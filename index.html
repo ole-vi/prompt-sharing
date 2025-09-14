@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OLE Prompt Library</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: #171a2b;
+      --muted: #9aa3b2;
+      --text: #e8ecf1;
+      --accent: #5ad1ff;
+      --border: #262b45;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, Noto Sans, Liberation Sans, Helvetica Neue, sans-serif; background: var(--bg); color: var(--text); }
+    header { padding: 20px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: linear-gradient(180deg, rgba(15,18,32,0.96), rgba(15,18,32,0.85)); backdrop-filter: blur(6px); z-index: 2; }
+    .wrap { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 300px 1fr; gap: 16px; padding: 18px 16px 40px; }
+    @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; }
+
+    /* Sidebar */
+    #sidebar { padding: 10px; display: flex; flex-direction: column; gap: 10px; height: fit-content; position: sticky; top: 76px; }
+    #search { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #12162a; color: var(--text); outline: none; }
+    #list { display: grid; gap: 6px; max-height: 70vh; overflow: auto; padding-right: 4px; }
+    .item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid transparent; background: #12162a; cursor: pointer; }
+    .item:hover { border-color: var(--border); background: #141936; }
+    .item-title { font-size: 14px; font-weight: 600; }
+    .item-meta { color: var(--muted); font-size: 12px; }
+
+    /* Main */
+    #main { padding: 14px; }
+    #empty { color: var(--muted); font-size: 14px; }
+    #title { margin: 0 0 6px; font-size: 22px; }
+    #meta { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+    #actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+    .btn { appearance: none; border: 1px solid var(--border); background: #11152a; color: var(--text); border-radius: 10px; padding: 8px 10px; font-size: 13px; cursor: pointer; }
+    .btn:hover { border-color: #30365a; background: #151a33; }
+    .btn:active { transform: translateY(1px); }
+    #content { line-height: 1.55; font-size: 15px; }
+    #content pre { background: #0b0f21; padding: 12px; border: 1px solid var(--border); border-radius: 10px; overflow: auto; }
+    #content code { background: #0b0f21; padding: 1px 4px; border-radius: 6px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    footer { max-width: 1100px; margin: 20px auto 40px; color: var(--muted); font-size: 13px; padding: 0 16px; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 999px; border: 1px solid var(--border); background: #11152a; font-size: 12px; color: var(--muted); }
+  </style>
+  <!-- Marked for Markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="wrap" style="padding:0;grid-template-columns:1fr;gap:0">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+        <div>
+          <div style="font-size:18px; font-weight:800; letter-spacing:0.2px;">OLE Prompt Library</div>
+          <div style="color:var(--muted); font-size:13px;">Single file, no build. Drop .md files in <code>/prompts</code> and they show up here.</div>
+        </div>
+        <div class="pill" id="repoPill">Loading repo...</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <aside id="sidebar" class="card">
+      <input id="search" placeholder="Search prompts..." />
+      <div id="list"></div>
+      <div style="padding:8px 6px; color:var(--muted); font-size:12px;">
+        Add prompts by committing <code>.md</code> files to <code>/prompts</code> in your repo. Use a first-level heading for the title.
+      </div>
+    </aside>
+
+    <main id="main" class="card">
+      <div id="empty">Select a prompt from the list. You can deep link to any prompt using the URL hash.</div>
+      <h1 id="title" style="display:none"></h1>
+      <div id="meta" style="display:none"></div>
+      <div id="actions" style="display:none">
+        <button class="btn" id="copyBtn">Copy prompt</button>
+        <a class="btn" id="rawBtn" target="_blank" rel="noopener">Open raw</a>
+        <button class="btn" id="shareBtn">Copy link</button>
+      </div>
+      <article id="content"></article>
+    </main>
+  </div>
+
+  <footer>
+    <div>Config this page by editing the constants at the top of the script. Host with GitHub Pages on the same repo.</div>
+  </footer>
+
+  <script>
+    // ---------- CONFIG ----------
+    // Set these three values to your repo info, then push index.html to the repo root and enable GitHub Pages (Settings -> Pages -> Build from main).
+    // Example: owner "open-learning-exchange", repo "ole-prompts", branch "main".
+    const OWNER = "YOUR_GH_OWNER";   // e.g., "open-learning-exchange" or your personal user
+    const REPO  = "YOUR_REPO_NAME";  // e.g., "ole-prompts"
+    const BRANCH = "main";           // default branch name
+
+    // Optional: set to true to prefix titles with emoji based on filename categories
+    const PRETTY_TITLES = true;
+
+    // ---------- Runtime state ----------
+    let files = []; // [{name, path, download_url, sha}]
+    let cacheRaw = new Map(); // slug -> raw markdown text
+
+    const listEl = document.getElementById('list');
+    const contentEl = document.getElementById('content');
+    const titleEl = document.getElementById('title');
+    const metaEl = document.getElementById('meta');
+    const emptyEl = document.getElementById('empty');
+    const actionsEl = document.getElementById('actions');
+    const copyBtn = document.getElementById('copyBtn');
+    const rawBtn = document.getElementById('rawBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    const searchEl = document.getElementById('search');
+    const repoPill = document.getElementById('repoPill');
+
+    // Helpers
+    const apiListURL = (path) => `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`;
+    const rawURL = (path) => `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${path}`;
+
+    function slugify(filename) {
+      return filename.replace(/\.md$/i, "").replace(/\s+/g, "-").toLowerCase();
+    }
+
+    function prettyTitle(name) {
+      const base = name.replace(/\.md$/i, "");
+      const addEmoji = (s) => {
+        if (!PRETTY_TITLES) return s;
+        if (/review|pr|rubric/i.test(s)) return "🔍 " + s;
+        if (/bug|triage|fix/i.test(s)) return "🩹 " + s;
+        if (/spec|design|plan/i.test(s)) return "🧭 " + s;
+        if (/refactor/i.test(s)) return "🧹 " + s;
+        return s;
+      };
+      return addEmoji(base.replace(/[-_]/g, " "));
+    }
+
+    async function loadList() {
+      repoPill.textContent = `${OWNER}/${REPO}@${BRANCH}`;
+      const url = apiListURL('prompts');
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`GitHub API error ${res.status}`);
+        const data = await res.json();
+        files = data.filter(x => x.type === 'file' && /\.md$/i.test(x.name));
+        renderList(files);
+        // If URL hash points to a prompt, load it
+        const hash = new URL(location.href).hash;
+        const match = hash.match(/[#&?]p=([^&]+)/) || hash.match(/^#([^&]+)$/);
+        if (match) selectBySlug(decodeURIComponent(match[1]));
+      } catch (e) {
+        listEl.innerHTML = `<div style="color:var(--muted); padding:8px;">Could not load prompts from <code>/prompts</code>. Make sure the repo, branch, and folder exist. ${e.message}</div>`;
+      }
+    }
+
+    function renderList(items) {
+      const q = searchEl.value?.trim().toLowerCase();
+      const filtered = q ? items.filter(f => f.name.toLowerCase().includes(q)) : items;
+      if (!filtered.length) {
+        listEl.innerHTML = '<div style="color:var(--muted); padding:8px;">No prompts found.</div>';
+        return;
+      }
+      listEl.innerHTML = '';
+      for (const f of filtered.sort((a,b)=>a.name.localeCompare(b.name))) {
+        const slug = slugify(f.name);
+        const a = document.createElement('a');
+        a.className = 'item';
+        a.href = `#p=${encodeURIComponent(slug)}`;
+        a.onclick = (ev) => { ev.preventDefault(); selectFile(f, true); };
+
+        const left = document.createElement('div');
+        left.style.display = 'flex';
+        left.style.flexDirection = 'column';
+        left.style.gap = '2px';
+        const t = document.createElement('div');
+        t.className = 'item-title';
+        t.textContent = prettyTitle(f.name);
+        const m = document.createElement('div');
+        m.className = 'item-meta';
+        m.textContent = f.name;
+        left.appendChild(t); left.appendChild(m);
+        a.appendChild(left);
+        listEl.appendChild(a);
+      }
+    }
+
+    async function selectBySlug(slug) {
+      const f = files.find(x => slugify(x.name) === slug);
+      if (f) selectFile(f, false);
+    }
+
+    async function selectFile(f, pushHash) {
+      emptyEl.style.display = 'none';
+      titleEl.style.display = 'block';
+      metaEl.style.display = 'block';
+      actionsEl.style.display = 'flex';
+      titleEl.textContent = prettyTitle(f.name);
+      metaEl.textContent = `File: prompts/${f.name}`;
+      rawBtn.href = rawURL(`prompts/${f.name}`);
+      const slug = slugify(f.name);
+      if (pushHash) history.pushState(null, '', `#p=${encodeURIComponent(slug)}`);
+
+      let raw = cacheRaw.get(slug);
+      if (!raw) {
+        const res = await fetch(rawURL(`prompts/${f.name}`));
+        raw = await res.text();
+        cacheRaw.set(slug, raw);
+      }
+      copyBtn.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(raw);
+          copyBtn.textContent = 'Copied';
+          setTimeout(() => copyBtn.textContent = 'Copy prompt', 1000);
+        } catch {
+          alert('Clipboard blocked. Select and copy manually.');
+        }
+      };
+      shareBtn.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(location.href);
+          shareBtn.textContent = 'Link copied';
+          setTimeout(() => shareBtn.textContent = 'Copy link', 1000);
+        } catch {
+          alert('Could not copy link.');
+        }
+      };
+
+      // Try to extract a first H1 as title to display above, but still render full markdown below
+      const firstLine = raw.split(/\r?\n/)[0];
+      if (/^#\s+/.test(firstLine)) {
+        titleEl.textContent = firstLine.replace(/^#\s+/, '');
+      }
+
+      // Render Markdown
+      contentEl.innerHTML = marked.parse(raw, { breaks: true });
+
+      // Add copy buttons to every code block for convenience
+      enhanceCodeBlocks();
+    }
+
+    function enhanceCodeBlocks() {
+      const pres = contentEl.querySelectorAll('pre');
+      pres.forEach((pre) => {
+        if (pre.querySelector('.copy')) return;
+        const btn = document.createElement('button');
+        btn.textContent = 'Copy';
+        btn.className = 'btn copy';
+        btn.style.position = 'absolute';
+        btn.style.margin = '6px';
+        btn.style.right = '8px';
+        btn.style.transform = 'translateY(-2px)';
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'relative';
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(pre);
+        wrapper.appendChild(btn);
+        btn.addEventListener('click', async () => {
+          const code = pre.innerText;
+          try {
+            await navigator.clipboard.writeText(code);
+            btn.textContent = 'Copied';
+            setTimeout(() => btn.textContent = 'Copy', 900);
+          } catch {}
+        });
+      });
+    }
+
+    // Search
+    searchEl.addEventListener('input', () => renderList(files));
+
+    // Hash navigation support
+    window.addEventListener('hashchange', () => {
+      const hash = new URL(location.href).hash;
+      const match = hash.match(/[#&?]p=([^&]+)/) || hash.match(/^#([^&]+)$/);
+      if (match) selectBySlug(decodeURIComponent(match[1]));
+    });
+
+    // Kick off
+    loadList();
+  </script>
+</body>
+</html>
