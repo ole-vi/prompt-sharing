@@ -134,7 +134,7 @@
     const repoPill = document.getElementById('repoPill');
 
     // Helpers use dynamic values
-    const apiListURL = (path) => `https://api.github.com/repos/${currentOwner}/${currentRepo}/contents/${path}`;
+    const apiListURL = (path) =>   `https://api.github.com/repos/${currentOwner}/${currentRepo}/contents/${path}?ref=${encodeURIComponent(currentBranch)}`;
     const rawURL     = (path) => `https://raw.githubusercontent.com/${currentOwner}/${currentRepo}/${currentBranch}/${path}`;
 
     function slugify(filename) {
