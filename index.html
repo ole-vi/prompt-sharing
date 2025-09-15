@@ -55,7 +55,12 @@
           <div style="font-size:18px; font-weight:800; letter-spacing:0.2px;">OLE Prompt Library</div>
           <div style="color:var(--muted); font-size:13px;">Single file, no build. Drop .md files in <code>/prompts</code> and they show up here.</div>
         </div>
-        <div class="pill" id="repoPill">Loading repo...</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="pill" id="repoPill">Loading repo...</div>
+          <select id="branchSelect" class="btn" style="min-width:140px;">
+            <option>Loading branches…</option>
+          </select>
+        </div>
       </div>
     </div>
   </header>
@@ -84,7 +89,7 @@
   </div>
 
   <footer>
-    <div>Switch branches/owners/repos via URL. Examples: <code>?branch=Jesse</code> or <code>?owner=ole-vi&repo=prompt-sharing&branch=main</code>.</div>
+    <div>Switch branches/owners/repos via URL or the dropdown. Examples: <code>?branch=Jesse</code> or <code>?owner=ole-vi&repo=prompt-sharing&branch=main</code>.</div>
   </footer>
 
   <script>
@@ -95,7 +100,6 @@
     const PRETTY_TITLES = true;
 
     // ---------- DYNAMIC OVERRIDES FROM URL ----------
-    // Accept params in either ?query or #hash (e.g., #p=stubs&branch=Jesse)
     function parseParams() {
       const out = {};
       const sources = [
@@ -117,8 +121,8 @@
     let currentBranch = params.branch || BRANCH;
 
     // ---------- Runtime state ----------
-    let files = [];                 // [{name, path, download_url, sha}, ...]
-    let cacheRaw = new Map();       // slug -> raw markdown text
+    let files = [];           // [{name, path, download_url, sha}, ...]
+    let cacheRaw = new Map(); // slug -> raw markdown text
 
     const listEl   = document.getElementById('list');
     const contentEl= document.getElementById('content');
@@ -132,10 +136,13 @@
     const shareBtn = document.getElementById('shareBtn');
     const searchEl = document.getElementById('search');
     const repoPill = document.getElementById('repoPill');
+    const branchSelect = document.getElementById('branchSelect');
 
     // Helpers use dynamic values
-    const apiListURL = (path) =>   `https://api.github.com/repos/${currentOwner}/${currentRepo}/contents/${path}?ref=${encodeURIComponent(currentBranch)}`;
-    const rawURL     = (path) => `https://raw.githubusercontent.com/${currentOwner}/${currentRepo}/${currentBranch}/${path}`;
+    const apiListURL = (path) =>
+      `https://api.github.com/repos/${currentOwner}/${currentRepo}/contents/${path}?ref=${encodeURIComponent(currentBranch)}`;
+    const rawURL = (path) =>
+      `https://raw.githubusercontent.com/${currentOwner}/${currentRepo}/${currentBranch}/${path}`;
 
     function slugify(filename) {
       return filename.replace(/\.md$/i, "").replace(/\s+/g, "-").toLowerCase();
@@ -158,7 +165,7 @@
       repoPill.textContent = `${currentOwner}/${currentRepo}@${currentBranch}`;
       const url = apiListURL('prompts');
       try {
-        const res = await fetch(url);
+        const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) throw new Error(`GitHub API error ${res.status}`);
         const data = await res.json();
         files = data.filter(x => x.type === 'file' && /\.md$/i.test(x.name));
@@ -168,7 +175,9 @@
         const match = hash.match(/[#&?]p=([^&]+)/) || hash.match(/^#([^&]+)$/);
         if (match) selectBySlug(decodeURIComponent(match[1]));
       } catch (e) {
-        listEl.innerHTML = `<div style="color:var(--muted); padding:8px;">Could not load prompts from <code>${currentOwner}/${currentRepo}@${currentBranch}/prompts</code>. ${e.message}</div>`;
+        listEl.innerHTML = `<div style="color:var(--muted); padding:8px;">
+          Could not load prompts from <code>${currentOwner}/${currentRepo}@${currentBranch}/prompts</code>. ${e.message}
+        </div>`;
       }
     }
 
@@ -222,7 +231,7 @@
 
       let raw = cacheRaw.get(slug);
       if (!raw) {
-        const res = await fetch(rawURL(`prompts/${f.name}`));
+        const res = await fetch(rawURL(`prompts/${f.name}`) + `?ts=${Date.now()}`, { cache: 'no-store' });
         raw = await res.text();
         cacheRaw.set(slug, raw);
       }
@@ -239,9 +248,10 @@
         try {
           await navigator.clipboard.writeText(location.href);
           shareBtn.textContent = 'Link copied';
-          setTimeout(() => shareBtn.textContent = '🔗 Copy link', 1000);
         } catch {
           alert('Could not copy link.');
+        } finally {
+          setTimeout(() => (shareBtn.textContent = '🔗 Copy link'), 1000);
         }
       };
 
@@ -275,13 +285,62 @@
           try {
             await navigator.clipboard.writeText(code);
             btn.textContent = 'Copied';
-            setTimeout(() => btn.textContent = 'Copy', 900);
+            setTimeout(() => (btn.textContent = 'Copy'), 900);
           } catch {}
         });
       });
     }
 
-    // Live-respond to hash/query changes for branch/owner/repo overrides
+    // --- Branch dropdown: fetch & populate ---
+    async function loadBranches() {
+      branchSelect.disabled = true;
+      branchSelect.innerHTML = `<option>Loading branches…</option>`;
+      try {
+        const res = await fetch(`https://api.github.com/repos/${currentOwner}/${currentRepo}/branches?per_page=100`, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+        const branches = await res.json();
+
+        branchSelect.innerHTML = '';
+        for (const b of branches) {
+          const opt = document.createElement('option');
+          opt.value = b.name;
+          opt.textContent = b.name;
+          branchSelect.appendChild(opt);
+        }
+        // Ensure current branch is visible even if not returned yet
+        if (![...branchSelect.options].some(o => o.value === currentBranch)) {
+          const opt = document.createElement('option');
+          opt.value = currentBranch;
+          opt.textContent = `${currentBranch} (unlisted)`;
+          branchSelect.appendChild(opt);
+        }
+        branchSelect.value = currentBranch;
+      } catch (e) {
+        branchSelect.innerHTML = `<option value="${currentBranch}">${currentBranch}</option>`;
+      } finally {
+        branchSelect.disabled = false;
+      }
+    }
+
+    // Handle dropdown changes
+    document.addEventListener('change', (e) => {
+      if (e.target !== branchSelect) return;
+      currentBranch = branchSelect.value;
+
+      // Preserve existing query params and slug
+      const qs = new URLSearchParams(location.search);
+      qs.set('branch', currentBranch);
+      const slugMatch = location.hash.match(/[#&?]p=([^&]+)/) || location.hash.match(/^#([^&]+)$/);
+      const slug = slugMatch ? decodeURIComponent(slugMatch[1]) : null;
+
+      const newUrl = `${location.pathname}?${qs.toString()}${slug ? '#p=' + encodeURIComponent(slug) : ''}`;
+      history.replaceState(null, '', newUrl);
+
+      cacheRaw.clear();
+      loadList();
+    });
+
+    // Respond to hash/query changes (owner/repo/branch via URL)
     window.addEventListener('hashchange', () => {
       const p = parseParams();
       const prev = { owner: currentOwner, repo: currentRepo, branch: currentBranch };
@@ -289,9 +348,13 @@
       if (p.repo)   currentRepo   = p.repo;
       if (p.branch) currentBranch = p.branch;
 
-      if (currentOwner !== prev.owner || currentRepo !== prev.repo || currentBranch !== prev.branch) {
+      const repoChanged = currentOwner !== prev.owner || currentRepo !== prev.repo;
+      const branchChanged = currentBranch !== prev.branch;
+
+      if (repoChanged || branchChanged) {
         cacheRaw.clear();
         loadList();
+        loadBranches();
       } else {
         const match = location.hash.match(/[#&?]p=([^&]+)/) || location.hash.match(/^#([^&]+)$/);
         if (match) selectBySlug(decodeURIComponent(match[1]));
@@ -300,20 +363,23 @@
 
     window.addEventListener('popstate', () => {
       const p = parseParams();
-      const changed = (p.owner && p.owner !== currentOwner) ||
-                      (p.repo && p.repo !== currentRepo) ||
-                      (p.branch && p.branch !== currentBranch);
+      const changed =
+        (p.owner && p.owner !== currentOwner) ||
+        (p.repo && p.repo !== currentRepo) ||
+        (p.branch && p.branch !== currentBranch);
       if (changed) {
         currentOwner  = p.owner  || currentOwner;
         currentRepo   = p.repo   || currentRepo;
         currentBranch = p.branch || currentBranch;
         cacheRaw.clear();
         loadList();
+        loadBranches();
       }
     });
 
     // Kick off
     loadList();
+    loadBranches();
   </script>
 </body>
 </html>
