@@ -56,7 +56,7 @@ Example:
 - File: `prompts/stubs.md`  
 - Link: https://ole-vi.github.io/prompt-sharing/#p=stubs
 
-These links can be shared in Slack, docs, etc.
+These links can be shared in Discord, Whatsapp, docs, etc.
 
 ## Features
 
