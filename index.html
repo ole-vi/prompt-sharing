@@ -74,29 +74,51 @@
       <h1 id="title" style="display:none"></h1>
       <div id="meta" style="display:none"></div>
       <div id="actions" style="display:none">
-        <button class="btn" id="copyBtn">📋 Copy prompt</button>
-        <button class="btn" id="shareBtn">🔗 Copy link</button>
-        <a class="btn" id="ghBtn" target="_blank" rel="noopener">🗂️ View Markdown</a>
-        <a class="btn" id="rawBtn" target="_blank" rel="noopener">📄 Open raw</a>
+        <button class="btn" id="copyBtn" title="Copy the entire prompt">📋 Copy prompt</button>
+        <a class="btn" id="rawBtn" target="_blank" rel="noopener" title="Open raw markdown">📄 Open raw</a>
+        <a class="btn" id="ghBtn" target="_blank" rel="noopener" title="Open the file on GitHub">🗂️ View on GitHub</a>
+        <button class="btn" id="shareBtn" title="Copy a link to this prompt">🔗 Copy link</button>
       </div>
       <article id="content"></article>
     </main>
   </div>
 
   <footer>
-    <div>Config this page by editing the constants at the top of the script. Host with GitHub Pages on the same repo.</div>
+    <div>Switch branches/owners/repos via URL. Examples: <code>?branch=Jesse</code> or <code>?owner=ole-vi&repo=prompt-sharing&branch=main</code>.</div>
   </footer>
 
   <script>
-    // ---------- CONFIG ----------
+    // ---------- DEFAULT CONFIG ----------
     const OWNER  = "ole-vi";
     const REPO   = "prompt-sharing";
     const BRANCH = "main";
     const PRETTY_TITLES = true;
 
+    // ---------- DYNAMIC OVERRIDES FROM URL ----------
+    // Accept params in either ?query or #hash (e.g., #p=stubs&branch=Jesse)
+    function parseParams() {
+      const out = {};
+      const sources = [
+        location.search || "",
+        location.hash && location.hash.includes("?")
+          ? location.hash.slice(location.hash.indexOf("?"))
+          : ""
+      ];
+      for (const src of sources) {
+        const p = new URLSearchParams(src);
+        for (const [k, v] of p.entries()) out[k.toLowerCase()] = v;
+      }
+      return out;
+    }
+
+    const params = parseParams();
+    let currentOwner  = params.owner  || OWNER;
+    let currentRepo   = params.repo   || REPO;
+    let currentBranch = params.branch || BRANCH;
+
     // ---------- Runtime state ----------
-    let files = [];
-    let cacheRaw = new Map();
+    let files = [];                 // [{name, path, download_url, sha}, ...]
+    let cacheRaw = new Map();       // slug -> raw markdown text
 
     const listEl   = document.getElementById('list');
     const contentEl= document.getElementById('content');
@@ -111,8 +133,9 @@
     const searchEl = document.getElementById('search');
     const repoPill = document.getElementById('repoPill');
 
-    const apiListURL = (path) => `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`;
-    const rawURL     = (path) => `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${path}`;
+    // Helpers use dynamic values
+    const apiListURL = (path) => `https://api.github.com/repos/${currentOwner}/${currentRepo}/contents/${path}`;
+    const rawURL     = (path) => `https://raw.githubusercontent.com/${currentOwner}/${currentRepo}/${currentBranch}/${path}`;
 
     function slugify(filename) {
       return filename.replace(/\.md$/i, "").replace(/\s+/g, "-").toLowerCase();
@@ -132,7 +155,7 @@
     }
 
     async function loadList() {
-      repoPill.textContent = `${OWNER}/${REPO}@${BRANCH}`;
+      repoPill.textContent = `${currentOwner}/${currentRepo}@${currentBranch}`;
       const url = apiListURL('prompts');
       try {
         const res = await fetch(url);
@@ -140,11 +163,12 @@
         const data = await res.json();
         files = data.filter(x => x.type === 'file' && /\.md$/i.test(x.name));
         renderList(files);
+
         const hash = new URL(location.href).hash;
         const match = hash.match(/[#&?]p=([^&]+)/) || hash.match(/^#([^&]+)$/);
         if (match) selectBySlug(decodeURIComponent(match[1]));
       } catch (e) {
-        listEl.innerHTML = `<div style="color:var(--muted); padding:8px;">Could not load prompts from <code>/prompts</code>. Make sure the repo, branch, and folder exist. ${e.message}</div>`;
+        listEl.innerHTML = `<div style="color:var(--muted); padding:8px;">Could not load prompts from <code>${currentOwner}/${currentRepo}@${currentBranch}/prompts</code>. ${e.message}</div>`;
       }
     }
 
@@ -192,7 +216,7 @@
       titleEl.textContent = prettyTitle(f.name);
       metaEl.textContent = `File: prompts/${f.name}`;
       rawBtn.href = rawURL(`prompts/${f.name}`);
-      ghBtn.href  = `https://github.com/${OWNER}/${REPO}/blob/${BRANCH}/prompts/${f.name}`;
+      ghBtn.href  = `https://github.com/${currentOwner}/${currentRepo}/blob/${currentBranch}/prompts/${f.name}`;
       const slug = slugify(f.name);
       if (pushHash) history.pushState(null, '', `#p=${encodeURIComponent(slug)}`);
 
@@ -257,13 +281,38 @@
       });
     }
 
-    searchEl.addEventListener('input', () => renderList(files));
+    // Live-respond to hash/query changes for branch/owner/repo overrides
     window.addEventListener('hashchange', () => {
-      const hash = new URL(location.href).hash;
-      const match = hash.match(/[#&?]p=([^&]+)/) || hash.match(/^#([^&]+)$/);
-      if (match) selectBySlug(decodeURIComponent(match[1]));
+      const p = parseParams();
+      const prev = { owner: currentOwner, repo: currentRepo, branch: currentBranch };
+      if (p.owner)  currentOwner  = p.owner;
+      if (p.repo)   currentRepo   = p.repo;
+      if (p.branch) currentBranch = p.branch;
+
+      if (currentOwner !== prev.owner || currentRepo !== prev.repo || currentBranch !== prev.branch) {
+        cacheRaw.clear();
+        loadList();
+      } else {
+        const match = location.hash.match(/[#&?]p=([^&]+)/) || location.hash.match(/^#([^&]+)$/);
+        if (match) selectBySlug(decodeURIComponent(match[1]));
+      }
     });
 
+    window.addEventListener('popstate', () => {
+      const p = parseParams();
+      const changed = (p.owner && p.owner !== currentOwner) ||
+                      (p.repo && p.repo !== currentRepo) ||
+                      (p.branch && p.branch !== currentBranch);
+      if (changed) {
+        currentOwner  = p.owner  || currentOwner;
+        currentRepo   = p.repo   || currentRepo;
+        currentBranch = p.branch || currentBranch;
+        cacheRaw.clear();
+        loadList();
+      }
+    });
+
+    // Kick off
     loadList();
   </script>
 </body>
