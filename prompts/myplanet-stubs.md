@@ -8,8 +8,8 @@ Create task stubs for recent issues:
 2. For each issue:
    - Confirm no open PR references it.
    - Read body/comments; follow linked discussions.
-   - Score solvability (1–100).
-   - Output: `Issue #<number>: <title> – <score>`.
+   - Score **impact** (1–100) and **feasibility** (1–100).
+   - Output: `Issue #<number>: <title> – impact <score>, feasibility <score>`.
    - One-line problem/solution summary.
    - Fix instructions ending with:
      a. Commit and push changes.
