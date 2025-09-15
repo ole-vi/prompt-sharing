@@ -21,7 +21,6 @@
     @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; }
 
-    /* Sidebar */
     #sidebar { padding: 10px; display: flex; flex-direction: column; gap: 10px; height: fit-content; position: sticky; top: 76px; }
     #search { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #12162a; color: var(--text); outline: none; }
     #list { display: grid; gap: 6px; max-height: 70vh; overflow: auto; padding-right: 4px; }
@@ -30,7 +29,6 @@
     .item-title { font-size: 14px; font-weight: 600; }
     .item-meta { color: var(--muted); font-size: 12px; }
 
-    /* Main */
     #main { padding: 14px; }
     #empty { color: var(--muted); font-size: 14px; }
     #title { margin: 0 0 6px; font-size: 22px; }
@@ -55,7 +53,7 @@
       <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
         <div>
           <div style="font-size:18px; font-weight:800; letter-spacing:0.2px;">OLE Prompt Library</div>
-          <div style="color:var(--muted); font-size:13px;">Drop .md files in <code>/prompts</code> and they show up here.</div>
+          <div style="color:var(--muted); font-size:13px;">Single file, no build. Drop .md files in <code>/prompts</code> and they show up here.</div>
         </div>
         <div class="pill" id="repoPill">Loading repo...</div>
       </div>
@@ -76,9 +74,10 @@
       <h1 id="title" style="display:none"></h1>
       <div id="meta" style="display:none"></div>
       <div id="actions" style="display:none">
-        <button class="btn" id="copyBtn">Copy prompt</button>
-        <a class="btn" id="rawBtn" target="_blank" rel="noopener">Open raw</a>
-        <button class="btn" id="shareBtn">Copy link</button>
+        <button class="btn" id="copyBtn">📋 Copy prompt</button>
+        <button class="btn" id="shareBtn">🔗 Copy link</button>
+        <a class="btn" id="ghBtn" target="_blank" rel="noopener">🗂️ View Markdown</a>
+        <a class="btn" id="rawBtn" target="_blank" rel="noopener">📄 Open raw</a>
       </div>
       <article id="content"></article>
     </main>
@@ -96,8 +95,8 @@
     const PRETTY_TITLES = true;
 
     // ---------- Runtime state ----------
-    let files = [];          // [{name, path, download_url, sha}]
-    let cacheRaw = new Map(); // slug -> raw markdown text
+    let files = [];
+    let cacheRaw = new Map();
 
     const listEl   = document.getElementById('list');
     const contentEl= document.getElementById('content');
@@ -107,11 +106,11 @@
     const actionsEl= document.getElementById('actions');
     const copyBtn  = document.getElementById('copyBtn');
     const rawBtn   = document.getElementById('rawBtn');
+    const ghBtn    = document.getElementById('ghBtn');
     const shareBtn = document.getElementById('shareBtn');
     const searchEl = document.getElementById('search');
     const repoPill = document.getElementById('repoPill');
 
-    // Helpers
     const apiListURL = (path) => `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`;
     const rawURL     = (path) => `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${path}`;
 
@@ -141,7 +140,6 @@
         const data = await res.json();
         files = data.filter(x => x.type === 'file' && /\.md$/i.test(x.name));
         renderList(files);
-        // If URL hash points to a prompt, load it
         const hash = new URL(location.href).hash;
         const match = hash.match(/[#&?]p=([^&]+)/) || hash.match(/^#([^&]+)$/);
         if (match) selectBySlug(decodeURIComponent(match[1]));
@@ -194,6 +192,7 @@
       titleEl.textContent = prettyTitle(f.name);
       metaEl.textContent = `File: prompts/${f.name}`;
       rawBtn.href = rawURL(`prompts/${f.name}`);
+      ghBtn.href  = `https://github.com/${OWNER}/${REPO}/blob/${BRANCH}/prompts/${f.name}`;
       const slug = slugify(f.name);
       if (pushHash) history.pushState(null, '', `#p=${encodeURIComponent(slug)}`);
 
@@ -207,7 +206,7 @@
         try {
           await navigator.clipboard.writeText(raw);
           copyBtn.textContent = 'Copied';
-          setTimeout(() => copyBtn.textContent = 'Copy prompt', 1000);
+          setTimeout(() => copyBtn.textContent = '📋 Copy prompt', 1000);
         } catch {
           alert('Clipboard blocked. Select and copy manually.');
         }
@@ -216,22 +215,18 @@
         try {
           await navigator.clipboard.writeText(location.href);
           shareBtn.textContent = 'Link copied';
-          setTimeout(() => shareBtn.textContent = 'Copy link', 1000);
+          setTimeout(() => shareBtn.textContent = '🔗 Copy link', 1000);
         } catch {
           alert('Could not copy link.');
         }
       };
 
-      // Use first H1 as the title if present
       const firstLine = raw.split(/\r?\n/)[0];
       if (/^#\s+/.test(firstLine)) {
         titleEl.textContent = firstLine.replace(/^#\s+/, '');
       }
 
-      // Render Markdown
       contentEl.innerHTML = marked.parse(raw, { breaks: true });
-
-      // Add copy buttons to every code block
       enhanceCodeBlocks();
     }
 
@@ -262,7 +257,6 @@
       });
     }
 
-    // Search and navigation
     searchEl.addEventListener('input', () => renderList(files));
     window.addEventListener('hashchange', () => {
       const hash = new URL(location.href).hash;
@@ -270,7 +264,6 @@
       if (match) selectBySlug(decodeURIComponent(match[1]));
     });
 
-    // Kick off
     loadList();
   </script>
 </body>
