@@ -57,9 +57,13 @@
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
           <div class="pill" id="repoPill">Loading repo...</div>
-          <select id="branchSelect" class="btn" style="min-width:140px;">
-            <option>Loading branches…</option>
-          </select>
+          <!-- Chevron + branch select -->
+          <label style="display:flex; align-items:center; gap:4px;">
+            <span title="Choose a branch">▼</span>
+            <select id="branchSelect" class="btn" style="min-width:140px;">
+              <option>Loading branches…</option>
+            </select>
+          </label>
         </div>
       </div>
     </div>
@@ -138,9 +142,7 @@
     const repoPill = document.getElementById('repoPill');
     const branchSelect = document.getElementById('branchSelect');
 
-    // Helpers use dynamic values
-    const apiListURL = (path) =>
-      `https://api.github.com/repos/${currentOwner}/${currentRepo}/contents/${path}?ref=${encodeURIComponent(currentBranch)}`;
+    // ---------- Helpers ----------
     const rawURL = (path) =>
       `https://raw.githubusercontent.com/${currentOwner}/${currentRepo}/${currentBranch}/${path}`;
 
@@ -161,22 +163,80 @@
       return addEmoji(base.replace(/[-_]/g, " "));
     }
 
+    // ---------- Robust GitHub fetch + fallbacks ----------
+    async function fetchJSON(url) {
+      const res = await fetch(url, {
+        cache: 'no-store',
+        headers: { 'Accept': 'application/vnd.github+json' }
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        const err = new Error(`GitHub API ${res.status} ${res.statusText} ${txt.slice(0,140)}`);
+        err.status = res.status;
+        throw err;
+      }
+      return res.json();
+    }
+
+    async function listPromptsViaContents() {
+      const url = `https://api.github.com/repos/${currentOwner}/${currentRepo}/contents/prompts?ref=${encodeURIComponent(currentBranch)}&ts=${Date.now()}`;
+      return fetchJSON(url);
+    }
+
+    async function listPromptsViaTrees() {
+      const url = `https://api.github.com/repos/${currentOwner}/${currentRepo}/git/trees/${encodeURIComponent(currentBranch)}?recursive=1&ts=${Date.now()}`;
+      const data = await fetchJSON(url);
+      const items = (data.tree || []).filter(n => n.type === 'blob' && /^prompts\/[^/]+\.md$/i.test(n.path));
+      return items.map(n => ({
+        type: 'file',
+        name: n.path.split('/').pop(),
+        path: n.path
+      }));
+    }
+
+    // ---------- Load + render list (with session cache) ----------
+    async function refreshList(cacheKey) {
+      let data;
+      try {
+        data = await listPromptsViaContents();
+      } catch (e) {
+        if (e.status === 403) {
+          // Rate limited → fallback to Trees API
+          data = await listPromptsViaTrees();
+        } else {
+          throw e;
+        }
+      }
+      files = (data || []).filter(x => x.type === 'file' && /\.md$/i.test(x.name));
+      sessionStorage.setItem(cacheKey, JSON.stringify(files));
+      renderList(files);
+    }
+
     async function loadList() {
       repoPill.textContent = `${currentOwner}/${currentRepo}@${currentBranch}`;
-      const url = apiListURL('prompts');
-      try {
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`GitHub API error ${res.status}`);
-        const data = await res.json();
-        files = data.filter(x => x.type === 'file' && /\.md$/i.test(x.name));
-        renderList(files);
+      const cacheKey = `prompts:${currentOwner}/${currentRepo}@${currentBranch}`;
 
-        const hash = new URL(location.href).hash;
-        const match = hash.match(/[#&?]p=([^&]+)/) || hash.match(/^#([^&]+)$/);
+      try {
+        // Use session cache if present
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          files = JSON.parse(cached);
+          renderList(files);
+          // Background refresh (non-blocking)
+          refreshList(cacheKey).catch(() => {});
+          // Deep link handling
+          const match = location.hash.match(/[#&?]p=([^&]+)/) || location.hash.match(/^#([^&]+)$/);
+          if (match) selectBySlug(decodeURIComponent(match[1]));
+          return;
+        }
+
+        // First load (no cache)
+        await refreshList(cacheKey);
+        const match = location.hash.match(/[#&?]p=([^&]+)/) || location.hash.match(/^#([^&]+)$/);
         if (match) selectBySlug(decodeURIComponent(match[1]));
       } catch (e) {
         listEl.innerHTML = `<div style="color:var(--muted); padding:8px;">
-          Could not load prompts from <code>${currentOwner}/${currentRepo}@${currentBranch}/prompts</code>. ${e.message}
+          Could not load prompts from <code>${currentOwner}/${currentRepo}@${currentBranch}/prompts</code>.<br/>${e.message}
         </div>`;
       }
     }
@@ -296,8 +356,14 @@
       branchSelect.disabled = true;
       branchSelect.innerHTML = `<option>Loading branches…</option>`;
       try {
-        const res = await fetch(`https://api.github.com/repos/${currentOwner}/${currentRepo}/branches?per_page=100`, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+        const res = await fetch(
+          `https://api.github.com/repos/${currentOwner}/${currentRepo}/branches?per_page=100&ts=${Date.now()}`,
+          { cache: 'no-store', headers: { 'Accept': 'application/vnd.github+json' } }
+        );
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          throw new Error(`GitHub API ${res.status} ${res.statusText} ${txt.slice(0,120)}`);
+        }
         const branches = await res.json();
 
         branchSelect.innerHTML = '';
@@ -307,7 +373,6 @@
           opt.textContent = b.name;
           branchSelect.appendChild(opt);
         }
-        // Ensure current branch is visible even if not returned yet
         if (![...branchSelect.options].some(o => o.value === currentBranch)) {
           const opt = document.createElement('option');
           opt.value = currentBranch;
@@ -315,8 +380,10 @@
           branchSelect.appendChild(opt);
         }
         branchSelect.value = currentBranch;
+        branchSelect.title = '';
       } catch (e) {
         branchSelect.innerHTML = `<option value="${currentBranch}">${currentBranch}</option>`;
+        branchSelect.title = (e && e.message) ? e.message : 'Failed to load branches';
       } finally {
         branchSelect.disabled = false;
       }
