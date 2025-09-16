@@ -15,4 +15,4 @@ Create task stubs for recent issues:
      a. Commit and push changes.
      b. Open PR titled "<title> (fixes #<number>)" with "fixes #<number>" followed by <summary> of solution.
      c. do not run ./gradlew test.
-3. Sort stubs by highest solvability.
+3. Sort the generated stubs by highest impact × feasibility product (descending).
