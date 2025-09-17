@@ -1,4 +1,4 @@
-# daily: try solve issues 8 weeks
+# myplanet daily: try solve issues 8 weeks
 Create task stubs for recent issues:
 1. Retrieve open issues from open-learning-exchange/myplanet created within 8 weeks. 
    - Use gh or GitHub REST/GraphQL APIs.
