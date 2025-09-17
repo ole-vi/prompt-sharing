@@ -1,4 +1,4 @@
-# Generate feature implementation stubs for Planet
+# planet: daily - try solve issues 8 weeks
 
 Create task stubs for new feature requests in the Planet repo:
 
