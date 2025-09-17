@@ -1,4 +1,4 @@
-# planet: daily - try solve issues 8 weeks
+# planet: daily - try solve label issues
 
 Create task stubs for new feature requests in the Planet repo:
 
