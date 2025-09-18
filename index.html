@@ -23,11 +23,19 @@
 
     #sidebar { padding: 10px; display: flex; flex-direction: column; gap: 10px; height: fit-content; position: sticky; top: 76px; }
     #search { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #12162a; color: var(--text); outline: none; }
-    #list { display: grid; gap: 6px; max-height: 70vh; overflow: auto; padding-right: 4px; }
+    #list { max-height: 70vh; overflow: auto; padding-right: 4px; }
+    #list ul { list-style: none; margin: 0; padding-left: 16px; }
+    #list > ul { padding-left: 0; }
+    .tree-dir { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 10px; cursor: pointer; color: var(--text); }
+    .tree-dir:hover { background: #141936; }
+    .tree-dir button { appearance: none; border: none; background: none; color: var(--muted); cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; width: 18px; }
+    .tree-dir button:focus { outline: 1px solid var(--accent); border-radius: 4px; }
+    .tree-dir .folder-name { font-size: 13px; font-weight: 600; }
     .item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid transparent; background: #12162a; cursor: pointer; }
     .item:hover { border-color: var(--border); background: #141936; }
     .item-title { font-size: 14px; font-weight: 600; }
     .item-meta { color: var(--muted); font-size: 12px; }
+    .item.active { border-color: var(--accent); background: #151f3c; }
 
     #main { padding: 14px; }
     #empty { color: var(--muted); font-size: 14px; }
@@ -127,6 +135,9 @@
     // ---------- Runtime state ----------
     let files = [];           // [{name, path, download_url, sha}, ...]
     let cacheRaw = new Map(); // slug -> raw markdown text
+    let currentSlug = null;   // currently selected slug
+    let expandedState = new Set();
+    let expandedStateKey = null;
 
     const listEl   = document.getElementById('list');
     const contentEl= document.getElementById('content');
@@ -146,8 +157,35 @@
     const rawURL = (path) =>
       `https://raw.githubusercontent.com/${currentOwner}/${currentRepo}/${currentBranch}/${path}`;
 
-    function slugify(filename) {
-      return filename.replace(/\.md$/i, "").replace(/\s+/g, "-").toLowerCase();
+    function slugify(filePath) {
+      const base = filePath.replace(/\.md$/i, '').toLowerCase().replace(/\s+/g, '-');
+      return encodeURIComponent(base);
+    }
+
+    function getExpandedStateKey() {
+      return `sidebar:expanded:${currentOwner}/${currentRepo}@${currentBranch}`;
+    }
+
+    function loadExpandedState() {
+      const key = getExpandedStateKey();
+      if (expandedStateKey === key) return;
+      expandedStateKey = key;
+      try {
+        const raw = sessionStorage.getItem(key);
+        const parsed = raw ? JSON.parse(raw) : [];
+        expandedState = new Set(Array.isArray(parsed) ? parsed : []);
+      } catch {
+        expandedState = new Set();
+      }
+      expandedState.add('prompts');
+    }
+
+    function persistExpandedState() {
+      const key = getExpandedStateKey();
+      expandedStateKey = key;
+      try {
+        sessionStorage.setItem(key, JSON.stringify([...expandedState]));
+      } catch {}
     }
 
     function prettyTitle(name) {
@@ -178,19 +216,38 @@
       return res.json();
     }
 
-    async function listPromptsViaContents() {
-      const url = `https://api.github.com/repos/${currentOwner}/${currentRepo}/contents/prompts?ref=${encodeURIComponent(currentBranch)}&ts=${Date.now()}`;
-      return fetchJSON(url);
+    async function listPromptsViaContents(path = 'prompts') {
+      const url = `https://api.github.com/repos/${currentOwner}/${currentRepo}/contents/${path}?ref=${encodeURIComponent(currentBranch)}&ts=${Date.now()}`;
+      const entries = await fetchJSON(url);
+      if (!Array.isArray(entries)) return [];
+
+      const results = [];
+      for (const entry of entries) {
+        if (entry.type === 'file' && /\.md$/i.test(entry.name)) {
+          results.push({
+            type: 'file',
+            name: entry.name,
+            path: entry.path,
+            sha: entry.sha,
+            download_url: entry.download_url
+          });
+        } else if (entry.type === 'dir') {
+          const children = await listPromptsViaContents(entry.path);
+          results.push(...children);
+        }
+      }
+      return results;
     }
 
     async function listPromptsViaTrees() {
       const url = `https://api.github.com/repos/${currentOwner}/${currentRepo}/git/trees/${encodeURIComponent(currentBranch)}?recursive=1&ts=${Date.now()}`;
       const data = await fetchJSON(url);
-      const items = (data.tree || []).filter(n => n.type === 'blob' && /^prompts\/[^/]+\.md$/i.test(n.path));
+      const items = (data.tree || []).filter(n => n.type === 'blob' && /^prompts\/.+\.md$/i.test(n.path));
       return items.map(n => ({
         type: 'file',
         name: n.path.split('/').pop(),
-        path: n.path
+        path: n.path,
+        sha: n.sha
       }));
     }
 
@@ -200,14 +257,14 @@
       try {
         data = await listPromptsViaContents();
       } catch (e) {
-        if (e.status === 403) {
-          // Rate limited → fallback to Trees API
+        if (e.status === 403 || e.status === 404) {
+          // Rate limited or directory missing → fallback to Trees API
           data = await listPromptsViaTrees();
         } else {
           throw e;
         }
       }
-      files = (data || []).filter(x => x.type === 'file' && /\.md$/i.test(x.name));
+      files = (data || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
       sessionStorage.setItem(cacheKey, JSON.stringify(files));
       renderList(files);
     }
@@ -241,39 +298,192 @@
       }
     }
 
+    function ancestorPaths(path) {
+      const parts = path.split('/');
+      const ancestors = [];
+      for (let i = 0; i < parts.length - 1; i++) {
+        ancestors.push(parts.slice(0, i + 1).join('/'));
+      }
+      return ancestors;
+    }
+
+    function ensureAncestorsExpanded(path) {
+      const ancestors = ancestorPaths(path);
+      let changed = false;
+      for (const dir of ancestors) {
+        if (!expandedState.has(dir)) {
+          expandedState.add(dir);
+          changed = true;
+        }
+      }
+      if (changed) persistExpandedState();
+      return changed;
+    }
+
+    function buildTree(items) {
+      const root = { type: 'dir', name: 'prompts', path: 'prompts', children: new Map() };
+      for (const item of items) {
+        if (!item.path) continue;
+        const relative = item.path.replace(/^prompts\/?/, '');
+        const segments = relative.split('/');
+        let node = root;
+        let currentPath = 'prompts';
+        for (let i = 0; i < segments.length; i++) {
+          const segment = segments[i];
+          const isFile = i === segments.length - 1;
+          if (isFile) {
+            node.children.set(segment, { ...item, type: 'file' });
+          } else {
+            currentPath = `${currentPath}/${segment}`;
+            if (!node.children.has(segment)) {
+              node.children.set(segment, {
+                type: 'dir',
+                name: segment,
+                path: currentPath,
+                children: new Map()
+              });
+            }
+            node = node.children.get(segment);
+          }
+        }
+      }
+      return root;
+    }
+
+    function toggleDirectory(path, expand) {
+      const before = expandedState.has(path);
+      if (expand) {
+        expandedState.add(path);
+      } else {
+        expandedState.delete(path);
+      }
+      if (before !== expand) {
+        persistExpandedState();
+      }
+      renderList(files);
+    }
+
+    function renderTree(node, container, forcedExpanded) {
+      const entries = Array.from(node.children.values());
+      entries.sort((a, b) => {
+        if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+        const aName = (a.name || '').toLowerCase();
+        const bName = (b.name || '').toLowerCase();
+        return aName.localeCompare(bName);
+      });
+
+      for (const entry of entries) {
+        if (entry.type === 'dir') {
+          const li = document.createElement('li');
+          const header = document.createElement('div');
+          header.className = 'tree-dir';
+          const toggle = document.createElement('button');
+          toggle.type = 'button';
+          const isForced = forcedExpanded.has(entry.path);
+          const isExpanded = isForced || expandedState.has(entry.path);
+          toggle.textContent = isExpanded ? '▾' : '▸';
+          toggle.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            toggleDirectory(entry.path, !isExpanded);
+          });
+          header.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            toggleDirectory(entry.path, !isExpanded);
+          });
+          const label = document.createElement('span');
+          label.className = 'folder-name';
+          label.textContent = entry.name;
+          header.appendChild(toggle);
+          header.appendChild(label);
+          li.appendChild(header);
+
+          const childList = document.createElement('ul');
+          childList.style.display = isExpanded ? 'block' : 'none';
+          li.appendChild(childList);
+          renderTree(entry, childList, forcedExpanded);
+          if (!childList.children.length) {
+            continue;
+          }
+          container.appendChild(li);
+        } else {
+          const file = entry;
+          const li = document.createElement('li');
+          const slug = slugify(file.path);
+          const a = document.createElement('a');
+          a.className = 'item';
+          a.href = `#p=${encodeURIComponent(slug)}`;
+          a.dataset.slug = slug;
+          a.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            selectFile(file, true);
+          });
+
+          const left = document.createElement('div');
+          left.style.display = 'flex';
+          left.style.flexDirection = 'column';
+          left.style.gap = '2px';
+          const t = document.createElement('div');
+          t.className = 'item-title';
+          t.textContent = prettyTitle(file.name);
+          const m = document.createElement('div');
+          m.className = 'item-meta';
+          m.textContent = file.path.replace(/^prompts\//, '');
+          left.appendChild(t);
+          left.appendChild(m);
+          a.appendChild(left);
+          li.appendChild(a);
+          container.appendChild(li);
+        }
+      }
+    }
+
     function renderList(items) {
+      loadExpandedState();
       const q = searchEl.value?.trim().toLowerCase();
-      const filtered = q ? items.filter(f => f.name.toLowerCase().includes(q)) : items;
+      const searchActive = Boolean(q);
+      const filtered = !q
+        ? items.slice()
+        : items.filter(f => {
+            const name = f.name?.toLowerCase?.() || '';
+            const path = f.path?.toLowerCase?.() || '';
+            return name.includes(q) || path.includes(q);
+          });
+
       if (!filtered.length) {
         listEl.innerHTML = '<div style="color:var(--muted); padding:8px;">No prompts found.</div>';
         return;
       }
-      listEl.innerHTML = '';
-      for (const f of filtered.sort((a,b)=>a.name.localeCompare(b.name))) {
-        const slug = slugify(f.name);
-        const a = document.createElement('a');
-        a.className = 'item';
-        a.href = `#p=${encodeURIComponent(slug)}`;
-        a.onclick = (ev) => { ev.preventDefault(); selectFile(f, true); };
 
-        const left = document.createElement('div');
-        left.style.display = 'flex';
-        left.style.flexDirection = 'column';
-        left.style.gap = '2px';
-        const t = document.createElement('div');
-        t.className = 'item-title';
-        t.textContent = prettyTitle(f.name);
-        const m = document.createElement('div');
-        m.className = 'item-meta';
-        m.textContent = f.name;
-        left.appendChild(t); left.appendChild(m);
-        a.appendChild(left);
-        listEl.appendChild(a);
+      const forcedExpanded = new Set();
+      if (searchActive) {
+        for (const file of filtered) {
+          for (const ancestor of ancestorPaths(file.path)) {
+            forcedExpanded.add(ancestor);
+          }
+        }
       }
+
+      listEl.innerHTML = '';
+      const rootList = document.createElement('ul');
+      listEl.appendChild(rootList);
+      const tree = buildTree(filtered);
+      renderTree(tree, rootList, forcedExpanded);
+      updateActiveItem();
+    }
+
+    function updateActiveItem() {
+      const anchors = listEl.querySelectorAll('.item');
+      anchors.forEach((a) => {
+        if (a.dataset.slug === currentSlug) {
+          a.classList.add('active');
+        } else {
+          a.classList.remove('active');
+        }
+      });
     }
 
     async function selectBySlug(slug) {
-      const f = files.find(x => slugify(x.name) === slug);
+      const f = files.find(x => slugify(x.path) === slug);
       if (f) selectFile(f, false);
     }
 
@@ -283,15 +493,23 @@
       metaEl.style.display = 'block';
       actionsEl.style.display = 'flex';
       titleEl.textContent = prettyTitle(f.name);
-      metaEl.textContent = `File: prompts/${f.name}`;
-      rawBtn.href = rawURL(`prompts/${f.name}`);
-      ghBtn.href  = `https://github.com/${currentOwner}/${currentRepo}/blob/${currentBranch}/prompts/${f.name}`;
-      const slug = slugify(f.name);
+      metaEl.textContent = `File: ${f.path}`;
+      rawBtn.href = rawURL(f.path);
+      ghBtn.href  = `https://github.com/${currentOwner}/${currentRepo}/blob/${currentBranch}/${f.path}`;
+      const slug = slugify(f.path);
       if (pushHash) history.pushState(null, '', `#p=${encodeURIComponent(slug)}`);
+      currentSlug = slug;
+
+      const expanded = ensureAncestorsExpanded(f.path);
+      if (expanded) {
+        renderList(files);
+      } else {
+        updateActiveItem();
+      }
 
       let raw = cacheRaw.get(slug);
       if (!raw) {
-        const res = await fetch(rawURL(`prompts/${f.name}`) + `?ts=${Date.now()}`, { cache: 'no-store' });
+        const res = await fetch(rawURL(f.path) + `?ts=${Date.now()}`, { cache: 'no-store' });
         raw = await res.text();
         cacheRaw.set(slug, raw);
       }
@@ -442,6 +660,10 @@
         loadList();
         loadBranches();
       }
+    });
+
+    searchEl.addEventListener('input', () => {
+      renderList(files);
     });
 
     // Kick off
