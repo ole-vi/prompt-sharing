@@ -93,6 +93,7 @@
       <div id="actions" style="display:none">
         <button class="btn" id="copyBtn" title="Copy the entire prompt">📋 Copy prompt</button>
         <button class="btn" id="shareBtn" title="Copy a link to this prompt">🔗 Copy link</button>
+        <a class="btn" id="editBtn" target="_blank" rel="noopener" title="Edit the file on GitHub">✏️ Edit on GitHub</a>
         <a class="btn" id="ghBtn" target="_blank" rel="noopener" title="Open the file on GitHub">🗂️ View on GitHub</a>
         <a class="btn" id="rawBtn" target="_blank" rel="noopener" title="Open raw markdown">📄 Open raw</a>
       </div>
@@ -148,6 +149,7 @@
     const copyBtn  = document.getElementById('copyBtn');
     const rawBtn   = document.getElementById('rawBtn');
     const ghBtn    = document.getElementById('ghBtn');
+    const editBtn  = document.getElementById('editBtn');
     const shareBtn = document.getElementById('shareBtn');
     const searchEl = document.getElementById('search');
     const repoPill = document.getElementById('repoPill');
@@ -488,6 +490,12 @@
     }
 
     async function selectFile(f, pushHash) {
+      if (!f) {
+        editBtn.style.display = 'none';
+        editBtn.removeAttribute('href');
+        return;
+      }
+
       emptyEl.style.display = 'none';
       titleEl.style.display = 'block';
       metaEl.style.display = 'block';
@@ -496,6 +504,8 @@
       metaEl.textContent = `File: ${f.path}`;
       rawBtn.href = rawURL(f.path);
       ghBtn.href  = `https://github.com/${currentOwner}/${currentRepo}/blob/${currentBranch}/${f.path}`;
+      editBtn.style.display = '';
+      editBtn.href = `https://github.com/${currentOwner}/${currentRepo}/edit/${currentBranch}/${f.path}`;
       const slug = slugify(f.path);
       if (pushHash) history.pushState(null, '', `#p=${encodeURIComponent(slug)}`);
       currentSlug = slug;
