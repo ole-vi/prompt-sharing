@@ -1,4 +1,3 @@
-# myplanet: daily - big plan performance quick wins
 an analysis suggested
 
 Refactor Roadmap (High → Low Priority)
