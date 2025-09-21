@@ -1,4 +1,3 @@
-# myplanet: daily - dead code view layer
 Conduct a repository-wide dead-code audit.
 Focus tightly on the view/UI layer (Activities, Fragments, Compose screens, adapters, XML bindings).
 Show stepwise validation (minimum five steps) for each suspect.
