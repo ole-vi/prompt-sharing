@@ -1,4 +1,3 @@
-# myplanet: daily - big plan list diffutil hygiene sweep
 an analysis suggested
 
 Refactor Roadmap (High → Low Priority)
