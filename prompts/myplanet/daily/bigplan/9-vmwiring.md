@@ -1,4 +1,3 @@
-# myplanet: daily - big plan viewmodel wiring
 an analysis suggested
 
 Refactor Roadmap (High → Low Priority)
