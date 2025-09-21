@@ -1,4 +1,3 @@
-# myplanet: daily - big plan easy wins
 an analysis suggested
 
 Refactor Roadmap (High → Low Priority)
