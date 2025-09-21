@@ -1,4 +1,3 @@
-# myplanet: daily - big plan coroutine hygiene
 an analysis suggested
 
 Refactor Roadmap (High → Low Priority)
