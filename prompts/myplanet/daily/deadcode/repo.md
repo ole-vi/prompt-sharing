@@ -1,4 +1,3 @@
-# myplanet: daily - dead code repository directory
 Conduct a repository-wide dead-code audit.
 specially look at the repository data layer  
 Show stepwise validation (minimum five steps) for each suspect.
