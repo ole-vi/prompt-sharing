@@ -94,6 +94,7 @@
         <button class="btn" id="copyBtn" title="Copy the entire prompt">📋 Copy prompt</button>
         <button class="btn" id="shareBtn" title="Copy a link to this prompt">🔗 Copy link</button>
         <a class="btn" id="ghBtn" target="_blank" rel="noopener" title="Open the file on GitHub">🗂️ View on GitHub</a>
+        <a class="btn" id="permalinkBtn" target="_blank" rel="noopener" title="Open the exact revision" style="display:none">🔒 Permalink</a>
         <a class="btn" id="rawBtn" target="_blank" rel="noopener" title="Open raw markdown">📄 Open raw</a>
       </div>
       <article id="content"></article>
@@ -148,6 +149,7 @@
     const copyBtn  = document.getElementById('copyBtn');
     const rawBtn   = document.getElementById('rawBtn');
     const ghBtn    = document.getElementById('ghBtn');
+    const permalinkBtn = document.getElementById('permalinkBtn');
     const shareBtn = document.getElementById('shareBtn');
     const searchEl = document.getElementById('search');
     const repoPill = document.getElementById('repoPill');
@@ -496,6 +498,15 @@
       metaEl.textContent = `File: ${f.path}`;
       rawBtn.href = rawURL(f.path);
       ghBtn.href  = `https://github.com/${currentOwner}/${currentRepo}/blob/${currentBranch}/${f.path}`;
+      if (f.sha) {
+        permalinkBtn.href = `https://github.com/${currentOwner}/${currentRepo}/blob/${f.sha}/${f.path}`;
+        permalinkBtn.style.display = '';
+        permalinkBtn.removeAttribute('aria-disabled');
+      } else {
+        permalinkBtn.removeAttribute('href');
+        permalinkBtn.style.display = 'none';
+        permalinkBtn.setAttribute('aria-disabled', 'true');
+      }
       const slug = slugify(f.path);
       if (pushHash) history.pushState(null, '', `#p=${encodeURIComponent(slug)}`);
       currentSlug = slug;
