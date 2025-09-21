@@ -1,4 +1,3 @@
-# myplanet: daily - big plan repository directory
 an analysis suggested
 
 Refactor Roadmap (High → Low Priority)
