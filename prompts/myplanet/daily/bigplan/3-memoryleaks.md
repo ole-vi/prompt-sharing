@@ -1,4 +1,3 @@
-# myplanet: daily - big plan memory leaks
 an analysis suggested
 
 Refactor Roadmap (High → Low Priority)
