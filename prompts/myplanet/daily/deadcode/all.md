@@ -1,4 +1,3 @@
-# myplanet: daily - dead code repository wide
 Conduct a repository-wide dead-code audit.
 Show stepwise validation (minimum five steps) for each suspect.
 tell us about the level of logic for confirming or not
