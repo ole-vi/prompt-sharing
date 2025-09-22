@@ -1,5 +1,3 @@
-# Kotlin Code Refactoring Tasks
-
 Refactor the Kotlin codebase and create 10 task stubs with the following goals:
 
 - **Remove duplication**
