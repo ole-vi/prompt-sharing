@@ -1,0 +1,1 @@
+https://gist.githubusercontent.com/jessewashburn/dce02f35d94f0e1e74a27a6617d18dee/raw/9410894b3c7dd0bc347913419c9da9990a933977/myplanet-codex-gemini-cli
