@@ -26,12 +26,12 @@
     #list { max-height: 70vh; overflow: auto; padding-right: 4px; }
     #list ul { list-style: none; margin: 0; padding-left: 16px; }
     #list > ul { padding-left: 0; }
-    .tree-dir { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 10px; cursor: pointer; color: var(--text); }
+    .tree-dir { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 10px; cursor: pointer; color: var(--text); }
     .tree-dir:hover { background: #141936; }
     .tree-dir button { appearance: none; border: none; background: none; color: var(--muted); cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; width: 18px; }
     .tree-dir button:focus { outline: 1px solid var(--accent); border-radius: 4px; }
     .tree-dir .folder-name { font-size: 13px; font-weight: 600; }
-    .item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid transparent; background: #12162a; cursor: pointer; }
+    .item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 10px; border: 1px solid transparent; background: #12162a; cursor: pointer; }
     .item:hover { border-color: var(--border); background: #141936; }
     .item-title { font-size: 14px; font-weight: 600; }
     .item-meta { color: var(--muted); font-size: 12px; }
@@ -427,11 +427,7 @@
           const t = document.createElement('div');
           t.className = 'item-title';
           t.textContent = prettyTitle(file.name);
-          const m = document.createElement('div');
-          m.className = 'item-meta';
-          m.textContent = file.path.replace(/^prompts\//, '');
           left.appendChild(t);
-          left.appendChild(m);
           a.appendChild(left);
           li.appendChild(a);
           container.appendChild(li);
