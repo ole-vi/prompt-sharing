@@ -1,4 +1,4 @@
-an analysis suggested
+# Daily Big Plan Prompt
 
 Refactor Roadmap (High → Low Priority)
 1. Finish Cleaning the Data Layer
