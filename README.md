@@ -45,6 +45,22 @@ prompt-sharing/
 
 4. After a minute or two, the live site will auto-refresh to include your new prompt.
 
+### Using a Gist pointer
+
+Instead of storing the full prompt in this repo, you can point a prompt file at a GitHub Gist. To do this, create a markdown file whose entire body is the raw Gist URL:
+
+```markdown
+https://gist.githubusercontent.com/your-username/abc123456789/raw/my-shared-prompt.md
+```
+
+When the site loads this file it will fetch the referenced Gist content, cache it, and render that content in place of the URL.
+
+**Limitations**
+
+* The URL must be a publicly readable `gist.githubusercontent.com` raw link. Private gists or GitHub pages that require auth are not supported.
+* Only a single URL is supported in the file body; any extra text will be treated as a normal prompt rather than a pointer.
+* Updates to the Gist will appear the next time the site fetches that URL. If you change the pointer to a different Gist, update the URL in the prompt file.
+
 ## Linking to prompts
 
 Every prompt has its own URL:
