@@ -134,7 +134,7 @@
 
     // ---------- Runtime state ----------
     let files = [];           // [{name, path, download_url, sha}, ...]
-    let cacheRaw = new Map(); // slug -> raw markdown text
+    let cacheRaw = new Map(); // slug -> { text, rawUrl, error? }
     let currentSlug = null;   // currently selected slug
     let expandedState = new Set();
     let expandedStateKey = null;
@@ -494,7 +494,8 @@
       actionsEl.style.display = 'flex';
       titleEl.textContent = prettyTitle(f.name);
       metaEl.textContent = `File: ${f.path}`;
-      rawBtn.href = rawURL(f.path);
+      const repoRawUrl = rawURL(f.path);
+      rawBtn.href = repoRawUrl;
       ghBtn.href  = `https://github.com/${currentOwner}/${currentRepo}/blob/${currentBranch}/${f.path}`;
       const slug = slugify(f.path);
       if (pushHash) history.pushState(null, '', `#p=${encodeURIComponent(slug)}`);
@@ -507,15 +508,53 @@
         updateActiveItem();
       }
 
-      let raw = cacheRaw.get(slug);
-      if (!raw) {
-        const res = await fetch(rawURL(f.path) + `?ts=${Date.now()}`, { cache: 'no-store' });
-        raw = await res.text();
-        cacheRaw.set(slug, raw);
+      let cached = cacheRaw.get(slug);
+      if (!cached) {
+        const res = await fetch(repoRawUrl + `?ts=${Date.now()}`, { cache: 'no-store' });
+        const repoText = await res.text();
+        const trimmed = repoText.trim();
+        const lines = trimmed ? trimmed.split(/\r?\n/) : [];
+        let finalText = repoText;
+        let finalRawUrl = repoRawUrl;
+        let gistError = null;
+
+        if (lines.length === 1 && lines[0]) {
+          try {
+            const pointerUrl = new URL(lines[0]);
+            const host = pointerUrl.host;
+            const isGistHost = host === 'gist.githubusercontent.com';
+            const isGistGithubRaw = host === 'gist.github.com' && pointerUrl.pathname.split('/').includes('raw');
+            if (isGistHost || isGistGithubRaw) {
+              const pointerHref = pointerUrl.toString();
+              try {
+                const gistRes = await fetch(pointerHref, { cache: 'no-store' });
+                if (!gistRes.ok) {
+                  const txt = await gistRes.text().catch(() => '');
+                  throw new Error(`Gist ${gistRes.status} ${gistRes.statusText} ${txt.slice(0, 120)}`);
+                }
+                finalText = await gistRes.text();
+                finalRawUrl = pointerHref;
+              } catch (err) {
+                const detail = err && err.message ? ` (${err.message})` : '';
+                gistError = `Could not load gist content from ${pointerHref}. Showing repository version instead.${detail}`;
+                console.error(err);
+              }
+            }
+          } catch (err) {
+            // Not a valid URL pointer; fall back to repository content
+          }
+        }
+
+        cached = { text: finalText, rawUrl: finalRawUrl };
+        if (gistError) cached.error = gistError;
+        cacheRaw.set(slug, cached);
       }
+
+      rawBtn.href = cached.rawUrl;
+
       copyBtn.onclick = async () => {
         try {
-          await navigator.clipboard.writeText(raw);
+          await navigator.clipboard.writeText(cached.text);
           copyBtn.textContent = 'Copied';
           setTimeout(() => copyBtn.textContent = '📋 Copy prompt', 1000);
         } catch {
@@ -533,12 +572,24 @@
         }
       };
 
-      const firstLine = raw.split(/\r?\n/)[0];
+      const firstLine = cached.text.split(/\r?\n/)[0];
       if (/^#\s+/.test(firstLine)) {
         titleEl.textContent = firstLine.replace(/^#\s+/, '');
       }
 
-      contentEl.innerHTML = marked.parse(raw, { breaks: true });
+      contentEl.innerHTML = '';
+      if (cached.error) {
+        const warn = document.createElement('div');
+        warn.textContent = cached.error;
+        warn.style.background = '#2b1b1b';
+        warn.style.border = '1px solid #5a2a2a';
+        warn.style.borderRadius = '10px';
+        warn.style.padding = '10px 12px';
+        warn.style.marginBottom = '12px';
+        warn.style.color = '#f7d7d7';
+        contentEl.appendChild(warn);
+      }
+      contentEl.insertAdjacentHTML('beforeend', marked.parse(cached.text, { breaks: true }));
       enhanceCodeBlocks();
     }
 
