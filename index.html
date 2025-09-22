@@ -135,7 +135,7 @@
 
     // ---------- Runtime state ----------
     let files = [];           // [{name, path, download_url, sha}, ...]
-    let cacheRaw = new Map(); // slug -> raw markdown text
+    let cacheRaw = new Map(); // slug -> raw markdown text (or object for gist pointers)
     let currentSlug = null;   // currently selected slug
     let expandedState = new Set();
     let expandedStateKey = null;
@@ -158,6 +158,25 @@
     // ---------- Helpers ----------
     const rawURL = (path) =>
       `https://raw.githubusercontent.com/${currentOwner}/${currentRepo}/${currentBranch}/${path}`;
+
+    const GIST_POINTER_REGEX = /^https:\/\/gist\.githubusercontent\.com\/\S+\/raw\/\S+$/i;
+
+    async function fetchGistContent(gistUrl) {
+      const cacheKey = `gist:${gistUrl}`;
+      if (cacheRaw.has(cacheKey)) {
+        return cacheRaw.get(cacheKey);
+      }
+      const url = gistUrl.includes('?')
+        ? `${gistUrl}&ts=${Date.now()}`
+        : `${gistUrl}?ts=${Date.now()}`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) {
+        throw new Error(`Gist fetch failed: ${res.status} ${res.statusText}`);
+      }
+      const text = await res.text();
+      cacheRaw.set(cacheKey, text);
+      return text;
+    }
 
     function slugify(filePath) {
       const base = filePath.replace(/\.md$/i, '').toLowerCase().replace(/\s+/g, '-');
@@ -513,11 +532,44 @@
         updateActiveItem();
       }
 
-      let raw = cacheRaw.get(slug);
-      if (!raw) {
+      let cached = cacheRaw.get(slug);
+      let raw;
+      if (cached) {
+        if (typeof cached === 'string') {
+          raw = cached;
+        } else {
+          const { gistUrl } = cached;
+          if (gistUrl) {
+            try {
+              const gistBody = await fetchGistContent(gistUrl);
+              raw = gistBody;
+              cached.body = gistBody;
+            } catch (err) {
+              console.error(err);
+              raw = cached.body || gistUrl;
+            }
+          } else {
+            raw = cached.body;
+          }
+        }
+      } else {
         const res = await fetch(rawURL(f.path) + `?ts=${Date.now()}`, { cache: 'no-store' });
-        raw = await res.text();
-        cacheRaw.set(slug, raw);
+        let text = await res.text();
+        const trimmed = text.trim();
+        if (GIST_POINTER_REGEX.test(trimmed)) {
+          try {
+            const gistBody = await fetchGistContent(trimmed);
+            raw = gistBody;
+            cacheRaw.set(slug, { body: gistBody, gistUrl: trimmed });
+          } catch (err) {
+            console.error(err);
+            raw = text;
+            cacheRaw.set(slug, { body: text, gistUrl: trimmed });
+          }
+        } else {
+          raw = text;
+          cacheRaw.set(slug, raw);
+        }
       }
       copyBtn.onclick = async () => {
         try {
