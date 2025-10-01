@@ -106,13 +106,10 @@
   </footer>
 
   <script>
-    // ---------- DEFAULT CONFIG ----------
     const OWNER  = "ole-vi";
     const REPO   = "prompt-sharing";
     const BRANCH = "main";
     const PRETTY_TITLES = true;
-
-    // ---------- DYNAMIC OVERRIDES FROM URL ----------
     function parseParams() {
       const out = {};
       const sources = [
@@ -133,10 +130,9 @@
     let currentRepo   = params.repo   || REPO;
     let currentBranch = params.branch || BRANCH;
 
-    // ---------- Runtime state ----------
-    let files = [];           // [{name, path, download_url, sha}, ...]
-    let cacheRaw = new Map(); // slug -> raw markdown text (or object for gist pointers)
-    let currentSlug = null;   // currently selected slug
+    let files = [];
+    let cacheRaw = new Map();
+    let currentSlug = null;
     let expandedState = new Set();
     let expandedStateKey = null;
 
@@ -155,7 +151,6 @@
     const repoPill = document.getElementById('repoPill');
     const branchSelect = document.getElementById('branchSelect');
 
-    // ---------- Helpers ----------
     const rawURL = (path) =>
       `https://raw.githubusercontent.com/${currentOwner}/${currentRepo}/${currentBranch}/${path}`;
 
@@ -261,7 +256,6 @@
       return addEmoji(base.replace(/[-_]/g, " "));
     }
 
-    // ---------- Robust GitHub fetch + fallbacks ----------
     async function fetchJSON(url) {
       const res = await fetch(url, {
         cache: 'no-store',
@@ -311,14 +305,12 @@
       }));
     }
 
-    // ---------- Load + render list (with session cache) ----------
     async function refreshList(cacheKey) {
       let data;
       try {
         data = await listPromptsViaContents();
       } catch (e) {
         if (e.status === 403 || e.status === 404) {
-          // Rate limited or directory missing → fallback to Trees API
           data = await listPromptsViaTrees();
         } else {
           throw e;
@@ -334,20 +326,16 @@
       const cacheKey = `prompts:${currentOwner}/${currentRepo}@${currentBranch}`;
 
       try {
-        // Use session cache if present
         const cached = sessionStorage.getItem(cacheKey);
         if (cached) {
           files = JSON.parse(cached);
           renderList(files);
-          // Background refresh (non-blocking)
           refreshList(cacheKey).catch(() => {});
-          // Deep link handling
           const match = location.hash.match(/[#&?]p=([^&]+)/) || location.hash.match(/^#([^&]+)$/);
           if (match) selectBySlug(decodeURIComponent(match[1]));
           return;
         }
 
-        // First load (no cache)
         await refreshList(cacheKey);
         const match = location.hash.match(/[#&?]p=([^&]+)/) || location.hash.match(/^#([^&]+)$/);
         if (match) selectBySlug(decodeURIComponent(match[1]));
@@ -577,13 +565,11 @@
         if (typeof cached === 'string') {
           raw = cached;
         } else {
-          // Handle object cache (contains gist info)
           if (cached.gistUrl) {
             isGistContent = true;
             gistUrl = cached.gistUrl;
             console.log('Cache contains gist URL, refetching...');
             try {
-              // Use the resolved raw URL if available, otherwise resolve again
               const finalRawUrl = cached.rawGistUrl || await resolveGistRawUrl(cached.gistUrl);
               console.log('Using raw URL:', finalRawUrl);
               const gistBody = await fetchGistContent(finalRawUrl);
@@ -604,7 +590,6 @@
         let text = await res.text();
         const trimmed = text.trim();
         
-        // Check for any type of gist URL
         if (GIST_POINTER_REGEX.test(trimmed) || GIST_URL_REGEX.test(trimmed)) {
           isGistContent = true;
           gistUrl = trimmed;
@@ -628,14 +613,12 @@
         }
       }
 
-      // Set buttons based on content type
       if (isGistContent && gistUrl) {
         editBtn.textContent = '✏️ Edit Link';
         editBtn.title = 'Edit the gist link';
         ghBtn.textContent = '🗂️ View on Gist';
         ghBtn.title = 'Open the gist on GitHub';
         ghBtn.href = gistUrl;
-        // For gists, create a data URL with the raw content
         const blob = new Blob([raw], { type: 'text/plain' });
         const dataUrl = URL.createObjectURL(blob);
         rawBtn.href = dataUrl;
@@ -678,12 +661,9 @@
         titleEl.textContent = firstLine.replace(/^#\s+/, '');
       }
 
-      // Check if this content came from a gist for rendering
       if (isGistContent) {
-        // For gist content, if it doesn't look like markdown, wrap it in a code block
         const looksLikeMarkdown = /^#|^\*|^-|^\d+\.|```/.test(raw.trim());
         if (!looksLikeMarkdown) {
-          // Wrap in a code block for better display
           const wrappedContent = '```\n' + raw + '\n```';
           contentEl.innerHTML = marked.parse(wrappedContent, { breaks: true });
         } else {
@@ -723,7 +703,6 @@
       });
     }
 
-    // --- Branch dropdown: fetch & populate ---
     async function loadBranches() {
       branchSelect.disabled = true;
       branchSelect.innerHTML = `<option>Loading branches…</option>`;
@@ -761,7 +740,6 @@
       }
     }
 
-    // Handle dropdown changes
     document.addEventListener('change', (e) => {
       if (e.target !== branchSelect) return;
       currentBranch = branchSelect.value;
@@ -779,7 +757,6 @@
       loadList();
     });
 
-    // Respond to hash/query changes (owner/repo/branch via URL)
     window.addEventListener('hashchange', () => {
       const p = parseParams();
       const prev = { owner: currentOwner, repo: currentRepo, branch: currentBranch };
@@ -820,7 +797,6 @@
       renderList(files);
     });
 
-    // Kick off
     loadList();
     loadBranches();
   </script>
