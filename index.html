@@ -156,6 +156,7 @@
 
     const GIST_POINTER_REGEX = /^https:\/\/gist\.githubusercontent\.com\/\S+\/raw\/\S+$/i;
     const GIST_URL_REGEX = /^https:\/\/gist\.github\.com\/[\w-]+\/[a-f0-9]+\/?(?:#file-[\w.-]+)?(?:\?file=[\w.-]+)?$/i;
+    const CODEX_URL_REGEX = /^https:\/\/chatgpt\.com\/s\/[a-f0-9_]+$/i;
 
     async function resolveGistRawUrl(gistUrl) {
       // If it's already a raw URL, use it directly
@@ -558,7 +559,9 @@
       let cached = cacheRaw.get(slug);
       let raw;
       let isGistContent = false;
+      let isCodexContent = false;
       let gistUrl = null;
+      let codexUrl = null;
 
       if (cached) {
         console.log('Using cached content:', typeof cached, cached);
@@ -581,6 +584,11 @@
               console.error('Failed to refetch gist:', err);
               raw = cached.body || `Error loading gist: ${err.message}`;
             }
+          } else if (cached.codexUrl) {
+            isCodexContent = true;
+            codexUrl = cached.codexUrl;
+            console.log('Cache contains codex URL, using cached content...');
+            raw = cached.body;
           } else {
             raw = cached.body || cached;
           }
@@ -606,8 +614,14 @@
             raw = text;
             cacheRaw.set(slug, { body: text, gistUrl: trimmed, error: err.message });
           }
+        } else if (CODEX_URL_REGEX.test(trimmed)) {
+          isCodexContent = true;
+          codexUrl = trimmed;
+          console.log('Detected codex URL:', trimmed);
+          raw = trimmed;
+          cacheRaw.set(slug, { body: raw, codexUrl: trimmed });
         } else {
-          console.log('Not a gist URL, using original text');
+          console.log('Not a gist or codex URL, using original text');
           raw = text;
           cacheRaw.set(slug, raw);
         }
@@ -624,6 +638,19 @@
         rawBtn.href = dataUrl;
         rawBtn.removeAttribute('download');
         rawBtn.title = 'Open gist content in new tab';
+      } else if (isCodexContent && codexUrl) {
+        editBtn.textContent = '✏️ Edit Link';
+        editBtn.title = 'Edit the codex link';
+        ghBtn.textContent = '💬 View on ChatGPT';
+        ghBtn.title = 'Open the conversation on ChatGPT';
+        ghBtn.href = codexUrl;
+        ghBtn.target = '_blank';
+        const blob = new Blob([codexUrl], { type: 'text/plain' });
+        const dataUrl = URL.createObjectURL(blob);
+        rawBtn.href = dataUrl;
+        rawBtn.target = '_blank';
+        rawBtn.removeAttribute('download');
+        rawBtn.title = 'Open raw link in new tab';
       } else {
         editBtn.textContent = '✏️ Edit on GitHub';
         editBtn.title = 'Edit the file on GitHub';
@@ -635,12 +662,34 @@
       }
       editBtn.style.display = '';
       editBtn.href = `https://github.com/${currentOwner}/${currentRepo}/edit/${currentBranch}/${f.path}`;
+      
+      if (isCodexContent) {
+        copyBtn.style.display = 'none';
+        shareBtn.textContent = '🔗 Copy link';
+      } else {
+        copyBtn.style.display = '';
+        copyBtn.textContent = '📋 Copy prompt';
+        shareBtn.textContent = '🔗 Copy link';
+      }
+      
       copyBtn.onclick = async () => {
         try {
-          console.log('Copying content:', raw.substring(0, 100) + (raw.length > 100 ? '...' : ''));
-          await navigator.clipboard.writeText(raw);
+          let contentToCopy;
+          let buttonText;
+          
+          if (isCodexContent && codexUrl) {
+            contentToCopy = codexUrl;
+            buttonText = '📋 Copy link';
+            console.log('Copying codex URL:', codexUrl);
+          } else {
+            contentToCopy = raw;
+            buttonText = '📋 Copy prompt';
+            console.log('Copying content:', raw.substring(0, 100) + (raw.length > 100 ? '...' : ''));
+          }
+          
+          await navigator.clipboard.writeText(contentToCopy);
           copyBtn.textContent = 'Copied';
-          setTimeout(() => copyBtn.textContent = '📋 Copy prompt', 1000);
+          setTimeout(() => copyBtn.textContent = buttonText, 1000);
         } catch {
           alert('Clipboard blocked. Select and copy manually.');
         }
@@ -652,7 +701,8 @@
         } catch {
           alert('Could not copy link.');
         } finally {
-          setTimeout(() => (shareBtn.textContent = '🔗 Copy link'), 1000);
+          const originalText = '🔗 Copy link';
+          setTimeout(() => (shareBtn.textContent = originalText), 1000);
         }
       };
 
