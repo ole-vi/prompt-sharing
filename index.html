@@ -31,6 +31,8 @@
     .tree-dir button { appearance: none; border: none; background: none; color: var(--muted); cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; width: 18px; }
     .tree-dir button:focus { outline: 1px solid var(--accent); border-radius: 4px; }
     .tree-dir .folder-name { font-size: 13px; font-weight: 600; }
+    .tree-dir .github-folder-icon { margin-left: 4px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; font-size: 12px; }
+    .tree-dir .github-folder-icon:hover { opacity: 1; }
     .item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 10px; border: 1px solid transparent; background: #12162a; cursor: pointer; }
     .item:hover { border-color: var(--border); background: #141936; }
     .item-title { font-size: 14px; font-weight: 600; }
@@ -430,8 +432,20 @@
           const label = document.createElement('span');
           label.className = 'folder-name';
           label.textContent = entry.name;
+          
+          const ghIcon = document.createElement('span');
+          ghIcon.className = 'github-folder-icon';
+          ghIcon.textContent = '🗂️';
+          ghIcon.title = 'Open directory on GitHub';
+          ghIcon.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const ghUrl = `https://github.com/${currentOwner}/${currentRepo}/tree/${currentBranch}/${entry.path}`;
+            window.open(ghUrl, '_blank', 'noopener,noreferrer');
+          });
+          
           header.appendChild(toggle);
           header.appendChild(label);
+          header.appendChild(ghIcon);
           li.appendChild(header);
 
           const childList = document.createElement('ul');
