@@ -180,6 +180,10 @@
       `https://raw.githubusercontent.com/${currentOwner}/${currentRepo}/${currentBranch}/${path}`;
 
     const GIST_POINTER_REGEX = /^https:\/\/gist\.githubusercontent\.com\/\S+\/raw\/\S+$/i;
+    const CHATGPT_SHARE_REGEXES = [
+      /^https:\/\/chatgpt\.com\/s\/([^/?#]+)/i,
+      /^https:\/\/chat\.openai\.com\/share\/([^/?#]+)/i
+    ];
 
     async function fetchGistContent(gistUrl) {
       const cacheKey = `gist:${gistUrl}`;
@@ -196,6 +200,172 @@
       const text = await res.text();
       cacheRaw.set(cacheKey, text);
       return text;
+    }
+
+    function extractChatGPTShareId(url) {
+      for (const regex of CHATGPT_SHARE_REGEXES) {
+        const match = url.match(regex);
+        if (match && match[1]) return match[1];
+      }
+      return null;
+    }
+
+    function extractTextFromShareContent(value, seen = new Set()) {
+      if (value == null) return '';
+      const type = typeof value;
+      if (type === 'string') return value;
+      if (type === 'number' || type === 'boolean') return String(value);
+      if (Array.isArray(value)) {
+        return value
+          .map((item) => extractTextFromShareContent(item, seen))
+          .filter(Boolean)
+          .join('\n\n');
+      }
+      if (type === 'object') {
+        if (seen.has(value)) return '';
+        const nextSeen = new Set(seen);
+        nextSeen.add(value);
+
+        if (Array.isArray(value.parts)) {
+          return value.parts
+            .map((part) => extractTextFromShareContent(part, nextSeen))
+            .filter(Boolean)
+            .join('\n\n');
+        }
+
+        const prioritizedKeys = [
+          'text',
+          'title',
+          'description',
+          'details',
+          'code',
+          'value',
+          'content',
+          'result',
+          'data'
+        ];
+
+        const collected = [];
+        for (const key of prioritizedKeys) {
+          if (key in value) {
+            const extracted = extractTextFromShareContent(value[key], nextSeen);
+            if (extracted) collected.push(extracted);
+          }
+        }
+
+        if (!collected.length) {
+          for (const v of Object.values(value)) {
+            const extracted = extractTextFromShareContent(v, nextSeen);
+            if (extracted) collected.push(extracted);
+          }
+        }
+
+        return collected.join('\n\n');
+      }
+      return '';
+    }
+
+    function normalizeChatGPTMessages(data) {
+      const nodes = [];
+
+      const pushMessage = (raw) => {
+        if (!raw) return;
+        const message = raw.message || raw;
+        if (!message) return;
+        const author = message.author || raw.author || {};
+        const role = (author.role || message.role || raw.role || '').toLowerCase();
+        const content = message.content || raw.content;
+        const text = extractTextFromShareContent(content).trim();
+        if (!text) return;
+        const createTime = message.create_time || raw.create_time || 0;
+        const id = message.id || raw.id || '';
+        nodes.push({ id, role, text, createTime });
+      };
+
+      const conversation = data && data.conversation;
+      if (conversation) {
+        if (Array.isArray(conversation.messages)) {
+          conversation.messages.forEach(pushMessage);
+        }
+        if (conversation.mapping && typeof conversation.mapping === 'object') {
+          Object.values(conversation.mapping).forEach(pushMessage);
+        }
+      }
+
+      if (Array.isArray(data && data.messages)) {
+        data.messages.forEach(pushMessage);
+      }
+
+      const unique = [];
+      const seen = new Set();
+      for (const node of nodes) {
+        const key = node.id || `${node.role}:${node.createTime}:${node.text}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        unique.push(node);
+      }
+
+      unique.sort((a, b) => {
+        const aTime = typeof a.createTime === 'number' ? a.createTime : 0;
+        const bTime = typeof b.createTime === 'number' ? b.createTime : 0;
+        if (aTime !== bTime) return aTime - bTime;
+        return (a.id || '').localeCompare(b.id || '');
+      });
+
+      return unique;
+    }
+
+    function formatChatGPTShareAsMarkdown(data, shareUrl) {
+      const messages = normalizeChatGPTMessages(data);
+      const lines = [];
+      const title = (data && (data.public_title || data.title)) || (data && data.conversation && data.conversation.title);
+      if (title && typeof title === 'string') {
+        lines.push(`# ${title.trim()}`);
+        lines.push('');
+      }
+      lines.push(`> Source: ${shareUrl}`);
+      lines.push('');
+
+      if (messages.length === 0) {
+        lines.push('_No messages were found in this shared conversation._');
+        return lines.join('\n').trim();
+      }
+
+      const roleLabels = {
+        system: 'System',
+        user: 'User',
+        assistant: 'Assistant',
+        tool: 'Tool'
+      };
+
+      for (const msg of messages) {
+        const label = roleLabels[msg.role] || (msg.role ? msg.role.charAt(0).toUpperCase() + msg.role.slice(1) : 'Message');
+        lines.push(`### ${label}`);
+        lines.push('');
+        lines.push(msg.text.trim());
+        lines.push('');
+      }
+
+      return lines.join('\n').trim();
+    }
+
+    async function fetchChatGPTShareContent(shareUrl) {
+      const shareId = extractChatGPTShareId(shareUrl);
+      if (!shareId) {
+        throw new Error('Invalid ChatGPT share URL.');
+      }
+
+      const endpoint = `https://chatgpt.com/backend-api/share-links/${shareId}`;
+      const res = await fetch(endpoint, {
+        cache: 'no-store',
+        headers: { Accept: 'application/json' }
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        throw new Error(`ChatGPT share fetch failed: ${res.status} ${res.statusText} ${txt.slice(0, 140)}`);
+      }
+      const data = await res.json();
+      return formatChatGPTShareAsMarkdown(data, shareUrl);
     }
 
     function slugify(filePath) {
@@ -554,7 +724,7 @@
         if (typeof cached === 'string') {
           raw = cached;
         } else {
-          const { gistUrl } = cached;
+          const { gistUrl, chatgptUrl } = cached;
           if (gistUrl) {
             try {
               const gistBody = await fetchGistContent(gistUrl);
@@ -563,6 +733,15 @@
             } catch (err) {
               console.error(err);
               raw = cached.body || gistUrl;
+            }
+          } else if (chatgptUrl) {
+            try {
+              const shareBody = await fetchChatGPTShareContent(chatgptUrl);
+              raw = shareBody;
+              cached.body = shareBody;
+            } catch (err) {
+              console.error(err);
+              raw = cached.body || chatgptUrl;
             }
           } else {
             raw = cached.body;
@@ -583,8 +762,21 @@
             cacheRaw.set(slug, { body: text, gistUrl: trimmed });
           }
         } else {
-          raw = text;
-          cacheRaw.set(slug, raw);
+          const shareId = extractChatGPTShareId(trimmed);
+          if (shareId) {
+            try {
+              const shareBody = await fetchChatGPTShareContent(trimmed);
+              raw = shareBody;
+              cacheRaw.set(slug, { body: shareBody, chatgptUrl: trimmed });
+            } catch (err) {
+              console.error(err);
+              raw = text;
+              cacheRaw.set(slug, { body: text, chatgptUrl: trimmed });
+            }
+          } else {
+            raw = text;
+            cacheRaw.set(slug, raw);
+          }
         }
       }
       copyBtn.onclick = async () => {
