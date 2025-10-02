@@ -3,3 +3,4 @@
 - tell us about the level of logic for confirming or not.
 - assign a “cleanup vs implement” rating (1–100).
 - include removal and revival task stubs with precise path hints.
+- also tell us about how many lines will get removed
