@@ -31,6 +31,10 @@
     .tree-dir button { appearance: none; border: none; background: none; color: var(--muted); cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; width: 18px; }
     .tree-dir button:focus { outline: 1px solid var(--accent); border-radius: 4px; }
     .tree-dir .folder-name { font-size: 13px; font-weight: 600; }
+    .tree-dir .github-folder-icon { margin-left: 4px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; font-size: 12px; }
+    .tree-dir .github-folder-icon:hover { opacity: 1; }
+    .tree-dir .add-file-icon { margin-left: 4px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; font-size: 12px; color: #4ade80; }
+    .tree-dir .add-file-icon:hover { opacity: 1; }
     .item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 10px; border: 1px solid transparent; background: #12162a; cursor: pointer; }
     .item:hover { border-color: var(--border); background: #141936; }
     .item-title { font-size: 14px; font-weight: 600; }
@@ -180,6 +184,46 @@
       `https://raw.githubusercontent.com/${currentOwner}/${currentRepo}/${currentBranch}/${path}`;
 
     const GIST_POINTER_REGEX = /^https:\/\/gist\.githubusercontent\.com\/\S+\/raw\/\S+$/i;
+    const GIST_URL_REGEX = /^https:\/\/gist\.github\.com\/[\w-]+\/[a-f0-9]+\/?(?:#file-[\w.-]+)?(?:\?file=[\w.-]+)?$/i;
+    const CODEX_URL_REGEX = /^https:\/\/chatgpt\.com\/s\/[a-f0-9_]+$/i;
+
+    async function resolveGistRawUrl(gistUrl) {
+      // If it's already a raw URL, use it directly
+      if (GIST_POINTER_REGEX.test(gistUrl)) {
+        return gistUrl;
+      }
+
+      // Parse regular gist URLs
+      const match = gistUrl.match(/^https:\/\/gist\.github\.com\/([\w-]+)\/([a-f0-9]+)\/?(?:#file-([\w.-]+))?(?:\?file=([\w.-]+))?$/i);
+      if (!match) {
+        throw new Error('Invalid gist URL format');
+      }
+
+      const [, user, gistId, fragmentFile, queryFile] = match;
+      const targetFile = fragmentFile || queryFile;
+
+      if (targetFile) {
+        // Specific file requested
+        return `https://gist.githubusercontent.com/${user}/${gistId}/raw/${targetFile}`;
+      } else {
+        // No specific file - fetch gist metadata to find the best file
+        const apiUrl = `https://api.github.com/gists/${gistId}`;
+        const res = await fetch(apiUrl);
+        if (!res.ok) {
+          throw new Error(`Failed to fetch gist metadata: ${res.status}`);
+        }
+        const gistData = await res.json();
+        const files = Object.keys(gistData.files);
+        
+        let bestFile = files.find(f => f.endsWith('.md')) || files[0];
+        
+        if (!bestFile) {
+          throw new Error('No files found in gist');
+        }
+        
+        return `https://gist.githubusercontent.com/${user}/${gistId}/raw/${bestFile}`;
+      }
+    }
 
     async function fetchGistContent(gistUrl) {
       const cacheKey = `gist:${gistUrl}`;
@@ -316,15 +360,12 @@
         if (cached) {
           files = JSON.parse(cached);
           renderList(files);
-          // Background refresh (non-blocking)
           refreshList(cacheKey).catch(() => {});
-          // Deep link handling
           const match = location.hash.match(/[#&?]p=([^&]+)/) || location.hash.match(/^#([^&]+)$/);
           if (match) selectBySlug(decodeURIComponent(match[1]));
           return;
         }
 
-        // First load (no cache)
         await refreshList(cacheKey);
         const match = location.hash.match(/[#&?]p=([^&]+)/) || location.hash.match(/^#([^&]+)$/);
         if (match) selectBySlug(decodeURIComponent(match[1]));
@@ -430,8 +471,32 @@
           const label = document.createElement('span');
           label.className = 'folder-name';
           label.textContent = entry.name;
+          
+          const ghIcon = document.createElement('span');
+          ghIcon.className = 'github-folder-icon';
+          ghIcon.textContent = '🗂️';
+          ghIcon.title = 'Open directory on GitHub';
+          ghIcon.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const ghUrl = `https://github.com/${currentOwner}/${currentRepo}/tree/${currentBranch}/${entry.path}`;
+            window.open(ghUrl, '_blank', 'noopener,noreferrer');
+          });
+          
+          const addIcon = document.createElement('span');
+          addIcon.className = 'add-file-icon';
+          addIcon.textContent = '+';
+          addIcon.title = 'Create new file in this directory';
+          addIcon.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const newFilePath = entry.path ? `${entry.path}/new-prompt.md` : 'new-prompt.md';
+            const ghUrl = `https://github.com/${currentOwner}/${currentRepo}/new/${currentBranch}?filename=${newFilePath}`;
+            window.open(ghUrl, '_blank', 'noopener,noreferrer');
+          });
+          
           header.appendChild(toggle);
           header.appendChild(label);
+          header.appendChild(ghIcon);
+          header.appendChild(addIcon);
           li.appendChild(header);
 
           const childList = document.createElement('ul');
@@ -533,10 +598,6 @@
       actionsEl.style.display = 'flex';
       titleEl.textContent = prettyTitle(f.name);
       metaEl.textContent = `File: ${f.path}`;
-      rawBtn.href = rawURL(f.path);
-      ghBtn.href  = `https://github.com/${currentOwner}/${currentRepo}/blob/${currentBranch}/${f.path}`;
-      editBtn.style.display = '';
-      editBtn.href = `https://github.com/${currentOwner}/${currentRepo}/edit/${currentBranch}/${f.path}`;
       const slug = slugify(f.path);
       if (pushHash) history.pushState(null, '', `#p=${encodeURIComponent(slug)}`);
       currentSlug = slug;
@@ -550,48 +611,138 @@
 
       let cached = cacheRaw.get(slug);
       let raw;
+      let isGistContent = false;
+      let isCodexContent = false;
+      let gistUrl = null;
+      let codexUrl = null;
+
       if (cached) {
+        console.log('Using cached content:', typeof cached, cached);
         if (typeof cached === 'string') {
           raw = cached;
         } else {
-          const { gistUrl } = cached;
-          if (gistUrl) {
+          if (cached.gistUrl) {
+            isGistContent = true;
+            gistUrl = cached.gistUrl;
+            console.log('Cache contains gist URL, refetching...');
             try {
-              const gistBody = await fetchGistContent(gistUrl);
+              const finalRawUrl = cached.rawGistUrl || await resolveGistRawUrl(cached.gistUrl);
+              console.log('Using raw URL:', finalRawUrl);
+              const gistBody = await fetchGistContent(finalRawUrl);
+              console.log('Refetched gist content length:', gistBody.length);
               raw = gistBody;
               cached.body = gistBody;
+              cached.rawGistUrl = finalRawUrl;
             } catch (err) {
-              console.error(err);
-              raw = cached.body || gistUrl;
+              console.error('Failed to refetch gist:', err);
+              raw = cached.body || `Error loading gist: ${err.message}`;
             }
-          } else {
+          } else if (cached.codexUrl) {
+            isCodexContent = true;
+            codexUrl = cached.codexUrl;
+            console.log('Cache contains codex URL, using cached content...');
             raw = cached.body;
+          } else {
+            raw = cached.body || cached;
           }
         }
       } else {
         const res = await fetch(rawURL(f.path) + `?ts=${Date.now()}`, { cache: 'no-store' });
         let text = await res.text();
         const trimmed = text.trim();
-        if (GIST_POINTER_REGEX.test(trimmed)) {
+        
+        if (GIST_POINTER_REGEX.test(trimmed) || GIST_URL_REGEX.test(trimmed)) {
+          isGistContent = true;
+          gistUrl = trimmed;
+          console.log('Detected gist URL:', trimmed);
           try {
-            const gistBody = await fetchGistContent(trimmed);
+            const rawGistUrl = await resolveGistRawUrl(trimmed);
+            console.log('Resolved to raw URL:', rawGistUrl);
+            const gistBody = await fetchGistContent(rawGistUrl);
+            console.log('Fetched gist content length:', gistBody.length);
             raw = gistBody;
-            cacheRaw.set(slug, { body: gistBody, gistUrl: trimmed });
+            cacheRaw.set(slug, { body: gistBody, gistUrl: trimmed, rawGistUrl });
           } catch (err) {
-            console.error(err);
+            console.error('Failed to fetch gist:', err);
             raw = text;
-            cacheRaw.set(slug, { body: text, gistUrl: trimmed });
+            cacheRaw.set(slug, { body: text, gistUrl: trimmed, error: err.message });
           }
+        } else if (CODEX_URL_REGEX.test(trimmed)) {
+          isCodexContent = true;
+          codexUrl = trimmed;
+          console.log('Detected codex URL:', trimmed);
+          raw = trimmed;
+          cacheRaw.set(slug, { body: raw, codexUrl: trimmed });
         } else {
+          console.log('Not a gist or codex URL, using original text');
           raw = text;
           cacheRaw.set(slug, raw);
         }
       }
+
+      if (isGistContent && gistUrl) {
+        editBtn.textContent = '✏️ Edit Link';
+        editBtn.title = 'Edit the gist link';
+        ghBtn.textContent = '🗂️ View on Gist';
+        ghBtn.title = 'Open the gist on GitHub';
+        ghBtn.href = gistUrl;
+        const blob = new Blob([raw], { type: 'text/plain' });
+        const dataUrl = URL.createObjectURL(blob);
+        rawBtn.href = dataUrl;
+        rawBtn.removeAttribute('download');
+        rawBtn.title = 'Open gist content in new tab';
+      } else if (isCodexContent && codexUrl) {
+        editBtn.textContent = '✏️ Edit Link';
+        editBtn.title = 'Edit the codex link';
+        ghBtn.textContent = '💬 View on Codex';
+        ghBtn.title = 'Open the conversation on Codex';
+        ghBtn.href = codexUrl;
+        ghBtn.target = '_blank';
+        const blob = new Blob([codexUrl], { type: 'text/plain' });
+        const dataUrl = URL.createObjectURL(blob);
+        rawBtn.href = dataUrl;
+        rawBtn.target = '_blank';
+        rawBtn.removeAttribute('download');
+        rawBtn.title = 'Open raw link in new tab';
+      } else {
+        editBtn.textContent = '✏️ Edit on GitHub';
+        editBtn.title = 'Edit the file on GitHub';
+        ghBtn.textContent = '🗂️ View on GitHub';
+        ghBtn.title = 'Open the file on GitHub';
+        ghBtn.href = `https://github.com/${currentOwner}/${currentRepo}/blob/${currentBranch}/${f.path}`;
+        rawBtn.href = rawURL(f.path);
+        rawBtn.title = 'Open raw markdown';
+      }
+      editBtn.style.display = '';
+      editBtn.href = `https://github.com/${currentOwner}/${currentRepo}/edit/${currentBranch}/${f.path}`;
+      
+      if (isCodexContent) {
+        copyBtn.style.display = 'none';
+        shareBtn.textContent = '🔗 Copy link';
+      } else {
+        copyBtn.style.display = '';
+        copyBtn.textContent = '📋 Copy prompt';
+        shareBtn.textContent = '🔗 Copy link';
+      }
+      
       copyBtn.onclick = async () => {
         try {
-          await navigator.clipboard.writeText(raw);
+          let contentToCopy;
+          let buttonText;
+          
+          if (isCodexContent && codexUrl) {
+            contentToCopy = codexUrl;
+            buttonText = '📋 Copy link';
+            console.log('Copying codex URL:', codexUrl);
+          } else {
+            contentToCopy = raw;
+            buttonText = '📋 Copy prompt';
+            console.log('Copying content:', raw.substring(0, 100) + (raw.length > 100 ? '...' : ''));
+          }
+          
+          await navigator.clipboard.writeText(contentToCopy);
           copyBtn.textContent = 'Copied';
-          setTimeout(() => copyBtn.textContent = '📋 Copy prompt', 1000);
+          setTimeout(() => copyBtn.textContent = buttonText, 1000);
         } catch {
           alert('Clipboard blocked. Select and copy manually.');
         }
@@ -603,7 +754,8 @@
         } catch {
           alert('Could not copy link.');
         } finally {
-          setTimeout(() => (shareBtn.textContent = '🔗 Copy link'), 1000);
+          const originalText = '🔗 Copy link';
+          setTimeout(() => (shareBtn.textContent = originalText), 1000);
         }
       };
 
@@ -612,7 +764,18 @@
         titleEl.textContent = firstLine.replace(/^#\s+/, '');
       }
 
-      contentEl.innerHTML = marked.parse(raw, { breaks: true });
+      if (isGistContent) {
+        const looksLikeMarkdown = /^#|^\*|^-|^\d+\.|```/.test(raw.trim());
+        if (!looksLikeMarkdown) {
+          const wrappedContent = '```\n' + raw + '\n```';
+          contentEl.innerHTML = marked.parse(wrappedContent, { breaks: true });
+        } else {
+          contentEl.innerHTML = marked.parse(raw, { breaks: true });
+        }
+      } else {
+        contentEl.innerHTML = marked.parse(raw, { breaks: true });
+      }
+      
       enhanceCodeBlocks();
     }
 
