@@ -56,6 +56,28 @@
     a:hover { text-decoration: underline; }
     footer { max-width: 1100px; margin: 20px auto 40px; color: var(--muted); font-size: 13px; padding: 0 16px; }
     .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 999px; border: 1px solid var(--border); background: #11152a; font-size: 12px; color: var(--muted); }
+    
+    /* Branch dropdown styling */
+    #branchSelect optgroup {
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    #branchSelect option {
+      color: var(--text);
+      font-weight: normal;
+    }
+    #branchSelect option[value="__toggle_features__"],
+    #branchSelect option[value="__toggle_users__"] {
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--card);
+      cursor: pointer;
+    }
+    #branchSelect option[value="__toggle_features__"]:hover,
+    #branchSelect option[value="__toggle_users__"]:hover {
+      background: rgba(90, 209, 255, 0.1);
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -64,7 +86,9 @@
     <div class="wrap" style="padding:0;grid-template-columns:1fr;gap:0">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
         <div>
-          <div style="font-size:18px; font-weight:800; letter-spacing:0.2px;">OLE Prompt Library</div>
+          <a href="https://ole-vi.github.io/prompt-sharing/" style="text-decoration:none; color:inherit;">
+            <div style="font-size:18px; font-weight:800; letter-spacing:0.2px;">OLE Prompt Library</div>
+          </a>
           <div style="color:var(--muted); font-size:13px;">Single file, no build. Drop .md files in <code>/prompts</code> and they show up here.</div>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
@@ -114,6 +138,7 @@
     const REPO   = "prompt-sharing";
     const BRANCH = "main";
     const PRETTY_TITLES = true;
+
     function parseParams() {
       const out = {};
       const sources = [
@@ -781,6 +806,51 @@
       });
     }
 
+    function classifyBranch(branchName) {
+      if (branchName === 'main' || branchName === 'master') {
+        return 'main';
+      }
+      
+      const userBranches = ['dogi', 'jesse', 'saksham'];
+      if (userBranches.includes(branchName)) {
+        return 'user';
+      }
+      
+      if (
+        branchName.startsWith('codex/') ||
+        /^\d+-/.test(branchName) ||
+        branchName.includes('feature/') ||
+        branchName.includes('fix/') ||
+        branchName.includes('bugfix/') ||
+        branchName.includes('hotfix/') ||
+        (branchName.includes('-') && branchName.length > 8)
+      ) {
+        return 'feature';
+      }
+      
+      if (/^[a-zA-Z][a-zA-Z0-9]*$/.test(branchName) && branchName.length < 15) {
+        return 'user';
+      }
+      
+      return 'feature';
+    }
+
+    function toggleFeatureBranches() {
+      const showFeatures = localStorage.getItem('showFeatureBranches') === 'true';
+      const newShowFeatures = !showFeatures;
+      localStorage.setItem('showFeatureBranches', newShowFeatures.toString());
+      
+      loadBranches();
+    }
+
+    function toggleUserBranches() {
+      const showUsers = localStorage.getItem('showUserBranches') !== 'false';
+      const newShowUsers = !showUsers;
+      localStorage.setItem('showUserBranches', newShowUsers.toString());
+      
+      loadBranches();
+    }
+
     async function loadBranches() {
       branchSelect.disabled = true;
       branchSelect.innerHTML = `<option>Loading branches…</option>`;
@@ -795,19 +865,90 @@
         }
         const branches = await res.json();
 
-        branchSelect.innerHTML = '';
+        const mainBranches = [];
+        const userBranches = [];
+        const featureBranches = [];
+        
         for (const b of branches) {
+          const category = classifyBranch(b.name);
+          switch (category) {
+            case 'main':
+              mainBranches.push(b);
+              break;
+            case 'user':
+              userBranches.push(b);
+              break;
+            case 'feature':
+              featureBranches.push(b);
+              break;
+          }
+        }
+
+        userBranches.sort((a, b) => a.name.localeCompare(b.name));
+        featureBranches.sort((a, b) => a.name.localeCompare(b.name));
+
+        branchSelect.innerHTML = '';
+        
+        for (const b of mainBranches) {
           const opt = document.createElement('option');
           opt.value = b.name;
           opt.textContent = b.name;
           branchSelect.appendChild(opt);
         }
+        
+        if (userBranches.length > 0) {
+          const showUsers = localStorage.getItem('showUserBranches') !== 'false'; // default: true
+          const userGroup = document.createElement('optgroup');
+          
+          const userHeaderOpt = document.createElement('option');
+          userHeaderOpt.value = '__toggle_users__';
+          userHeaderOpt.textContent = `${showUsers ? '▼' : '▶'} User Branches (${userBranches.length})`;
+          userHeaderOpt.style.fontWeight = '600';
+          userHeaderOpt.style.color = 'var(--accent)';
+          userHeaderOpt.style.backgroundColor = 'var(--card)';
+          userGroup.appendChild(userHeaderOpt);
+          
+          if (showUsers) {
+            for (const b of userBranches) {
+              const opt = document.createElement('option');
+              opt.value = b.name;
+              opt.textContent = `  ${b.name}`;
+              userGroup.appendChild(opt);
+            }
+          }
+          branchSelect.appendChild(userGroup);
+        }
+        
+        if (featureBranches.length > 0) {
+          const showFeatures = localStorage.getItem('showFeatureBranches') === 'true';
+          const featureGroup = document.createElement('optgroup');
+          
+          const headerOpt = document.createElement('option');
+          headerOpt.value = '__toggle_features__';
+          headerOpt.textContent = `${showFeatures ? '▼' : '▶'} Feature Branches (${featureBranches.length})`;
+          headerOpt.style.fontWeight = '600';
+          headerOpt.style.color = 'var(--accent)';
+          headerOpt.style.backgroundColor = 'var(--card)';
+          featureGroup.appendChild(headerOpt);
+          
+          if (showFeatures) {
+            for (const b of featureBranches) {
+              const opt = document.createElement('option');
+              opt.value = b.name;
+              opt.textContent = `  ${b.name}`;
+              featureGroup.appendChild(opt);
+            }
+          }
+          branchSelect.appendChild(featureGroup);
+        }
+
         if (![...branchSelect.options].some(o => o.value === currentBranch)) {
           const opt = document.createElement('option');
           opt.value = currentBranch;
           opt.textContent = `${currentBranch} (unlisted)`;
           branchSelect.appendChild(opt);
         }
+        
         branchSelect.value = currentBranch;
         branchSelect.title = '';
       } catch (e) {
@@ -820,9 +961,19 @@
 
     document.addEventListener('change', (e) => {
       if (e.target !== branchSelect) return;
+      
+      if (branchSelect.value === '__toggle_features__') {
+        toggleFeatureBranches();
+        return;
+      }
+      
+      if (branchSelect.value === '__toggle_users__') {
+        toggleUserBranches();
+        return;
+      }
+      
       currentBranch = branchSelect.value;
 
-      // Preserve existing query params and slug
       const qs = new URLSearchParams(location.search);
       qs.set('branch', currentBranch);
       const slugMatch = location.hash.match(/[#&?]p=([^&]+)/) || location.hash.match(/^#([^&]+)$/);
