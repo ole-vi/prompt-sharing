@@ -865,7 +865,6 @@
           viaProxy(`https://api.github.com/repos/${currentOwner}/${currentRepo}/branches?per_page=100&ts=${Date.now()}`),
           { cache: 'no-store', headers: { 'Accept': 'application/vnd.github+json' } }
         );
-
         if (!res.ok) {
           const txt = await res.text().catch(() => '');
           throw new Error(`GitHub API ${res.status} ${res.statusText} ${txt.slice(0,120)}`);
