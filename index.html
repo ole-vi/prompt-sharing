@@ -30,11 +30,12 @@
     .tree-dir:hover { background: #141936; }
     .tree-dir button { appearance: none; border: none; background: none; color: var(--muted); cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; width: 18px; }
     .tree-dir button:focus { outline: 1px solid var(--accent); border-radius: 4px; }
-    .tree-dir .folder-name { font-size: 13px; font-weight: 600; }
-    .tree-dir .github-folder-icon { margin-left: 4px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; font-size: 12px; }
-    .tree-dir .github-folder-icon:hover { opacity: 1; }
-    .tree-dir .add-file-icon { margin-left: 4px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; font-size: 12px; color: #4ade80; }
-    .tree-dir .add-file-icon:hover { opacity: 1; }
+    .tree-dir .folder-name { font-size: 13px; font-weight: 600; flex: 1; }
+    .tree-dir .folder-icons { display: flex; gap: 4px; margin-left: auto; }
+    .tree-dir .folder-icons span { cursor: pointer; opacity: 0.6; transition: all 0.2s; padding: 4px; border-radius: 4px; min-width: 28px; min-height: 28px; display: flex; align-items: center; justify-content: center; }
+    .tree-dir .folder-icons span:hover { opacity: 1; background: rgba(255, 255, 255, 0.05); }
+    .tree-dir .add-file-icon { color: #4ade80; font-weight: bold; }
+    .tree-dir .add-file-icon:hover { background: rgba(74, 222, 128, 0.1) !important; }
     .item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 10px; border: 1px solid transparent; background: #12162a; cursor: pointer; }
     .item:hover { border-color: var(--border); background: #141936; }
     .item-title { font-size: 14px; font-weight: 600; }
@@ -472,6 +473,9 @@
           label.className = 'folder-name';
           label.textContent = entry.name;
           
+          const iconsContainer = document.createElement('div');
+          iconsContainer.className = 'folder-icons';
+          
           const ghIcon = document.createElement('span');
           ghIcon.className = 'github-folder-icon';
           ghIcon.textContent = '🗂️';
@@ -493,10 +497,12 @@
             window.open(ghUrl, '_blank', 'noopener,noreferrer');
           });
           
+          iconsContainer.appendChild(ghIcon);
+          iconsContainer.appendChild(addIcon);
+          
           header.appendChild(toggle);
           header.appendChild(label);
-          header.appendChild(ghIcon);
-          header.appendChild(addIcon);
+          header.appendChild(iconsContainer);
           li.appendChild(header);
 
           const childList = document.createElement('ul');
