@@ -6,7 +6,6 @@ REPO CONSTRAINTS
 - DI: Hilt modules should be tested with lightweight fakes, not full Hilt setup.
 - Keep each test tiny, deterministic, and self-contained (no sleeps).
 - Use the project’s existing JUnit4.13.2 and kotlinx-coroutines-test.
-- No new runtime dependencies. Minimal imports; no unused code.
 
 
 TEST REQUIREMENTS
@@ -19,9 +18,11 @@ TEST REQUIREMENTS
 4) If it’s a RecyclerView adapter using DiffUtil/ListAdapter:
    - Use AsyncListDiffer or a ListUpdateCallback spy to assert insert/update/remove dispatches from submitList.
 5) If it’s a repository or data helper:
+   - Mock or spy the repository and any dependencies.(MockK)
+   - Use coEvery and coVerify for suspend functions.
    - Provide a minimal in-memory fake or stub for RealmRepository or Realm objects used.
    - Assert return values and side effects.
-6) If it’s a DI module:
+7) If it’s a DI module:
    - Verify that the binding resolves the correct implementation using a minimal manual graph or simple fetch via provider functions; no full Hilt runtime.
 
 OUTPUT FORMAT
