@@ -1,0 +1,57 @@
+name: Scrape Codex Links
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "prompts/**/*.md"
+    branches:
+      - main
+
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Find new Codex links
+        id: find
+        run: |
+          links=$(grep -Eroh 'https://chatgpt.com/s/[A-Za-z0-9_]+' prompts || true)
+          if [ -z "$links" ]; then
+            echo "No Codex links found."
+            exit 0
+          fi
+          echo "links<<EOF" >> $GITHUB_OUTPUT
+          echo "$links" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Scrape and append prompt text
+        if: steps.find.outputs.links != ''
+        run: |
+          while read -r link; do
+            echo "Processing $link..."
+            file=$(grep -rl "$link" prompts)
+            json=$(curl -s "http://35.222.246.223:8080/scrape?url=$link")
+            content=$(echo "$json" | jq -r '.prompt // .text // empty')
+            if [ -n "$content" ]; then
+              echo -e "\n\n---\n\n### Extracted Prompt\n$content" >> "$file"
+              echo "Updated $file"
+            else
+              echo "No prompt extracted for $link"
+            fi
+          done <<< "$(echo "${{ steps.find.outputs.links }}")"
+
+      - name: Commit and push results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add prompts
+          git commit -m "Auto-scraped Codex prompts" || echo "No new content to commit."
+          git push
