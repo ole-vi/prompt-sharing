@@ -37,15 +37,18 @@ jobs:
         run: |
           while read -r link; do
             echo "Processing $link..."
-            file=$(grep -rl "$link" prompts)
-            json=$(curl -s "http://35.222.246.223:8080/scrape?url=$link")
-            content=$(echo "$json" | jq -r '.prompt // .text // empty')
-            if [ -n "$content" ]; then
-              echo -e "\n\n---\n\n### Extracted Prompt\n$content" >> "$file"
-              echo "Updated $file"
-            else
-              echo "No prompt extracted for $link"
-            fi
+            # Find each file containing that link
+            grep -rl "$link" prompts | while read -r file; do
+              echo "  Updating $file..."
+              json=$(curl -s "http://35.222.246.223:8080/scrape?url=$link")
+              content=$(echo "$json" | jq -r '.prompt // .text // empty')
+              if [ -n "$content" ]; then
+                echo -e "\n\n---\n\n### Extracted Prompt\n$content" >> "$file"
+                echo "  ✅ Appended to $file"
+              else
+                echo "  ⚠️ No prompt extracted for $link"
+              fi
+            done
           done <<< "$(echo "${{ steps.find.outputs.links }}")"
 
       - name: Commit and push results
