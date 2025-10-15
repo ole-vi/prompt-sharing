@@ -1,11 +1,13 @@
 name: Scrape Codex Links
 
 on:
+  workflow_dispatch:
   push:
     paths:
-      - "prompts/**/*.md"   # Only run when .md files in prompts/ change
+      - "prompts/**/*.md"
     branches:
-      - 37-puppeteer-for-scraping-codex              # Replace branch name before merging
+      - 37-puppeteer-for-scraping-codex
+
 
 jobs:
   scrape:
