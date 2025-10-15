@@ -11,7 +11,7 @@ REPO CONSTRAINTS
 
 TEST REQUIREMENTS
 1) Create exactly ONE test file at TEST_FILE_PATH mirroring PACKAGE_UNDER_TEST (e.g., app/src/test/java/.../ClassNameTest.kt).
-2) Include 1–3 focused tests that cover the public API/observables of the class in this file.
+2) Include 1–3 focused tests that cover the public API/observables of the class in this file. if possible generate 2 happy scenario and 1 negative scenario.
 3) If it’s a ViewModel: 
    - Use runTest + StandardTestDispatcher.
    - Verify state emissions and that blocking work happens via withContext(Dispatchers.IO) indirectly (fake repo call recorded).
