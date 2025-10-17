@@ -23,12 +23,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install puppeteer@24.2.0 jq
+          sudo apt-get update
+          sudo apt-get install -y xvfb jq
+          npm install puppeteer@24.2.0
 
       - name: Find new Codex links
         id: find
         run: |
-          # Find all ChatGPT share links
           links=$(grep -Eroh 'https://chatgpt.com/s/[A-Za-z0-9_]+' prompts || true)
           if [ -z "$links" ]; then
             echo "No Codex links found."
@@ -46,30 +47,34 @@ jobs:
           const [,, url] = process.argv;
           (async () => {
             const browser = await puppeteer.launch({
-              headless: 'new',
-              args: ['--no-sandbox', '--disable-setuid-sandbox']
+              headless: false,
+              args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-gpu'
+              ]
             });
             const page = await browser.newPage();
-            await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+            await page.goto(url, { waitUntil: 'networkidle2', timeout: 120000 });
+            await page.waitForTimeout(5000); // give JS time to render
             const text = await page.evaluate(() => {
-              const main = document.querySelector('main') || document.body;
-              return main.innerText.trim();
+              const container = document.querySelector('main') || document.body;
+              return container.innerText.trim();
             });
-            console.log(text.slice(0, 2000));
+            console.log(text.slice(0, 3000));
             await browser.close();
           })();
           EOF
 
           while read -r link; do
             echo "Processing $link..."
-            file=$(grep -rl "$link" prompts)
-            # Skip if already contains "Extracted Prompt"
+            file=$(grep -rl "$link" prompts | head -n 1)
             if grep -q "Extracted Prompt" "$file"; then
               echo "Already scraped: $file"
               continue
             fi
 
-            content=$(node scrape.js "$link" || true)
+            content=$(xvfb-run -a node scrape.js "$link" || true)
             if [ -n "$content" ]; then
               echo -e "\n\n---\n\n### Extracted Prompt\n$content" >> "$file"
               echo "✅ Appended to $file"
