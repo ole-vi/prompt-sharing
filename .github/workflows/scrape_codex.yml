@@ -1,26 +1,27 @@
 name: Scrape Codex Links
 
 on:
-  workflow_dispatch:
   push:
-    paths:
-      - "prompts/**/*.md"
     branches:
       - main
-
+    paths:
+      - "prompts/**/*.md"
+  workflow_dispatch:
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
 
-      - name: Find new Codex links
+      - name: Find Codex links
         id: find
         run: |
           links=$(grep -Eroh 'https://chatgpt.com/s/[A-Za-z0-9_]+' prompts || true)
@@ -32,29 +33,35 @@ jobs:
           echo "$links" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Scrape and append prompt text
+      - name: Scrape and append extracted prompts
         if: steps.find.outputs.links != ''
         run: |
-          while read -r link; do
+          echo "${{ steps.find.outputs.links }}" | sort -u | while read -r link; do
+            [ -z "$link" ] && continue
             echo "Processing $link..."
-            # Find each file containing that link
             grep -rl "$link" prompts | while read -r file; do
-              echo "  Updating $file..."
+              echo "  Checking $file..."
+              if grep -q "### Extracted Prompt" "$file"; then
+                echo "  (Already scraped — skipping $file)"
+                continue
+              fi
+              echo "  Fetching from scraper..."
               json=$(curl -s "http://35.222.246.223:8080/scrape?url=$link")
               content=$(echo "$json" | jq -r '.prompt // .text // empty')
               if [ -n "$content" ]; then
                 echo -e "\n\n---\n\n### Extracted Prompt\n$content" >> "$file"
-                echo "  ✅ Appended to $file"
+                echo "  ✅ Appended extracted content to $file"
               else
-                echo "  ⚠️ No prompt extracted for $link"
+                echo "  ⚠️ No prompt text extracted for $link"
               fi
             done
-          done <<< "$(echo "${{ steps.find.outputs.links }}")"
+          done
 
       - name: Commit and push results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add prompts
-          git commit -m "Auto-scraped Codex prompts" || echo "No new content to commit."
+          git diff --cached --quiet && echo "No changes to commit." && exit 0
+          git commit -m "Auto-scraped Codex prompts"
           git push
