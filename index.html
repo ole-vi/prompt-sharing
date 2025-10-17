@@ -563,9 +563,41 @@
             // If this submenu wasn't open, open it
             if (!wasOpen) {
               const rect = addIcon.getBoundingClientRect();
-              submenu.style.left = rect.right + 'px';
-              submenu.style.top = rect.top + 'px';
+              
+              // Show submenu temporarily to measure its dimensions
               submenu.style.display = 'block';
+              submenu.style.visibility = 'hidden';
+              const submenuRect = submenu.getBoundingClientRect();
+              
+              // Calculate position - prefer right side, fall back to left if needed
+              let left = rect.right;
+              let top = rect.top;
+              
+              // Check if submenu would go off the right edge of viewport
+              if (left + submenuRect.width > window.innerWidth - 10) {
+                // Position to the left of the button instead
+                left = rect.left - submenuRect.width;
+              }
+              
+              // Check if submenu would go off the bottom of viewport
+              if (top + submenuRect.height > window.innerHeight - 10) {
+                // Position above the button instead
+                top = rect.bottom - submenuRect.height;
+              }
+              
+              // Ensure submenu doesn't go off the left edge
+              if (left < 10) {
+                left = 10;
+              }
+              
+              // Ensure submenu doesn't go off the top edge
+              if (top < 10) {
+                top = 10;
+              }
+              
+              submenu.style.left = left + 'px';
+              submenu.style.top = top + 'px';
+              submenu.style.visibility = 'visible';
               openSubmenus.add(submenu);
               header.classList.add('submenu-open');
               activeSubmenuHeaders.add(header);
