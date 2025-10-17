@@ -59,7 +59,6 @@
     footer { max-width: 1100px; margin: 20px auto 40px; color: var(--muted); font-size: 13px; padding: 0 16px; }
     .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 999px; border: 1px solid var(--border); background: #11152a; font-size: 12px; color: var(--muted); }
     
-    /* Branch dropdown styling */
     #branchSelect optgroup {
       font-weight: 600;
       color: var(--muted);
@@ -95,7 +94,6 @@
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
           <div class="pill" id="repoPill">Loading repo...</div>
-          <!-- Chevron + branch select -->
           <label style="display:flex; align-items:center; gap:4px;">
             <span title="Choose a branch">▼</span>
             <select id="branchSelect" class="btn" style="min-width:140px;">
@@ -166,8 +164,8 @@
     let currentSlug = null;
     let expandedState = new Set();
     let expandedStateKey = null;
-    let openSubmenus = new Set(); // Track open submenus
-    let activeSubmenuHeaders = new Set(); // Track headers with open submenus
+    let openSubmenus = new Set();
+    let activeSubmenuHeaders = new Set();
 
     const listEl   = document.getElementById('list');
     const contentEl= document.getElementById('content');
@@ -192,12 +190,10 @@
     const CODEX_URL_REGEX = /^https:\/\/chatgpt\.com\/s\/[a-f0-9_]+$/i;
 
     async function resolveGistRawUrl(gistUrl) {
-      // If it's already a raw URL, use it directly
       if (GIST_POINTER_REGEX.test(gistUrl)) {
         return gistUrl;
       }
 
-      // Parse regular gist URLs
       const match = gistUrl.match(/^https:\/\/gist\.github\.com\/([\w-]+)\/([a-f0-9]+)\/?(?:#file-([\w.-]+))?(?:\?file=([\w.-]+))?$/i);
       if (!match) {
         throw new Error('Invalid gist URL format');
@@ -207,10 +203,8 @@
       const targetFile = fragmentFile || queryFile;
 
       if (targetFile) {
-        // Specific file requested
         return `https://gist.githubusercontent.com/${user}/${gistId}/raw/${targetFile}`;
       } else {
-        // No specific file - fetch gist metadata to find the best file
         const apiUrl = `https://api.github.com/gists/${gistId}`;
         const res = await fetch(apiUrl);
         if (!res.ok) {
@@ -505,7 +499,6 @@
           addIcon.textContent = '+';
           addIcon.title = 'Create new file in this directory';
 
-          // --- Submenu container ---
           const submenu = document.createElement('div');
           submenu.style.position = 'absolute';
           submenu.style.background = 'var(--card)';
@@ -516,7 +509,6 @@
           submenu.style.display = 'none';
           submenu.style.zIndex = '10';
 
-          // Define menu items
           const makeMenuItem = (label, emoji, onClick) => {
             const item = document.createElement('div');
             item.textContent = `${emoji} ${label}`;
@@ -534,14 +526,12 @@
             return item;
           };
 
-          // Option 1: blank prompt
           submenu.appendChild(makeMenuItem("Prompt (blank)", "📝", () => {
             const newFilePath = entry.path ? `${entry.path}/new-prompt.md` : 'new-prompt.md';
             const ghUrl = `https://github.com/${currentOwner}/${currentRepo}/new/${currentBranch}?filename=${encodeURIComponent(newFilePath)}`;
             window.open(ghUrl, '_blank', 'noopener,noreferrer');
           }));
 
-          // Option 2: conversation template
           submenu.appendChild(makeMenuItem("Conversation (template)", "💬", () => {
             const template = `**Conversation Link (Codex, Jules, etc):** [https://chatgpt.com/s/...]\n\n### Prompt\n[paste your full prompt here]\n\n### Additional Info\n[context, notes, or follow-up thoughts]\n`;
             const encoded = encodeURIComponent(template);
@@ -552,45 +542,34 @@
 
           document.body.appendChild(submenu);
 
-          // Toggle menu visibility
           addIcon.addEventListener('click', (ev) => {
             ev.stopPropagation();
             
-            // Close all other submenus first
             const wasOpen = submenu.style.display === 'block';
             closeAllSubmenus();
             
-            // If this submenu wasn't open, open it
             if (!wasOpen) {
               const rect = addIcon.getBoundingClientRect();
               
-              // Show submenu temporarily to measure its dimensions
               submenu.style.display = 'block';
               submenu.style.visibility = 'hidden';
               const submenuRect = submenu.getBoundingClientRect();
               
-              // Calculate position - prefer right side, fall back to left if needed
               let left = rect.right;
               let top = rect.top;
               
-              // Check if submenu would go off the right edge of viewport
               if (left + submenuRect.width > window.innerWidth - 10) {
-                // Position to the left of the button instead
                 left = rect.left - submenuRect.width;
               }
               
-              // Check if submenu would go off the bottom of viewport
               if (top + submenuRect.height > window.innerHeight - 10) {
-                // Position above the button instead
                 top = rect.bottom - submenuRect.height;
               }
               
-              // Ensure submenu doesn't go off the left edge
               if (left < 10) {
                 left = 10;
               }
               
-              // Ensure submenu doesn't go off the top edge
               if (top < 10) {
                 top = 10;
               }
@@ -604,7 +583,6 @@
             }
           });
 
-          // Close menu on click outside
           document.addEventListener('click', () => closeAllSubmenus());
           
           iconsContainer.appendChild(ghIcon);
@@ -1013,7 +991,7 @@
         }
         
         if (userBranches.length > 0) {
-          const showUsers = localStorage.getItem('showUserBranches') !== 'false'; // default: true
+          const showUsers = localStorage.getItem('showUserBranches') !== 'false';
           const userGroup = document.createElement('optgroup');
           
           const userHeaderOpt = document.createElement('option');
