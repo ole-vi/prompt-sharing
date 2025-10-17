@@ -138,6 +138,12 @@
     const REPO   = "prompt-sharing";
     const BRANCH = "main";
     const PRETTY_TITLES = true;
+    const PROXY_BASE = 'https://sharing.dogi.workers.dev/gh';
+
+    function viaProxy(apiUrl) {
+      const u = new URL(apiUrl);
+      return `${PROXY_BASE}${u.pathname}${u.search}`;
+    }
 
     function parseParams() {
       const out = {};
@@ -208,7 +214,7 @@
       } else {
         // No specific file - fetch gist metadata to find the best file
         const apiUrl = `https://api.github.com/gists/${gistId}`;
-        const res = await fetch(apiUrl);
+        const res = await fetch(viaProxy(apiUrl));
         if (!res.ok) {
           throw new Error(`Failed to fetch gist metadata: ${res.status}`);
         }
@@ -287,7 +293,7 @@
     }
 
     async function fetchJSON(url) {
-      const res = await fetch(url, {
+      const res = await fetch(viaProxy(url), {
         cache: 'no-store',
         headers: { 'Accept': 'application/vnd.github+json' }
       });
@@ -856,7 +862,7 @@
       branchSelect.innerHTML = `<option>Loading branches…</option>`;
       try {
         const res = await fetch(
-          `https://api.github.com/repos/${currentOwner}/${currentRepo}/branches?per_page=100&ts=${Date.now()}`,
+          viaProxy(`https://api.github.com/repos/${currentOwner}/${currentRepo}/branches?per_page=100&ts=${Date.now()}`),
           { cache: 'no-store', headers: { 'Accept': 'application/vnd.github+json' } }
         );
         if (!res.ok) {
