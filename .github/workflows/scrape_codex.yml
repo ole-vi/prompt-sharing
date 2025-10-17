@@ -1,29 +1,34 @@
 name: Scrape Codex Links
 
 on:
+  workflow_dispatch:
   push:
-    branches:
-      - main
     paths:
       - "prompts/**/*.md"
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install jq
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-      - name: Find Codex links
+      - name: Install dependencies
+        run: |
+          npm install puppeteer@24.2.0 jq
+
+      - name: Find new Codex links
         id: find
         run: |
+          # Find all ChatGPT share links
           links=$(grep -Eroh 'https://chatgpt.com/s/[A-Za-z0-9_]+' prompts || true)
           if [ -z "$links" ]; then
             echo "No Codex links found."
@@ -33,35 +38,50 @@ jobs:
           echo "$links" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Scrape and append extracted prompts
+      - name: Scrape and append prompt text
         if: steps.find.outputs.links != ''
         run: |
-          echo "${{ steps.find.outputs.links }}" | sort -u | while read -r link; do
-            [ -z "$link" ] && continue
+          cat > scrape.js <<'EOF'
+          import puppeteer from 'puppeteer';
+          const [,, url] = process.argv;
+          (async () => {
+            const browser = await puppeteer.launch({
+              headless: 'new',
+              args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+            const page = await browser.newPage();
+            await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+            const text = await page.evaluate(() => {
+              const main = document.querySelector('main') || document.body;
+              return main.innerText.trim();
+            });
+            console.log(text.slice(0, 2000));
+            await browser.close();
+          })();
+          EOF
+
+          while read -r link; do
             echo "Processing $link..."
-            grep -rl "$link" prompts | while read -r file; do
-              echo "  Checking $file..."
-              if grep -q "### Extracted Prompt" "$file"; then
-                echo "  (Already scraped — skipping $file)"
-                continue
-              fi
-              echo "  Fetching from scraper..."
-              json=$(curl -s "http://35.222.246.223:8080/scrape?url=$link")
-              content=$(echo "$json" | jq -r '.prompt // .text // empty')
-              if [ -n "$content" ]; then
-                echo -e "\n\n---\n\n### Extracted Prompt\n$content" >> "$file"
-                echo "  ✅ Appended extracted content to $file"
-              else
-                echo "  ⚠️ No prompt text extracted for $link"
-              fi
-            done
-          done
+            file=$(grep -rl "$link" prompts)
+            # Skip if already contains "Extracted Prompt"
+            if grep -q "Extracted Prompt" "$file"; then
+              echo "Already scraped: $file"
+              continue
+            fi
+
+            content=$(node scrape.js "$link" || true)
+            if [ -n "$content" ]; then
+              echo -e "\n\n---\n\n### Extracted Prompt\n$content" >> "$file"
+              echo "✅ Appended to $file"
+            else
+              echo "⚠️ No prompt extracted for $link"
+            fi
+          done <<< "$(echo "${{ steps.find.outputs.links }}")"
 
       - name: Commit and push results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add prompts
-          git diff --cached --quiet && echo "No changes to commit." && exit 0
-          git commit -m "Auto-scraped Codex prompts"
+          git commit -m "Auto-scraped Codex prompts" || echo "No new content to commit."
           git push
