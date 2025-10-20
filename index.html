@@ -138,11 +138,10 @@
     const REPO   = "prompt-sharing";
     const BRANCH = "main";
     const PRETTY_TITLES = true;
-    const PROXY_BASE = 'https://sharing.dogi.workers.dev/gh';
+    //const PROXY_BASE = 'https://sharing.dogi.workers.dev/gh';
 
     function viaProxy(apiUrl) {
-      const u = new URL(apiUrl);
-      return `${PROXY_BASE}${u.pathname}${u.search}`;
+      return apiUrl; // no proxy, fetch directly from GitHub
     }
 
     function parseParams() {
