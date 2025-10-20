@@ -944,7 +944,7 @@
           
           // Try URL parameter approach for Open WebUI
           const encodedPrompt = encodeURIComponent(cleanPrompt);
-          const webUIUrl = `${WEBUI_URL}/?q=${encodedPrompt}`;
+          const webUIUrl = `${WEBUI_URL}?q=${encodedPrompt}`;
           
           const newWindow = window.open(webUIUrl, '_blank', 'noopener,noreferrer');
           
