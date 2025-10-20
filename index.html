@@ -79,6 +79,44 @@
     #branchSelect option[value="__toggle_users__"]:hover {
       background: rgba(90, 209, 255, 0.1);
     }
+    
+    /* Toast notification styles */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--card);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-size: 14px;
+      z-index: 1000;
+      max-width: 400px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transform: translateX(450px);
+      transition: transform 0.3s ease-in-out;
+    }
+    
+    .toast.show {
+      transform: translateX(0);
+    }
+    
+    .toast .toast-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 2px;
+    }
+    
+    .toast .toast-close:hover {
+      color: var(--text);
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -120,6 +158,7 @@
       <div id="meta" style="display:none"></div>
       <div id="actions" style="display:none">
         <button class="btn" id="copyBtn" title="Copy the entire prompt">📋 Copy prompt</button>
+        <button class="btn" id="tryBtn" title="Try this prompt in Open WebUI">🚀 Try it now</button>
         <button class="btn" id="shareBtn" title="Copy a link to this prompt">🔗 Copy link</button>
         <a class="btn" id="editBtn" target="_blank" rel="noopener" title="Edit the file on GitHub">✏️ Edit on GitHub</a>
         <a class="btn" id="ghBtn" target="_blank" rel="noopener" title="Open the file on GitHub">🗂️ View on GitHub</a>
@@ -138,10 +177,63 @@
     const REPO   = "prompt-sharing";
     const BRANCH = "main";
     const PRETTY_TITLES = true;
+    const WEBUI_URL = "http://34.72.116.79:3000";
     //const PROXY_BASE = 'https://sharing.dogi.workers.dev/gh';
 
     function viaProxy(apiUrl) {
       return apiUrl; // no proxy, fetch directly from GitHub
+    }
+
+    function showToast(message, duration = 5000) {
+      // Remove any existing toast
+      const existingToast = document.querySelector('.toast');
+      if (existingToast) {
+        existingToast.remove();
+      }
+      
+      // Create new toast
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `
+        <button class="toast-close" title="Close">&times;</button>
+        <div>${message}</div>
+      `;
+      
+      // Add to page
+      document.body.appendChild(toast);
+      
+      // Show with animation
+      setTimeout(() => toast.classList.add('show'), 10);
+      
+      // Auto-hide after duration
+      const hideToast = () => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      };
+      
+      // Close button handler
+      toast.querySelector('.toast-close').addEventListener('click', hideToast);
+      
+      // Auto-hide timer
+      setTimeout(hideToast, duration);
+    }
+
+    function cleanPromptForWebUI(rawText) {
+      return rawText
+        .replace(/^#\s+[^\n]*\n?/, '') // Remove the first heading if it exists (title)
+        .replace(/```[\s\S]*?```/g, (match) => {
+          // Preserve code blocks but remove markdown syntax
+          return match.replace(/```[\w]*\n?/g, '').replace(/```/g, '');
+        })
+        .replace(/`([^`]+)`/g, '$1') // Remove inline code backticks
+        .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove bold
+        .replace(/\*([^*]+)\*/g, '$1') // Remove italic
+        .replace(/#{1,6}\s+/g, '') // Remove remaining headers
+        .trim();
     }
 
     function parseParams() {
@@ -179,6 +271,7 @@
     const emptyEl  = document.getElementById('empty');
     const actionsEl= document.getElementById('actions');
     const copyBtn  = document.getElementById('copyBtn');
+    const tryBtn   = document.getElementById('tryBtn');
     const rawBtn   = document.getElementById('rawBtn');
     const ghBtn    = document.getElementById('ghBtn');
     const editBtn  = document.getElementById('editBtn');
@@ -716,19 +809,15 @@
       let codexUrl = null;
 
       if (cached) {
-        console.log('Using cached content:', typeof cached, cached);
         if (typeof cached === 'string') {
           raw = cached;
         } else {
           if (cached.gistUrl) {
             isGistContent = true;
             gistUrl = cached.gistUrl;
-            console.log('Cache contains gist URL, refetching...');
             try {
               const finalRawUrl = cached.rawGistUrl || await resolveGistRawUrl(cached.gistUrl);
-              console.log('Using raw URL:', finalRawUrl);
               const gistBody = await fetchGistContent(finalRawUrl);
-              console.log('Refetched gist content length:', gistBody.length);
               raw = gistBody;
               cached.body = gistBody;
               cached.rawGistUrl = finalRawUrl;
@@ -739,7 +828,6 @@
           } else if (cached.codexUrl) {
             isCodexContent = true;
             codexUrl = cached.codexUrl;
-            console.log('Cache contains codex URL, using cached content...');
             raw = cached.body;
           } else {
             raw = cached.body || cached;
@@ -753,12 +841,9 @@
         if (GIST_POINTER_REGEX.test(trimmed) || GIST_URL_REGEX.test(trimmed)) {
           isGistContent = true;
           gistUrl = trimmed;
-          console.log('Detected gist URL:', trimmed);
           try {
             const rawGistUrl = await resolveGistRawUrl(trimmed);
-            console.log('Resolved to raw URL:', rawGistUrl);
             const gistBody = await fetchGistContent(rawGistUrl);
-            console.log('Fetched gist content length:', gistBody.length);
             raw = gistBody;
             cacheRaw.set(slug, { body: gistBody, gistUrl: trimmed, rawGistUrl });
           } catch (err) {
@@ -769,11 +854,9 @@
         } else if (CODEX_URL_REGEX.test(trimmed)) {
           isCodexContent = true;
           codexUrl = trimmed;
-          console.log('Detected codex URL:', trimmed);
           raw = trimmed;
           cacheRaw.set(slug, { body: raw, codexUrl: trimmed });
         } else {
-          console.log('Not a gist or codex URL, using original text');
           raw = text;
           cacheRaw.set(slug, raw);
         }
@@ -817,27 +900,19 @@
       
       if (isCodexContent) {
         copyBtn.style.display = 'none';
+        tryBtn.style.display = 'none'; // Hide try button for conversation links
         shareBtn.textContent = '🔗 Copy link';
       } else {
         copyBtn.style.display = '';
+        tryBtn.style.display = ''; // Show try button for prompts
         copyBtn.textContent = '📋 Copy prompt';
         shareBtn.textContent = '🔗 Copy link';
       }
       
       copyBtn.onclick = async () => {
         try {
-          let contentToCopy;
-          let buttonText;
-          
-          if (isCodexContent && codexUrl) {
-            contentToCopy = codexUrl;
-            buttonText = '📋 Copy link';
-            console.log('Copying codex URL:', codexUrl);
-          } else {
-            contentToCopy = raw;
-            buttonText = '📋 Copy prompt';
-            console.log('Copying content:', raw.substring(0, 100) + (raw.length > 100 ? '...' : ''));
-          }
+          const contentToCopy = isCodexContent && codexUrl ? codexUrl : raw;
+          const buttonText = isCodexContent && codexUrl ? '📋 Copy link' : '📋 Copy prompt';
           
           await navigator.clipboard.writeText(contentToCopy);
           copyBtn.textContent = 'Copied';
@@ -846,6 +921,66 @@
           alert('Clipboard blocked. Select and copy manually.');
         }
       };
+
+      tryBtn.onclick = async () => {
+        try {
+          if (isCodexContent && codexUrl) {
+            alert('This is a conversation link, not a prompt. Use the copy button to get the URL.');
+            return;
+          }
+          
+          // Clean up the prompt text for WebUI compatibility
+          const cleanPrompt = cleanPromptForWebUI(raw);
+          
+          // Copy to clipboard (most reliable method)
+          try {
+            await navigator.clipboard.writeText(cleanPrompt);
+          } catch (e) {
+            // Clipboard copy failed, but we'll still proceed
+          }
+          
+          // Show immediate feedback
+          tryBtn.textContent = '🚀 Opening WebUI...';
+          
+          // Try URL parameter approach for Open WebUI
+          const encodedPrompt = encodeURIComponent(cleanPrompt);
+          const webUIUrl = `${WEBUI_URL}/?q=${encodedPrompt}`;
+          
+          const newWindow = window.open(webUIUrl, '_blank', 'noopener,noreferrer');
+          
+          if (!newWindow) {
+            alert('Popup blocked. Please allow popups and try again.');
+            tryBtn.textContent = '🚀 Try it now';
+            return;
+          }
+          
+          // Show enhanced toast with instructions
+          setTimeout(() => {
+            const promptPreview = cleanPrompt.length > 100 
+              ? cleanPrompt.substring(0, 100) + '...' 
+              : cleanPrompt;
+            
+            showToast(`
+              <div style="margin-bottom: 8px;"><strong>🚀 WebUI opened!</strong></div>
+              <div style="margin-bottom: 8px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 6px; font-family: monospace; font-size: 12px; max-height: 80px; overflow-y: auto;">
+                ${promptPreview.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+              </div>
+              <div style="font-size: 13px; color: var(--muted);">
+                ✅ Prompt copied to clipboard<br/>
+                📝 Paste (Ctrl+V) into the WebUI chat box
+              </div>
+            `, 8000);
+            
+            tryBtn.textContent = '🚀 Try it now';
+          }, 500);
+          
+        } catch (error) {
+          console.error('Error opening WebUI:', error);
+          alert('Error opening WebUI. Please try again.');
+          tryBtn.textContent = '🚀 Try it now';
+        }
+      };
+
       shareBtn.onclick = async () => {
         try {
           await navigator.clipboard.writeText(location.href);
