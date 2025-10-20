@@ -28,13 +28,15 @@
     #list > ul { padding-left: 0; }
     .tree-dir { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 10px; cursor: pointer; color: var(--text); }
     .tree-dir:hover { background: #141936; }
+    .tree-dir.submenu-open { background: #151f3c; border: 1px solid var(--accent); }
     .tree-dir button { appearance: none; border: none; background: none; color: var(--muted); cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; width: 18px; }
     .tree-dir button:focus { outline: 1px solid var(--accent); border-radius: 4px; }
-    .tree-dir .folder-name { font-size: 13px; font-weight: 600; }
-    .tree-dir .github-folder-icon { margin-left: 4px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; font-size: 12px; }
-    .tree-dir .github-folder-icon:hover { opacity: 1; }
-    .tree-dir .add-file-icon { margin-left: 4px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; font-size: 12px; color: #4ade80; }
-    .tree-dir .add-file-icon:hover { opacity: 1; }
+    .tree-dir .folder-name { font-size: 13px; font-weight: 600; flex: 1; }
+    .tree-dir .folder-icons { display: flex; gap: 4px; margin-left: auto; }
+    .tree-dir .folder-icons span { cursor: pointer; opacity: 0.6; transition: all 0.2s; padding: 4px; border-radius: 4px; min-width: 28px; min-height: 28px; display: flex; align-items: center; justify-content: center; }
+    .tree-dir .folder-icons span:hover { opacity: 1; background: rgba(255, 255, 255, 0.05); }
+    .tree-dir .add-file-icon { color: #4ade80; font-weight: bold; }
+    .tree-dir .add-file-icon:hover { background: rgba(74, 222, 128, 0.1) !important; }
     .item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 10px; border: 1px solid transparent; background: #12162a; cursor: pointer; }
     .item:hover { border-color: var(--border); background: #141936; }
     .item-title { font-size: 14px; font-weight: 600; }
@@ -57,7 +59,6 @@
     footer { max-width: 1100px; margin: 20px auto 40px; color: var(--muted); font-size: 13px; padding: 0 16px; }
     .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 999px; border: 1px solid var(--border); background: #11152a; font-size: 12px; color: var(--muted); }
     
-    /* Branch dropdown styling */
     #branchSelect optgroup {
       font-weight: 600;
       color: var(--muted);
@@ -93,7 +94,6 @@
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
           <div class="pill" id="repoPill">Loading repo...</div>
-          <!-- Chevron + branch select -->
           <label style="display:flex; align-items:center; gap:4px;">
             <span title="Choose a branch">▼</span>
             <select id="branchSelect" class="btn" style="min-width:140px;">
@@ -170,6 +170,8 @@
     let currentSlug = null;
     let expandedState = new Set();
     let expandedStateKey = null;
+    let openSubmenus = new Set();
+    let activeSubmenuHeaders = new Set();
 
     const listEl   = document.getElementById('list');
     const contentEl= document.getElementById('content');
@@ -194,12 +196,10 @@
     const CODEX_URL_REGEX = /^https:\/\/chatgpt\.com\/s\/[a-f0-9_]+$/i;
 
     async function resolveGistRawUrl(gistUrl) {
-      // If it's already a raw URL, use it directly
       if (GIST_POINTER_REGEX.test(gistUrl)) {
         return gistUrl;
       }
 
-      // Parse regular gist URLs
       const match = gistUrl.match(/^https:\/\/gist\.github\.com\/([\w-]+)\/([a-f0-9]+)\/?(?:#file-([\w.-]+))?(?:\?file=([\w.-]+))?$/i);
       if (!match) {
         throw new Error('Invalid gist URL format');
@@ -209,10 +209,8 @@
       const targetFile = fragmentFile || queryFile;
 
       if (targetFile) {
-        // Specific file requested
         return `https://gist.githubusercontent.com/${user}/${gistId}/raw/${targetFile}`;
       } else {
-        // No specific file - fetch gist metadata to find the best file
         const apiUrl = `https://api.github.com/gists/${gistId}`;
         const res = await fetch(viaProxy(apiUrl));
         if (!res.ok) {
@@ -277,6 +275,17 @@
       try {
         sessionStorage.setItem(key, JSON.stringify([...expandedState]));
       } catch {}
+    }
+
+    function closeAllSubmenus() {
+      openSubmenus.forEach(submenu => {
+        submenu.style.display = 'none';
+      });
+      activeSubmenuHeaders.forEach(header => {
+        header.classList.remove('submenu-open');
+      });
+      openSubmenus.clear();
+      activeSubmenuHeaders.clear();
     }
 
     function prettyTitle(name) {
@@ -478,6 +487,9 @@
           label.className = 'folder-name';
           label.textContent = entry.name;
           
+          const iconsContainer = document.createElement('div');
+          iconsContainer.className = 'folder-icons';
+          
           const ghIcon = document.createElement('span');
           ghIcon.className = 'github-folder-icon';
           ghIcon.textContent = '🗂️';
@@ -492,17 +504,99 @@
           addIcon.className = 'add-file-icon';
           addIcon.textContent = '+';
           addIcon.title = 'Create new file in this directory';
+
+          const submenu = document.createElement('div');
+          submenu.style.position = 'absolute';
+          submenu.style.background = 'var(--card)';
+          submenu.style.border = '1px solid var(--border)';
+          submenu.style.borderRadius = '8px';
+          submenu.style.padding = '6px 0';
+          submenu.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
+          submenu.style.display = 'none';
+          submenu.style.zIndex = '10';
+
+          const makeMenuItem = (label, emoji, onClick) => {
+            const item = document.createElement('div');
+            item.textContent = `${emoji} ${label}`;
+            item.style.padding = '6px 14px';
+            item.style.cursor = 'pointer';
+            item.style.fontSize = '13px';
+            item.style.color = 'var(--text)';
+            item.addEventListener('mouseenter', () => item.style.background = '#1a1f35');
+            item.addEventListener('mouseleave', () => item.style.background = 'transparent');
+            item.addEventListener('click', (e) => {
+              e.stopPropagation();
+              submenu.style.display = 'none';
+              onClick();
+            });
+            return item;
+          };
+
+          submenu.appendChild(makeMenuItem("Prompt (blank)", "📝", () => {
+            const newFilePath = entry.path ? `${entry.path}/new-prompt.md` : 'new-prompt.md';
+            const ghUrl = `https://github.com/${currentOwner}/${currentRepo}/new/${currentBranch}?filename=${encodeURIComponent(newFilePath)}`;
+            window.open(ghUrl, '_blank', 'noopener,noreferrer');
+          }));
+
+          submenu.appendChild(makeMenuItem("Conversation (template)", "💬", () => {
+            const template = `**Conversation Link (Codex, Jules, etc):** [https://chatgpt.com/s/...]\n\n### Prompt\n[paste your full prompt here]\n\n### Additional Info\n[context, notes, or follow-up thoughts]\n`;
+            const encoded = encodeURIComponent(template);
+            const newFilePath = entry.path ? `${entry.path}/new-conversation.md` : 'new-conversation.md';
+            const ghUrl = `https://github.com/${currentOwner}/${currentRepo}/new/${currentBranch}?filename=${encodeURIComponent(newFilePath)}&value=${encoded}`;
+            window.open(ghUrl, '_blank', 'noopener,noreferrer');
+          }));
+
+          document.body.appendChild(submenu);
+
           addIcon.addEventListener('click', (ev) => {
             ev.stopPropagation();
-            const newFilePath = entry.path ? `${entry.path}/new-prompt.md` : 'new-prompt.md';
-            const ghUrl = `https://github.com/${currentOwner}/${currentRepo}/new/${currentBranch}?filename=${newFilePath}`;
-            window.open(ghUrl, '_blank', 'noopener,noreferrer');
+            
+            const wasOpen = submenu.style.display === 'block';
+            closeAllSubmenus();
+            
+            if (!wasOpen) {
+              const rect = addIcon.getBoundingClientRect();
+              
+              submenu.style.display = 'block';
+              submenu.style.visibility = 'hidden';
+              const submenuRect = submenu.getBoundingClientRect();
+              
+              let left = rect.right;
+              let top = rect.top;
+              
+              if (left + submenuRect.width > window.innerWidth - 10) {
+                left = rect.left - submenuRect.width;
+              }
+              
+              if (top + submenuRect.height > window.innerHeight - 10) {
+                top = rect.bottom - submenuRect.height;
+              }
+              
+              if (left < 10) {
+                left = 10;
+              }
+              
+              if (top < 10) {
+                top = 10;
+              }
+              
+              submenu.style.left = left + 'px';
+              submenu.style.top = top + 'px';
+              submenu.style.visibility = 'visible';
+              openSubmenus.add(submenu);
+              header.classList.add('submenu-open');
+              activeSubmenuHeaders.add(header);
+            }
           });
+
+          document.addEventListener('click', () => closeAllSubmenus());
+          
+          iconsContainer.appendChild(ghIcon);
+          iconsContainer.appendChild(addIcon);
           
           header.appendChild(toggle);
           header.appendChild(label);
-          header.appendChild(ghIcon);
-          header.appendChild(addIcon);
+          header.appendChild(iconsContainer);
           li.appendChild(header);
 
           const childList = document.createElement('ul');
@@ -903,7 +997,7 @@
         }
         
         if (userBranches.length > 0) {
-          const showUsers = localStorage.getItem('showUserBranches') !== 'false'; // default: true
+          const showUsers = localStorage.getItem('showUserBranches') !== 'false';
           const userGroup = document.createElement('optgroup');
           
           const userHeaderOpt = document.createElement('option');
