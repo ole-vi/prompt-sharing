@@ -1,5 +1,5 @@
 Create task stubs for recent issues:
-1. Retrieve open issues from open-learning-exchange/myplanet created within 8 weeks. 
+1. Retrieve open issues from open-learning-exchange/myplanet created within last week. 
    - Use gh or GitHub REST/GraphQL APIs.
    - Cache responses and handle rate limits.
    - Exclude “wontfix”, “invalid”, “duplicate”.
