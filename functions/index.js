@@ -78,7 +78,7 @@ exports.runJules = functions.https.onCall(async (data, context) => {
       title: "Prompt-Sharing Trigger",
       prompt: promptText,
       sourceContext: {
-        source: "sources/github/open-learning-exchange/planet",
+        source: "sources/github/open-learning-exchange/myplanet",
         githubRepoContext: { startingBranch: "master" }
       },
       automationMode: "AUTO_CREATE_PR"
@@ -179,7 +179,7 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
       title: "Prompt-Sharing Trigger",
       prompt: promptText,
       sourceContext: {
-        source: "sources/github/open-learning-exchange/planet",
+        source: "sources/github/open-learning-exchange/myplanet",
         githubRepoContext: { startingBranch: "master" }
       },
       automationMode: "AUTO_CREATE_PR"
