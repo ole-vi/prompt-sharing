@@ -1,0 +1,27 @@
+{
+  "projects": {
+    "default": "prompt-sharing-f8eeb"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-functions-debug.log"
+      ]
+    }
+  ],
+  "hosting": {
+    "site": "prompt-sharing-f8eeb",
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "functions/**"
+    ]
+  }
+}

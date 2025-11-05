@@ -81,6 +81,13 @@
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Firebase SDK from official Google CDN - compat build for global access -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
+  <!-- Firebase initialization wrapper -->
+  <script src="firebase-init.js"></script>
 </head>
 <body>
   <header>
@@ -93,6 +100,13 @@
           <div style="color:var(--muted); font-size:13px;">Single file, no build. Drop .md files in <code>/prompts</code> and they show up here.</div>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
+          <div id="authStatus" style="display:flex; align-items:center; gap:8px; font-size:13px;">
+            <span id="userDisplay" style="display:none; font-size:12px; color:var(--muted);">
+              Signed in as&nbsp;<strong id="userName"></strong>
+            </span>
+            <button class="btn" id="authBtn" style="padding:6px 10px; font-size:12px;">Sign in with GitHub</button>
+            <button class="btn" id="signOutBtn" style="padding:6px 10px; font-size:12px; background:#e74c3c; color:white; display:none;" title="Sign out">Sign Out</button>
+          </div>
           <div class="pill" id="repoPill">Loading repo...</div>
           <label style="display:flex; align-items:center; gap:4px;">
             <span title="Choose a branch">▼</span>
@@ -121,6 +135,7 @@
       <div id="actions" style="display:none">
         <button class="btn" id="copyBtn" title="Copy the entire prompt">📋 Copy prompt</button>
         <button class="btn" id="shareBtn" title="Copy a link to this prompt">🔗 Copy link</button>
+        <button class="btn" id="julesBtn" title="Try this prompt in Jules">⚡ Try in Jules</button>
         <a class="btn" id="editBtn" target="_blank" rel="noopener" title="Edit the file on GitHub">✏️ Edit on GitHub</a>
         <a class="btn" id="ghBtn" target="_blank" rel="noopener" title="Open the file on GitHub">🗂️ View on GitHub</a>
         <a class="btn" id="rawBtn" target="_blank" rel="noopener" title="Open raw markdown">📄 Open raw</a>
@@ -133,7 +148,336 @@
     <div>Switch branches/owners/repos via URL or the dropdown. Examples: <code>?branch=Jesse</code> or <code>?owner=ole-vi&repo=prompt-sharing&branch=main</code>.</div>
   </footer>
 
+  <!-- Jules API Key Modal -->
+  <div id="julesKeyModal" style="display:none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; max-width:400px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+      <h2 style="margin:0 0 12px; font-size:18px;">Save Jules API Key</h2>
+      <p style="margin:0 0 16px; color:var(--muted); font-size:13px;">Enter your Jules API key. This will be encrypted and stored securely.</p>
+      <input id="julesKeyInput" type="password" placeholder="Paste your Jules API key..." style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; background:#12162a; color:var(--text); outline:none; margin-bottom:16px; box-sizing:border-box;" />
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button id="julesCancelBtn" class="btn" style="padding:8px 12px;">Cancel</button>
+        <button id="julesSaveBtn" class="btn" style="padding:8px 12px; border-color:var(--accent); color:var(--accent);">Save & Continue</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // ===== Jules & Auth Integration =====
+    let currentPromptText = null;
+
+    // Initialize Firebase auth state listener
+    function initJulesAuth() {
+      try {
+        if (!window.auth) {
+          console.error('Auth not initialized yet');
+          return;
+        }
+        window.auth.onAuthStateChanged((user) => {
+          updateAuthUI(user);
+        });
+        console.log('Jules auth initialized');
+      } catch (error) {
+        console.error('Failed to initialize Jules auth:', error);
+      }
+    }
+
+    /**
+     * Update the auth status UI in the header
+     */
+    function updateAuthUI(user) {
+      const authStatus = document.getElementById('authStatus');
+      const authBtn = document.getElementById('authBtn');
+      const signOutBtn = document.getElementById('signOutBtn');
+      const userDisplay = document.getElementById('userDisplay');
+      const userName = document.getElementById('userName');
+
+      if (user) {
+        // User is signed in
+        authBtn.style.display = 'none';
+        signOutBtn.style.display = 'inline-block';
+        userDisplay.style.display = 'inline-flex';
+        userName.textContent = user.displayName || user.email || 'User';
+        signOutBtn.onclick = signOutUser;
+      } else {
+        // User is signed out
+        authBtn.style.display = 'inline-block';
+        signOutBtn.style.display = 'none';
+        userDisplay.style.display = 'none';
+        authBtn.onclick = signInWithGitHub;
+      }
+    }
+
+    /**
+     * Sign in with GitHub
+     */
+    async function signInWithGitHub() {
+      try {
+        if (!window.auth) {
+          alert('Authentication not ready. Please refresh the page.');
+          return;
+        }
+        const provider = new firebase.auth.GithubAuthProvider();
+        await window.auth.signInWithPopup(provider);
+      } catch (error) {
+        console.error('Sign-in failed:', error);
+        alert('Failed to sign in. Please try again.');
+      }
+    }
+
+    /**
+     * Sign out
+     */
+    async function signOutUser() {
+      try {
+        if (window.auth) {
+          await window.auth.signOut();
+        }
+      } catch (error) {
+        console.error('Sign-out failed:', error);
+        alert('Failed to sign out.');
+      }
+    }
+
+    /**
+     * Show modal for Jules API key input
+     */
+    function showJulesKeyModal() {
+      const modal = document.getElementById('julesKeyModal');
+      const input = document.getElementById('julesKeyInput');
+      modal.style.display = 'flex';
+      input.value = '';
+      input.focus();
+    }
+
+    function hideJulesKeyModal() {
+      const modal = document.getElementById('julesKeyModal');
+      modal.style.display = 'none';
+    }
+
+    async function handleTryInJules() {
+      try {
+        const user = window.auth ? window.auth.currentUser : null;
+        if (!user) {
+          try {
+            await signInWithGitHub();
+            setTimeout(() => handleTryInJulesAfterAuth(), 500);
+          } catch (error) {
+            alert('Login required to use Jules.');
+          }
+          return;
+        }
+        await handleTryInJulesAfterAuth();
+      } catch (error) {
+        console.error('Error in Try in Jules:', error);
+        alert('An error occurred: ' + error.message);
+      }
+    }
+
+    async function handleTryInJulesAfterAuth() {
+      const user = window.auth ? window.auth.currentUser : null;
+      if (!user) {
+        alert('Not logged in.');
+        return;
+      }
+
+      try {
+        const hasKey = await checkJulesKey(user.uid);
+        if (!hasKey) {
+          showJulesKeyModal();
+        } else {
+          await callRunJulesFunction();
+        }
+      } catch (error) {
+        console.error('Error in Jules flow:', error);
+        alert('An error occurred. Please try again.');
+      }
+    }
+
+    async function checkJulesKey(uid) {
+      try {
+        if (!window.db) {
+          console.error('Firestore not initialized');
+          return false;
+        }
+        const doc = await window.db.collection('julesKeys').doc(uid).get();
+        return doc.exists;
+      } catch (error) {
+        console.error('Error checking Jules key:', error);
+        return false;
+      }
+    }
+
+    async function deleteStoredJulesKey(uid) {
+      try {
+        if (!window.db) return false;
+        await window.db.collection('julesKeys').doc(uid).delete();
+        return true;
+      } catch (error) {
+        console.error('Error deleting Jules key:', error);
+        return false;
+      }
+    }
+
+    async function encryptAndStoreKey(plaintext, uid) {
+      try {
+        const paddedUid = (uid + '\0'.repeat(32)).slice(0, 32);
+        const keyData = new TextEncoder().encode(paddedUid);
+        const key = await window.crypto.subtle.importKey('raw', keyData, { name: 'AES-GCM' }, false, ['encrypt']);
+
+        const ivString = uid.slice(0, 12).padEnd(12, '0');
+        const iv = new TextEncoder().encode(ivString).slice(0, 12);
+        const plaintextData = new TextEncoder().encode(plaintext);
+        const ciphertext = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintextData);
+        const encrypted = btoa(String.fromCharCode(...new Uint8Array(ciphertext)));
+
+        if (!window.db) throw new Error('Firestore not initialized');
+        await window.db.collection('julesKeys').doc(uid).set({
+          key: encrypted,
+          storedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        return true;
+      } catch (error) {
+        console.error('Failed to encrypt/store key:', error);
+        throw error;
+      }
+    }
+
+
+
+    /**
+     * Call the runJules Cloud Function via HTTP endpoint
+     */
+    async function callRunJulesFunction() {
+      const user = window.auth ? window.auth.currentUser : null;
+      if (!user) {
+        alert('Not logged in.');
+        return;
+      }
+
+      try {
+        const julesBtn = document.getElementById('julesBtn');
+        const originalText = julesBtn.textContent;
+        julesBtn.textContent = 'Running...';
+        julesBtn.disabled = true;
+
+        const token = await user.getIdToken(true);
+        const functionUrl = 'https://us-central1-prompt-sharing-f8eeb.cloudfunctions.net/runJulesHttp';
+        
+        const response = await fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ promptText: currentPromptText || '' })
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || `HTTP ${response.status}`);
+        }
+
+        const sessionUrl = result.sessionUrl;
+        if (sessionUrl) {
+          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+        } else {
+          alert('Jules session URL not returned.');
+        }
+
+        julesBtn.textContent = originalText;
+        julesBtn.disabled = false;
+      } catch (error) {
+        console.error('Cloud function call failed:', error);
+        alert('Failed to invoke Jules function: ' + error.message);
+        const julesBtn = document.getElementById('julesBtn');
+        julesBtn.textContent = '⚡ Try in Jules';
+        julesBtn.disabled = false;
+      }
+    }
+
+    /**
+     * Initialize modal event listeners
+     */
+    function initModalListeners() {
+      const modal = document.getElementById('julesKeyModal');
+      const input = document.getElementById('julesKeyInput');
+      const saveBtn = document.getElementById('julesSaveBtn');
+      const cancelBtn = document.getElementById('julesCancelBtn');
+
+      cancelBtn.addEventListener('click', hideJulesKeyModal);
+
+      saveBtn.addEventListener('click', async () => {
+        const apiKey = input.value.trim();
+        if (!apiKey) {
+          alert('Please enter your Jules API key.');
+          return;
+        }
+
+        try {
+          saveBtn.textContent = 'Saving...';
+          saveBtn.disabled = true;
+
+          const user = window.auth ? window.auth.currentUser : null;
+          if (!user) {
+            alert('Not logged in.');
+            saveBtn.textContent = 'Save & Continue';
+            saveBtn.disabled = false;
+            return;
+          }
+
+          await encryptAndStoreKey(apiKey, user.uid);
+
+          hideJulesKeyModal();
+          saveBtn.textContent = 'Save & Continue';
+          saveBtn.disabled = false;
+
+          // Proceed to call runJules
+          await callRunJulesFunction();
+        } catch (error) {
+          console.error('Failed to save Jules key:', error);
+          alert('Failed to save API key: ' + error.message);
+          saveBtn.textContent = 'Save & Continue';
+          saveBtn.disabled = false;
+        }
+      });
+
+      // Close modal on ESC key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.style.display === 'flex') {
+          hideJulesKeyModal();
+        }
+      });
+
+      // Close modal on outside click
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          hideJulesKeyModal();
+        }
+      });
+
+      // Allow Enter to save
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          saveBtn.click();
+        }
+      });
+    }
+
+    function initializeJulesWhenReady() {
+      if (window.firebaseReady) {
+        initJulesAuth();
+      } else if (window.firebaseError) {
+        console.error('Firebase initialization failed:', window.firebaseError);
+      } else {
+        setTimeout(initializeJulesWhenReady, 500);
+      }
+    }
+    
+    setTimeout(initializeJulesWhenReady, 1000);
+    initModalListeners();
+    
+    // ===== Original Prompt App Code =====
+    
     const OWNER  = "ole-vi";
     const REPO   = "prompt-sharing";
     const BRANCH = "main";
@@ -858,6 +1202,11 @@
         }
       };
 
+      // Jules button handler
+      const julesBtn = document.getElementById('julesBtn');
+      currentPromptText = raw;
+      julesBtn.onclick = handleTryInJules;
+
       const firstLine = raw.split(/\r?\n/)[0];
       if (/^#\s+/.test(firstLine)) {
         titleEl.textContent = firstLine.replace(/^#\s+/, '');
@@ -1127,6 +1476,31 @@
 
     loadList();
     loadBranches();
+
+    // Helper functions for testing
+    window.deleteJulesKey = async function() {
+      const user = window.auth?.currentUser;
+      if (!user) {
+        console.log('Not logged in');
+        return;
+      }
+      const deleted = await deleteStoredJulesKey(user.uid);
+      if (deleted) {
+        console.log('✓ Jules key deleted. You can now enter a new one.');
+      } else {
+        console.log('✗ Failed to delete Jules key');
+      }
+    };
+
+    window.checkJulesKeyStatus = async function() {
+      const user = window.auth?.currentUser;
+      if (!user) {
+        console.log('Not logged in');
+        return;
+      }
+      const hasKey = await checkJulesKey(user.uid);
+      console.log('Jules key stored:', hasKey ? '✓ Yes' : '✗ No');
+    };
   </script>
 </body>
 </html>
