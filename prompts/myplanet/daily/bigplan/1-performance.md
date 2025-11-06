@@ -12,6 +12,7 @@ Refactor Roadmap (High → Low Priority)
 
 based on that tell me all the spots with tasks we should do to accomplish above suggestion
 remember we can only review 9.99ish pr s a round/day
+give me 10 tasks
 Mostly we wanna avoid merge conflicts during this PR review merge round
 also this time focus specially on
 performance quick wins
