@@ -62,14 +62,20 @@ export function setCurrentPromptText(text) {
 }
 
 export async function selectBySlug(slug, files, owner, repo, branch) {
-  const f = files.find(x => slugify(x.path) === slug);
-  if (f) await selectFile(f, false, owner, repo, branch);
+  try {
+    const f = files.find(x => slugify(x.path) === slug);
+    if (f) await selectFile(f, false, owner, repo, branch);
+  } catch (error) {
+    console.error('Error selecting file by slug:', error);
+  }
 }
 
 export async function selectFile(f, pushHash, owner, repo, branch) {
   if (!f) {
-    editBtn.style.display = 'none';
-    editBtn.removeAttribute('href');
+    if (editBtn) {
+      editBtn.style.display = 'none';
+      editBtn.removeAttribute('href');
+    }
     return;
   }
 

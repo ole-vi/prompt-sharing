@@ -87,6 +87,8 @@ export function loadExpandedState(owner, repo, branch) {
 }
 
 export function persistExpandedState() {
+  // sessionStorage: expanded state is per-session (cleared on refresh)
+  // This prevents expanded folders from persisting after page reload
   const key = expandedStateKey;
   if (!key) return;
   try {
@@ -322,7 +324,9 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       a.addEventListener('click', (ev) => {
         ev.preventDefault();
         if (selectFileCallback) {
-          selectFileCallback(file, true, owner, repo, branch);
+          selectFileCallback(file, true, owner, repo, branch).catch(err => {
+            console.error('Error selecting file:', err);
+          });
         }
       });
 

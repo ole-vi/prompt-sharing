@@ -61,6 +61,7 @@ function classifyBranch(branchName) {
 }
 
 function toggleFeatureBranches() {
+  // localStorage: branch visibility preference persists across sessions
   const showFeatures = localStorage.getItem('showFeatureBranches') === 'true';
   const newShowFeatures = !showFeatures;
   localStorage.setItem('showFeatureBranches', newShowFeatures.toString());
@@ -68,6 +69,7 @@ function toggleFeatureBranches() {
 }
 
 function toggleUserBranches() {
+  // localStorage: branch visibility preference persists across sessions
   const showUsers = localStorage.getItem('showUserBranches') !== 'false';
   const newShowUsers = !showUsers;
   localStorage.setItem('showUserBranches', newShowUsers.toString());

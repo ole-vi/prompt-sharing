@@ -79,60 +79,72 @@ async function loadPrompts() {
 function setupEventListeners() {
   // Handle hash changes (prompt selection)
   window.addEventListener('hashchange', async () => {
-    const p = parseParams();
-    const prevOwner = currentOwner;
-    const prevRepo = currentRepo;
-    const prevBranch = currentBranch;
+    try {
+      const p = parseParams();
+      const prevOwner = currentOwner;
+      const prevRepo = currentRepo;
+      const prevBranch = currentBranch;
 
-    if (p.owner) currentOwner = p.owner;
-    if (p.repo) currentRepo = p.repo;
-    if (p.branch) currentBranch = p.branch;
+      if (p.owner) currentOwner = p.owner;
+      if (p.repo) currentRepo = p.repo;
+      if (p.branch) currentBranch = p.branch;
 
-    const repoChanged = currentOwner !== prevOwner || currentRepo !== prevRepo;
-    const branchChanged = currentBranch !== prevBranch;
+      const repoChanged = currentOwner !== prevOwner || currentRepo !== prevRepo;
+      const branchChanged = currentBranch !== prevBranch;
 
-    if (repoChanged || branchChanged) {
-      setCurrentRepo(currentOwner, currentRepo);
-      setCurrentBranch(currentBranch);
-      const cacheKey = STORAGE_KEYS.promptsCache(currentOwner, currentRepo, currentBranch);
-      sessionStorage.removeItem(cacheKey);
-      await loadPrompts();
-      await loadBranches();
-    } else {
-      // Just switching prompt
-      const hashSlug = getHashParam('p');
-      if (hashSlug) {
-        const { getFiles } = await import('./modules/prompt-list.js');
-        await selectBySlug(hashSlug, getFiles(), currentOwner, currentRepo, currentBranch);
+      if (repoChanged || branchChanged) {
+        setCurrentRepo(currentOwner, currentRepo);
+        setCurrentBranch(currentBranch);
+        const cacheKey = STORAGE_KEYS.promptsCache(currentOwner, currentRepo, currentBranch);
+        sessionStorage.removeItem(cacheKey);
+        await loadPrompts();
+        await loadBranches();
+      } else {
+        // Just switching prompt
+        const hashSlug = getHashParam('p');
+        if (hashSlug) {
+          const { getFiles } = await import('./modules/prompt-list.js');
+          await selectBySlug(hashSlug, getFiles(), currentOwner, currentRepo, currentBranch);
+        }
       }
+    } catch (error) {
+      console.error('Error handling hash change:', error);
     }
   });
 
   // Handle back/forward buttons
   window.addEventListener('popstate', async () => {
-    const p = parseParams();
-    const changed =
-      (p.owner && p.owner !== currentOwner) ||
-      (p.repo && p.repo !== currentRepo) ||
-      (p.branch && p.branch !== currentBranch);
+    try {
+      const p = parseParams();
+      const changed =
+        (p.owner && p.owner !== currentOwner) ||
+        (p.repo && p.repo !== currentRepo) ||
+        (p.branch && p.branch !== currentBranch);
 
-    if (changed) {
-      currentOwner = p.owner || currentOwner;
-      currentRepo = p.repo || currentRepo;
-      currentBranch = p.branch || currentBranch;
-      setCurrentRepo(currentOwner, currentRepo);
-      setCurrentBranch(currentBranch);
-      const cacheKey = STORAGE_KEYS.promptsCache(currentOwner, currentRepo, currentBranch);
-      sessionStorage.removeItem(cacheKey);
-      await loadPrompts();
-      await loadBranches();
+      if (changed) {
+        currentOwner = p.owner || currentOwner;
+        currentRepo = p.repo || currentRepo;
+        currentBranch = p.branch || currentBranch;
+        setCurrentRepo(currentOwner, currentRepo);
+        setCurrentBranch(currentBranch);
+        const cacheKey = STORAGE_KEYS.promptsCache(currentOwner, currentRepo, currentBranch);
+        sessionStorage.removeItem(cacheKey);
+        await loadPrompts();
+        await loadBranches();
+      }
+    } catch (error) {
+      console.error('Error handling popstate:', error);
     }
   });
 
   // Handle branch change event
   window.addEventListener('branchChanged', async (e) => {
-    currentBranch = e.detail.branch;
-    await loadPrompts();
+    try {
+      currentBranch = e.detail.branch;
+      await loadPrompts();
+    } catch (error) {
+      console.error('Error handling branch change:', error);
+    }
   });
 }
 
