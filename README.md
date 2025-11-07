@@ -7,15 +7,53 @@ Hosted for free with GitHub Pages, backed by simple `.md` files.
 
 [https://ole-vi.github.io/prompt-sharing/](https://ole-vi.github.io/prompt-sharing/)
 
-## Repo structure
+## Local development
+
+To test the app locally, you must serve it over HTTP (not open the HTML file directly):
+
+```bash
+# From the repo root
+python -m http.server 8888
+```
+
+Then open **`http://localhost:8888`** in your browser. 
+
+**Important:** Opening `index.html` directly (via `file://` URL) will not work with Firebase authentication. The app must be served over HTTP for GitHub OAuth to function.
+
+## Architecture
+
+This is a zero-build, modular single-page application. All code is plain JavaScript modules (no bundler).
+
+### Folder structure
 
 ```
 prompt-sharing/
-├── index.html      # The app (static single-page site)
-└── prompts/        # Markdown prompts live here
-    ├── stubs.md
-    └── pr-rubric.md
+├── index.html           # Main HTML (very lean)
+├── firebase-init.js     # Firebase initialization
+├── src/
+│   ├── app.js          # Main app entry point
+│   ├── styles.css      # All CSS
+│   ├── modules/        # Feature modules (ES6)
+│   │   ├── auth.js     # GitHub OAuth & auth state
+│   │   ├── jules.js    # Jules integration & encryption
+│   │   ├── github-api.js # GitHub API calls
+│   │   ├── prompt-list.js # Tree navigation & list rendering
+│   │   ├── prompt-renderer.js # Content display & selection
+│   │   └── branch-selector.js # Branch management
+│   └── utils/          # Shared utilities
+│       ├── constants.js # Constants, regex, storage keys
+│       ├── slug.js     # URL slug generation
+│       ├── url-params.js # URL parameter parsing
+│       └── dom-helpers.js # Common DOM operations
+└── prompts/            # Markdown prompts live here
 ```
+
+## How it works
+
+1. **index.html** loads Firebase SDK + marked.js, then loads `src/app.js` as a module
+2. **src/app.js** initializes all modules and wires up event listeners
+3. **Modules** are ES6 modules that import utilities and other modules as needed
+4. **No build step**: Files are served directly over HTTP
 
 ## Adding a new prompt
 
@@ -101,3 +139,39 @@ If a filename doesn’t match any of these keywords, no emoji is added. Emojis a
 * Repo must remain public for GitHub Pages and the GitHub API to fetch the prompts.
 * Changes take 1–2 minutes to appear live after pushing to `main`.
 * No in-browser editing; prompts are managed via git or the GitHub web interface.
+
+## Development Guide
+
+### Running locally
+
+```bash
+cd prompt-sharing
+python -m http.server 8888
+# Visit http://localhost:8888
+```
+
+The dev setup loads modules directly without compilation. Changes are reflected immediately (reload browser).
+
+### Project organization
+
+Each module in `src/modules/` handles one major feature:
+- **auth.js**: Firebase authentication state and UI updates
+- **github-api.js**: All GitHub API calls (repos, prompts, gists)
+- **prompt-list.js**: Tree rendering, sidebar list, search
+- **prompt-renderer.js**: Content loading and display
+- **branch-selector.js**: Branch listing and switching
+- **jules.js**: Jules API integration & key encryption
+
+Utilities in `src/utils/` are shared helpers:
+- **constants.js**: Regex patterns, storage keys, emoji mappings, all magic strings
+- **slug.js**: URL-safe filename generation
+- **url-params.js**: Query string & hash parsing
+- **dom-helpers.js**: Reusable DOM operations
+
+### Code style
+
+- ES6 modules with explicit imports/exports
+- No transpilation or build step
+- Plain JavaScript (no frameworks)
+- All external libraries loaded from CDN (marked.js, Firebase)
+
