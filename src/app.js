@@ -33,7 +33,7 @@ function initApp() {
   // Update header
   const repoPill = document.getElementById('repoPill');
   if (repoPill) {
-    repoPill.textContent = `${currentOwner}/${currentRepo}@${currentBranch}`;
+    repoPill.textContent = `${currentOwner}/${currentRepo}`;
   }
 
   // Load prompts
