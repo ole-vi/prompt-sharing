@@ -68,6 +68,10 @@ header {
     font-size: 11px;
     min-width: 120px;
   }
+
+  #sidebar {
+    position: static;
+  }
 }
 
 /* ===== Cards ===== */
@@ -86,6 +90,12 @@ header {
   height: fit-content;
   position: sticky;
   top: 76px;
+}
+
+@media (max-width: 600px) {
+  #sidebar {
+    position: static !important;
+  }
 }
 
 #search {
