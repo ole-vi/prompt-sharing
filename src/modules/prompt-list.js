@@ -12,6 +12,11 @@ let openSubmenus = new Set();
 let activeSubmenuHeaders = new Set();
 let currentSlug = null;
 
+// Store current repo context for event handlers
+let currentOwner = null;
+let currentRepo = null;
+let currentBranch = null;
+
 // Sidebar elements
 let listEl = null;
 let searchEl = null;
@@ -23,11 +28,17 @@ export function setSelectFileCallback(callback) {
   selectFileCallback = callback;
 }
 
+export function setRepoContext(owner, repo, branch) {
+  currentOwner = owner;
+  currentRepo = repo;
+  currentBranch = branch;
+}
+
 export function initPromptList() {
   listEl = document.getElementById('list');
   searchEl = document.getElementById('search');
   if (searchEl) {
-    searchEl.addEventListener('input', () => renderList(files));
+    searchEl.addEventListener('input', () => renderList(files, currentOwner, currentRepo, currentBranch));
   }
 }
 
@@ -106,7 +117,7 @@ export function toggleDirectory(path, expand) {
   if (before !== expand) {
     persistExpandedState();
   }
-  renderList(files);
+  renderList(files, currentOwner, currentRepo, currentBranch);
 }
 
 function closeAllSubmenus() {

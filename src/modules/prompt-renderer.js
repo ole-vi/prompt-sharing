@@ -51,6 +51,23 @@ export function initPromptRenderer() {
       }
     });
   }
+
+  // Clear prompt when branch changes
+  window.addEventListener('branchChanged', () => {
+    // Show empty state
+    setElementDisplay(emptyEl, true);
+    setElementDisplay(titleEl, false);
+    setElementDisplay(metaEl, false);
+    setElementDisplay(actionsEl, false);
+
+    // Clear content
+    if (contentEl) contentEl.innerHTML = '';
+
+    // Reset state
+    setCurrentSlug(null);
+    currentPromptText = null;
+    updateActiveItem();
+  });
 }
 
 export function getCurrentPromptText() {
