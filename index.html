@@ -85,6 +85,21 @@
     </div>
   </div>
 
+  <!-- Jules Environment Modal -->
+  <div id="julesEnvModal" style="display:none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; max-width:400px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+      <h2 style="margin:0 0 12px; font-size:18px;">Choose Jules Environment</h2>
+      <p style="margin:0 0 16px; color:var(--muted); font-size:13px;">Which repository would you like to open?</p>
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+        <button id="envPlanetBtn" class="btn" style="padding:12px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; font-weight:600; transition:all 0.2s;">🌍 Planet</button>
+        <button id="envMyplanetBtn" class="btn" style="padding:12px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; font-weight:600; transition:all 0.2s;">🚀 MyPlanet</button>
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button id="julesEnvCancelBtn" class="btn" style="padding:8px 12px;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="src/app.js"></script>
 </body>
 </html>

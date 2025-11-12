@@ -51,7 +51,7 @@ export async function encryptAndStoreKey(plaintext, uid) {
   }
 }
 
-export async function callRunJulesFunction(promptText) {
+export async function callRunJulesFunction(promptText, environment = "myplanet") {
   const user = window.auth ? window.auth.currentUser : null;
   if (!user) {
     alert('Not logged in.');
@@ -73,7 +73,7 @@ export async function callRunJulesFunction(promptText) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ promptText: promptText || '' })
+      body: JSON.stringify({ promptText: promptText || '', environment: environment })
     });
 
     const result = await response.json();
@@ -125,12 +125,11 @@ export async function handleTryInJulesAfterAuth(promptText) {
   try {
     const hasKey = await checkJulesKey(user.uid);
     if (!hasKey) {
-      showJulesKeyModal(() => handleJulesSaveKey(promptText, user.uid));
+      showJulesKeyModal(() => {
+        showJulesEnvModal(promptText);
+      });
     } else {
-      const sessionUrl = await callRunJulesFunction(promptText);
-      if (sessionUrl) {
-        window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-      }
+      showJulesEnvModal(promptText);
     }
   } catch (error) {
     console.error('Error in Jules flow:', error);
@@ -141,7 +140,7 @@ export async function handleTryInJulesAfterAuth(promptText) {
 export function showJulesKeyModal(onSave) {
   const modal = document.getElementById('julesKeyModal');
   const input = document.getElementById('julesKeyInput');
-  modal.classList.add('show');
+  modal.style.display = 'flex';
   input.value = '';
   input.focus();
 
@@ -192,29 +191,66 @@ export function showJulesKeyModal(onSave) {
 
 export function hideJulesKeyModal() {
   const modal = document.getElementById('julesKeyModal');
-  modal.classList.remove('show');
+  modal.style.display = 'none';
+}
+
+export function showJulesEnvModal(promptText) {
+  const modal = document.getElementById('julesEnvModal');
+  modal.style.display = 'flex';
+
+  const planetBtn = document.getElementById('envPlanetBtn');
+  const myplanetBtn = document.getElementById('envMyplanetBtn');
+  const cancelBtn = document.getElementById('julesEnvCancelBtn');
+
+  const handleSelect = async (environment) => {
+    modal.style.display = 'none';
+    const sessionUrl = await callRunJulesFunction(promptText, environment);
+    if (sessionUrl) {
+      window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  planetBtn.onclick = () => handleSelect('planet');
+  myplanetBtn.onclick = () => handleSelect('myplanet');
+  cancelBtn.onclick = () => {
+    modal.style.display = 'none';
+  };
+}
+
+export function hideJulesEnvModal() {
+  const modal = document.getElementById('julesEnvModal');
+  modal.style.display = 'none';
 }
 
 export function initJulesKeyModalListeners() {
-  const modal = document.getElementById('julesKeyModal');
-  const input = document.getElementById('julesKeyInput');
+  const keyModal = document.getElementById('julesKeyModal');
+  const envModal = document.getElementById('julesEnvModal');
+  const keyInput = document.getElementById('julesKeyInput');
 
-  // Close modal on ESC key
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.classList.contains('show')) {
+    if (e.key === 'Escape') {
+      if (keyModal.style.display === 'flex') {
+        hideJulesKeyModal();
+      }
+      if (envModal.style.display === 'flex') {
+        hideJulesEnvModal();
+      }
+    }
+  });
+
+  keyModal.addEventListener('click', (e) => {
+    if (e.target === keyModal) {
       hideJulesKeyModal();
     }
   });
 
-  // Close modal on outside click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      hideJulesKeyModal();
+  envModal.addEventListener('click', (e) => {
+    if (e.target === envModal) {
+      hideJulesEnvModal();
     }
   });
 
-  // Allow Enter to save
-  input.addEventListener('keypress', (e) => {
+  keyInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       document.getElementById('julesSaveBtn').click();
     }
