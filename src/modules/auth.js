@@ -50,6 +50,12 @@ export function updateAuthUI(user) {
     signOutBtn.style.display = 'inline-block';
     userDisplay.style.display = 'inline-flex';
     userName.textContent = user.displayName || user.email || 'User';
+    
+    userName.onclick = async () => {
+      const { showUserProfileModal } = await import('./jules.js');
+      showUserProfileModal();
+    };
+    
     signOutBtn.onclick = signOutUser;
   } else {
     // User is signed out

@@ -8,7 +8,9 @@ export async function checkJulesKey(uid) {
       console.error('Firestore not initialized');
       return false;
     }
+    console.log('[DEBUG] Checking Jules key for uid:', uid);
     const doc = await window.db.collection('julesKeys').doc(uid).get();
+    console.log('[DEBUG] Jules key exists:', doc.exists);
     return doc.exists;
   } catch (error) {
     console.error('Error checking Jules key:', error);
@@ -51,7 +53,7 @@ export async function encryptAndStoreKey(plaintext, uid) {
   }
 }
 
-export async function callRunJulesFunction(promptText) {
+export async function callRunJulesFunction(promptText, environment = "myplanet") {
   const user = window.auth ? window.auth.currentUser : null;
   if (!user) {
     alert('Not logged in.');
@@ -73,7 +75,7 @@ export async function callRunJulesFunction(promptText) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ promptText: promptText || '' })
+      body: JSON.stringify({ promptText: promptText || '', environment: environment })
     });
 
     const result = await response.json();
@@ -123,14 +125,19 @@ export async function handleTryInJulesAfterAuth(promptText) {
   }
 
   try {
+    console.log('[DEBUG] handleTryInJulesAfterAuth - checking for Jules key');
     const hasKey = await checkJulesKey(user.uid);
+    console.log('[DEBUG] hasKey:', hasKey);
+    
     if (!hasKey) {
-      showJulesKeyModal(() => handleJulesSaveKey(promptText, user.uid));
+      console.log('[DEBUG] No key found, showing key modal');
+      showJulesKeyModal(() => {
+        console.log('[DEBUG] Key saved, showing env modal');
+        showJulesEnvModal(promptText);
+      });
     } else {
-      const sessionUrl = await callRunJulesFunction(promptText);
-      if (sessionUrl) {
-        window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-      }
+      console.log('[DEBUG] Key found, showing env modal');
+      showJulesEnvModal(promptText);
     }
   } catch (error) {
     console.error('Error in Jules flow:', error);
@@ -141,7 +148,13 @@ export async function handleTryInJulesAfterAuth(promptText) {
 export function showJulesKeyModal(onSave) {
   const modal = document.getElementById('julesKeyModal');
   const input = document.getElementById('julesKeyInput');
-  modal.classList.add('show');
+  
+  console.log('[DEBUG] showJulesKeyModal called');
+  console.log('[DEBUG] Modal element:', modal);
+  console.log('[DEBUG] Input element:', input);
+  
+  // Use setAttribute to set display with !important
+  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
   input.value = '';
   input.focus();
 
@@ -192,29 +205,76 @@ export function showJulesKeyModal(onSave) {
 
 export function hideJulesKeyModal() {
   const modal = document.getElementById('julesKeyModal');
-  modal.classList.remove('show');
+  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+}
+
+export function showJulesEnvModal(promptText) {
+  const modal = document.getElementById('julesEnvModal');
+  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+
+  const planetBtn = document.getElementById('envPlanetBtn');
+  const myplanetBtn = document.getElementById('envMyplanetBtn');
+  const cancelBtn = document.getElementById('julesEnvCancelBtn');
+
+  const handleSelect = async (environment) => {
+    hideJulesEnvModal();
+    const sessionUrl = await callRunJulesFunction(promptText, environment);
+    if (sessionUrl) {
+      window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  planetBtn.onclick = () => handleSelect('planet');
+  myplanetBtn.onclick = () => handleSelect('myplanet');
+  cancelBtn.onclick = () => {
+    hideJulesEnvModal();
+  };
+}
+
+export function hideJulesEnvModal() {
+  const modal = document.getElementById('julesEnvModal');
+  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 }
 
 export function initJulesKeyModalListeners() {
-  const modal = document.getElementById('julesKeyModal');
-  const input = document.getElementById('julesKeyInput');
+  const keyModal = document.getElementById('julesKeyModal');
+  const envModal = document.getElementById('julesEnvModal');
+  const profileModal = document.getElementById('userProfileModal');
+  const keyInput = document.getElementById('julesKeyInput');
 
-  // Close modal on ESC key
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.classList.contains('show')) {
+    if (e.key === 'Escape') {
+      if (keyModal.style.display === 'flex') {
+        hideJulesKeyModal();
+      }
+      if (envModal.style.display === 'flex') {
+        hideJulesEnvModal();
+      }
+      if (profileModal.style.display === 'flex') {
+        hideUserProfileModal();
+      }
+    }
+  });
+
+  keyModal.addEventListener('click', (e) => {
+    if (e.target === keyModal) {
       hideJulesKeyModal();
     }
   });
 
-  // Close modal on outside click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      hideJulesKeyModal();
+  envModal.addEventListener('click', (e) => {
+    if (e.target === envModal) {
+      hideJulesEnvModal();
     }
   });
 
-  // Allow Enter to save
-  input.addEventListener('keypress', (e) => {
+  profileModal.addEventListener('click', (e) => {
+    if (e.target === profileModal) {
+      hideUserProfileModal();
+    }
+  });
+
+  keyInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       document.getElementById('julesSaveBtn').click();
     }
@@ -245,3 +305,85 @@ window.checkJulesKeyStatus = async function() {
   const hasKey = await checkJulesKey(user.uid);
   console.log('Jules key stored:', hasKey ? '✓ Yes' : '✗ No');
 };
+
+export function showUserProfileModal() {
+  const modal = document.getElementById('userProfileModal');
+  const user = window.auth?.currentUser;
+
+  if (!user) {
+    alert('Not logged in.');
+    return;
+  }
+
+  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+
+  const profileUserName = document.getElementById('profileUserName');
+  const julesKeyStatus = document.getElementById('julesKeyStatus');
+  const addBtn = document.getElementById('addJulesKeyBtn');
+  const resetBtn = document.getElementById('resetJulesKeyBtn');
+  const closeBtn = document.getElementById('closeProfileBtn');
+
+  profileUserName.textContent = user.displayName || user.email || 'Unknown User';
+
+  checkJulesKey(user.uid).then((hasKey) => {
+    julesKeyStatus.textContent = hasKey ? '✓ Saved' : '✗ Not saved';
+    julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+    
+    // Show/hide buttons based on key status
+    if (hasKey) {
+      addBtn.style.display = 'none';
+      resetBtn.style.display = 'block';
+    } else {
+      addBtn.style.display = 'block';
+      resetBtn.style.display = 'none';
+    }
+  });
+
+  // Add button handler - shows key modal
+  addBtn.onclick = () => {
+    hideUserProfileModal();
+    showJulesKeyModal(() => {
+      // After key is saved, reopen profile modal
+      setTimeout(() => showUserProfileModal(), 500);
+    });
+  };
+
+  resetBtn.onclick = async () => {
+    if (!confirm('This will delete your stored Jules API key. You\'ll need to enter a new one next time.')) {
+      return;
+    }
+    try {
+      resetBtn.disabled = true;
+      resetBtn.textContent = 'Deleting...';
+      const deleted = await deleteStoredJulesKey(user.uid);
+      if (deleted) {
+        julesKeyStatus.textContent = '✗ Not saved';
+        julesKeyStatus.style.color = 'var(--muted)';
+        resetBtn.textContent = '🔄 Reset Jules API Key';
+        resetBtn.disabled = false;
+        
+        // Update buttons
+        addBtn.style.display = 'block';
+        resetBtn.style.display = 'none';
+        
+        alert('Jules API key has been deleted. You can enter a new one next time.');
+      } else {
+        throw new Error('Failed to delete key');
+      }
+    } catch (error) {
+      console.error('Error resetting Jules key:', error);
+      alert('Failed to reset API key: ' + error.message);
+      resetBtn.textContent = '🔄 Reset Jules API Key';
+      resetBtn.disabled = false;
+    }
+  };
+
+  closeBtn.onclick = () => {
+    hideUserProfileModal();
+  };
+}
+
+export function hideUserProfileModal() {
+  const modal = document.getElementById('userProfileModal');
+  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+}
