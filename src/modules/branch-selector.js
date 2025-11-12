@@ -61,6 +61,8 @@ function classifyBranch(branchName) {
 }
 
 function toggleFeatureBranches() {
+
+  // localStorage: branch visibility preference persists across sessions
   const showFeatures = localStorage.getItem('showFeatureBranches') === 'true';
   const newShowFeatures = !showFeatures;
   localStorage.setItem('showFeatureBranches', newShowFeatures.toString());
