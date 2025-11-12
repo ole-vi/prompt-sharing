@@ -240,7 +240,9 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
 
       submenu.appendChild(makeMenuItem("Prompt (blank)", "📝", () => {
         const newFilePath = entry.path ? `${entry.path}/new-prompt.md` : 'new-prompt.md';
-        const ghUrl = `https://github.com/${owner}/${repo}/new/${branch}?filename=${encodeURIComponent(newFilePath)}`;
+        // GitHub's /new/{branch} endpoint: uses branch if it exists on the repo
+        // Include ref parameter to ensure correct branch is selected in the web UI
+        const ghUrl = `https://github.com/${owner}/${repo}/new/${branch}?filename=${encodeURIComponent(newFilePath)}&ref=${encodeURIComponent(branch)}`;
         window.open(ghUrl, '_blank', 'noopener,noreferrer');
       }));
 
@@ -248,7 +250,7 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
         const template = `**Conversation Link (Codex, Jules, etc):** [https://chatgpt.com/s/...]\n\n### Prompt\n[paste your full prompt here]\n\n### Additional Info\n[context, notes, or follow-up thoughts]\n`;
         const encoded = encodeURIComponent(template);
         const newFilePath = entry.path ? `${entry.path}/new-conversation.md` : 'new-conversation.md';
-        const ghUrl = `https://github.com/${owner}/${repo}/new/${branch}?filename=${encodeURIComponent(newFilePath)}&value=${encoded}`;
+        const ghUrl = `https://github.com/${owner}/${repo}/new/${branch}?filename=${encodeURIComponent(newFilePath)}&value=${encoded}&ref=${encodeURIComponent(branch)}`;
         window.open(ghUrl, '_blank', 'noopener,noreferrer');
       }));
 
