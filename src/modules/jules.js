@@ -319,6 +319,7 @@ export function showUserProfileModal() {
 
   const profileUserName = document.getElementById('profileUserName');
   const julesKeyStatus = document.getElementById('julesKeyStatus');
+  const addBtn = document.getElementById('addJulesKeyBtn');
   const resetBtn = document.getElementById('resetJulesKeyBtn');
   const closeBtn = document.getElementById('closeProfileBtn');
 
@@ -327,7 +328,25 @@ export function showUserProfileModal() {
   checkJulesKey(user.uid).then((hasKey) => {
     julesKeyStatus.textContent = hasKey ? '✓ Saved' : '✗ Not saved';
     julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+    
+    // Show/hide buttons based on key status
+    if (hasKey) {
+      addBtn.style.display = 'none';
+      resetBtn.style.display = 'block';
+    } else {
+      addBtn.style.display = 'block';
+      resetBtn.style.display = 'none';
+    }
   });
+
+  // Add button handler - shows key modal
+  addBtn.onclick = () => {
+    hideUserProfileModal();
+    showJulesKeyModal(() => {
+      // After key is saved, reopen profile modal
+      setTimeout(() => showUserProfileModal(), 500);
+    });
+  };
 
   resetBtn.onclick = async () => {
     if (!confirm('This will delete your stored Jules API key. You\'ll need to enter a new one next time.')) {
@@ -342,6 +361,11 @@ export function showUserProfileModal() {
         julesKeyStatus.style.color = 'var(--muted)';
         resetBtn.textContent = '🔄 Reset Jules API Key';
         resetBtn.disabled = false;
+        
+        // Update buttons
+        addBtn.style.display = 'block';
+        resetBtn.style.display = 'none';
+        
         alert('Jules API key has been deleted. You can enter a new one next time.');
       } else {
         throw new Error('Failed to delete key');
