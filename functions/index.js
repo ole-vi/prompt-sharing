@@ -80,8 +80,7 @@ exports.runJules = functions.https.onCall(async (data, context) => {
       sourceContext: {
         source: "sources/github/open-learning-exchange/myplanet",
         githubRepoContext: { startingBranch: "master" }
-      },
-      automationMode: "AUTO_CREATE_PR"
+      }
     };
 
     let r, json;
@@ -181,8 +180,7 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
       sourceContext: {
         source: "sources/github/open-learning-exchange/myplanet",
         githubRepoContext: { startingBranch: "master" }
-      },
-      automationMode: "AUTO_CREATE_PR"
+      }
     };
 
     let r, json;
@@ -194,7 +192,7 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
       });
       json = await r.json();
     } catch (e) {
-      console.error('Network error calling Jules:', e.message);
+      console.error("Network error calling Jules API:", e.message);
       res.status(503).json({ error: 'Failed to reach Jules API' });
       return;
     }
