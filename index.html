@@ -14,31 +14,36 @@
 </head>
 <body>
   <header>
-    <div class="wrap" style="padding:0;grid-template-columns:1fr;gap:0">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-        <div>
-          <a href="https://ole-vi.github.io/prompt-sharing/" style="text-decoration:none; color:inherit;">
-            <div style="font-size:18px; font-weight:800; letter-spacing:0.2px;">OLE Prompt Library</div>
-          </a>
-          <div style="color:var(--muted); font-size:13px;">Single file, no build. Drop .md files in <code>/prompts</code> and they show up here.</div>
+    <div style="max-width:1100px; margin:0 auto; display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:0 16px;">
+      <!-- Auth buttons - top right -->
+      <div id="authStatus" style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; font-size:13px; order:2;">
+        <div style="display:flex; gap:8px;">
+          <button class="btn" id="authBtn" style="padding:6px 10px; font-size:12px;">Sign in with GitHub</button>
+          <button class="btn" id="signOutBtn" style="padding:6px 10px; font-size:12px; background:#e74c3c; color:white; display:none;" title="Sign out">Sign Out</button>
         </div>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <div id="authStatus" style="display:flex; align-items:center; gap:8px; font-size:13px;">
-            <span id="userDisplay" style="display:none; font-size:12px; color:var(--muted);">
-              Signed in as&nbsp;<strong id="userName"></strong>
-            </span>
-            <button class="btn" id="authBtn" style="padding:6px 10px; font-size:12px;">Sign in with GitHub</button>
-            <button class="btn" id="signOutBtn" style="padding:6px 10px; font-size:12px; background:#e74c3c; color:white; display:none;" title="Sign out">Sign Out</button>
-          </div>
-          <div class="pill" id="repoPill">Loading repo...</div>
-          <label style="display:flex; align-items:center; gap:4px;">
-            <span title="Choose a branch">▼</span>
-            <select id="branchSelect" class="btn" style="min-width:140px;">
-              <option>Loading branches…</option>
-            </select>
-          </label>
-        </div>
+        <span id="userDisplay" style="display:none; font-size:11px; color:var(--muted);">
+          <strong id="userName"></strong>
+        </span>
       </div>
+      
+      <!-- Logo and description - left side -->
+      <div style="flex:1; order:1;">
+        <a href="https://ole-vi.github.io/prompt-sharing/" style="text-decoration:none; color:inherit;">
+          <div style="font-size:18px; font-weight:800; letter-spacing:0.2px;">OLE Prompt Library</div>
+        </a>
+        <div style="color:var(--muted); font-size:13px;">Single file, no build. Drop .md files in <code>/prompts</code> and they show up here.</div>
+      </div>
+    </div>
+    
+    <!-- Branch and repo controls - second row -->
+    <div style="max-width:1100px; margin:8px auto 0; display:flex; justify-content:flex-end; gap:8px; padding:0 16px; align-items:center;">
+      <div class="pill" id="repoPill">Loading repo...</div>
+      <label style="display:flex; align-items:center; gap:4px;">
+        <span title="Choose a branch">▼</span>
+        <select id="branchSelect" class="btn" style="min-width:140px;">
+          <option>Loading branches…</option>
+        </select>
+      </label>
     </div>
   </header>
 
@@ -66,10 +71,6 @@
       <article id="content"></article>
     </main>
   </div>
-
-  <footer>
-    <div>Switch branches/owners/repos via URL or the dropdown. Examples: <code>?branch=Jesse</code> or <code>?owner=ole-vi&repo=prompt-sharing&branch=main</code>.</div>
-  </footer>
 
   <!-- Jules API Key Modal -->
   <div id="julesKeyModal" style="display:none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">

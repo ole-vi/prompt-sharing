@@ -4,7 +4,7 @@ import { OWNER, REPO, BRANCH, STORAGE_KEYS } from './utils/constants.js';
 import { parseParams, getHashParam } from './utils/url-params.js';
 import { initAuthStateListener, updateAuthUI } from './modules/auth.js';
 import { initJulesKeyModalListeners, handleTryInJules } from './modules/jules.js';
-import { initPromptList, loadList, loadExpandedState, renderList, setSelectFileCallback } from './modules/prompt-list.js';
+import { initPromptList, loadList, loadExpandedState, renderList, setSelectFileCallback, setRepoContext } from './modules/prompt-list.js';
 import { initPromptRenderer, selectBySlug, selectFile, setHandleTryInJulesCallback } from './modules/prompt-renderer.js';
 import { initBranchSelector, loadBranches, setCurrentBranch, setCurrentRepo } from './modules/branch-selector.js';
 
@@ -30,10 +30,14 @@ function initApp() {
   initBranchSelector(currentOwner, currentRepo, currentBranch);
   initJulesKeyModalListeners();
 
+  // Set repo context for prompt list
+  setRepoContext(currentOwner, currentRepo, currentBranch);
+
   // Update header
   const repoPill = document.getElementById('repoPill');
   if (repoPill) {
-    repoPill.textContent = `${currentOwner}/${currentRepo}@${currentBranch}`;
+    repoPill.textContent = `${currentOwner}/${currentRepo}`;
+
   }
 
   // Load prompts
@@ -141,6 +145,7 @@ function setupEventListeners() {
   window.addEventListener('branchChanged', async (e) => {
     try {
       currentBranch = e.detail.branch;
+      setRepoContext(currentOwner, currentRepo, currentBranch);
       await loadPrompts();
     } catch (error) {
       console.error('Error handling branch change:', error);

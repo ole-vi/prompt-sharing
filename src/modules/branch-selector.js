@@ -61,6 +61,7 @@ function classifyBranch(branchName) {
 }
 
 function toggleFeatureBranches() {
+
   // localStorage: branch visibility preference persists across sessions
   const showFeatures = localStorage.getItem('showFeatureBranches') === 'true';
   const newShowFeatures = !showFeatures;
@@ -69,7 +70,6 @@ function toggleFeatureBranches() {
 }
 
 function toggleUserBranches() {
-  // localStorage: branch visibility preference persists across sessions
   const showUsers = localStorage.getItem('showUserBranches') !== 'false';
   const newShowUsers = !showUsers;
   localStorage.setItem('showUserBranches', newShowUsers.toString());
@@ -99,7 +99,6 @@ async function handleBranchChange(e) {
   const newUrl = `${location.pathname}?${qs.toString()}${slug ? '#p=' + encodeURIComponent(slug) : ''}`;
   history.replaceState(null, '', newUrl);
 
-  // Clear caches and reload
   sessionStorage.clear();
   window.dispatchEvent(new CustomEvent('branchChanged', { detail: { branch: currentBranch } }));
 }
@@ -137,7 +136,6 @@ export async function loadBranches() {
 
     branchSelect.innerHTML = '';
 
-    // Main branches
     for (const b of mainBranches) {
       const opt = document.createElement('option');
       opt.value = b.name;
@@ -162,7 +160,6 @@ export async function loadBranches() {
       branchSelect.appendChild(userGroup);
     }
 
-    // Feature branches
     if (featureBranches.length > 0) {
       const showFeatures = localStorage.getItem('showFeatureBranches') === 'true';
       const featureGroup = document.createElement('optgroup');
@@ -179,7 +176,6 @@ export async function loadBranches() {
       branchSelect.appendChild(featureGroup);
     }
 
-    // Add current branch if not in list
     if (![...branchSelect.options].some(o => o.value === currentBranch)) {
       const opt = document.createElement('option');
       opt.value = currentBranch;

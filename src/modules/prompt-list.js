@@ -12,6 +12,11 @@ let openSubmenus = new Set();
 let activeSubmenuHeaders = new Set();
 let currentSlug = null;
 
+// Store current repo context for event handlers
+let currentOwner = null;
+let currentRepo = null;
+let currentBranch = null;
+
 // Sidebar elements
 let listEl = null;
 let searchEl = null;
@@ -23,11 +28,17 @@ export function setSelectFileCallback(callback) {
   selectFileCallback = callback;
 }
 
+export function setRepoContext(owner, repo, branch) {
+  currentOwner = owner;
+  currentRepo = repo;
+  currentBranch = branch;
+}
+
 export function initPromptList() {
   listEl = document.getElementById('list');
   searchEl = document.getElementById('search');
   if (searchEl) {
-    searchEl.addEventListener('input', () => renderList(files));
+    searchEl.addEventListener('input', () => renderList(files, currentOwner, currentRepo, currentBranch));
   }
 }
 
@@ -106,7 +117,7 @@ export function toggleDirectory(path, expand) {
   if (before !== expand) {
     persistExpandedState();
   }
-  renderList(files);
+  renderList(files, currentOwner, currentRepo, currentBranch);
 }
 
 function closeAllSubmenus() {
@@ -250,6 +261,8 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
         const template = `**Conversation Link (Codex, Jules, etc):** [https://chatgpt.com/s/...]\n\n### Prompt\n[paste your full prompt here]\n\n### Additional Info\n[context, notes, or follow-up thoughts]\n`;
         const encoded = encodeURIComponent(template);
         const newFilePath = entry.path ? `${entry.path}/new-conversation.md` : 'new-conversation.md';
+        // GitHub's /new/{branch} endpoint: uses branch if it exists on the repo
+        // Include ref parameter to ensure correct branch is selected in the web UI
         const ghUrl = `https://github.com/${owner}/${repo}/new/${branch}?filename=${encodeURIComponent(newFilePath)}&value=${encoded}&ref=${encodeURIComponent(branch)}`;
         window.open(ghUrl, '_blank', 'noopener,noreferrer');
       }));
