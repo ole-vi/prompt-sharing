@@ -28,6 +28,7 @@ let ghBtn = null;
 let editBtn = null;
 let shareBtn = null;
 let julesBtn = null;
+let freeInputBtn = null;
 
 export function initPromptRenderer() {
   contentEl = document.getElementById('content');
@@ -41,6 +42,7 @@ export function initPromptRenderer() {
   editBtn = document.getElementById('editBtn');
   shareBtn = document.getElementById('shareBtn');
   julesBtn = document.getElementById('julesBtn');
+  freeInputBtn = document.getElementById('freeInputBtn');
 
   if (copyBtn) copyBtn.addEventListener('click', handleCopyPrompt);
   if (shareBtn) shareBtn.addEventListener('click', handleShareLink);
@@ -49,6 +51,12 @@ export function initPromptRenderer() {
       if (handleTryInJulesCallback) {
         handleTryInJulesCallback(currentPromptText);
       }
+    });
+  }
+  if (freeInputBtn) {
+    freeInputBtn.addEventListener('click', async () => {
+      const { showFreeInputModal } = await import('./jules.js');
+      showFreeInputModal();
     });
   }
 

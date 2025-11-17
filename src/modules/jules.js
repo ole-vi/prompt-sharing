@@ -239,6 +239,7 @@ export function hideJulesEnvModal() {
 export function initJulesKeyModalListeners() {
   const keyModal = document.getElementById('julesKeyModal');
   const envModal = document.getElementById('julesEnvModal');
+  const freeInputModal = document.getElementById('freeInputModal');
   const profileModal = document.getElementById('userProfileModal');
   const keyInput = document.getElementById('julesKeyInput');
 
@@ -249,6 +250,9 @@ export function initJulesKeyModalListeners() {
       }
       if (envModal.style.display === 'flex') {
         hideJulesEnvModal();
+      }
+      if (freeInputModal && freeInputModal.style.display === 'flex') {
+        hideFreeInputForm();
       }
       if (profileModal.style.display === 'flex') {
         hideUserProfileModal();
@@ -267,6 +271,14 @@ export function initJulesKeyModalListeners() {
       hideJulesEnvModal();
     }
   });
+
+  if (freeInputModal) {
+    freeInputModal.addEventListener('click', (e) => {
+      if (e.target === freeInputModal) {
+        hideFreeInputForm();
+      }
+    });
+  }
 
   profileModal.addEventListener('click', (e) => {
     if (e.target === profileModal) {
@@ -385,5 +397,92 @@ export function showUserProfileModal() {
 
 export function hideUserProfileModal() {
   const modal = document.getElementById('userProfileModal');
+  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+}
+
+export function showFreeInputModal() {
+  const user = window.auth ? window.auth.currentUser : null;
+  if (!user) {
+    (async () => {
+      try {
+        const { signInWithGitHub } = await import('./auth.js');
+        await signInWithGitHub();
+        setTimeout(() => showFreeInputModal(), 500);
+      } catch (error) {
+        alert('Login required to use Jules.');
+      }
+    })();
+    return;
+  }
+
+  handleFreeInputAfterAuth();
+}
+
+export async function handleFreeInputAfterAuth() {
+  const user = window.auth ? window.auth.currentUser : null;
+  if (!user) {
+    alert('Not logged in.');
+    return;
+  }
+
+  try {
+    const hasKey = await checkJulesKey(user.uid);
+    
+    if (!hasKey) {
+      showJulesKeyModal(() => {
+        showFreeInputForm();
+      });
+    } else {
+      showFreeInputForm();
+    }
+  } catch (error) {
+    console.error('Error in free input flow:', error);
+    alert('An error occurred. Please try again.');
+  }
+}
+
+export function showFreeInputForm() {
+  const modal = document.getElementById('freeInputModal');
+  const textarea = document.getElementById('freeInputTextarea');
+  const submitBtn = document.getElementById('freeInputSubmitBtn');
+  const cancelBtn = document.getElementById('freeInputCancelBtn');
+
+  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  textarea.value = '';
+  textarea.focus();
+
+  const handleSubmit = async () => {
+    const promptText = textarea.value.trim();
+    if (!promptText) {
+      alert('Please enter a prompt.');
+      return;
+    }
+
+    hideFreeInputForm();
+    
+    try {
+      await handleTryInJulesAfterAuth(promptText);
+    } catch (error) {
+      console.error('Error submitting free input:', error);
+      alert('Failed to submit prompt: ' + error.message);
+    }
+  };
+
+  const handleCancel = () => {
+    hideFreeInputForm();
+  };
+
+  submitBtn.onclick = handleSubmit;
+  cancelBtn.onclick = handleCancel;
+
+  textarea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      handleSubmit();
+    }
+  });
+}
+
+export function hideFreeInputForm() {
+  const modal = document.getElementById('freeInputModal');
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 }
