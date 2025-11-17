@@ -48,10 +48,19 @@ exports.runJules = functions.https.onCall(async (data, context) => {
   }
 
   const promptText = (data && data.promptText) || "";
+  const environment = (data && data.environment) || "myplanet";
 
   if (!promptText || typeof promptText !== "string" || promptText.length < 4) {
     throw new functions.https.HttpsError("invalid-argument", "Prompt text is required (minimum 4 characters)");
   }
+
+  if (!["planet", "myplanet"].includes(environment)) {
+    throw new functions.https.HttpsError("invalid-argument", "Environment must be 'planet' or 'myplanet'");
+  }
+
+  const sourceRepo = environment === "myplanet" 
+    ? "sources/github/open-learning-exchange/myplanet"
+    : "sources/github/open-learning-exchange/planet";
 
   try {
     const db = admin.firestore();
@@ -78,10 +87,9 @@ exports.runJules = functions.https.onCall(async (data, context) => {
       title: "Prompt-Sharing Trigger",
       prompt: promptText,
       sourceContext: {
-        source: "sources/github/open-learning-exchange/myplanet",
+        source: sourceRepo,
         githubRepoContext: { startingBranch: "master" }
-      },
-      automationMode: "AUTO_CREATE_PR"
+      }
     };
 
     let r, json;
@@ -145,12 +153,26 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
     const decodedToken = await admin.auth().verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
-    const { promptText } = req.body || {};
+    const { promptText, environment } = req.body || {};
+    const env = environment || "myplanet";
+
+    console.log(`[DEBUG] Request received - environment: ${env}`);
 
     if (!promptText || typeof promptText !== 'string' || promptText.length < 4) {
       res.status(400).json({ error: 'promptText must be a non-empty string (min 4 chars)' });
       return;
     }
+
+    if (!["planet", "myplanet"].includes(env)) {
+      res.status(400).json({ error: "Environment must be 'planet' or 'myplanet'" });
+      return;
+    }
+
+    const sourceRepo = env === "myplanet" 
+      ? "sources/github/open-learning-exchange/myplanet"
+      : "sources/github/open-learning-exchange/planet";
+    
+    console.log(`[DEBUG] Environment=${env}, sourceRepo=${sourceRepo}`);
 
     const db = admin.firestore();
     const snap = await db.doc(`julesKeys/${uid}`).get();
@@ -179,10 +201,9 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
       title: "Prompt-Sharing Trigger",
       prompt: promptText,
       sourceContext: {
-        source: "sources/github/open-learning-exchange/myplanet",
+        source: sourceRepo,
         githubRepoContext: { startingBranch: "master" }
-      },
-      automationMode: "AUTO_CREATE_PR"
+      }
     };
 
     let r, json;
