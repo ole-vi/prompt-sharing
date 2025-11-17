@@ -50,7 +50,7 @@
   <div class="wrap">
     <aside id="sidebar" class="card">
       <input id="search" placeholder="Search prompts..." />
-      <button class="btn" id="freeInputBtn" title="Send a custom prompt to Jules" style="width:100%; text-align:center;">✏️ Free Input to Jules</button>
+      <button class="btn" id="freeInputBtn" title="Send a custom prompt to Jules">✏️ Free Input to Jules</button>
       <div id="list"></div>
       <div style="padding:8px 6px; color:var(--muted); font-size:12px;">
         Add prompts by committing <code>.md</code> files to <code>/prompts</code> in your repo. Use a first-level heading for the title.
@@ -124,14 +124,14 @@
   </div>
 
   <!-- Free Input Modal -->
-  <div id="freeInputModal" style="display:none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; flex-direction:column; align-items:center; justify-content:center;">
-    <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; max-width:600px; width:90%; max-height:80vh; box-shadow:0 8px 24px rgba(0,0,0,0.4); display:flex; flex-direction:column;">
-      <h2 style="margin:0 0 12px; font-size:18px;">Free Input to Jules</h2>
-      <p style="margin:0 0 16px; color:var(--muted); font-size:13px;">Enter your custom prompt below and submit to Jules:</p>
-      <textarea id="freeInputTextarea" placeholder="Enter your prompt here..." style="width:100%; min-height:200px; padding:12px; border:1px solid var(--border); border-radius:8px; background:#12162a; color:var(--text); outline:none; margin-bottom:16px; box-sizing:border-box; resize:vertical; font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, Noto Sans, Liberation Sans, Helvetica Neue, sans-serif; font-size:14px;"></textarea>
-      <div style="display:flex; gap:8px; justify-content:flex-end;">
-        <button id="freeInputCancelBtn" class="btn" style="padding:8px 12px;">Cancel</button>
-        <button id="freeInputSubmitBtn" class="btn" style="padding:8px 12px; border-color:var(--accent); color:var(--accent);">Submit to Jules</button>
+  <div id="freeInputModal" class="modal">
+    <div class="modal-content modal-lg">
+      <h2>Free Input to Jules</h2>
+      <p>Enter your custom prompt below and submit to Jules:</p>
+      <textarea id="freeInputTextarea" placeholder="Enter your prompt here..." class="modal-textarea"></textarea>
+      <div class="modal-buttons">
+        <button id="freeInputCancelBtn" class="btn">Cancel</button>
+        <button id="freeInputSubmitBtn" class="btn primary">Submit to Jules</button>
       </div>
     </div>
   </div>
