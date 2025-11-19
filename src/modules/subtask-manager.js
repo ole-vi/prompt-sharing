@@ -98,19 +98,16 @@ export function analyzePromptStructure(text) {
  */
 export function buildSubtaskSequence(fullPrompt, selectedSubtasks) {
   return selectedSubtasks.map((subtask, idx) => {
-    const context =
-      selectedSubtasks.length > 1
-        ? `[Part ${idx + 1} of ${selectedSubtasks.length}]\n\n`
-        : '';
-
     const header =
       subtask.title && subtask.title !== `Part ${idx + 1}`
         ? `**Task:** ${subtask.title}\n\n`
         : '';
 
+    const julesContent = header + subtask.content;
+
     return {
       ...subtask,
-      fullContent: context + header + subtask.content,
+      fullContent: julesContent,
       sequenceInfo: {
         current: idx + 1,
         total: selectedSubtasks.length
