@@ -1,9 +1,5 @@
-// ===== Subtask Manager Module =====
-// Handles breaking down long prompts into logical subtasks
-
 /**
- * Parse task-stub blocks from markdown
- * Format: :::task-stub{title="..."}...:::
+ * Parse task-stub blocks: :::task-stub{title="..."}...:::
  */
 export function extractTaskStubs(text) {
   const taskStubRegex = /:::task-stub\{title="([^"]+)"\}\s*([\s\S]*?):::/g;
@@ -21,7 +17,7 @@ export function extractTaskStubs(text) {
 }
 
 /**
- * Break prompt into paragraphs (sections separated by blank lines or headings)
+ * Break prompt into paragraphs by blank lines and headings
  */
 export function breakIntoParagraphs(text) {
   const sections = [];
@@ -33,10 +29,9 @@ export function breakIntoParagraphs(text) {
     const isHeading = line.startsWith('#');
     const isBlank = line.trim() === '';
 
-    // Start new section on headings or substantial blank lines
     if ((isHeading || isBlank) && currentSection.length > 0) {
       const sectionText = currentSection.join('\n').trim();
-      if (sectionText.length > 50) { // Only include substantial sections
+      if (sectionText.length > 50) {
         sections.push({ content: sectionText });
       }
       currentSection = [];
@@ -48,7 +43,6 @@ export function breakIntoParagraphs(text) {
     }
   }
 
-  // Add final section
   if (currentSection.length > 0) {
     const sectionText = currentSection.join('\n').trim();
     if (sectionText.length > 50) {
@@ -100,7 +94,7 @@ export function analyzePromptStructure(text) {
 }
 
 /**
- * Build subtasks with full context
+ * Add sequence headers and context to each subtask
  */
 export function buildSubtaskSequence(fullPrompt, selectedSubtasks) {
   return selectedSubtasks.map((subtask, idx) => {
@@ -131,7 +125,7 @@ export function buildSubtaskSequence(fullPrompt, selectedSubtasks) {
 export function generateSplitSummary(subtasks) {
   const summary = {
     totalSubtasks: subtasks.length,
-    estimatedMinutes: Math.ceil(subtasks.length * 5), // Rough estimate: 5 min per subtask
+    estimatedMinutes: Math.ceil(subtasks.length * 5),
     breakdown: subtasks.map((st, idx) => ({
       number: idx + 1,
       title: st.title || `Part ${idx + 1}`,
@@ -143,7 +137,7 @@ export function generateSplitSummary(subtasks) {
 }
 
 /**
- * Validate subtask configuration
+ * Check for validation errors and warnings
  */
 export function validateSubtasks(subtasks) {
   const errors = [];
