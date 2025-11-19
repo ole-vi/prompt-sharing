@@ -136,6 +136,50 @@
     </div>
   </div>
 
+  <!-- Subtask Split Modal -->
+  <div id="subtaskSplitModal" class="modal">
+    <div class="modal-content modal-lg">
+      <h2>Break into Subtasks</h2>
+      <p id="splitRecommendation" style="color: var(--muted); font-size: 13px; margin-bottom: 12px;"></p>
+      
+      <!-- Mode selector -->
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+        <button id="splitModeSendAll" class="btn" style="flex: 1; padding: 8px; border: 1px solid var(--border); background: var(--card); cursor: pointer;">📤 Send as One</button>
+        <button id="splitModeSplitTasks" class="btn" style="flex: 1; padding: 8px; border: 1px solid var(--border); background: var(--card); cursor: pointer;">✂️ Split into Subtasks</button>
+      </div>
+
+      <!-- Preview panel (hidden by default) -->
+      <div id="splitPreviewPanel" style="display: none; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.02); max-height: 300px; overflow-y: auto;">
+        <div id="splitPreviewList" style="padding: 12px;"></div>
+      </div>
+
+      <!-- Summary stats (hidden by default) -->
+      <div id="splitSummary" style="display: none; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 12px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <div style="color: var(--muted); margin-bottom: 4px;">Total Subtasks</div>
+            <div id="splitCount" style="font-weight: 600; font-size: 16px;">0</div>
+          </div>
+          <div>
+            <div style="color: var(--muted); margin-bottom: 4px;">Estimated Time</div>
+            <div id="splitTime" style="font-weight: 600; font-size: 16px;">0m</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subtask list for editing (hidden by default) -->
+      <div id="splitEditPanel" style="display: none; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; max-height: 250px; overflow-y: auto; background: rgba(255,255,255,0.02);">
+        <div id="splitEditList" style="padding: 8px;"></div>
+      </div>
+
+      <div class="modal-buttons">
+        <button id="splitCancelBtn" class="btn">Cancel</button>
+        <button id="splitConfirmBtn" class="btn primary" style="display: none;">Send Subtasks</button>
+        <button id="splitSendAllBtn" class="btn primary">Send to Jules</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="src/app.js"></script>
 </body>
 </html>
