@@ -95,11 +95,12 @@ export async function callRunJulesFunction(promptText, environment = "myplanet")
     return result.sessionUrl || null;
   } catch (error) {
     console.error('Cloud function call failed:', error);
-    alert('Failed to invoke Jules function: ' + error.message);
     const julesBtn = document.getElementById('julesBtn');
-    julesBtn.textContent = '⚡ Try in Jules';
-    julesBtn.disabled = false;
-    return null;
+    if (julesBtn) {
+      julesBtn.textContent = '⚡ Try in Jules';
+      julesBtn.disabled = false;
+    }
+    throw error;
   }
 }
 
@@ -242,11 +243,64 @@ export function hideJulesEnvModal() {
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 }
 
+
+export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
+  return new Promise((resolve) => {
+    console.log('[ErrorModal] Showing error modal for subtask', subtaskNumber);
+    const modal = document.getElementById('subtaskErrorModal');
+    const subtaskNumDiv = document.getElementById('errorSubtaskNumber');
+    const messageDiv = document.getElementById('errorMessage');
+    const detailsDiv = document.getElementById('errorDetails');
+    const retryBtn = document.getElementById('subtaskErrorRetryBtn');
+    const skipBtn = document.getElementById('subtaskErrorSkipBtn');
+    const cancelBtn = document.getElementById('subtaskErrorCancelBtn');
+    const retryDelayCheckbox = document.getElementById('errorRetryDelayCheckbox');
+
+    if (!modal) {
+      console.error('[ErrorModal] Modal element not found!');
+      resolve({ action: 'cancel', shouldDelay: false });
+      return;
+    }
+
+    subtaskNumDiv.textContent = `Subtask ${subtaskNumber} of ${totalSubtasks}`;
+    messageDiv.textContent = error.message || String(error);
+    detailsDiv.textContent = error.toString();
+
+    modal.style.removeProperty('display');
+    modal.style.setProperty('display', 'flex', 'important');
+    console.log('[ErrorModal] Modal displayed, waiting for user action...', modal.style.display);
+
+    const handleAction = (action) => {
+      console.log('[ErrorModal] User selected:', action);
+      retryBtn.onclick = null;
+      skipBtn.onclick = null;
+      cancelBtn.onclick = null;
+
+      hideSubtaskErrorModal();
+
+      const shouldDelay = action === 'retry' ? retryDelayCheckbox.checked : false;
+      resolve({ action, shouldDelay });
+    };
+
+    retryBtn.onclick = () => handleAction('retry');
+    skipBtn.onclick = () => handleAction('skip');
+    cancelBtn.onclick = () => handleAction('cancel');
+  });
+}
+
+export function hideSubtaskErrorModal() {
+  const modal = document.getElementById('subtaskErrorModal');
+  if (modal) {
+    modal.style.removeProperty('display');
+  }
+}
+
 export function initJulesKeyModalListeners() {
   const keyModal = document.getElementById('julesKeyModal');
   const envModal = document.getElementById('julesEnvModal');
   const freeInputModal = document.getElementById('freeInputModal');
   const profileModal = document.getElementById('userProfileModal');
+  const errorModal = document.getElementById('subtaskErrorModal');
   const keyInput = document.getElementById('julesKeyInput');
 
   document.addEventListener('keydown', (e) => {
@@ -291,6 +345,14 @@ export function initJulesKeyModalListeners() {
       hideUserProfileModal();
     }
   });
+
+  if (errorModal) {
+    errorModal.addEventListener('click', (e) => {
+      if (e.target === errorModal) {
+        e.preventDefault();
+      }
+    });
+  }
 
   keyInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
@@ -614,39 +676,91 @@ async function submitSubtasks(subtasks) {
 
   if (!proceed) return;
 
-  // Submit each subtask
+  // Submit each subtask with error handling
+  let skippedCount = 0;
+  let successCount = 0;
+  
   for (let i = 0; i < sequenced.length; i++) {
     const subtask = sequenced[i];
     const status = `(${subtask.sequenceInfo.current}/${subtask.sequenceInfo.total})`;
     
     console.log(`[Subtask] Sending part ${subtask.sequenceInfo.current}/${subtask.sequenceInfo.total}`);
     
-    try {
-      const sessionUrl = await callRunJulesFunction(subtask.fullContent, 'myplanet');
-      if (sessionUrl) {
-        // Open first few in tabs, then show remaining
-        if (i < 3) {
-          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-        } else if (i === 3) {
-          alert(`Opening subtask ${subtask.sequenceInfo.current}. Remaining ${totalCount - 3} subtasks are queued. Check your Jules notifications.`);
-          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+    let retryCount = 0;
+    let maxRetries = 3;
+    let submitted = false;
+
+    while (retryCount < maxRetries && !submitted) {
+      try {
+        const sessionUrl = await callRunJulesFunction(subtask.fullContent, 'myplanet');
+        if (sessionUrl) {
+          if (successCount < 3) {
+            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          } else if (successCount === 3) {
+            alert(`Opening subtask ${subtask.sequenceInfo.current}. Remaining ${totalCount - successCount - 1} subtasks are queued. Check your Jules notifications.`);
+            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          }
+        }
+        
+        successCount++;
+        submitted = true;
+      } catch (error) {
+        console.error(`Error submitting subtask ${subtask.sequenceInfo.current}:`, error);
+        retryCount++;
+        console.log(`[Subtask] Error on attempt ${retryCount}/${maxRetries}`);
+
+        if (retryCount < maxRetries) {
+          console.log(`[Subtask] Showing error modal for subtask ${subtask.sequenceInfo.current}`);
+          const result = await showSubtaskErrorModal(
+            subtask.sequenceInfo.current,
+            subtask.sequenceInfo.total,
+            error
+          );
+          console.log(`[Subtask] User chose: ${result.action}`);
+
+          if (result.action === 'cancel') {
+            console.log('[Subtask] Cancelling all remaining tasks');
+            alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
+            return;
+          } else if (result.action === 'skip') {
+            console.log(`[Subtask] Skipping subtask ${subtask.sequenceInfo.current}`);
+            skippedCount++;
+            submitted = true;
+          } else if (result.action === 'retry') {
+            if (result.shouldDelay) {
+              console.log('[Subtask] Waiting 5 seconds before retry...');
+              await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+            console.log(`[Subtask] Retrying subtask ${subtask.sequenceInfo.current} (attempt ${retryCount + 1}/${maxRetries})`);
+          }
+        } else {
+          const result = await showSubtaskErrorModal(
+            subtask.sequenceInfo.current,
+            subtask.sequenceInfo.total,
+            error
+          );
+
+          if (result.action === 'cancel') {
+            console.log('[Subtask] Cancelling all remaining tasks');
+            alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
+            return;
+          } else {
+            skippedCount++;
+            submitted = true;
+          }
         }
       }
-      
-      // Small delay between submissions to avoid rate limiting
-      if (i < sequenced.length - 1) {
+
+      if (!submitted && i < sequenced.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
-    } catch (error) {
-      console.error(`Error submitting subtask ${i + 1}:`, error);
-      const continueSubmitting = confirm(
-        `Error sending part ${subtask.sequenceInfo.current}: ${error.message}\n\n` +
-        `Continue with remaining subtasks?`
-      );
-      if (!continueSubmitting) break;
     }
   }
 
-  alert(`✓ Submitted ${sequenced.length} subtask${sequenced.length > 1 ? 's' : ''} to Jules!`);
+  const summary = `✓ Completed!\n\n` +
+    `Successful: ${successCount}/${totalCount}\n` +
+    `Skipped: ${skippedCount}/${totalCount}`;
+  alert(summary);
+  console.log('[Subtask] Summary:', summary);
 }
 
