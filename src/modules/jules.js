@@ -451,6 +451,7 @@ export function showFreeInputForm() {
   const modal = document.getElementById('freeInputModal');
   const textarea = document.getElementById('freeInputTextarea');
   const submitBtn = document.getElementById('freeInputSubmitBtn');
+  const splitBtn = document.getElementById('freeInputSplitBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
 
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
@@ -467,11 +468,29 @@ export function showFreeInputForm() {
     hideFreeInputForm();
     
     try {
-      // Show subtask split modal instead of going directly to Jules
-      showSubtaskSplitModal(promptText);
+      // Submit directly as one (no split modal)
+      await handleTryInJulesAfterAuth(promptText);
     } catch (error) {
       console.error('Error submitting free input:', error);
       alert('Failed to submit prompt: ' + error.message);
+    }
+  };
+
+  const handleSplit = async () => {
+    const promptText = textarea.value.trim();
+    if (!promptText) {
+      alert('Please enter a prompt.');
+      return;
+    }
+
+    hideFreeInputForm();
+    
+    try {
+      // Show subtask split modal
+      showSubtaskSplitModal(promptText);
+    } catch (error) {
+      console.error('Error with split:', error);
+      alert('Failed to process prompt: ' + error.message);
     }
   };
 
@@ -480,6 +499,7 @@ export function showFreeInputForm() {
   };
 
   submitBtn.onclick = handleSubmit;
+  splitBtn.onclick = handleSplit;
   cancelBtn.onclick = handleCancel;
 
   textarea.addEventListener('keydown', (e) => {
@@ -504,83 +524,25 @@ let currentAnalysis = null; // Store analysis for mode switching
 export function showSubtaskSplitModal(promptText) {
   console.log('[DEBUG] showSubtaskSplitModal called with prompt length:', promptText.length);
   currentFullPrompt = promptText;
-  splitMode = 'send-all';
   
   const modal = document.getElementById('subtaskSplitModal');
-  console.log('[DEBUG] modal element:', modal);
-  
-  const recommendation = document.getElementById('splitRecommendation');
-  const modeAll = document.getElementById('splitModeSendAll');
-  const modeSplit = document.getElementById('splitModeSplitTasks');
-  const previewPanel = document.getElementById('splitPreviewPanel');
-  const summaryPanel = document.getElementById('splitSummary');
   const editPanel = document.getElementById('splitEditPanel');
   const confirmBtn = document.getElementById('splitConfirmBtn');
-  const sendAllBtn = document.getElementById('splitSendAllBtn');
   const cancelBtn = document.getElementById('splitCancelBtn');
-
-  console.log('[DEBUG] All elements found:', { recommendation: !!recommendation, modeAll: !!modeAll, modeSplit: !!modeSplit });
 
   // Analyze the prompt structure
   const analysis = analyzePromptStructure(promptText);
-  currentAnalysis = analysis; // Store for mode switching
   currentSubtasks = analysis.subtasks;
   
   console.log('[DEBUG] Analysis complete, subtasks:', currentSubtasks.length);
-  recommendation.textContent = analysis.recommendation;
 
   // Show modal
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
-  console.log('[DEBUG] Modal shown');
 
-  // Mode handlers
-  const selectMode = (mode) => {
-    console.log('[DEBUG] selectMode called:', mode);
-    splitMode = mode;
-    
-    // Update button styles
-    if (mode === 'send-all') {
-      modeAll.style.borderColor = 'var(--accent)';
-      modeAll.style.color = 'var(--accent)';
-      modeSplit.style.borderColor = 'var(--border)';
-      modeSplit.style.color = 'inherit';
-      
-      previewPanel.style.display = 'none';
-      summaryPanel.style.display = 'none';
-      editPanel.style.display = 'none';
-      confirmBtn.style.display = 'none';
-      sendAllBtn.style.display = 'block';
-    } else {
-      modeSplit.style.borderColor = 'var(--accent)';
-      modeSplit.style.color = 'var(--accent)';
-      modeAll.style.borderColor = 'var(--border)';
-      modeAll.style.color = 'inherit';
-      
-      // Make sure currentSubtasks is initialized to all subtasks
-      currentSubtasks = currentAnalysis.subtasks;
-      console.log('[DEBUG] Switched to split mode, initialized currentSubtasks to:', currentSubtasks.length);
-      
-      // Show preview and summary
-      renderSplitPreview(currentSubtasks);
-      previewPanel.style.display = 'block';
-      
-      // Show summary
-      const summary = generateSplitSummary(currentSubtasks);
-      document.getElementById('splitCount').textContent = summary.totalSubtasks;
-      document.getElementById('splitTime').textContent = summary.estimatedMinutes + 'm';
-      summaryPanel.style.display = 'block';
-      
-      editPanel.style.display = 'block';
-      renderSplitEdit(currentSubtasks);
-      
-      confirmBtn.style.display = 'block';
-      sendAllBtn.style.display = 'none';
-    }
-  };
+  // Render the checklist
+  renderSplitEdit(currentSubtasks);
 
-  modeAll.onclick = () => selectMode('send-all');
-  modeSplit.onclick = () => selectMode('split-tasks');
-
+  // Button handlers
   confirmBtn.onclick = async () => {
     const validation = validateSubtasks(currentSubtasks);
     if (!validation.valid) {
@@ -599,34 +561,9 @@ export function showSubtaskSplitModal(promptText) {
     await submitSubtasks(subtasksToSubmit);
   };
 
-  sendAllBtn.onclick = async () => {
-    hideSubtaskSplitModal();
-    await handleTryInJulesAfterAuth(promptText);
-  };
-
   cancelBtn.onclick = () => {
     hideSubtaskSplitModal();
   };
-
-  // Select 'send-all' mode by default
-  selectMode('send-all');
-}
-
-function renderSplitPreview(subtasks) {
-  const preview = document.getElementById('splitPreviewList');
-  preview.innerHTML = subtasks
-    .map((st, idx) => `
-      <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
-        <div style="font-weight: 600; font-size: 12px; color: var(--accent);">Part ${idx + 1}</div>
-        <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">
-          ${st.title || `Part ${idx + 1}`}
-        </div>
-        <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">
-          ${st.content.length} chars · ${st.content.split('\n').length} lines
-        </div>
-      </div>
-    `)
-    .join('');
 }
 
 function renderSplitEdit(subtasks) {
@@ -652,10 +589,6 @@ function renderSplitEdit(subtasks) {
         return document.getElementById(`subtask-${i}`).checked;
       });
       console.log('[DEBUG] Checkbox changed, currentSubtasks now:', currentSubtasks.length);
-      // Update summary
-      const summary = generateSplitSummary(currentSubtasks);
-      document.getElementById('splitCount').textContent = summary.totalSubtasks;
-      document.getElementById('splitTime').textContent = summary.estimatedMinutes + 'm';
     });
   });
 }
