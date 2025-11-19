@@ -1,6 +1,12 @@
 // ===== Jules Integration Module =====
 
 import { getCurrentUser } from './auth.js';
+import { 
+  analyzePromptStructure, 
+  buildSubtaskSequence, 
+  generateSplitSummary, 
+  validateSubtasks 
+} from './subtask-manager.js';
 
 export async function checkJulesKey(uid) {
   try {
@@ -89,11 +95,12 @@ export async function callRunJulesFunction(promptText, environment = "myplanet")
     return result.sessionUrl || null;
   } catch (error) {
     console.error('Cloud function call failed:', error);
-    alert('Failed to invoke Jules function: ' + error.message);
     const julesBtn = document.getElementById('julesBtn');
-    julesBtn.textContent = '⚡ Try in Jules';
-    julesBtn.disabled = false;
-    return null;
+    if (julesBtn) {
+      julesBtn.textContent = '⚡ Try in Jules';
+      julesBtn.disabled = false;
+    }
+    throw error;
   }
 }
 
@@ -236,11 +243,64 @@ export function hideJulesEnvModal() {
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 }
 
+
+export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
+  return new Promise((resolve) => {
+    console.log('[ErrorModal] Showing error modal for subtask', subtaskNumber);
+    const modal = document.getElementById('subtaskErrorModal');
+    const subtaskNumDiv = document.getElementById('errorSubtaskNumber');
+    const messageDiv = document.getElementById('errorMessage');
+    const detailsDiv = document.getElementById('errorDetails');
+    const retryBtn = document.getElementById('subtaskErrorRetryBtn');
+    const skipBtn = document.getElementById('subtaskErrorSkipBtn');
+    const cancelBtn = document.getElementById('subtaskErrorCancelBtn');
+    const retryDelayCheckbox = document.getElementById('errorRetryDelayCheckbox');
+
+    if (!modal) {
+      console.error('[ErrorModal] Modal element not found!');
+      resolve({ action: 'cancel', shouldDelay: false });
+      return;
+    }
+
+    subtaskNumDiv.textContent = `Subtask ${subtaskNumber} of ${totalSubtasks}`;
+    messageDiv.textContent = error.message || String(error);
+    detailsDiv.textContent = error.toString();
+
+    modal.style.removeProperty('display');
+    modal.style.setProperty('display', 'flex', 'important');
+    console.log('[ErrorModal] Modal displayed, waiting for user action...', modal.style.display);
+
+    const handleAction = (action) => {
+      console.log('[ErrorModal] User selected:', action);
+      retryBtn.onclick = null;
+      skipBtn.onclick = null;
+      cancelBtn.onclick = null;
+
+      hideSubtaskErrorModal();
+
+      const shouldDelay = action === 'retry' ? retryDelayCheckbox.checked : false;
+      resolve({ action, shouldDelay });
+    };
+
+    retryBtn.onclick = () => handleAction('retry');
+    skipBtn.onclick = () => handleAction('skip');
+    cancelBtn.onclick = () => handleAction('cancel');
+  });
+}
+
+export function hideSubtaskErrorModal() {
+  const modal = document.getElementById('subtaskErrorModal');
+  if (modal) {
+    modal.style.removeProperty('display');
+  }
+}
+
 export function initJulesKeyModalListeners() {
   const keyModal = document.getElementById('julesKeyModal');
   const envModal = document.getElementById('julesEnvModal');
   const freeInputModal = document.getElementById('freeInputModal');
   const profileModal = document.getElementById('userProfileModal');
+  const errorModal = document.getElementById('subtaskErrorModal');
   const keyInput = document.getElementById('julesKeyInput');
 
   document.addEventListener('keydown', (e) => {
@@ -285,6 +345,14 @@ export function initJulesKeyModalListeners() {
       hideUserProfileModal();
     }
   });
+
+  if (errorModal) {
+    errorModal.addEventListener('click', (e) => {
+      if (e.target === errorModal) {
+        e.preventDefault();
+      }
+    });
+  }
 
   keyInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
@@ -445,6 +513,7 @@ export function showFreeInputForm() {
   const modal = document.getElementById('freeInputModal');
   const textarea = document.getElementById('freeInputTextarea');
   const submitBtn = document.getElementById('freeInputSubmitBtn');
+  const splitBtn = document.getElementById('freeInputSplitBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
 
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
@@ -461,10 +530,29 @@ export function showFreeInputForm() {
     hideFreeInputForm();
     
     try {
+      // Submit directly as one (no split modal)
       await handleTryInJulesAfterAuth(promptText);
     } catch (error) {
       console.error('Error submitting free input:', error);
       alert('Failed to submit prompt: ' + error.message);
+    }
+  };
+
+  const handleSplit = async () => {
+    const promptText = textarea.value.trim();
+    if (!promptText) {
+      alert('Please enter a prompt.');
+      return;
+    }
+
+    hideFreeInputForm();
+    
+    try {
+      // Show subtask split modal
+      showSubtaskSplitModal(promptText);
+    } catch (error) {
+      console.error('Error with split:', error);
+      alert('Failed to process prompt: ' + error.message);
     }
   };
 
@@ -473,6 +561,7 @@ export function showFreeInputForm() {
   };
 
   submitBtn.onclick = handleSubmit;
+  splitBtn.onclick = handleSplit;
   cancelBtn.onclick = handleCancel;
 
   textarea.addEventListener('keydown', (e) => {
@@ -486,3 +575,192 @@ export function hideFreeInputForm() {
   const modal = document.getElementById('freeInputModal');
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 }
+
+// ===== Subtask Split Flow =====
+
+let currentFullPrompt = '';
+let currentSubtasks = [];
+let splitMode = 'send-all'; // 'send-all' or 'split-tasks'
+let currentAnalysis = null; // Store analysis for mode switching
+
+export function showSubtaskSplitModal(promptText) {
+  console.log('[DEBUG] showSubtaskSplitModal called with prompt length:', promptText.length);
+  currentFullPrompt = promptText;
+  
+  const modal = document.getElementById('subtaskSplitModal');
+  const editPanel = document.getElementById('splitEditPanel');
+  const confirmBtn = document.getElementById('splitConfirmBtn');
+  const cancelBtn = document.getElementById('splitCancelBtn');
+
+  // Analyze the prompt structure
+  const analysis = analyzePromptStructure(promptText);
+  currentSubtasks = analysis.subtasks;
+  
+  console.log('[DEBUG] Analysis complete, subtasks:', currentSubtasks.length);
+
+  // Show modal
+  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+
+  // Render the checklist
+  renderSplitEdit(currentSubtasks);
+
+  // Button handlers
+  confirmBtn.onclick = async () => {
+    const validation = validateSubtasks(currentSubtasks);
+    if (!validation.valid) {
+      alert('Error:\n' + validation.errors.join('\n'));
+      return;
+    }
+    
+    if (validation.warnings.length > 0) {
+      const proceed = confirm('Warnings:\n' + validation.warnings.join('\n') + '\n\nProceed anyway?');
+      if (!proceed) return;
+    }
+
+    // Save subtasks BEFORE hiding modal (which clears them)
+    const subtasksToSubmit = [...currentSubtasks];
+    hideSubtaskSplitModal();
+    await submitSubtasks(subtasksToSubmit);
+  };
+
+  cancelBtn.onclick = () => {
+    hideSubtaskSplitModal();
+  };
+}
+
+function renderSplitEdit(subtasks) {
+  const editList = document.getElementById('splitEditList');
+  editList.innerHTML = subtasks
+    .map((st, idx) => `
+      <div style="padding: 8px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center;">
+        <input type="checkbox" id="subtask-${idx}" checked style="cursor: pointer;" />
+        <label for="subtask-${idx}" style="flex: 1; cursor: pointer; font-size: 13px;">
+          <strong>Part ${idx + 1}:</strong> ${st.title || `Part ${idx + 1}`}
+        </label>
+        <span style="font-size: 11px; color: var(--muted);">${st.content.length}c</span>
+      </div>
+    `)
+    .join('');
+
+  // Add change listeners to checkboxes
+  subtasks.forEach((_, idx) => {
+    const checkbox = document.getElementById(`subtask-${idx}`);
+    checkbox.addEventListener('change', () => {
+      // Filter based on checked state
+      currentSubtasks = subtasks.filter((_, i) => {
+        return document.getElementById(`subtask-${i}`).checked;
+      });
+      console.log('[DEBUG] Checkbox changed, currentSubtasks now:', currentSubtasks.length);
+    });
+  });
+}
+
+export function hideSubtaskSplitModal() {
+  const modal = document.getElementById('subtaskSplitModal');
+  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  currentSubtasks = [];
+  splitMode = 'send-all';
+}
+
+async function submitSubtasks(subtasks) {
+  console.log('[DEBUG] submitSubtasks called with:', subtasks.length, 'subtasks');
+  const sequenced = buildSubtaskSequence(currentFullPrompt, subtasks);
+  
+  // Show confirmation
+  const totalCount = sequenced.length;
+  const proceed = confirm(
+    `Ready to send ${totalCount} subtask${totalCount > 1 ? 's' : ''} to Jules.\n\n` +
+    `Each subtask will be submitted sequentially. This may take a few minutes.\n\n` +
+    `Proceed?`
+  );
+
+  if (!proceed) return;
+
+  // Submit each subtask with error handling
+  let skippedCount = 0;
+  let successCount = 0;
+  
+  for (let i = 0; i < sequenced.length; i++) {
+    const subtask = sequenced[i];
+    const status = `(${subtask.sequenceInfo.current}/${subtask.sequenceInfo.total})`;
+    
+    console.log(`[Subtask] Sending part ${subtask.sequenceInfo.current}/${subtask.sequenceInfo.total}`);
+    
+    let retryCount = 0;
+    let maxRetries = 3;
+    let submitted = false;
+
+    while (retryCount < maxRetries && !submitted) {
+      try {
+        const sessionUrl = await callRunJulesFunction(subtask.fullContent, 'myplanet');
+        if (sessionUrl) {
+          if (successCount < 3) {
+            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          } else if (successCount === 3) {
+            alert(`Opening subtask ${subtask.sequenceInfo.current}. Remaining ${totalCount - successCount - 1} subtasks are queued. Check your Jules notifications.`);
+            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          }
+        }
+        
+        successCount++;
+        submitted = true;
+      } catch (error) {
+        console.error(`Error submitting subtask ${subtask.sequenceInfo.current}:`, error);
+        retryCount++;
+        console.log(`[Subtask] Error on attempt ${retryCount}/${maxRetries}`);
+
+        if (retryCount < maxRetries) {
+          console.log(`[Subtask] Showing error modal for subtask ${subtask.sequenceInfo.current}`);
+          const result = await showSubtaskErrorModal(
+            subtask.sequenceInfo.current,
+            subtask.sequenceInfo.total,
+            error
+          );
+          console.log(`[Subtask] User chose: ${result.action}`);
+
+          if (result.action === 'cancel') {
+            console.log('[Subtask] Cancelling all remaining tasks');
+            alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
+            return;
+          } else if (result.action === 'skip') {
+            console.log(`[Subtask] Skipping subtask ${subtask.sequenceInfo.current}`);
+            skippedCount++;
+            submitted = true;
+          } else if (result.action === 'retry') {
+            if (result.shouldDelay) {
+              console.log('[Subtask] Waiting 5 seconds before retry...');
+              await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+            console.log(`[Subtask] Retrying subtask ${subtask.sequenceInfo.current} (attempt ${retryCount + 1}/${maxRetries})`);
+          }
+        } else {
+          const result = await showSubtaskErrorModal(
+            subtask.sequenceInfo.current,
+            subtask.sequenceInfo.total,
+            error
+          );
+
+          if (result.action === 'cancel') {
+            console.log('[Subtask] Cancelling all remaining tasks');
+            alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
+            return;
+          } else {
+            skippedCount++;
+            submitted = true;
+          }
+        }
+      }
+
+      if (!submitted && i < sequenced.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+  }
+
+  const summary = `✓ Completed!\n\n` +
+    `Successful: ${successCount}/${totalCount}\n` +
+    `Skipped: ${skippedCount}/${totalCount}`;
+  alert(summary);
+  console.log('[Subtask] Summary:', summary);
+}
+

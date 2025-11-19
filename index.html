@@ -127,11 +127,56 @@
   <div id="freeInputModal" class="modal">
     <div class="modal-content modal-lg">
       <h2>Free Input to Jules</h2>
-      <p>Enter your custom prompt below and submit to Jules:</p>
+      <p>Enter your custom prompt below:</p>
       <textarea id="freeInputTextarea" placeholder="Enter your prompt here..." class="modal-textarea"></textarea>
       <div class="modal-buttons">
         <button id="freeInputCancelBtn" class="btn">Cancel</button>
+        <button id="freeInputSplitBtn" class="btn">✂️ Split into Subtasks</button>
         <button id="freeInputSubmitBtn" class="btn primary">Submit to Jules</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subtask Split Modal -->
+  <div id="subtaskSplitModal" class="modal">
+    <div class="modal-content modal-lg">
+      <h2>Break into Subtasks</h2>
+      
+      <!-- Subtask list for editing -->
+      <div id="splitEditPanel" style="margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; max-height: 400px; overflow-y: auto; background: rgba(255,255,255,0.02);">
+        <div id="splitEditList" style="padding: 8px;"></div>
+      </div>
+
+      <div class="modal-buttons">
+        <button id="splitCancelBtn" class="btn">Cancel</button>
+        <button id="splitConfirmBtn" class="btn primary">Send Subtasks</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subtask Error Modal -->
+  <div id="subtaskErrorModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <h2 style="margin: 0 0 8px; font-size: 18px; color: #ff6b6b;">⚠️ Subtask Failed</h2>
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; background: rgba(255,107,107,0.1); padding: 12px; border-radius: 8px; border-left: 3px solid #ff6b6b;">
+        <div style="flex: 1;">
+          <div id="errorSubtaskNumber" style="font-size: 12px; color: var(--muted); margin-bottom: 4px;"></div>
+          <div id="errorMessage" style="font-size: 13px; color: var(--text);"></div>
+        </div>
+      </div>
+      <div style="margin-bottom: 16px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: monospace; font-size: 12px; color: var(--muted);">
+        <div id="errorDetails" style="word-break: break-word;"></div>
+      </div>
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; flex: 1;">
+          <input id="errorRetryDelayCheckbox" type="checkbox" checked style="cursor: pointer;" />
+          <span>Wait 5 seconds before retry</span>
+        </label>
+      </div>
+      <div class="modal-buttons" style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button id="subtaskErrorCancelBtn" class="btn" style="padding: 8px 16px;">Cancel All</button>
+        <button id="subtaskErrorSkipBtn" class="btn" style="padding: 8px 16px; border-color: #f39c12; color: #f39c12;">Skip This</button>
+        <button id="subtaskErrorRetryBtn" class="btn primary" style="padding: 8px 16px; border-color: #27ae60; background: rgba(39,174,96,0.2); color: #27ae60;">Retry</button>
       </div>
     </div>
   </div>
