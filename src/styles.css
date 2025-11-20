@@ -31,15 +31,6 @@ html, body {
   }
 }
 
-@keyframes textGlow {
-  0%, 100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.2);
-  }
-}
-
 /* ===== Header ===== */
 header { 
   padding: 20px 16px;
@@ -70,12 +61,12 @@ header {
 
 /* ===== Layout ===== */
 .wrap { 
-  max-width: 1100px;
+  max-width: 1400px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 220px 1fr;
   gap: 16px;
-  padding: 18px 16px 40px;
+  padding: 12px 12px 40px;
 }
 
 @media (max-width: 900px) {
