@@ -7,17 +7,16 @@ export function setViaProxy(proxyFn) {
 }
 
 export async function fetchJSON(url) {
-  const res = await fetch(viaProxy(url), {
-    cache: 'no-store',
-    headers: { 'Accept': 'application/vnd.github+json' }
-  });
-  if (!res.ok) {
-    const txt = await res.text().catch(() => '');
-    const err = new Error(`GitHub API ${res.status} ${res.statusText} ${txt.slice(0, 140)}`);
-    err.status = res.status;
-    throw err;
+  try {
+    const res = await fetch(viaProxy(url), {
+      cache: 'no-store',
+      headers: { 'Accept': 'application/vnd.github+json' }
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch (e) {
+    return null;
   }
-  return res.json();
 }
 
 export async function listPromptsViaContents(owner, repo, branch, path = 'prompts') {
