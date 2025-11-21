@@ -54,12 +54,14 @@ exports.runJules = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("invalid-argument", "Prompt text is required (minimum 4 characters)");
   }
 
-  if (!["planet", "myplanet"].includes(environment)) {
-    throw new functions.https.HttpsError("invalid-argument", "Environment must be 'planet' or 'myplanet'");
+  if (!["planet", "myplanet", "meta"].includes(environment)) {
+    throw new functions.https.HttpsError("invalid-argument", "Environment must be 'planet', 'myplanet', or 'meta'");
   }
 
   const sourceRepo = environment === "myplanet" 
     ? "sources/github/open-learning-exchange/myplanet"
+    : environment === "meta"
+    ? "sources/github/ole-vi/prompt-sharing"
     : "sources/github/open-learning-exchange/planet";
 
   try {
@@ -163,13 +165,15 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    if (!["planet", "myplanet"].includes(env)) {
-      res.status(400).json({ error: "Environment must be 'planet' or 'myplanet'" });
+    if (!["planet", "myplanet", "meta"].includes(env)) {
+      res.status(400).json({ error: "Environment must be 'planet', 'myplanet', or 'meta'" });
       return;
     }
 
     const sourceRepo = env === "myplanet" 
       ? "sources/github/open-learning-exchange/myplanet"
+      : env === "meta"
+      ? "sources/github/ole-vi/prompt-sharing"
       : "sources/github/open-learning-exchange/planet";
     
     console.log(`[DEBUG] Environment=${env}, sourceRepo=${sourceRepo}`);
