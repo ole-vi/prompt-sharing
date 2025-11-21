@@ -55,7 +55,7 @@ exports.runJules = functions.https.onCall(async (data, context) => {
   }
 
   if (!["planet", "myplanet", "meta"].includes(environment)) {
-    throw new functions.https.HttpsError("invalid-argument", "Environment must be 'planet', 'myplanet', or 'meta'");
+    throw new functions.https.HttpsError("invalid-argument", "Environment must be 'planet', 'myplanet', or 'meta' (v2)");
   }
 
   const sourceRepo = environment === "myplanet" 
@@ -166,7 +166,7 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
     }
 
     if (!["planet", "myplanet", "meta"].includes(env)) {
-      res.status(400).json({ error: "Environment must be 'planet', 'myplanet', or 'meta'" });
+      res.status(400).json({ error: "Environment must be 'planet', 'myplanet', or 'meta' (v2)" });
       return;
     }
 
