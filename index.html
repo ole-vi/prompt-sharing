@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>OLE Prompt Library</title>
+  <title>PromptSync</title>
   <link rel="stylesheet" href="src/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
@@ -14,36 +14,64 @@
 </head>
 <body>
   <header>
-    <div style="max-width:1100px; margin:0 auto; display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:0 16px;">
-      <!-- Auth buttons - top right -->
-      <div id="authStatus" style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; font-size:13px; order:2;">
+    <style>
+      @media (max-width: 900px) {
+        #headerContainer {
+          flex-direction: column !important;
+          gap: 8px !important;
+          align-items: center !important;
+        }
+        #headerContainer > div:first-child {
+          width: 100%;
+          flex-direction: column !important;
+          align-items: center !important;
+          gap: 8px !important;
+        }
+        #headerBranding a {
+          flex-direction: column;
+          text-align: center;
+        }
+        #headerControls {
+          width: 100%;
+          justify-content: center !important;
+        }
+        #authStatus {
+          width: 100%;
+          align-items: center !important;
+        }
+      }
+    </style>
+    <div id="headerContainer" style="display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 16px; width:100%;">
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div id="headerBranding" style="display:flex; align-items:center; gap:12px;">
+          <a href="https://ole-vi.github.io/prompt-sharing/" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:12px;">
+            <img src="assets/PromptSyncLogo.svg" alt="PromptSync" style="width:36px; height:36px; flex-shrink:0; object-fit:contain;">
+            <div>
+              <div style="font-size:24px; font-weight:900; letter-spacing:0.5px; line-height:1.2;">PromptSync</div>
+              <div style="color:var(--muted); font-size:12px; margin-top:2px; word-break:break-word;">Share and amplify your team's AI knowledge.</div>
+            </div>
+          </a>
+        </div>
+
+        <div id="headerControls" style="display:flex; gap:8px; align-items:center;">
+          <div class="pill" id="repoPill" style="white-space:nowrap;">Loading repo...</div>
+          <label style="display:flex; align-items:center; gap:4px; white-space:nowrap;">
+            <span title="Choose a branch">▼</span>
+            <select id="branchSelect" class="btn" style="min-width:140px;">
+              <option>Loading branches…</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div id="authStatus" style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; font-size:13px; flex-shrink:0;">
         <div style="display:flex; gap:8px;">
           <button class="btn" id="authBtn" style="padding:6px 10px; font-size:12px;">Sign in with GitHub</button>
           <button class="btn" id="signOutBtn" style="padding:6px 10px; font-size:12px; background:#e74c3c; color:white; display:none;" title="Sign out">Sign Out</button>
         </div>
-        <span id="userDisplay" style="display:none; font-size:11px; color:var(--muted);">
-          <strong id="userName" style="cursor:pointer; text-decoration:underline;" title="Click to manage Jules API key"></strong>
+        <span id="userDisplay" style="display:none; font-size:11px; color:var(--muted);">          <strong id="userName" style="cursor:pointer; text-decoration:underline;" title="Click to manage Jules API key"></strong>
         </span>
       </div>
-      
-      <!-- Logo and description - left side -->
-      <div style="flex:1; order:1;">
-        <a href="https://ole-vi.github.io/prompt-sharing/" style="text-decoration:none; color:inherit;">
-          <div style="font-size:18px; font-weight:800; letter-spacing:0.2px;">OLE Prompt Library</div>
-        </a>
-        <div style="color:var(--muted); font-size:13px;">Single file, no build. Drop .md files in <code>/prompts</code> and they show up here.</div>
-      </div>
-    </div>
-    
-    <!-- Branch and repo controls - second row -->
-    <div style="max-width:1100px; margin:8px auto 0; display:flex; justify-content:flex-end; gap:8px; padding:0 16px; align-items:center;">
-      <div class="pill" id="repoPill">Loading repo...</div>
-      <label style="display:flex; align-items:center; gap:4px;">
-        <span title="Choose a branch">▼</span>
-        <select id="branchSelect" class="btn" style="min-width:140px;">
-          <option>Loading branches…</option>
-        </select>
-      </label>
     </div>
   </header>
 

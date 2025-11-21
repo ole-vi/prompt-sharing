@@ -1,6 +1,6 @@
-# Prompt Sharing Library
+# PromptSync
 
-A lightweight way to share prompts across the OLE team.
+Share and amplify your team's AI knowledge.
 Hosted for free with GitHub Pages, backed by simple `.md` files.
 
 ## Live site
