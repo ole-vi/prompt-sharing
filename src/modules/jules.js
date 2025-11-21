@@ -73,7 +73,7 @@ export async function callRunJulesFunction(promptText, environment = "myplanet")
     julesBtn.disabled = true;
 
     const token = await user.getIdToken(true);
-    const functionUrl = 'https://us-central1-prompt-sharing-f8eeb.cloudfunctions.net/runJulesHttp';
+    const functionUrl = 'https://runjuleshttp-n7gaasoeoq-uc.a.run.app';
 
     const response = await fetch(functionUrl, {
       method: 'POST',
@@ -221,6 +221,7 @@ export function showJulesEnvModal(promptText) {
 
   const planetBtn = document.getElementById('envPlanetBtn');
   const myplanetBtn = document.getElementById('envMyplanetBtn');
+  const metaBtn = document.getElementById('envMetaBtn');
   const cancelBtn = document.getElementById('julesEnvCancelBtn');
 
   const handleSelect = async (environment) => {
@@ -233,6 +234,7 @@ export function showJulesEnvModal(promptText) {
 
   planetBtn.onclick = () => handleSelect('planet');
   myplanetBtn.onclick = () => handleSelect('myplanet');
+  metaBtn.onclick = () => handleSelect('meta');
   cancelBtn.onclick = () => {
     hideJulesEnvModal();
   };

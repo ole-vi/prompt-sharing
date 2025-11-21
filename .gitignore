@@ -6,6 +6,7 @@ yarn-error.log
 # Firebase
 .firebaserc
 .runtimeconfig.json
+.firebase/
 
 # Environment files
 .env
