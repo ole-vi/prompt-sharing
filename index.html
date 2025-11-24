@@ -72,6 +72,7 @@
         </div>
         <span id="userDisplay" style="display:none; font-size:11px; color:var(--muted);">          <strong id="userName" style="cursor:pointer; text-decoration:underline;" title="Click to manage Jules API key"></strong>
         </span>
+        <a href="https://github.com/ole-vi/prompt-sharing/blob/main/README.md" target="_blank" rel="noopener" class="help-link" title="View documentation" style="padding:6px 10px; font-size:12px;">📖 Help</a>
       </div>
     </div>
   </header>
@@ -81,13 +82,12 @@
       <input id="search" placeholder="Search prompts..." />
       <button class="btn" id="freeInputBtn" title="Send a custom prompt to Jules">✏️ Free Input to Jules</button>
       <div id="list"></div>
-      <div style="padding:8px 6px; color:var(--muted); font-size:12px;">
-        Add prompts by committing <code>.md</code> files to <code>/prompts</code> in your repo. Use a first-level heading for the title.
-      </div>
     </aside>
 
-    <main id="main" class="card">
-      <div id="empty">Select a prompt from the list. You can deep link to any prompt using the URL hash.</div>
+    <main id="main" class="card" style="display:flex; flex-direction:column;">
+      <div id="empty" style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; min-height:300px; color:var(--muted); font-size:16px;">
+        <span>Please select a prompt from the list.</span>
+      </div>
       <h1 id="title" style="display:none"></h1>
       <div id="meta" style="display:none"></div>
       <div id="actions" style="display:none">
