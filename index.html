@@ -148,7 +148,6 @@
       
       <div style="display:flex; gap:8px; flex-direction:column; margin-bottom:16px;">
         <button id="addJulesKeyBtn" class="btn" style="padding:10px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; text-align:center; display:none;">➕ Add Jules API Key</button>
-        <button id="resetJulesKeyBtn" class="btn" style="padding:10px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; text-align:center;">🔄 Reset Jules API Key</button>
       </div>
       
       <!-- Jules Profile Info Section -->
@@ -157,7 +156,10 @@
         
         <!-- Recent Sessions -->
         <div style="margin-bottom:16px;">
-          <div style="font-size:13px; font-weight:600; color:var(--muted); margin-bottom:8px;">📖 Recent Sessions</div>
+          <div style="font-size:13px; font-weight:600; color:var(--muted); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+            <span>📖 Recent Sessions</span>
+            <a id="viewAllSessionsLink" href="#" style="font-size:12px; color:var(--accent); text-decoration:none; font-weight:500;">View All →</a>
+          </div>
           <div id="julesSessionsList" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:12px; max-height:250px; overflow-y:auto;">
             <div style="color:var(--muted); font-size:13px;">Loading sessions...</div>
           </div>
@@ -174,7 +176,14 @@
         <button id="loadJulesInfoBtn" class="btn" style="padding:10px; width:100%; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; text-align:center;">🔄 Refresh Jules Info</button>
       </div>
       
-      <div style="display:flex; gap:8px; justify-content:flex-end;">
+      <!-- Danger Zone -->
+      <div id="dangerZoneSection" style="display:none; margin-top:24px; padding:16px; border:1px solid #c0504d; border-radius:8px; background:rgba(192,80,77,0.08);">
+        <div style="font-size:14px; font-weight:600; color:#c0504d; margin-bottom:8px;">⚠️ Danger Zone</div>
+        <div style="font-size:12px; color:var(--muted); margin-bottom:12px;">This action will delete your stored Jules API key. You'll need to enter a new one next time.</div>
+        <button id="resetJulesKeyBtn" class="btn" style="padding:10px; width:100%; border:1px solid #c0504d; background:rgba(192,80,77,0.2); color:#ff9a97; cursor:pointer; border-radius:8px; text-align:center; font-weight:600;">🗑️ Delete Jules API Key</button>
+      </div>
+      
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
         <button id="closeProfileBtn" class="btn" style="padding:8px 12px;">Close</button>
       </div>
     </div>
@@ -234,6 +243,28 @@
         <button id="subtaskErrorCancelBtn" class="btn" style="padding: 8px 16px;">Cancel All</button>
         <button id="subtaskErrorSkipBtn" class="btn" style="padding: 8px 16px; border-color: #f39c12; color: #f39c12;">Skip This</button>
         <button id="subtaskErrorRetryBtn" class="btn primary" style="padding: 8px 16px; border-color: #27ae60; background: rgba(39,174,96,0.2); color: #27ae60;">Retry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jules Sessions History Modal -->
+  <div id="julesSessionsHistoryModal" style="display:none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;">
+    <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; max-width:800px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4); max-height:90vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 style="margin:0; font-size:18px;">📖 Jules Sessions History</h2>
+        <button id="closeSessionsHistoryBtn" class="btn" style="padding:8px 16px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px;">✕ Close</button>
+      </div>
+      
+      <div style="margin-bottom:16px;">
+        <input type="text" id="sessionSearchInput" placeholder="Search sessions..." style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.05); color:var(--text); font-size:14px;" />
+      </div>
+      
+      <div id="allSessionsList" style="display:flex; flex-direction:column; gap:8px;">
+        <div style="color:var(--muted); text-align:center; padding:24px;">Loading all sessions...</div>
+      </div>
+      
+      <div id="sessionsLoadMore" style="display:none; text-align:center; margin-top:16px;">
+        <button id="loadMoreSessionsBtn" class="btn" style="padding:10px 20px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px;">Load More</button>
       </div>
     </div>
   </div>

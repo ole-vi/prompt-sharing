@@ -105,12 +105,16 @@ export async function getJulesSourceDetails(apiKey, sourceId) {
  * Lists recent Jules sessions
  * @param {string} apiKey - Jules API key
  * @param {number} pageSize - Number of sessions to retrieve (default 10)
- * @returns {Promise<Object>} Response containing sessions array
+ * @param {string} pageToken - Optional page token for pagination
+ * @returns {Promise<Object>} Response containing sessions array and nextPageToken
  */
-export async function listJulesSessions(apiKey, pageSize = 10) {
+export async function listJulesSessions(apiKey, pageSize = 10, pageToken = null) {
   try {
     const url = new URL(`${JULES_API_BASE}/sessions`);
     url.searchParams.set('pageSize', pageSize.toString());
+    if (pageToken) {
+      url.searchParams.set('pageToken', pageToken);
+    }
 
     const response = await fetch(url.toString(), {
       headers: createJulesHeaders(apiKey)

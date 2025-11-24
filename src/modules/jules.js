@@ -7,7 +7,7 @@ import {
   generateSplitSummary, 
   validateSubtasks 
 } from './subtask-manager.js';
-import { loadJulesProfileInfo } from './jules-api.js';
+import { loadJulesProfileInfo, listJulesSessions } from './jules-api.js';
 
 export async function checkJulesKey(uid) {
   try {
@@ -362,6 +362,7 @@ export function initJulesKeyModalListeners() {
   const envModal = document.getElementById('julesEnvModal');
   const freeInputModal = document.getElementById('freeInputModal');
   const profileModal = document.getElementById('userProfileModal');
+  const sessionsHistoryModal = document.getElementById('julesSessionsHistoryModal');
   const errorModal = document.getElementById('subtaskErrorModal');
   const keyInput = document.getElementById('julesKeyInput');
 
@@ -378,6 +379,9 @@ export function initJulesKeyModalListeners() {
       }
       if (profileModal.style.display === 'flex') {
         hideUserProfileModal();
+      }
+      if (sessionsHistoryModal && sessionsHistoryModal.style.display === 'flex') {
+        hideJulesSessionsHistoryModal();
       }
     }
   });
@@ -407,6 +411,14 @@ export function initJulesKeyModalListeners() {
       hideUserProfileModal();
     }
   });
+  
+  if (sessionsHistoryModal) {
+    sessionsHistoryModal.addEventListener('click', (e) => {
+      if (e.target === sessionsHistoryModal) {
+        hideJulesSessionsHistoryModal();
+      }
+    });
+  }
 
   if (errorModal) {
     errorModal.addEventListener('click', (e) => {
@@ -463,6 +475,7 @@ export function showUserProfileModal() {
   const julesKeyStatus = document.getElementById('julesKeyStatus');
   const addBtn = document.getElementById('addJulesKeyBtn');
   const resetBtn = document.getElementById('resetJulesKeyBtn');
+  const dangerZoneSection = document.getElementById('dangerZoneSection');
   const closeBtn = document.getElementById('closeProfileBtn');
   const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
   const julesProfileInfoSection = document.getElementById('julesProfileInfoSection');
@@ -476,14 +489,14 @@ export function showUserProfileModal() {
     // Show/hide buttons based on key status
     if (hasKey) {
       addBtn.style.display = 'none';
-      resetBtn.style.display = 'block';
+      dangerZoneSection.style.display = 'block';
       julesProfileInfoSection.style.display = 'block';
       
       // Load Jules profile info automatically when key exists
       await loadAndDisplayJulesProfile(user.uid);
     } else {
       addBtn.style.display = 'block';
-      resetBtn.style.display = 'none';
+      dangerZoneSection.style.display = 'none';
       julesProfileInfoSection.style.display = 'none';
     }
   });
@@ -508,12 +521,12 @@ export function showUserProfileModal() {
       if (deleted) {
         julesKeyStatus.textContent = '✗ Not saved';
         julesKeyStatus.style.color = 'var(--muted)';
-        resetBtn.textContent = '🔄 Reset Jules API Key';
+        resetBtn.textContent = '🗑️ Delete Jules API Key';
         resetBtn.disabled = false;
         
         // Update buttons
         addBtn.style.display = 'block';
-        resetBtn.style.display = 'none';
+        dangerZoneSection.style.display = 'none';
         julesProfileInfoSection.style.display = 'none';
         
         alert('Jules API key has been deleted. You can enter a new one next time.');
@@ -531,11 +544,52 @@ export function showUserProfileModal() {
   // Load Jules Info button handler
   loadJulesInfoBtn.onclick = async () => {
     await loadAndDisplayJulesProfile(user.uid);
+    // Re-attach the View All link handler after profile loads
+    attachViewAllSessionsHandler();
   };
 
   closeBtn.onclick = () => {
     hideUserProfileModal();
   };
+  
+  // Attach View All Sessions handler
+  attachViewAllSessionsHandler();
+  
+  // Sessions History Modal handlers
+  const closeSessionsHistoryBtn = document.getElementById('closeSessionsHistoryBtn');
+  const loadMoreSessionsBtn = document.getElementById('loadMoreSessionsBtn');
+  const sessionSearchInput = document.getElementById('sessionSearchInput');
+  
+  if (closeSessionsHistoryBtn) {
+    closeSessionsHistoryBtn.onclick = () => {
+      hideJulesSessionsHistoryModal();
+    };
+  }
+  
+  if (loadMoreSessionsBtn) {
+    loadMoreSessionsBtn.onclick = () => {
+      loadSessionsPage();
+    };
+  }
+  
+  if (sessionSearchInput) {
+    sessionSearchInput.addEventListener('input', () => {
+      const user = window.auth?.currentUser;
+      if (!user) return;
+      renderAllSessions(allSessionsCache);
+    });
+  }
+}
+
+// Helper function to attach View All Sessions link handler
+function attachViewAllSessionsHandler() {
+  const viewAllSessionsLink = document.getElementById('viewAllSessionsLink');
+  if (viewAllSessionsLink) {
+    viewAllSessionsLink.onclick = (e) => {
+      e.preventDefault();
+      showJulesSessionsHistoryModal();
+    };
+  }
 }
 
 /**
@@ -617,7 +671,8 @@ async function loadAndDisplayJulesProfile(uid) {
           'FAILED': '❌',
           'IN_PROGRESS': '⏳',
           'PLANNING': '⏳',
-          'QUEUED': '⏸️'
+          'QUEUED': '⏸️',
+          'AWAITING_USER_FEEDBACK': '💬'
         }[state] || '❓';
         
         // Better state labels
@@ -626,8 +681,9 @@ async function loadAndDisplayJulesProfile(uid) {
           'FAILED': 'FAILED',
           'IN_PROGRESS': 'IN PROGRESS',
           'PLANNING': 'IN PROGRESS',
-          'QUEUED': 'QUEUED'
-        }[state] || state;
+          'QUEUED': 'QUEUED',
+          'AWAITING_USER_FEEDBACK': 'AWAITING USER FEEDBACK'
+        }[state] || state.replace(/_/g, ' ');
         
         const promptPreview = (session.prompt || 'No prompt text').substring(0, 80);
         const displayPrompt = promptPreview.length < (session.prompt || '').length ? promptPreview + '...' : promptPreview;
@@ -666,6 +722,9 @@ async function loadAndDisplayJulesProfile(uid) {
     // Reset button state
     loadBtn.disabled = false;
     loadBtn.textContent = '🔄 Refresh Jules Info';
+    
+    // Attach View All Sessions handler after content loads
+    attachViewAllSessionsHandler();
 
   } catch (error) {
     console.error('Error loading Jules profile:', error);
@@ -687,6 +746,151 @@ async function loadAndDisplayJulesProfile(uid) {
 export function hideUserProfileModal() {
   const modal = document.getElementById('userProfileModal');
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+}
+
+// Jules Sessions History Modal
+let allSessionsCache = [];
+let sessionNextPageToken = null;
+
+export function showJulesSessionsHistoryModal() {
+  const modal = document.getElementById('julesSessionsHistoryModal');
+  const allSessionsList = document.getElementById('allSessionsList');
+  const loadMoreSection = document.getElementById('sessionsLoadMore');
+  const searchInput = document.getElementById('sessionSearchInput');
+  
+  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  
+  // Reset state
+  allSessionsCache = [];
+  sessionNextPageToken = null;
+  searchInput.value = '';
+  
+  // Load first page
+  loadSessionsPage();
+}
+
+export function hideJulesSessionsHistoryModal() {
+  const modal = document.getElementById('julesSessionsHistoryModal');
+  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+}
+
+async function loadSessionsPage() {
+  const user = window.auth?.currentUser;
+  if (!user) return;
+  
+  const allSessionsList = document.getElementById('allSessionsList');
+  const loadMoreSection = document.getElementById('sessionsLoadMore');
+  const loadMoreBtn = document.getElementById('loadMoreSessionsBtn');
+  
+  try {
+    loadMoreBtn.disabled = true;
+    loadMoreBtn.textContent = 'Loading...';
+    
+    // Get decrypted API key
+    const { getDecryptedJulesKey } = await import('./jules-api.js');
+    const apiKey = await getDecryptedJulesKey(user.uid);
+    if (!apiKey) {
+      throw new Error('Jules API key not found');
+    }
+    
+    const result = await listJulesSessions(apiKey, 50, sessionNextPageToken);
+    
+    if (result.sessions && result.sessions.length > 0) {
+      allSessionsCache = [...allSessionsCache, ...result.sessions];
+      sessionNextPageToken = result.nextPageToken || null;
+      
+      renderAllSessions(allSessionsCache);
+      
+      // Show/hide load more button
+      if (sessionNextPageToken) {
+        loadMoreSection.style.display = 'block';
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = 'Load More';
+      } else {
+        loadMoreSection.style.display = 'none';
+      }
+    } else if (allSessionsCache.length === 0) {
+      allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions found</div>';
+    }
+  } catch (error) {
+    console.error('Failed to load sessions page:', error);
+    if (allSessionsCache.length === 0) {
+      allSessionsList.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">Failed to load sessions: ${error.message}</div>`;
+    }
+    loadMoreBtn.disabled = false;
+    loadMoreBtn.textContent = 'Load More';
+  }
+}
+
+function renderAllSessions(sessions) {
+  const allSessionsList = document.getElementById('allSessionsList');
+  const searchInput = document.getElementById('sessionSearchInput');
+  const searchTerm = searchInput.value.toLowerCase();
+  
+  const filteredSessions = searchTerm 
+    ? sessions.filter(s => {
+        const promptText = s.prompt || s.displayName || '';
+        const sessionId = s.name?.split('/').pop() || '';
+        return promptText.toLowerCase().includes(searchTerm) || sessionId.toLowerCase().includes(searchTerm);
+      })
+    : sessions;
+  
+  if (filteredSessions.length === 0) {
+    allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions match your search</div>';
+    return;
+  }
+  
+  const stateEmoji = {
+    'PLANNING': '📝',
+    'IN_PROGRESS': '⚙️',
+    'AWAITING_USER_FEEDBACK': '💬',
+    'COMPLETED': '✅',
+    'FAILED': '❌',
+    'CANCELLED': '🚫'
+  };
+  
+  const stateLabel = {
+    'PLANNING': 'IN PROGRESS',
+    'IN_PROGRESS': 'IN PROGRESS',
+    'AWAITING_USER_FEEDBACK': 'AWAITING USER FEEDBACK',
+    'COMPLETED': 'COMPLETED',
+    'FAILED': 'FAILED',
+    'CANCELLED': 'CANCELLED'
+  };
+  
+  allSessionsList.innerHTML = filteredSessions.map(session => {
+    const sessionId = session.name?.split('/').pop() || '';
+    const state = session.state || 'UNKNOWN';
+    const emoji = stateEmoji[state] || '❓';
+    const label = stateLabel[state] || state.replace(/_/g, ' ');
+    
+    // Use prompt text as title, fallback to displayName or sessionId
+    const promptText = session.prompt || session.displayName || sessionId;
+    const displayTitle = promptText.length > 100 ? promptText.substring(0, 100) + '...' : promptText;
+    
+    const createTime = session.createTime ? new Date(session.createTime).toLocaleString() : 'Unknown';
+    const updateTime = session.updateTime ? new Date(session.updateTime).toLocaleString() : 'Unknown';
+    
+    const prUrl = session.githubPrUrl || null;
+    const prLink = prUrl 
+      ? `<div style="margin-top:4px;"><a href="${prUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none;">🔗 View PR</a></div>`
+      : '';
+    
+    return `<div style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.03); cursor:pointer; transition:all 0.2s;"
+                 onmouseover="this.style.borderColor='var(--accent)'; this.style.background='rgba(255,255,255,0.06)'"
+                 onmouseout="this.style.borderColor='var(--border)'; this.style.background='rgba(255,255,255,0.03)'"
+                 onclick="window.open('https://jules.googleapis.com/v1alpha/session/${sessionId}', '_blank')">
+      <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:6px;">
+        <div style="font-weight:600; font-size:13px; flex:1; margin-right:8px;">${displayTitle}</div>
+        <div style="font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(255,255,255,0.1); white-space:nowrap; margin-left:8px;">
+          ${emoji} ${label}
+        </div>
+      </div>
+      <div style="font-size:11px; color:var(--muted); margin-bottom:2px;">Created: ${createTime}</div>
+      <div style="font-size:11px; color:var(--muted);">Updated: ${updateTime}</div>
+      ${prLink}
+    </div>`;
+  }).join('');
 }
 
 export function showFreeInputModal() {
