@@ -23,7 +23,6 @@ function initFirebaseWhenReady() {
     if (typeof firebase !== 'undefined' && firebase.initializeApp) {
       // Initialize app
       const app = firebase.initializeApp(firebaseConfig);
-      console.log('Firebase initialized successfully');
       
       // Get services - compat API doesn't require app parameter
       window.auth = firebase.auth();
@@ -38,7 +37,6 @@ function initFirebaseWhenReady() {
       }
       
       window.firebaseReady = true;
-      console.log('Firebase services ready:', { auth: !!window.auth, db: !!window.db, functions: !!window.functions });
       
       return true;
     } else {

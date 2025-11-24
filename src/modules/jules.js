@@ -525,26 +525,6 @@ export function initJulesKeyModalListeners() {
   });
 }
 
-// Expose for console testing
-window.deleteJulesKey = async function() {
-  const user = window.auth?.currentUser;
-  if (!user) {
-    return;
-  }
-  const deleted = await deleteStoredJulesKey(user.uid);
-  if (deleted) {
-  } else {
-  }
-};
-
-window.checkJulesKeyStatus = async function() {
-  const user = window.auth?.currentUser;
-  if (!user) {
-    return;
-  }
-  const hasKey = await checkJulesKey(user.uid);
-};
-
 export function showUserProfileModal() {
   const modal = document.getElementById('userProfileModal');
   const user = window.auth?.currentUser;
