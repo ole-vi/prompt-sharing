@@ -122,10 +122,15 @@
       
       <div id="favoriteReposContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
       
-      <div id="allReposContainer" style="margin-bottom:16px;">
-        <select id="julesRepoSelect" class="btn" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--text); font-size:14px; cursor:pointer;">
-          <option value="">Select a repository...</option>
-        </select>
+      <div id="allReposContainer" style="margin-bottom:16px; position:relative;">
+        <div id="julesRepoDropdown" class="custom-dropdown" style="width:100%; position:relative;">
+          <button id="julesRepoDropdownBtn" class="custom-dropdown-btn" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--text); font-size:14px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;">
+            <span id="julesRepoDropdownText">Select a repository...</span>
+            <span style="color:var(--muted);">▼</span>
+          </button>
+          <div id="julesRepoDropdownMenu" class="custom-dropdown-menu" style="display:none; position:absolute; top:100%; left:0; right:0; margin-top:4px; max-height:300px; overflow-y:auto; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000;">
+          </div>
+        </div>
       </div>
       
       <div style="display:flex; gap:8px; justify-content:flex-end;">
@@ -217,10 +222,15 @@
       <div style="margin-bottom: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.02);">
         <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Repository:</label>
         <div id="subtaskFavoriteReposContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;"></div>
-        <div id="subtaskAllReposContainer" style="margin-top: 8px;">
-          <select id="subtaskRepoSelect" class="modal-input" style="width: 100%; padding: 8px;">
-            <option value="">Select a repository...</option>
-          </select>
+        <div id="subtaskAllReposContainer" style="margin-top: 8px; position:relative;">
+          <div id="subtaskRepoDropdown" class="custom-dropdown" style="width:100%; position:relative;">
+            <button id="subtaskRepoDropdownBtn" class="custom-dropdown-btn" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--text); font-size:13px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;">
+              <span id="subtaskRepoDropdownText">Select a repository...</span>
+              <span style="color:var(--muted);">▼</span>
+            </button>
+            <div id="subtaskRepoDropdownMenu" class="custom-dropdown-menu" style="display:none; position:absolute; top:100%; left:0; right:0; margin-top:4px; max-height:300px; overflow-y:auto; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000;">
+            </div>
+          </div>
         </div>
       </div>
       

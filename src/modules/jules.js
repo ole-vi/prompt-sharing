@@ -212,7 +212,9 @@ export async function showJulesEnvModal(promptText) {
 
   const favoriteContainer = document.getElementById('favoriteReposContainer');
   const allReposContainer = document.getElementById('allReposContainer');
-  const repoSelect = document.getElementById('julesRepoSelect');
+  const dropdownBtn = document.getElementById('julesRepoDropdownBtn');
+  const dropdownText = document.getElementById('julesRepoDropdownText');
+  const dropdownMenu = document.getElementById('julesRepoDropdownMenu');
   const cancelBtn = document.getElementById('julesEnvCancelBtn');
   
   const user = getCurrentUser();
@@ -244,12 +246,14 @@ export async function showJulesEnvModal(promptText) {
   }
 
   let allReposLoaded = false;
+  let sourceBranchMap = {};
 
   const loadAllRepos = async () => {
     if (allReposLoaded) return;
     
-    repoSelect.innerHTML = '<option value="">Loading...</option>';
-    repoSelect.disabled = true;
+    dropdownText.textContent = 'Loading...';
+    dropdownBtn.disabled = true;
+    dropdownMenu.style.display = 'none';
 
     try {
       const { listJulesSources } = await import('./jules-api.js');
@@ -257,8 +261,8 @@ export async function showJulesEnvModal(promptText) {
       
       const apiKey = await getDecryptedJulesKey(user.uid);
       if (!apiKey) {
-        repoSelect.innerHTML = '<option value="">No API key configured</option>';
-        repoSelect.disabled = false;
+        dropdownText.textContent = 'No API key configured';
+        dropdownBtn.disabled = false;
         return;
       }
 
@@ -266,57 +270,64 @@ export async function showJulesEnvModal(promptText) {
       const sources = sourcesData.sources || [];
 
       if (sources.length === 0) {
-        repoSelect.innerHTML = '<option value="">No repositories found</option>';
-        repoSelect.disabled = false;
+        dropdownText.textContent = 'No repositories found';
+        dropdownBtn.disabled = false;
         return;
       }
 
-      repoSelect.innerHTML = '<option value="">Select a repository...</option>';
-      repoSelect.disabled = false;
-      
-      // Store branch information for each source
-      const sourceBranchMap = {};
+      dropdownText.textContent = 'Select a repository...';
+      dropdownBtn.disabled = false;
+      dropdownMenu.innerHTML = '';
       
       sources.forEach(source => {
-        const option = document.createElement('option');
+        const item = document.createElement('div');
+        item.className = 'custom-dropdown-item';
         const pathParts = (source.name || source.id).split('/');
         const repoName = pathParts.slice(-2).join('/');
-        option.value = source.name || source.id;
-        option.textContent = repoName;
-        repoSelect.appendChild(option);
+        item.textContent = repoName;
+        item.dataset.value = source.name || source.id;
         
         // Try to get default branch from source, fallback to master
         const defaultBranch = source.githubRepoContext?.defaultBranch || 
                              source.defaultBranch || 
                              'master';
         sourceBranchMap[source.name || source.id] = defaultBranch;
+        
+        item.onclick = () => {
+          dropdownMenu.querySelectorAll('.custom-dropdown-item').forEach(i => i.classList.remove('selected'));
+          item.classList.add('selected');
+          dropdownText.textContent = repoName;
+          dropdownMenu.style.display = 'none';
+          const branch = sourceBranchMap[item.dataset.value] || 'master';
+          handleRepoSelect(item.dataset.value, branch, promptText);
+        };
+        
+        dropdownMenu.appendChild(item);
       });
 
-      repoSelect.onchange = () => {
-        if (repoSelect.value) {
-          const branch = sourceBranchMap[repoSelect.value] || 'master';
-          handleRepoSelect(repoSelect.value, branch, promptText);
-        }
-      };
-
       allReposLoaded = true;
-      
-      // Automatically expand the dropdown after loading
-      repoSelect.focus();
-      repoSelect.size = Math.min(sources.length + 1, 10); // Show up to 10 items
-      setTimeout(() => {
-        if (repoSelect.showPicker) {
-          repoSelect.showPicker();
-        }
-      }, 100);
+      dropdownMenu.style.display = 'block';
     } catch (error) {
-      repoSelect.innerHTML = '<option value="">Failed to load - click to retry</option>';
-      repoSelect.disabled = false;
+      dropdownText.textContent = 'Failed to load - click to retry';
+      dropdownBtn.disabled = false;
       allReposLoaded = false;
     }
   };
 
-  repoSelect.onclick = loadAllRepos;
+  dropdownBtn.onclick = () => {
+    if (dropdownMenu.style.display === 'block') {
+      dropdownMenu.style.display = 'none';
+    } else {
+      loadAllRepos();
+    }
+  };
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!allReposContainer.contains(e.target)) {
+      dropdownMenu.style.display = 'none';
+    }
+  });
 
   cancelBtn.onclick = () => {
     hideJulesEnvModal();
@@ -1124,12 +1135,14 @@ export function showSubtaskSplitModal(promptText) {
 async function populateSubtaskRepoSelection() {
   const favoriteContainer = document.getElementById('subtaskFavoriteReposContainer');
   const allReposContainer = document.getElementById('subtaskAllReposContainer');
-  const repoSelect = document.getElementById('subtaskRepoSelect');
+  const dropdownBtn = document.getElementById('subtaskRepoDropdownBtn');
+  const dropdownText = document.getElementById('subtaskRepoDropdownText');
+  const dropdownMenu = document.getElementById('subtaskRepoDropdownMenu');
   
   const user = getCurrentUser();
   if (!user) {
     favoriteContainer.innerHTML = '<div style="color:var(--muted); text-align:center; padding:8px; font-size:13px;">Please sign in first</div>';
-    showMoreContainer.style.display = 'none';
+    allReposContainer.style.display = 'none';
     return;
   }
 
@@ -1174,8 +1187,9 @@ async function populateSubtaskRepoSelection() {
   const loadAllRepos = async () => {
     if (allReposLoaded) return;
     
-    repoSelect.innerHTML = '<option value="">Loading...</option>';
-    repoSelect.disabled = true;
+    dropdownText.textContent = 'Loading...';
+    dropdownBtn.disabled = true;
+    dropdownMenu.innerHTML = '';
 
     try {
       const { listJulesSources } = await import('./jules-api.js');
@@ -1183,8 +1197,8 @@ async function populateSubtaskRepoSelection() {
       
       const apiKey = await getDecryptedJulesKey(user.uid);
       if (!apiKey) {
-        repoSelect.innerHTML = '<option value="">No API key configured</option>';
-        repoSelect.disabled = false;
+        dropdownText.textContent = 'No API key configured';
+        dropdownBtn.disabled = false;
         return;
       }
 
@@ -1192,58 +1206,70 @@ async function populateSubtaskRepoSelection() {
       const sources = sourcesData.sources || [];
 
       if (sources.length === 0) {
-        repoSelect.innerHTML = '<option value="">No repositories found</option>';
-        repoSelect.disabled = false;
+        dropdownText.textContent = 'No repositories found';
+        dropdownBtn.disabled = false;
         return;
       }
 
-      repoSelect.innerHTML = '<option value="">Select a repository...</option>';
-      repoSelect.disabled = false;
+      dropdownText.textContent = 'Select a repository...';
+      dropdownBtn.disabled = false;
       
       // Store branch information for each source
       const sourceBranchMap = {};
       
       sources.forEach(source => {
-        const option = document.createElement('option');
+        const item = document.createElement('div');
+        item.className = 'custom-dropdown-item';
         const pathParts = (source.name || source.id).split('/');
         const repoName = pathParts.slice(-2).join('/');
-        option.value = source.name || source.id;
-        option.textContent = repoName;
-        repoSelect.appendChild(option);
+        item.textContent = repoName;
+        item.dataset.sourceId = source.name || source.id;
         
         // Try to get default branch from source, fallback to master
         const defaultBranch = source.githubRepoContext?.defaultBranch || 
                              source.defaultBranch || 
                              'master';
         sourceBranchMap[source.name || source.id] = defaultBranch;
+        item.dataset.branch = defaultBranch;
+        
+        item.onclick = () => {
+          lastSelectedSourceId = item.dataset.sourceId;
+          lastSelectedBranch = item.dataset.branch;
+          dropdownText.textContent = repoName;
+          
+          // Update selected styling
+          dropdownMenu.querySelectorAll('.custom-dropdown-item').forEach(i => {
+            i.classList.remove('selected');
+          });
+          item.classList.add('selected');
+          
+          // Close dropdown
+          dropdownMenu.style.display = 'none';
+        };
+        
+        dropdownMenu.appendChild(item);
       });
-
-      repoSelect.onchange = () => {
-        if (repoSelect.value) {
-          const branch = sourceBranchMap[repoSelect.value] || 'master';
-          lastSelectedSourceId = repoSelect.value;
-          lastSelectedBranch = branch;
-        }
-      };
 
       allReposLoaded = true;
       
-      // Automatically expand the dropdown after loading
-      repoSelect.focus();
-      repoSelect.size = Math.min(sources.length + 1, 10); // Show up to 10 items
-      setTimeout(() => {
-        if (repoSelect.showPicker) {
-          repoSelect.showPicker();
-        }
-      }, 100);
+      // Auto-display the dropdown after loading
+      dropdownMenu.style.display = 'block';
+      
     } catch (error) {
-      repoSelect.innerHTML = '<option value="">Failed to load - click to retry</option>';
-      repoSelect.disabled = false;
+      dropdownText.textContent = 'Failed to load - click to retry';
+      dropdownBtn.disabled = false;
       allReposLoaded = false;
     }
   };
 
-  repoSelect.onclick = loadAllRepos;
+  dropdownBtn.onclick = loadAllRepos;
+  
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+      dropdownMenu.style.display = 'none';
+    }
+  });
 }
 
 function renderSplitEdit(subtasks) {
