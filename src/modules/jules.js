@@ -696,12 +696,7 @@ async function submitSubtasks(subtasks) {
       try {
         const sessionUrl = await callRunJulesFunction(subtask.fullContent, 'myplanet');
         if (sessionUrl) {
-          if (successCount < 3) {
-            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-          } else if (successCount === 3) {
-            alert(`Opening subtask ${subtask.sequenceInfo.current}. Remaining ${totalCount - successCount - 1} subtasks are queued. Check your Jules notifications.`);
-            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-          }
+          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
         }
         
         successCount++;
