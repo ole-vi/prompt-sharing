@@ -672,3 +672,24 @@ footer code {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Jules sources expand/collapse animation */
+#julesSourcesList .expand-arrow {
+  transition: transform 0.2s ease;
+}
+
+#julesSourcesList [id$="-branches"] {
+  animation: slideDown 0.2s ease-out;
+  overflow: hidden;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+  }
+}

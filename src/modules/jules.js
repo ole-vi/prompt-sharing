@@ -226,9 +226,70 @@ export function showJulesEnvModal(promptText) {
 
   const handleSelect = async (environment) => {
     hideJulesEnvModal();
-    const sessionUrl = await callRunJulesFunction(promptText, environment);
-    if (sessionUrl) {
-      window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+    
+    let retryCount = 0;
+    let maxRetries = 3;
+    let submitted = false;
+
+    while (retryCount < maxRetries && !submitted) {
+      try {
+        const sessionUrl = await callRunJulesFunction(promptText, environment);
+        if (sessionUrl) {
+          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+        }
+        submitted = true;
+      } catch (error) {
+        console.error('Error submitting task to Jules:', error);
+        retryCount++;
+        console.log(`[Jules] Error on attempt ${retryCount}/${maxRetries}`);
+
+        if (retryCount < maxRetries) {
+          console.log('[Jules] Showing error modal');
+          const result = await showSubtaskErrorModal(1, 1, error);
+          console.log(`[Jules] User chose: ${result.action}`);
+
+          if (result.action === 'cancel') {
+            console.log('[Jules] Cancelled');
+            return;
+          } else if (result.action === 'skip') {
+            console.log('[Jules] Skipped');
+            return;
+          } else if (result.action === 'retry') {
+            if (result.shouldDelay) {
+              console.log('[Jules] Waiting 5 seconds before retry...');
+              await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+            console.log(`[Jules] Retrying (attempt ${retryCount + 1}/${maxRetries})`);
+          }
+        } else {
+          const result = await showSubtaskErrorModal(1, 1, error);
+          
+          if (result.action === 'retry') {
+            console.log('[Jules] Max retries reached but user wants to retry, trying one more time...');
+            if (result.shouldDelay) {
+              await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+            // One final attempt
+            try {
+              const sessionUrl = await callRunJulesFunction(promptText, environment);
+              if (sessionUrl) {
+                window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+              }
+              submitted = true;
+            } catch (finalError) {
+              alert('Failed to submit task after multiple retries. Please try again later.');
+              console.error('[Jules] Final retry failed:', finalError);
+            }
+          } else {
+            console.log('[Jules] Task not submitted after max retries');
+          }
+          return;
+        }
+      }
+
+      if (!submitted) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
   };
 
@@ -497,19 +558,49 @@ async function loadAndDisplayJulesProfile(uid) {
 
     // Display sources
     if (profileData.sources && profileData.sources.length > 0) {
-      sourcesListDiv.innerHTML = profileData.sources.map(source => {
+      sourcesListDiv.innerHTML = profileData.sources.map((source, index) => {
         const repoName = source.githubRepo?.name || source.name || source.id;
+        // Extract owner/repo from the full path (e.g., "sources/github/owner/repo" -> "owner/repo")
+        const githubPath = repoName.includes('github/') 
+          ? repoName.split('github/')[1] 
+          : repoName.replace('sources/', '');
         const branches = source.branches || [];
+        const sourceId = `source-${index}`;
         const branchList = branches.length > 0 
-          ? `<div style="margin-top:6px; padding-left:12px; font-size:12px; color:var(--muted);">
-               <div style="margin-bottom:2px;">🌿 Branches (${branches.length}):</div>
-               ${branches.slice(0, 5).map(b => `<div style="padding-left:8px;">• ${b.displayName || b.name}</div>`).join('')}
-               ${branches.length > 5 ? `<div style="padding-left:8px; font-style:italic;">... and ${branches.length - 5} more</div>` : ''}
+          ? `<div id="${sourceId}-branches" style="margin-top:6px; padding-left:12px; font-size:12px; color:var(--muted); display:none;">
+               <div style="margin-bottom:4px; color:var(--text);">🌿 Branches (${branches.length}):</div>
+               ${branches.map(b => `<div style="padding:4px 0 4px 8px; cursor:pointer; transition:color 0.2s;" 
+                  onmouseover="this.style.color='var(--accent)'" 
+                  onmouseout="this.style.color='var(--muted)'" 
+                  onclick="window.open('https://github.com/${githubPath}/tree/${encodeURIComponent(b.displayName || b.name)}', '_blank')">
+                  • ${b.displayName || b.name}
+                </div>`).join('')}
              </div>`
-          : '';
+          : '<div id="' + sourceId + '-branches" style="display:none; margin-top:6px; padding-left:12px; font-size:12px; color:var(--muted); font-style:italic;">No branches found</div>';
         
-        return `<div style="padding:8px; margin-bottom:8px; border-bottom:1px solid var(--border); font-size:13px;">
-          <div style="font-weight:600;">📂 ${repoName}</div>
+        const branchSummary = branches.length > 0 
+          ? `<span style="color:var(--muted); font-size:11px; margin-left:8px;">(${branches.length} ${branches.length === 1 ? 'branch' : 'branches'})</span>`
+          : '<span style="color:var(--muted); font-size:11px; margin-left:8px;">(no branches)</span>';
+        
+        return `<div style="padding:8px; margin-bottom:4px; border-bottom:1px solid var(--border); font-size:13px;">
+          <div style="font-weight:600; cursor:pointer; user-select:none; display:flex; align-items:center; transition:color 0.2s;" 
+               onclick="(function(e) {
+                 const branches = document.getElementById('${sourceId}-branches');
+                 const arrow = e.currentTarget.querySelector('.expand-arrow');
+                 if (branches.style.display === 'none') {
+                   branches.style.display = 'block';
+                   arrow.textContent = '▼';
+                 } else {
+                   branches.style.display = 'none';
+                   arrow.textContent = '▶';
+                 }
+               })(event)"
+               onmouseover="this.style.color='var(--accent)'"
+               onmouseout="this.style.color='var(--text)'">
+            <span class="expand-arrow" style="display:inline-block; width:12px; font-size:10px; margin-right:6px;">▶</span>
+            <span>📂 ${githubPath}</span>
+            ${branchSummary}
+          </div>
           ${branchList}
         </div>`;
       }).join('');
@@ -525,22 +616,47 @@ async function loadAndDisplayJulesProfile(uid) {
           'COMPLETED': '✅',
           'FAILED': '❌',
           'IN_PROGRESS': '⏳',
-          'PLANNING': '📋',
+          'PLANNING': '⏳',
           'QUEUED': '⏸️'
         }[state] || '❓';
         
-        const promptPreview = (session.prompt || 'No prompt text').substring(0, 60) + '...';
+        // Better state labels
+        const stateLabel = {
+          'COMPLETED': 'COMPLETED',
+          'FAILED': 'FAILED',
+          'IN_PROGRESS': 'IN PROGRESS',
+          'PLANNING': 'IN PROGRESS',
+          'QUEUED': 'QUEUED'
+        }[state] || state;
+        
+        const promptPreview = (session.prompt || 'No prompt text').substring(0, 80);
+        const displayPrompt = promptPreview.length < (session.prompt || '').length ? promptPreview + '...' : promptPreview;
         const createdAt = session.createTime ? new Date(session.createTime).toLocaleDateString() : 'Unknown';
         const prUrl = session.outputs?.[0]?.pullRequest?.url;
-        const prLink = prUrl ? `<a href="${prUrl}" target="_blank" style="color:var(--accent); text-decoration:none; font-size:11px;">🔗 View PR</a>` : '';
         
-        return `<div style="padding:10px; margin-bottom:8px; border-bottom:1px solid var(--border); font-size:12px;">
-          <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:4px;">
-            <div style="font-weight:600; flex:1;">${stateEmoji} ${state}</div>
+        // Extract session ID from session name (format: "sessions/123abc")
+        // The ID after "sessions/" is the actual session identifier
+        const sessionId = session.name?.split('sessions/')[1] || session.id?.split('sessions/')[1] || session.id;
+        const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
+        
+        const prLink = prUrl 
+          ? `<a href="${prUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:none; font-size:11px; margin-right:8px;" 
+              onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">🔗 View PR</a>` 
+          : '';
+        
+        return `<div style="padding:10px; margin-bottom:8px; border:1px solid var(--border); border-radius:8px; font-size:12px; cursor:pointer; transition:all 0.2s; background:rgba(255,255,255,0.02);"
+                     onmouseover="this.style.background='rgba(77,217,255,0.05)'; this.style.borderColor='var(--accent)'"
+                     onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.borderColor='var(--border)'"
+                     onclick="window.open('${sessionUrl}', '_blank', 'noopener,noreferrer')">
+          <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:6px;">
+            <div style="font-weight:600; flex:1;">${stateEmoji} ${stateLabel}</div>
             <div style="color:var(--muted); font-size:11px;">${createdAt}</div>
           </div>
-          <div style="color:var(--muted); margin-bottom:4px;">${promptPreview}</div>
-          ${prLink}
+          <div style="color:var(--text); margin-bottom:6px; line-height:1.4;">${displayPrompt}</div>
+          ${prLink ? `<div style="display:flex; gap:8px; align-items:center;" onclick="event.stopPropagation();">
+            ${prLink}
+            <span style="color:var(--muted); font-size:11px;">Click card to view session →</span>
+          </div>` : '<div style="color:var(--muted); font-size:11px;">Click to view session details →</div>'}
         </div>`;
       }).join('');
     } else {
