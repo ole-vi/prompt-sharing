@@ -11,7 +11,6 @@ import { JULES_API_BASE, ERRORS } from '../utils/constants.js';
 export async function getDecryptedJulesKey(uid) {
   try {
     if (!window.db) {
-      console.error('Firestore not initialized');
       return null;
     }
 
@@ -36,7 +35,6 @@ export async function getDecryptedJulesKey(uid) {
 
     return new TextDecoder().decode(plaintext);
   } catch (error) {
-    console.error('Failed to decrypt Jules key:', error);
     return null;
   }
 }
@@ -70,7 +68,6 @@ export async function listJulesSources(apiKey) {
 
     return await response.json();
   } catch (error) {
-    console.error('Error listing Jules sources:', error);
     throw error;
   }
 }
@@ -96,7 +93,6 @@ export async function getJulesSourceDetails(apiKey, sourceId) {
 
     return await response.json();
   } catch (error) {
-    console.error('Error getting Jules source details:', error);
     throw error;
   }
 }
@@ -126,7 +122,6 @@ export async function listJulesSessions(apiKey, pageSize = 10, pageToken = null)
 
     return await response.json();
   } catch (error) {
-    console.error('Error listing Jules sessions:', error);
     throw error;
   }
 }
@@ -149,7 +144,6 @@ export async function getJulesSession(apiKey, sessionId) {
 
     return await response.json();
   } catch (error) {
-    console.error('Error getting Jules session:', error);
     throw error;
   }
 }
@@ -172,7 +166,6 @@ export async function getJulesSessionActivities(apiKey, sessionId) {
 
     return await response.json();
   } catch (error) {
-    console.error('Error getting Jules session activities:', error);
     throw error;
   }
 }
@@ -218,7 +211,6 @@ export async function createJulesSession(apiKey, sessionConfig) {
 
     return await response.json();
   } catch (error) {
-    console.error('Error creating Jules session:', error);
     throw error;
   }
 }
@@ -243,7 +235,6 @@ export async function approveJulesSessionPlan(apiKey, sessionId) {
 
     return await response.json();
   } catch (error) {
-    console.error('Error approving Jules session plan:', error);
     throw error;
   }
 }
@@ -273,14 +264,12 @@ export async function loadJulesProfileInfo(uid) {
           // Source object has both 'name' (full path like "sources/github/owner/repo") 
           // and 'id' fields. Use 'name' for the API call.
           const sourceIdentifier = source.name || source.id;
-          console.log('[DEBUG] Fetching details for source:', sourceIdentifier);
           const details = await getJulesSourceDetails(apiKey, sourceIdentifier);
           return {
             ...source,
             branches: details.githubRepo?.branches || []
           };
         } catch (error) {
-          console.error(`Failed to fetch branches for ${source.name || source.id}:`, error);
           return {
             ...source,
             branches: []
@@ -294,7 +283,6 @@ export async function loadJulesProfileInfo(uid) {
       sessions: sessionsData.sessions || []
     };
   } catch (error) {
-    console.error('Error loading Jules profile info:', error);
     throw error;
   }
 }

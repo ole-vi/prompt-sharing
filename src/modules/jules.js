@@ -12,15 +12,11 @@ import { loadJulesProfileInfo, listJulesSessions } from './jules-api.js';
 export async function checkJulesKey(uid) {
   try {
     if (!window.db) {
-      console.error('Firestore not initialized');
       return false;
     }
-    console.log('[DEBUG] Checking Jules key for uid:', uid);
     const doc = await window.db.collection('julesKeys').doc(uid).get();
-    console.log('[DEBUG] Jules key exists:', doc.exists);
     return doc.exists;
   } catch (error) {
-    console.error('Error checking Jules key:', error);
     return false;
   }
 }
@@ -31,7 +27,6 @@ export async function deleteStoredJulesKey(uid) {
     await window.db.collection('julesKeys').doc(uid).delete();
     return true;
   } catch (error) {
-    console.error('Error deleting Jules key:', error);
     return false;
   }
 }
@@ -55,7 +50,6 @@ export async function encryptAndStoreKey(plaintext, uid) {
     });
     return true;
   } catch (error) {
-    console.error('Failed to encrypt/store key:', error);
     throw error;
   }
 }
@@ -95,7 +89,6 @@ export async function callRunJulesFunction(promptText, environment = "myplanet")
 
     return result.sessionUrl || null;
   } catch (error) {
-    console.error('Cloud function call failed:', error);
     const julesBtn = document.getElementById('julesBtn');
     if (julesBtn) {
       julesBtn.textContent = '⚡ Try in Jules';
@@ -120,7 +113,6 @@ export async function handleTryInJules(promptText) {
     }
     await handleTryInJulesAfterAuth(promptText);
   } catch (error) {
-    console.error('Error in Try in Jules:', error);
     alert('An error occurred: ' + error.message);
   }
 }
@@ -133,22 +125,16 @@ export async function handleTryInJulesAfterAuth(promptText) {
   }
 
   try {
-    console.log('[DEBUG] handleTryInJulesAfterAuth - checking for Jules key');
     const hasKey = await checkJulesKey(user.uid);
-    console.log('[DEBUG] hasKey:', hasKey);
     
     if (!hasKey) {
-      console.log('[DEBUG] No key found, showing key modal');
       showJulesKeyModal(() => {
-        console.log('[DEBUG] Key saved, showing env modal');
         showJulesEnvModal(promptText);
       });
     } else {
-      console.log('[DEBUG] Key found, showing env modal');
       showJulesEnvModal(promptText);
     }
   } catch (error) {
-    console.error('Error in Jules flow:', error);
     alert('An error occurred. Please try again.');
   }
 }
@@ -157,9 +143,6 @@ export function showJulesKeyModal(onSave) {
   const modal = document.getElementById('julesKeyModal');
   const input = document.getElementById('julesKeyInput');
   
-  console.log('[DEBUG] showJulesKeyModal called');
-  console.log('[DEBUG] Modal element:', modal);
-  console.log('[DEBUG] Input element:', input);
   
   // Use setAttribute to set display with !important
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
@@ -196,7 +179,6 @@ export function showJulesKeyModal(onSave) {
 
       if (onSave) onSave();
     } catch (error) {
-      console.error('Failed to save Jules key:', error);
       alert('Failed to save API key: ' + error.message);
       saveBtn.textContent = 'Save & Continue';
       saveBtn.disabled = false;
@@ -239,33 +221,24 @@ export function showJulesEnvModal(promptText) {
         }
         submitted = true;
       } catch (error) {
-        console.error('Error submitting task to Jules:', error);
         retryCount++;
-        console.log(`[Jules] Error on attempt ${retryCount}/${maxRetries}`);
 
         if (retryCount < maxRetries) {
-          console.log('[Jules] Showing error modal');
           const result = await showSubtaskErrorModal(1, 1, error);
-          console.log(`[Jules] User chose: ${result.action}`);
 
           if (result.action === 'cancel') {
-            console.log('[Jules] Cancelled');
             return;
           } else if (result.action === 'skip') {
-            console.log('[Jules] Skipped');
             return;
           } else if (result.action === 'retry') {
             if (result.shouldDelay) {
-              console.log('[Jules] Waiting 5 seconds before retry...');
               await new Promise(resolve => setTimeout(resolve, 5000));
             }
-            console.log(`[Jules] Retrying (attempt ${retryCount + 1}/${maxRetries})`);
           }
         } else {
           const result = await showSubtaskErrorModal(1, 1, error);
           
           if (result.action === 'retry') {
-            console.log('[Jules] Max retries reached but user wants to retry, trying one more time...');
             if (result.shouldDelay) {
               await new Promise(resolve => setTimeout(resolve, 5000));
             }
@@ -278,10 +251,8 @@ export function showJulesEnvModal(promptText) {
               submitted = true;
             } catch (finalError) {
               alert('Failed to submit task after multiple retries. Please try again later.');
-              console.error('[Jules] Final retry failed:', finalError);
             }
           } else {
-            console.log('[Jules] Task not submitted after max retries');
           }
           return;
         }
@@ -308,7 +279,6 @@ export function hideJulesEnvModal() {
 
 export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
   return new Promise((resolve) => {
-    console.log('[ErrorModal] Showing error modal for subtask', subtaskNumber);
     const modal = document.getElementById('subtaskErrorModal');
     const subtaskNumDiv = document.getElementById('errorSubtaskNumber');
     const messageDiv = document.getElementById('errorMessage');
@@ -319,7 +289,6 @@ export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
     const retryDelayCheckbox = document.getElementById('errorRetryDelayCheckbox');
 
     if (!modal) {
-      console.error('[ErrorModal] Modal element not found!');
       resolve({ action: 'cancel', shouldDelay: false });
       return;
     }
@@ -330,10 +299,8 @@ export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
 
     modal.style.removeProperty('display');
     modal.style.setProperty('display', 'flex', 'important');
-    console.log('[ErrorModal] Modal displayed, waiting for user action...', modal.style.display);
 
     const handleAction = (action) => {
-      console.log('[ErrorModal] User selected:', action);
       retryBtn.onclick = null;
       skipBtn.onclick = null;
       cancelBtn.onclick = null;
@@ -439,25 +406,20 @@ export function initJulesKeyModalListeners() {
 window.deleteJulesKey = async function() {
   const user = window.auth?.currentUser;
   if (!user) {
-    console.log('Not logged in');
     return;
   }
   const deleted = await deleteStoredJulesKey(user.uid);
   if (deleted) {
-    console.log('✓ Jules key deleted. You can now enter a new one.');
   } else {
-    console.log('✗ Failed to delete Jules key');
   }
 };
 
 window.checkJulesKeyStatus = async function() {
   const user = window.auth?.currentUser;
   if (!user) {
-    console.log('Not logged in');
     return;
   }
   const hasKey = await checkJulesKey(user.uid);
-  console.log('Jules key stored:', hasKey ? '✓ Yes' : '✗ No');
 };
 
 export function showUserProfileModal() {
@@ -534,7 +496,6 @@ export function showUserProfileModal() {
         throw new Error('Failed to delete key');
       }
     } catch (error) {
-      console.error('Error resetting Jules key:', error);
       alert('Failed to reset API key: ' + error.message);
       resetBtn.textContent = '🔄 Reset Jules API Key';
       resetBtn.disabled = false;
@@ -727,7 +688,6 @@ async function loadAndDisplayJulesProfile(uid) {
     attachViewAllSessionsHandler();
 
   } catch (error) {
-    console.error('Error loading Jules profile:', error);
     
     // Display error
     sourcesListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
@@ -813,7 +773,6 @@ async function loadSessionsPage() {
       allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions found</div>';
     }
   } catch (error) {
-    console.error('Failed to load sessions page:', error);
     if (allSessionsCache.length === 0) {
       allSessionsList.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">Failed to load sessions: ${error.message}</div>`;
     }
@@ -929,7 +888,6 @@ export async function handleFreeInputAfterAuth() {
       showFreeInputForm();
     }
   } catch (error) {
-    console.error('Error in free input flow:', error);
     alert('An error occurred. Please try again.');
   }
 }
@@ -958,7 +916,6 @@ export function showFreeInputForm() {
       // Submit directly as one (no split modal)
       await handleTryInJulesAfterAuth(promptText);
     } catch (error) {
-      console.error('Error submitting free input:', error);
       alert('Failed to submit prompt: ' + error.message);
     }
   };
@@ -976,7 +933,6 @@ export function showFreeInputForm() {
       // Show subtask split modal
       showSubtaskSplitModal(promptText);
     } catch (error) {
-      console.error('Error with split:', error);
       alert('Failed to process prompt: ' + error.message);
     }
   };
@@ -1009,7 +965,6 @@ let splitMode = 'send-all'; // 'send-all' or 'split-tasks'
 let currentAnalysis = null; // Store analysis for mode switching
 
 export function showSubtaskSplitModal(promptText) {
-  console.log('[DEBUG] showSubtaskSplitModal called with prompt length:', promptText.length);
   currentFullPrompt = promptText;
   
   const modal = document.getElementById('subtaskSplitModal');
@@ -1021,7 +976,6 @@ export function showSubtaskSplitModal(promptText) {
   const analysis = analyzePromptStructure(promptText);
   currentSubtasks = analysis.subtasks;
   
-  console.log('[DEBUG] Analysis complete, subtasks:', currentSubtasks.length);
 
   // Show modal
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
@@ -1075,7 +1029,6 @@ function renderSplitEdit(subtasks) {
       currentSubtasks = subtasks.filter((_, i) => {
         return document.getElementById(`subtask-${i}`).checked;
       });
-      console.log('[DEBUG] Checkbox changed, currentSubtasks now:', currentSubtasks.length);
     });
   });
 }
@@ -1088,7 +1041,6 @@ export function hideSubtaskSplitModal() {
 }
 
 async function submitSubtasks(subtasks) {
-  console.log('[DEBUG] submitSubtasks called with:', subtasks.length, 'subtasks');
   const sequenced = buildSubtaskSequence(currentFullPrompt, subtasks);
   
   // Show confirmation
@@ -1109,7 +1061,6 @@ async function submitSubtasks(subtasks) {
     const subtask = sequenced[i];
     const status = `(${subtask.sequenceInfo.current}/${subtask.sequenceInfo.total})`;
     
-    console.log(`[Subtask] Sending part ${subtask.sequenceInfo.current}/${subtask.sequenceInfo.total}`);
     
     let retryCount = 0;
     let maxRetries = 3;
@@ -1130,33 +1081,25 @@ async function submitSubtasks(subtasks) {
         successCount++;
         submitted = true;
       } catch (error) {
-        console.error(`Error submitting subtask ${subtask.sequenceInfo.current}:`, error);
         retryCount++;
-        console.log(`[Subtask] Error on attempt ${retryCount}/${maxRetries}`);
 
         if (retryCount < maxRetries) {
-          console.log(`[Subtask] Showing error modal for subtask ${subtask.sequenceInfo.current}`);
           const result = await showSubtaskErrorModal(
             subtask.sequenceInfo.current,
             subtask.sequenceInfo.total,
             error
           );
-          console.log(`[Subtask] User chose: ${result.action}`);
 
           if (result.action === 'cancel') {
-            console.log('[Subtask] Cancelling all remaining tasks');
             alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
             return;
           } else if (result.action === 'skip') {
-            console.log(`[Subtask] Skipping subtask ${subtask.sequenceInfo.current}`);
             skippedCount++;
             submitted = true;
           } else if (result.action === 'retry') {
             if (result.shouldDelay) {
-              console.log('[Subtask] Waiting 5 seconds before retry...');
               await new Promise(resolve => setTimeout(resolve, 5000));
             }
-            console.log(`[Subtask] Retrying subtask ${subtask.sequenceInfo.current} (attempt ${retryCount + 1}/${maxRetries})`);
           }
         } else {
           const result = await showSubtaskErrorModal(
@@ -1166,7 +1109,6 @@ async function submitSubtasks(subtasks) {
           );
 
           if (result.action === 'cancel') {
-            console.log('[Subtask] Cancelling all remaining tasks');
             alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
             return;
           } else {
@@ -1186,6 +1128,5 @@ async function submitSubtasks(subtasks) {
     `Successful: ${successCount}/${totalCount}\n` +
     `Skipped: ${skippedCount}/${totalCount}`;
   alert(summary);
-  console.log('[Subtask] Summary:', summary);
 }
 
