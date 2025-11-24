@@ -941,7 +941,7 @@ function renderAllSessions(sessions) {
     return `<div style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.03); cursor:pointer; transition:all 0.2s;"
                  onmouseover="this.style.borderColor='var(--accent)'; this.style.background='rgba(255,255,255,0.06)'"
                  onmouseout="this.style.borderColor='var(--border)'; this.style.background='rgba(255,255,255,0.03)'"
-                 onclick="window.open('https://jules.googleapis.com/v1alpha/session/${sessionId}', '_blank')">
+                 onclick="window.open('https://jules.google.com/session/${sessionId}', '_blank')">
       <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:6px;">
         <div style="font-weight:600; font-size:13px; flex:1; margin-right:8px;">${displayTitle}</div>
         <div style="font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(255,255,255,0.1); white-space:nowrap; margin-left:8px;">
