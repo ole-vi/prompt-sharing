@@ -121,7 +121,28 @@ These links can be shared in Discord, Whatsapp, docs, etc.
 * One-click Copy prompt button
 * Deep linking to specific prompts with `#p=<slug>`
 * Automatic emoji tags based on filename keywords (see below)
+* **Jules Integration**: View connected repositories, branches, and recent sessions
+* **GitHub Authentication**: Sign in to access Jules features
 * No build step, no backend — just static files
+
+### Jules API Integration
+
+PromptSync integrates with the Google Jules API to provide visibility into your Jules account:
+
+* **View Connected Repositories**: See all repos connected via the Jules GitHub App
+* **Browse Branches**: View available branches for each connected repository
+* **Track Sessions**: Monitor your recent Jules sessions with status and PR links
+* **Secure Storage**: API keys are encrypted before storage in Firestore
+
+To use Jules features:
+1. Sign in with GitHub (click in the header)
+2. Click your username to open your profile
+3. Add your Jules API key (get one from [jules.google.com](https://jules.google.com) → Settings → API Keys)
+4. Your connected repos and recent sessions will automatically load
+
+For detailed integration documentation, see:
+* `JULES_API_INTEGRATION.md` - Complete implementation details
+* `JULES_API_DEVELOPER_GUIDE.md` - API reference and code examples
 
 ## Emoji Titles
 
@@ -160,7 +181,8 @@ Each module in `src/modules/` handles one major feature:
 - **prompt-list.js**: Tree rendering, sidebar list, search
 - **prompt-renderer.js**: Content loading and display
 - **branch-selector.js**: Branch listing and switching
-- **jules.js**: Jules API integration & key encryption
+- **jules.js**: Jules integration, key encryption, and modal management
+- **jules-api.js**: Complete Jules API client for sources, sessions, and activities
 
 Utilities in `src/utils/` are shared helpers:
 - **constants.js**: Regex patterns, storage keys, emoji mappings, all magic strings

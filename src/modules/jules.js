@@ -7,6 +7,7 @@ import {
   generateSplitSummary, 
   validateSubtasks 
 } from './subtask-manager.js';
+import { loadJulesProfileInfo } from './jules-api.js';
 
 export async function checkJulesKey(uid) {
   try {
@@ -395,17 +396,19 @@ export function showUserProfileModal() {
     return;
   }
 
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
 
   const profileUserName = document.getElementById('profileUserName');
   const julesKeyStatus = document.getElementById('julesKeyStatus');
   const addBtn = document.getElementById('addJulesKeyBtn');
   const resetBtn = document.getElementById('resetJulesKeyBtn');
   const closeBtn = document.getElementById('closeProfileBtn');
+  const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
+  const julesProfileInfoSection = document.getElementById('julesProfileInfoSection');
 
   profileUserName.textContent = user.displayName || user.email || 'Unknown User';
 
-  checkJulesKey(user.uid).then((hasKey) => {
+  checkJulesKey(user.uid).then(async (hasKey) => {
     julesKeyStatus.textContent = hasKey ? '✓ Saved' : '✗ Not saved';
     julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
     
@@ -413,9 +416,14 @@ export function showUserProfileModal() {
     if (hasKey) {
       addBtn.style.display = 'none';
       resetBtn.style.display = 'block';
+      julesProfileInfoSection.style.display = 'block';
+      
+      // Load Jules profile info automatically when key exists
+      await loadAndDisplayJulesProfile(user.uid);
     } else {
       addBtn.style.display = 'block';
       resetBtn.style.display = 'none';
+      julesProfileInfoSection.style.display = 'none';
     }
   });
 
@@ -445,6 +453,7 @@ export function showUserProfileModal() {
         // Update buttons
         addBtn.style.display = 'block';
         resetBtn.style.display = 'none';
+        julesProfileInfoSection.style.display = 'none';
         
         alert('Jules API key has been deleted. You can enter a new one next time.');
       } else {
@@ -458,14 +467,110 @@ export function showUserProfileModal() {
     }
   };
 
+  // Load Jules Info button handler
+  loadJulesInfoBtn.onclick = async () => {
+    await loadAndDisplayJulesProfile(user.uid);
+  };
+
   closeBtn.onclick = () => {
     hideUserProfileModal();
   };
 }
 
+/**
+ * Loads and displays Jules profile information in the profile modal
+ */
+async function loadAndDisplayJulesProfile(uid) {
+  const loadBtn = document.getElementById('loadJulesInfoBtn');
+  const sourcesListDiv = document.getElementById('julesSourcesList');
+  const sessionsListDiv = document.getElementById('julesSessionsList');
+
+  try {
+    // Show loading state
+    loadBtn.disabled = true;
+    loadBtn.textContent = '⏳ Loading...';
+    sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sources...</div>';
+    sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
+
+    // Load profile data
+    const profileData = await loadJulesProfileInfo(uid);
+
+    // Display sources
+    if (profileData.sources && profileData.sources.length > 0) {
+      sourcesListDiv.innerHTML = profileData.sources.map(source => {
+        const repoName = source.githubRepo?.name || source.name || source.id;
+        const branches = source.branches || [];
+        const branchList = branches.length > 0 
+          ? `<div style="margin-top:6px; padding-left:12px; font-size:12px; color:var(--muted);">
+               <div style="margin-bottom:2px;">🌿 Branches (${branches.length}):</div>
+               ${branches.slice(0, 5).map(b => `<div style="padding-left:8px;">• ${b.displayName || b.name}</div>`).join('')}
+               ${branches.length > 5 ? `<div style="padding-left:8px; font-style:italic;">... and ${branches.length - 5} more</div>` : ''}
+             </div>`
+          : '';
+        
+        return `<div style="padding:8px; margin-bottom:8px; border-bottom:1px solid var(--border); font-size:13px;">
+          <div style="font-weight:600;">📂 ${repoName}</div>
+          ${branchList}
+        </div>`;
+      }).join('');
+    } else {
+      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No connected repositories found.<br><small>Connect repos in the Jules UI.</small></div>';
+    }
+
+    // Display sessions
+    if (profileData.sessions && profileData.sessions.length > 0) {
+      sessionsListDiv.innerHTML = profileData.sessions.map(session => {
+        const state = session.state || 'UNKNOWN';
+        const stateEmoji = {
+          'COMPLETED': '✅',
+          'FAILED': '❌',
+          'IN_PROGRESS': '⏳',
+          'PLANNING': '📋',
+          'QUEUED': '⏸️'
+        }[state] || '❓';
+        
+        const promptPreview = (session.prompt || 'No prompt text').substring(0, 60) + '...';
+        const createdAt = session.createTime ? new Date(session.createTime).toLocaleDateString() : 'Unknown';
+        const prUrl = session.outputs?.[0]?.pullRequest?.url;
+        const prLink = prUrl ? `<a href="${prUrl}" target="_blank" style="color:var(--accent); text-decoration:none; font-size:11px;">🔗 View PR</a>` : '';
+        
+        return `<div style="padding:10px; margin-bottom:8px; border-bottom:1px solid var(--border); font-size:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:4px;">
+            <div style="font-weight:600; flex:1;">${stateEmoji} ${state}</div>
+            <div style="color:var(--muted); font-size:11px;">${createdAt}</div>
+          </div>
+          <div style="color:var(--muted); margin-bottom:4px;">${promptPreview}</div>
+          ${prLink}
+        </div>`;
+      }).join('');
+    } else {
+      sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No recent sessions found.</div>';
+    }
+
+    // Reset button state
+    loadBtn.disabled = false;
+    loadBtn.textContent = '🔄 Refresh Jules Info';
+
+  } catch (error) {
+    console.error('Error loading Jules profile:', error);
+    
+    // Display error
+    sourcesListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
+      Failed to load sources: ${error.message}
+    </div>`;
+    sessionsListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
+      Failed to load sessions: ${error.message}
+    </div>`;
+
+    // Reset button state
+    loadBtn.disabled = false;
+    loadBtn.textContent = '🔄 Refresh Jules Info';
+  }
+}
+
 export function hideUserProfileModal() {
   const modal = document.getElementById('userProfileModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
 }
 
 export function showFreeInputModal() {
