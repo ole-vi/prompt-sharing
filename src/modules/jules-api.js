@@ -3,11 +3,6 @@
 
 import { JULES_API_BASE, ERRORS } from '../utils/constants.js';
 
-/**
- * Decrypts and retrieves the user's stored Jules API key
- * @param {string} uid - User ID
- * @returns {Promise<string|null>} The decrypted API key or null if not found
- */
 export async function getDecryptedJulesKey(uid) {
   try {
     if (!window.db) {
@@ -39,11 +34,6 @@ export async function getDecryptedJulesKey(uid) {
   }
 }
 
-/**
- * Creates headers for Jules API requests with authentication
- * @param {string} apiKey - Jules API key
- * @returns {Object} Headers object for fetch requests
- */
 function createJulesHeaders(apiKey) {
   return {
     'Content-Type': 'application/json',
@@ -51,11 +41,6 @@ function createJulesHeaders(apiKey) {
   };
 }
 
-/**
- * Lists all connected repositories (sources) in Jules
- * @param {string} apiKey - Jules API key
- * @returns {Promise<Object>} Response containing sources array
- */
 export async function listJulesSources(apiKey) {
   try {
     const response = await fetch(`${JULES_API_BASE}/sources`, {
@@ -72,12 +57,6 @@ export async function listJulesSources(apiKey) {
   }
 }
 
-/**
- * Gets details for a specific source including branches
- * @param {string} apiKey - Jules API key
- * @param {string} sourceId - Source identifier (e.g., "sources/github/owner/repo")
- * @returns {Promise<Object>} Source details with branches
- */
 export async function getJulesSourceDetails(apiKey, sourceId) {
   try {
     // Source ID already contains the full path (e.g., "sources/github/owner/repo")
@@ -97,13 +76,6 @@ export async function getJulesSourceDetails(apiKey, sourceId) {
   }
 }
 
-/**
- * Lists recent Jules sessions
- * @param {string} apiKey - Jules API key
- * @param {number} pageSize - Number of sessions to retrieve (default 10)
- * @param {string} pageToken - Optional page token for pagination
- * @returns {Promise<Object>} Response containing sessions array and nextPageToken
- */
 export async function listJulesSessions(apiKey, pageSize = 10, pageToken = null) {
   try {
     const url = new URL(`${JULES_API_BASE}/sessions`);
@@ -126,12 +98,6 @@ export async function listJulesSessions(apiKey, pageSize = 10, pageToken = null)
   }
 }
 
-/**
- * Gets details for a specific session
- * @param {string} apiKey - Jules API key
- * @param {string} sessionId - Session identifier
- * @returns {Promise<Object>} Session details with state and outputs
- */
 export async function getJulesSession(apiKey, sessionId) {
   try {
     const response = await fetch(`${JULES_API_BASE}/sessions/${sessionId}`, {
@@ -148,12 +114,6 @@ export async function getJulesSession(apiKey, sessionId) {
   }
 }
 
-/**
- * Gets execution logs and activities for a session
- * @param {string} apiKey - Jules API key
- * @param {string} sessionId - Session identifier
- * @returns {Promise<Object>} Activities and execution trace
- */
 export async function getJulesSessionActivities(apiKey, sessionId) {
   try {
     const response = await fetch(`${JULES_API_BASE}/sessions/${sessionId}/activities`, {
@@ -170,17 +130,6 @@ export async function getJulesSessionActivities(apiKey, sessionId) {
   }
 }
 
-/**
- * Creates a new Jules session (triggers prompt execution)
- * @param {string} apiKey - Jules API key
- * @param {Object} sessionConfig - Configuration for the session
- * @param {string} sessionConfig.prompt - The prompt to execute
- * @param {string} sessionConfig.sourceId - Source/repo identifier
- * @param {string} sessionConfig.branch - Branch name
- * @param {boolean} [sessionConfig.autoCreatePR] - Auto-create PR when true
- * @param {boolean} [sessionConfig.requirePlanApproval] - Require manual approval for plan
- * @returns {Promise<Object>} Created session object
- */
 export async function createJulesSession(apiKey, sessionConfig) {
   try {
     const body = {
@@ -215,12 +164,6 @@ export async function createJulesSession(apiKey, sessionConfig) {
   }
 }
 
-/**
- * Approves a Jules session plan (when requirePlanApproval was set)
- * @param {string} apiKey - Jules API key
- * @param {string} sessionId - Session identifier
- * @returns {Promise<Object>} Updated session
- */
 export async function approveJulesSessionPlan(apiKey, sessionId) {
   try {
     const response = await fetch(`${JULES_API_BASE}/sessions/${sessionId}:approvePlan`, {
@@ -239,11 +182,6 @@ export async function approveJulesSessionPlan(apiKey, sessionId) {
   }
 }
 
-/**
- * Loads complete Jules profile information for a user
- * @param {string} uid - User ID
- * @returns {Promise<Object>} Profile data with sources, branches, and sessions
- */
 export async function loadJulesProfileInfo(uid) {
   try {
     const apiKey = await getDecryptedJulesKey(uid);
