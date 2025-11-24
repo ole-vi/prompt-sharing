@@ -211,16 +211,14 @@ export async function showJulesEnvModal(promptText) {
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 
   const favoriteContainer = document.getElementById('favoriteReposContainer');
-  const showMoreContainer = document.getElementById('showMoreReposContainer');
   const allReposContainer = document.getElementById('allReposContainer');
   const repoSelect = document.getElementById('julesRepoSelect');
-  const showMoreBtn = document.getElementById('showMoreReposBtn');
   const cancelBtn = document.getElementById('julesEnvCancelBtn');
   
   const user = getCurrentUser();
   if (!user) {
     favoriteContainer.innerHTML = '<div style="color:var(--muted); text-align:center; padding:12px;">Please sign in first</div>';
-    showMoreContainer.style.display = 'none';
+    allReposContainer.style.display = 'none';
     return;
   }
 
@@ -230,8 +228,7 @@ export async function showJulesEnvModal(promptText) {
   const favorites = storedFavorites ? JSON.parse(storedFavorites) : DEFAULT_FAVORITE_REPOS;
 
   favoriteContainer.innerHTML = '';
-  allReposContainer.style.display = 'none';
-  showMoreContainer.style.display = 'block';
+  allReposContainer.style.display = 'block';
   
   if (favorites && favorites.length > 0) {
     favorites.forEach(fav => {
@@ -248,11 +245,11 @@ export async function showJulesEnvModal(promptText) {
 
   let allReposLoaded = false;
 
-  showMoreBtn.onclick = async () => {
+  const loadAllRepos = async () => {
     if (allReposLoaded) return;
     
-    showMoreBtn.textContent = 'Loading...';
-    showMoreBtn.disabled = true;
+    repoSelect.innerHTML = '<option value="">Loading...</option>';
+    repoSelect.disabled = true;
 
     try {
       const { listJulesSources } = await import('./jules-api.js');
@@ -260,8 +257,8 @@ export async function showJulesEnvModal(promptText) {
       
       const apiKey = await getDecryptedJulesKey(user.uid);
       if (!apiKey) {
-        showMoreBtn.textContent = 'No API key configured';
-        showMoreBtn.disabled = false;
+        repoSelect.innerHTML = '<option value="">No API key configured</option>';
+        repoSelect.disabled = false;
         return;
       }
 
@@ -269,11 +266,13 @@ export async function showJulesEnvModal(promptText) {
       const sources = sourcesData.sources || [];
 
       if (sources.length === 0) {
-        showMoreBtn.textContent = 'No repositories found';
+        repoSelect.innerHTML = '<option value="">No repositories found</option>';
+        repoSelect.disabled = false;
         return;
       }
 
       repoSelect.innerHTML = '<option value="">Select a repository...</option>';
+      repoSelect.disabled = false;
       
       // Store branch information for each source
       const sourceBranchMap = {};
@@ -301,13 +300,23 @@ export async function showJulesEnvModal(promptText) {
       };
 
       allReposLoaded = true;
-      showMoreContainer.style.display = 'none';
-      allReposContainer.style.display = 'block';
+      
+      // Automatically expand the dropdown after loading
+      repoSelect.focus();
+      repoSelect.size = Math.min(sources.length + 1, 10); // Show up to 10 items
+      setTimeout(() => {
+        if (repoSelect.showPicker) {
+          repoSelect.showPicker();
+        }
+      }, 100);
     } catch (error) {
-      showMoreBtn.textContent = 'Failed to load - try again';
-      showMoreBtn.disabled = false;
+      repoSelect.innerHTML = '<option value="">Failed to load - click to retry</option>';
+      repoSelect.disabled = false;
+      allReposLoaded = false;
     }
   };
+
+  repoSelect.onclick = loadAllRepos;
 
   cancelBtn.onclick = () => {
     hideJulesEnvModal();
@@ -1114,10 +1123,8 @@ export function showSubtaskSplitModal(promptText) {
 
 async function populateSubtaskRepoSelection() {
   const favoriteContainer = document.getElementById('subtaskFavoriteReposContainer');
-  const showMoreContainer = document.getElementById('subtaskShowMoreReposContainer');
   const allReposContainer = document.getElementById('subtaskAllReposContainer');
   const repoSelect = document.getElementById('subtaskRepoSelect');
-  const showMoreBtn = document.getElementById('subtaskShowMoreReposBtn');
   
   const user = getCurrentUser();
   if (!user) {
@@ -1132,8 +1139,7 @@ async function populateSubtaskRepoSelection() {
   const favorites = storedFavorites ? JSON.parse(storedFavorites) : DEFAULT_FAVORITE_REPOS;
 
   favoriteContainer.innerHTML = '';
-  allReposContainer.style.display = 'none';
-  showMoreContainer.style.display = 'block';
+  allReposContainer.style.display = 'block';
   
   // Render favorite buttons
   if (favorites && favorites.length > 0) {
@@ -1165,11 +1171,11 @@ async function populateSubtaskRepoSelection() {
 
   let allReposLoaded = false;
 
-  showMoreBtn.onclick = async () => {
+  const loadAllRepos = async () => {
     if (allReposLoaded) return;
     
-    showMoreBtn.textContent = 'Loading...';
-    showMoreBtn.disabled = true;
+    repoSelect.innerHTML = '<option value="">Loading...</option>';
+    repoSelect.disabled = true;
 
     try {
       const { listJulesSources } = await import('./jules-api.js');
@@ -1177,8 +1183,8 @@ async function populateSubtaskRepoSelection() {
       
       const apiKey = await getDecryptedJulesKey(user.uid);
       if (!apiKey) {
-        showMoreBtn.textContent = 'No API key configured';
-        showMoreBtn.disabled = false;
+        repoSelect.innerHTML = '<option value="">No API key configured</option>';
+        repoSelect.disabled = false;
         return;
       }
 
@@ -1186,11 +1192,13 @@ async function populateSubtaskRepoSelection() {
       const sources = sourcesData.sources || [];
 
       if (sources.length === 0) {
-        showMoreBtn.textContent = 'No repositories found';
+        repoSelect.innerHTML = '<option value="">No repositories found</option>';
+        repoSelect.disabled = false;
         return;
       }
 
       repoSelect.innerHTML = '<option value="">Select a repository...</option>';
+      repoSelect.disabled = false;
       
       // Store branch information for each source
       const sourceBranchMap = {};
@@ -1219,13 +1227,23 @@ async function populateSubtaskRepoSelection() {
       };
 
       allReposLoaded = true;
-      showMoreContainer.style.display = 'none';
-      allReposContainer.style.display = 'block';
+      
+      // Automatically expand the dropdown after loading
+      repoSelect.focus();
+      repoSelect.size = Math.min(sources.length + 1, 10); // Show up to 10 items
+      setTimeout(() => {
+        if (repoSelect.showPicker) {
+          repoSelect.showPicker();
+        }
+      }, 100);
     } catch (error) {
-      showMoreBtn.textContent = 'Failed to load - try again';
-      showMoreBtn.disabled = false;
+      repoSelect.innerHTML = '<option value="">Failed to load - click to retry</option>';
+      repoSelect.disabled = false;
+      allReposLoaded = false;
     }
   };
+
+  repoSelect.onclick = loadAllRepos;
 }
 
 function renderSplitEdit(subtasks) {
