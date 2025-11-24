@@ -1248,6 +1248,12 @@ async function populateSubtaskRepoSelection() {
 
 function renderSplitEdit(subtasks) {
   const editList = document.getElementById('splitEditList');
+  
+  if (!subtasks || subtasks.length === 0) {
+    editList.innerHTML = '<div style="padding: 16px; text-align: center; color: var(--muted); font-size: 13px;">No subtasks detected. This prompt will be sent as a single task.</div>';
+    return;
+  }
+  
   editList.innerHTML = subtasks
     .map((st, idx) => `
       <div style="padding: 8px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center;">
