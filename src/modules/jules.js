@@ -76,7 +76,7 @@ export async function callRunJulesFunction(promptText, sourceId, branch = 'maste
     julesBtn.disabled = true;
 
     const token = await user.getIdToken(true);
-    const functionUrl = 'https://us-central1-prompt-sharing-f8eeb.cloudfunctions.net/runJulesHttp';
+    const functionUrl = 'https://runjuleshttp-n7gaasoeoq-uc.a.run.app';
 
     const response = await fetch(functionUrl, {
       method: 'POST',
@@ -1141,7 +1141,7 @@ async function populateSubtaskRepoSelection() {
       btn.className = 'btn';
       btn.style.cssText = 'padding:8px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:6px; font-weight:600; transition:all 0.2s; width:100%; font-size:13px;';
       btn.textContent = `${fav.emoji || '📦'} ${fav.name}`;
-      
+
       // Check if this is the currently selected repo
       if (fav.id === lastSelectedSourceId) {
         btn.style.cssText += ' background:rgba(99,102,241,0.1); border-color:#6366f1;';

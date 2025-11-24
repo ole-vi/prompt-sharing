@@ -80,6 +80,8 @@ exports.runJules = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError("internal", "Failed to decrypt Jules API key");
     }
 
+    const startingBranch = environment === "meta" ? "main" : "master";
+
     const julesBody = {
       title: "Prompt-Sharing Trigger",
       prompt: promptText,
@@ -188,6 +190,8 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
       res.status(500).json({ error: 'Failed to decrypt Jules API key' });
       return;
     }
+
+    const startingBranch = env === "meta" ? "main" : "master";
 
     const julesBody = {
       title: "Prompt-Sharing Trigger",
