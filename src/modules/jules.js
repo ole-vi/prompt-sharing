@@ -7,19 +7,20 @@ import {
   generateSplitSummary, 
   validateSubtasks 
 } from './subtask-manager.js';
+import { loadJulesProfileInfo, listJulesSessions } from './jules-api.js';
+
+// Store the last selected repository for subtasks
+let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
+let lastSelectedBranch = 'master';
 
 export async function checkJulesKey(uid) {
   try {
     if (!window.db) {
-      console.error('Firestore not initialized');
       return false;
     }
-    console.log('[DEBUG] Checking Jules key for uid:', uid);
     const doc = await window.db.collection('julesKeys').doc(uid).get();
-    console.log('[DEBUG] Jules key exists:', doc.exists);
     return doc.exists;
   } catch (error) {
-    console.error('Error checking Jules key:', error);
     return false;
   }
 }
@@ -30,7 +31,6 @@ export async function deleteStoredJulesKey(uid) {
     await window.db.collection('julesKeys').doc(uid).delete();
     return true;
   } catch (error) {
-    console.error('Error deleting Jules key:', error);
     return false;
   }
 }
@@ -54,16 +54,19 @@ export async function encryptAndStoreKey(plaintext, uid) {
     });
     return true;
   } catch (error) {
-    console.error('Failed to encrypt/store key:', error);
     throw error;
   }
 }
 
-export async function callRunJulesFunction(promptText, environment = "myplanet") {
+export async function callRunJulesFunction(promptText, sourceId, branch = 'master') {
   const user = window.auth ? window.auth.currentUser : null;
   if (!user) {
     alert('Not logged in.');
     return null;
+  }
+
+  if (!sourceId) {
+    throw new Error('No repository selected');
   }
 
   try {
@@ -81,7 +84,7 @@ export async function callRunJulesFunction(promptText, environment = "myplanet")
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ promptText: promptText || '', environment: environment })
+      body: JSON.stringify({ promptText: promptText || '', sourceId: sourceId, branch: branch })
     });
 
     const result = await response.json();
@@ -94,7 +97,6 @@ export async function callRunJulesFunction(promptText, environment = "myplanet")
 
     return result.sessionUrl || null;
   } catch (error) {
-    console.error('Cloud function call failed:', error);
     const julesBtn = document.getElementById('julesBtn');
     if (julesBtn) {
       julesBtn.textContent = '⚡ Try in Jules';
@@ -119,7 +121,6 @@ export async function handleTryInJules(promptText) {
     }
     await handleTryInJulesAfterAuth(promptText);
   } catch (error) {
-    console.error('Error in Try in Jules:', error);
     alert('An error occurred: ' + error.message);
   }
 }
@@ -132,22 +133,16 @@ export async function handleTryInJulesAfterAuth(promptText) {
   }
 
   try {
-    console.log('[DEBUG] handleTryInJulesAfterAuth - checking for Jules key');
     const hasKey = await checkJulesKey(user.uid);
-    console.log('[DEBUG] hasKey:', hasKey);
     
     if (!hasKey) {
-      console.log('[DEBUG] No key found, showing key modal');
       showJulesKeyModal(() => {
-        console.log('[DEBUG] Key saved, showing env modal');
         showJulesEnvModal(promptText);
       });
     } else {
-      console.log('[DEBUG] Key found, showing env modal');
       showJulesEnvModal(promptText);
     }
   } catch (error) {
-    console.error('Error in Jules flow:', error);
     alert('An error occurred. Please try again.');
   }
 }
@@ -156,9 +151,6 @@ export function showJulesKeyModal(onSave) {
   const modal = document.getElementById('julesKeyModal');
   const input = document.getElementById('julesKeyInput');
   
-  console.log('[DEBUG] showJulesKeyModal called');
-  console.log('[DEBUG] Modal element:', modal);
-  console.log('[DEBUG] Input element:', input);
   
   // Use setAttribute to set display with !important
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
@@ -195,7 +187,6 @@ export function showJulesKeyModal(onSave) {
 
       if (onSave) onSave();
     } catch (error) {
-      console.error('Failed to save Jules key:', error);
       alert('Failed to save API key: ' + error.message);
       saveBtn.textContent = 'Save & Continue';
       saveBtn.disabled = false;
@@ -215,29 +206,192 @@ export function hideJulesKeyModal() {
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 }
 
-export function showJulesEnvModal(promptText) {
+export async function showJulesEnvModal(promptText) {
   const modal = document.getElementById('julesEnvModal');
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 
-  const planetBtn = document.getElementById('envPlanetBtn');
-  const myplanetBtn = document.getElementById('envMyplanetBtn');
-  const metaBtn = document.getElementById('envMetaBtn');
+  const favoriteContainer = document.getElementById('favoriteReposContainer');
+  const allReposContainer = document.getElementById('allReposContainer');
+  const dropdownBtn = document.getElementById('julesRepoDropdownBtn');
+  const dropdownText = document.getElementById('julesRepoDropdownText');
+  const dropdownMenu = document.getElementById('julesRepoDropdownMenu');
   const cancelBtn = document.getElementById('julesEnvCancelBtn');
+  
+  const user = getCurrentUser();
+  if (!user) {
+    favoriteContainer.innerHTML = '<div style="color:var(--muted); text-align:center; padding:12px;">Please sign in first</div>';
+    allReposContainer.style.display = 'none';
+    return;
+  }
 
-  const handleSelect = async (environment) => {
-    hideJulesEnvModal();
-    const sessionUrl = await callRunJulesFunction(promptText, environment);
-    if (sessionUrl) {
-      window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+  const { DEFAULT_FAVORITE_REPOS, STORAGE_KEY_FAVORITE_REPOS } = await import('../utils/constants.js');
+  
+  const storedFavorites = localStorage.getItem(STORAGE_KEY_FAVORITE_REPOS);
+  const favorites = storedFavorites ? JSON.parse(storedFavorites) : DEFAULT_FAVORITE_REPOS;
+
+  favoriteContainer.innerHTML = '';
+  allReposContainer.style.display = 'block';
+  
+  if (favorites && favorites.length > 0) {
+    favorites.forEach(fav => {
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.style.cssText = 'padding:12px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; font-weight:600; transition:all 0.2s; width:100%;';
+      btn.textContent = `${fav.emoji || '📦'} ${fav.name}`;
+      btn.onclick = () => handleRepoSelect(fav.id, fav.branch || 'master', promptText);
+      favoriteContainer.appendChild(btn);
+    });
+  } else {
+    favoriteContainer.innerHTML = '<div style="color:var(--muted); text-align:center; padding:12px;">No favorite repositories</div>';
+  }
+
+  let allReposLoaded = false;
+  let sourceBranchMap = {};
+
+  const loadAllRepos = async () => {
+    if (allReposLoaded) return;
+    
+    dropdownText.textContent = 'Loading...';
+    dropdownBtn.disabled = true;
+    dropdownMenu.style.display = 'none';
+
+    try {
+      const { listJulesSources } = await import('./jules-api.js');
+      const { getDecryptedJulesKey } = await import('./jules-api.js');
+      
+      const apiKey = await getDecryptedJulesKey(user.uid);
+      if (!apiKey) {
+        dropdownText.textContent = 'No API key configured';
+        dropdownBtn.disabled = false;
+        return;
+      }
+
+      const sourcesData = await listJulesSources(apiKey);
+      const sources = sourcesData.sources || [];
+
+      if (sources.length === 0) {
+        dropdownText.textContent = 'No repositories found';
+        dropdownBtn.disabled = false;
+        return;
+      }
+
+      dropdownText.textContent = 'Select a repository...';
+      dropdownBtn.disabled = false;
+      dropdownMenu.innerHTML = '';
+      
+      sources.forEach(source => {
+        const item = document.createElement('div');
+        item.className = 'custom-dropdown-item';
+        const pathParts = (source.name || source.id).split('/');
+        const repoName = pathParts.slice(-2).join('/');
+        item.textContent = repoName;
+        item.dataset.value = source.name || source.id;
+        
+        // Try to get default branch from source, fallback to master
+        const defaultBranch = source.githubRepoContext?.defaultBranch || 
+                             source.defaultBranch || 
+                             'master';
+        sourceBranchMap[source.name || source.id] = defaultBranch;
+        
+        item.onclick = () => {
+          dropdownMenu.querySelectorAll('.custom-dropdown-item').forEach(i => i.classList.remove('selected'));
+          item.classList.add('selected');
+          dropdownText.textContent = repoName;
+          dropdownMenu.style.display = 'none';
+          const branch = sourceBranchMap[item.dataset.value] || 'master';
+          handleRepoSelect(item.dataset.value, branch, promptText);
+        };
+        
+        dropdownMenu.appendChild(item);
+      });
+
+      allReposLoaded = true;
+      dropdownMenu.style.display = 'block';
+    } catch (error) {
+      dropdownText.textContent = 'Failed to load - click to retry';
+      dropdownBtn.disabled = false;
+      allReposLoaded = false;
     }
   };
 
-  planetBtn.onclick = () => handleSelect('planet');
-  myplanetBtn.onclick = () => handleSelect('myplanet');
-  metaBtn.onclick = () => handleSelect('meta');
+  dropdownBtn.onclick = () => {
+    if (dropdownMenu.style.display === 'block') {
+      dropdownMenu.style.display = 'none';
+    } else {
+      loadAllRepos();
+    }
+  };
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!allReposContainer.contains(e.target)) {
+      dropdownMenu.style.display = 'none';
+    }
+  });
+
   cancelBtn.onclick = () => {
     hideJulesEnvModal();
   };
+}
+
+async function handleRepoSelect(sourceId, branch, promptText) {
+  hideJulesEnvModal();
+  
+  // Store the selected repository for future subtask submissions
+  lastSelectedSourceId = sourceId;
+  lastSelectedBranch = branch || 'master';
+  
+  let retryCount = 0;
+  let maxRetries = 3;
+  let submitted = false;
+
+  while (retryCount < maxRetries && !submitted) {
+    try {
+      const sessionUrl = await callRunJulesFunction(promptText, sourceId, lastSelectedBranch);
+      if (sessionUrl) {
+        window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+      }
+      submitted = true;
+    } catch (error) {
+      retryCount++;
+
+      if (retryCount < maxRetries) {
+        const result = await showSubtaskErrorModal(1, 1, error);
+
+        if (result.action === 'cancel') {
+          return;
+        } else if (result.action === 'skip') {
+          return;
+        } else if (result.action === 'retry') {
+          if (result.shouldDelay) {
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+        }
+      } else {
+        const result = await showSubtaskErrorModal(1, 1, error);
+        
+        if (result.action === 'retry') {
+          if (result.shouldDelay) {
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+          try {
+            const sessionUrl = await callRunJulesFunction(promptText, sourceId, lastSelectedBranch);
+            if (sessionUrl) {
+              window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+            }
+            submitted = true;
+          } catch (finalError) {
+            alert('Failed to submit task after multiple retries. Please try again later.');
+          }
+        }
+        return;
+      }
+    }
+
+    if (!submitted) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
 }
 
 export function hideJulesEnvModal() {
@@ -248,7 +402,6 @@ export function hideJulesEnvModal() {
 
 export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
   return new Promise((resolve) => {
-    console.log('[ErrorModal] Showing error modal for subtask', subtaskNumber);
     const modal = document.getElementById('subtaskErrorModal');
     const subtaskNumDiv = document.getElementById('errorSubtaskNumber');
     const messageDiv = document.getElementById('errorMessage');
@@ -259,7 +412,6 @@ export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
     const retryDelayCheckbox = document.getElementById('errorRetryDelayCheckbox');
 
     if (!modal) {
-      console.error('[ErrorModal] Modal element not found!');
       resolve({ action: 'cancel', shouldDelay: false });
       return;
     }
@@ -270,10 +422,8 @@ export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
 
     modal.style.removeProperty('display');
     modal.style.setProperty('display', 'flex', 'important');
-    console.log('[ErrorModal] Modal displayed, waiting for user action...', modal.style.display);
 
     const handleAction = (action) => {
-      console.log('[ErrorModal] User selected:', action);
       retryBtn.onclick = null;
       skipBtn.onclick = null;
       cancelBtn.onclick = null;
@@ -302,6 +452,7 @@ export function initJulesKeyModalListeners() {
   const envModal = document.getElementById('julesEnvModal');
   const freeInputModal = document.getElementById('freeInputModal');
   const profileModal = document.getElementById('userProfileModal');
+  const sessionsHistoryModal = document.getElementById('julesSessionsHistoryModal');
   const errorModal = document.getElementById('subtaskErrorModal');
   const keyInput = document.getElementById('julesKeyInput');
 
@@ -318,6 +469,9 @@ export function initJulesKeyModalListeners() {
       }
       if (profileModal.style.display === 'flex') {
         hideUserProfileModal();
+      }
+      if (sessionsHistoryModal && sessionsHistoryModal.style.display === 'flex') {
+        hideJulesSessionsHistoryModal();
       }
     }
   });
@@ -347,6 +501,14 @@ export function initJulesKeyModalListeners() {
       hideUserProfileModal();
     }
   });
+  
+  if (sessionsHistoryModal) {
+    sessionsHistoryModal.addEventListener('click', (e) => {
+      if (e.target === sessionsHistoryModal) {
+        hideJulesSessionsHistoryModal();
+      }
+    });
+  }
 
   if (errorModal) {
     errorModal.addEventListener('click', (e) => {
@@ -363,31 +525,6 @@ export function initJulesKeyModalListeners() {
   });
 }
 
-// Expose for console testing
-window.deleteJulesKey = async function() {
-  const user = window.auth?.currentUser;
-  if (!user) {
-    console.log('Not logged in');
-    return;
-  }
-  const deleted = await deleteStoredJulesKey(user.uid);
-  if (deleted) {
-    console.log('✓ Jules key deleted. You can now enter a new one.');
-  } else {
-    console.log('✗ Failed to delete Jules key');
-  }
-};
-
-window.checkJulesKeyStatus = async function() {
-  const user = window.auth?.currentUser;
-  if (!user) {
-    console.log('Not logged in');
-    return;
-  }
-  const hasKey = await checkJulesKey(user.uid);
-  console.log('Jules key stored:', hasKey ? '✓ Yes' : '✗ No');
-};
-
 export function showUserProfileModal() {
   const modal = document.getElementById('userProfileModal');
   const user = window.auth?.currentUser;
@@ -397,27 +534,35 @@ export function showUserProfileModal() {
     return;
   }
 
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
 
   const profileUserName = document.getElementById('profileUserName');
   const julesKeyStatus = document.getElementById('julesKeyStatus');
   const addBtn = document.getElementById('addJulesKeyBtn');
   const resetBtn = document.getElementById('resetJulesKeyBtn');
+  const dangerZoneSection = document.getElementById('dangerZoneSection');
   const closeBtn = document.getElementById('closeProfileBtn');
+  const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
+  const julesProfileInfoSection = document.getElementById('julesProfileInfoSection');
 
   profileUserName.textContent = user.displayName || user.email || 'Unknown User';
 
-  checkJulesKey(user.uid).then((hasKey) => {
+  checkJulesKey(user.uid).then(async (hasKey) => {
     julesKeyStatus.textContent = hasKey ? '✓ Saved' : '✗ Not saved';
     julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
     
     // Show/hide buttons based on key status
     if (hasKey) {
       addBtn.style.display = 'none';
-      resetBtn.style.display = 'block';
+      dangerZoneSection.style.display = 'block';
+      julesProfileInfoSection.style.display = 'block';
+      
+      // Load Jules profile info automatically when key exists
+      await loadAndDisplayJulesProfile(user.uid);
     } else {
       addBtn.style.display = 'block';
-      resetBtn.style.display = 'none';
+      dangerZoneSection.style.display = 'none';
+      julesProfileInfoSection.style.display = 'none';
     }
   });
 
@@ -441,33 +586,385 @@ export function showUserProfileModal() {
       if (deleted) {
         julesKeyStatus.textContent = '✗ Not saved';
         julesKeyStatus.style.color = 'var(--muted)';
-        resetBtn.textContent = '🔄 Reset Jules API Key';
+        resetBtn.textContent = '🗑️ Delete Jules API Key';
         resetBtn.disabled = false;
         
         // Update buttons
         addBtn.style.display = 'block';
-        resetBtn.style.display = 'none';
+        dangerZoneSection.style.display = 'none';
+        julesProfileInfoSection.style.display = 'none';
         
         alert('Jules API key has been deleted. You can enter a new one next time.');
       } else {
         throw new Error('Failed to delete key');
       }
     } catch (error) {
-      console.error('Error resetting Jules key:', error);
       alert('Failed to reset API key: ' + error.message);
       resetBtn.textContent = '🔄 Reset Jules API Key';
       resetBtn.disabled = false;
     }
   };
 
+  // Load Jules Info button handler
+  loadJulesInfoBtn.onclick = async () => {
+    await loadAndDisplayJulesProfile(user.uid);
+    // Re-attach the View All link handler after profile loads
+    attachViewAllSessionsHandler();
+  };
+
   closeBtn.onclick = () => {
     hideUserProfileModal();
   };
+  
+  // Attach View All Sessions handler
+  attachViewAllSessionsHandler();
+  
+  // Sessions History Modal handlers
+  const closeSessionsHistoryBtn = document.getElementById('closeSessionsHistoryBtn');
+  const loadMoreSessionsBtn = document.getElementById('loadMoreSessionsBtn');
+  const sessionSearchInput = document.getElementById('sessionSearchInput');
+  
+  if (closeSessionsHistoryBtn) {
+    closeSessionsHistoryBtn.onclick = () => {
+      hideJulesSessionsHistoryModal();
+    };
+  }
+  
+  if (loadMoreSessionsBtn) {
+    loadMoreSessionsBtn.onclick = () => {
+      loadSessionsPage();
+    };
+  }
+  
+  if (sessionSearchInput) {
+    sessionSearchInput.addEventListener('input', () => {
+      const user = window.auth?.currentUser;
+      if (!user) return;
+      renderAllSessions(allSessionsCache);
+    });
+  }
+}
+
+// Helper function to attach View All Sessions link handler
+function attachViewAllSessionsHandler() {
+  const viewAllSessionsLink = document.getElementById('viewAllSessionsLink');
+  if (viewAllSessionsLink) {
+    viewAllSessionsLink.onclick = (e) => {
+      e.preventDefault();
+      showJulesSessionsHistoryModal();
+    };
+  }
+}
+
+/**
+ * Loads and displays Jules profile information in the profile modal
+ */
+async function loadAndDisplayJulesProfile(uid) {
+  const loadBtn = document.getElementById('loadJulesInfoBtn');
+  const sourcesListDiv = document.getElementById('julesSourcesList');
+  const sessionsListDiv = document.getElementById('julesSessionsList');
+
+  try {
+    // Show loading state
+    loadBtn.disabled = true;
+    loadBtn.textContent = '⏳ Loading...';
+    sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sources...</div>';
+    sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
+
+    // Load profile data
+    const profileData = await loadJulesProfileInfo(uid);
+
+    // Display sources
+    if (profileData.sources && profileData.sources.length > 0) {
+      sourcesListDiv.innerHTML = profileData.sources.map((source, index) => {
+        const repoName = source.githubRepo?.name || source.name || source.id;
+        // Extract owner/repo from the full path (e.g., "sources/github/owner/repo" -> "owner/repo")
+        const githubPath = repoName.includes('github/') 
+          ? repoName.split('github/')[1] 
+          : repoName.replace('sources/', '');
+        const branches = source.branches || [];
+        const sourceId = `source-${index}`;
+        const branchList = branches.length > 0 
+          ? `<div id="${sourceId}-branches" style="margin-top:6px; padding-left:12px; font-size:12px; color:var(--muted); display:none;">
+               <div style="margin-bottom:4px; color:var(--text);">🌿 Branches (${branches.length}):</div>
+               ${branches.map(b => `<div style="padding:4px 0 4px 8px; cursor:pointer; transition:color 0.2s;" 
+                  onmouseover="this.style.color='var(--accent)'" 
+                  onmouseout="this.style.color='var(--muted)'" 
+                  onclick="window.open('https://github.com/${githubPath}/tree/${encodeURIComponent(b.displayName || b.name)}', '_blank')">
+                  • ${b.displayName || b.name}
+                </div>`).join('')}
+             </div>`
+          : '<div id="' + sourceId + '-branches" style="display:none; margin-top:6px; padding-left:12px; font-size:12px; color:var(--muted); font-style:italic;">No branches found</div>';
+        
+        const branchSummary = branches.length > 0 
+          ? `<span style="color:var(--muted); font-size:11px; margin-left:8px;">(${branches.length} ${branches.length === 1 ? 'branch' : 'branches'})</span>`
+          : '<span style="color:var(--muted); font-size:11px; margin-left:8px;">(no branches)</span>';
+        
+        return `<div style="padding:8px; margin-bottom:4px; border-bottom:1px solid var(--border); font-size:13px;">
+          <div style="font-weight:600; cursor:pointer; user-select:none; display:flex; align-items:center; transition:color 0.2s;" 
+               onclick="(function(e) {
+                 const branches = document.getElementById('${sourceId}-branches');
+                 const arrow = e.currentTarget.querySelector('.expand-arrow');
+                 if (branches.style.display === 'none') {
+                   branches.style.display = 'block';
+                   arrow.textContent = '▼';
+                 } else {
+                   branches.style.display = 'none';
+                   arrow.textContent = '▶';
+                 }
+               })(event)"
+               onmouseover="this.style.color='var(--accent)'"
+               onmouseout="this.style.color='var(--text)'">
+            <span class="expand-arrow" style="display:inline-block; width:12px; font-size:10px; margin-right:6px;">▶</span>
+            <span>📂 ${githubPath}</span>
+            ${branchSummary}
+          </div>
+          ${branchList}
+        </div>`;
+      }).join('');
+    } else {
+      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No connected repositories found.<br><small>Connect repos in the Jules UI.</small></div>';
+    }
+
+    // Display sessions
+    if (profileData.sessions && profileData.sessions.length > 0) {
+      sessionsListDiv.innerHTML = profileData.sessions.map(session => {
+        const state = session.state || 'UNKNOWN';
+        const stateEmoji = {
+          'COMPLETED': '✅',
+          'FAILED': '❌',
+          'IN_PROGRESS': '⏳',
+          'PLANNING': '⏳',
+          'QUEUED': '⏸️',
+          'AWAITING_USER_FEEDBACK': '💬'
+        }[state] || '❓';
+        
+        // Better state labels
+        const stateLabel = {
+          'COMPLETED': 'COMPLETED',
+          'FAILED': 'FAILED',
+          'IN_PROGRESS': 'IN PROGRESS',
+          'PLANNING': 'IN PROGRESS',
+          'QUEUED': 'QUEUED',
+          'AWAITING_USER_FEEDBACK': 'AWAITING USER FEEDBACK'
+        }[state] || state.replace(/_/g, ' ');
+        
+        const promptPreview = (session.prompt || 'No prompt text').substring(0, 80);
+        const displayPrompt = promptPreview.length < (session.prompt || '').length ? promptPreview + '...' : promptPreview;
+        const createdAt = session.createTime ? new Date(session.createTime).toLocaleDateString() : 'Unknown';
+        const prUrl = session.outputs?.[0]?.pullRequest?.url;
+        
+        // Extract session ID from session name (format: "sessions/123abc")
+        // The ID after "sessions/" is the actual session identifier
+        const sessionId = session.name?.split('sessions/')[1] || session.id?.split('sessions/')[1] || session.id;
+        const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
+        
+        const prLink = prUrl 
+          ? `<a href="${prUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:none; font-size:11px; margin-right:8px;" 
+              onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">🔗 View PR</a>` 
+          : '';
+        
+        return `<div style="padding:10px; margin-bottom:8px; border:1px solid var(--border); border-radius:8px; font-size:12px; cursor:pointer; transition:all 0.2s; background:rgba(255,255,255,0.02);"
+                     onmouseover="this.style.background='rgba(77,217,255,0.05)'; this.style.borderColor='var(--accent)'"
+                     onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.borderColor='var(--border)'"
+                     onclick="window.open('${sessionUrl}', '_blank', 'noopener,noreferrer')">
+          <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:6px;">
+            <div style="font-weight:600; flex:1;">${stateEmoji} ${stateLabel}</div>
+            <div style="color:var(--muted); font-size:11px;">${createdAt}</div>
+          </div>
+          <div style="color:var(--text); margin-bottom:6px; line-height:1.4;">${displayPrompt}</div>
+          ${prLink ? `<div style="display:flex; gap:8px; align-items:center;" onclick="event.stopPropagation();">
+            ${prLink}
+            <span style="color:var(--muted); font-size:11px;">Click card to view session →</span>
+          </div>` : '<div style="color:var(--muted); font-size:11px;">Click to view session details →</div>'}
+        </div>`;
+      }).join('');
+    } else {
+      sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No recent sessions found.</div>';
+    }
+
+    // Reset button state
+    loadBtn.disabled = false;
+    loadBtn.textContent = '🔄 Refresh Jules Info';
+    
+    // Attach View All Sessions handler after content loads
+    attachViewAllSessionsHandler();
+
+  } catch (error) {
+    
+    // Display error
+    sourcesListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
+      Failed to load sources: ${error.message}
+    </div>`;
+    sessionsListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
+      Failed to load sessions: ${error.message}
+    </div>`;
+
+    // Reset button state
+    loadBtn.disabled = false;
+    loadBtn.textContent = '🔄 Refresh Jules Info';
+  }
 }
 
 export function hideUserProfileModal() {
   const modal = document.getElementById('userProfileModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+}
+
+// Jules Sessions History Modal
+let allSessionsCache = [];
+let sessionNextPageToken = null;
+
+export function showJulesSessionsHistoryModal() {
+  const modal = document.getElementById('julesSessionsHistoryModal');
+  const allSessionsList = document.getElementById('allSessionsList');
+  const loadMoreSection = document.getElementById('sessionsLoadMore');
+  const searchInput = document.getElementById('sessionSearchInput');
+  
+  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  
+  // Reset state
+  allSessionsCache = [];
+  sessionNextPageToken = null;
+  searchInput.value = '';
+  
+  // Load first page
+  loadSessionsPage();
+}
+
+export function hideJulesSessionsHistoryModal() {
+  const modal = document.getElementById('julesSessionsHistoryModal');
+  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+}
+
+async function loadSessionsPage() {
+  const user = window.auth?.currentUser;
+  if (!user) return;
+  
+  const allSessionsList = document.getElementById('allSessionsList');
+  const loadMoreSection = document.getElementById('sessionsLoadMore');
+  const loadMoreBtn = document.getElementById('loadMoreSessionsBtn');
+  
+  try {
+    loadMoreBtn.disabled = true;
+    loadMoreBtn.textContent = 'Loading...';
+    
+    // Get decrypted API key
+    const { getDecryptedJulesKey } = await import('./jules-api.js');
+    const apiKey = await getDecryptedJulesKey(user.uid);
+    if (!apiKey) {
+      throw new Error('Jules API key not found');
+    }
+    
+    const result = await listJulesSessions(apiKey, 50, sessionNextPageToken);
+    
+    if (result.sessions && result.sessions.length > 0) {
+      allSessionsCache = [...allSessionsCache, ...result.sessions];
+      sessionNextPageToken = result.nextPageToken || null;
+      
+      renderAllSessions(allSessionsCache);
+      
+      // Show/hide load more button
+      if (sessionNextPageToken) {
+        loadMoreSection.style.display = 'block';
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = 'Load More';
+      } else {
+        loadMoreSection.style.display = 'none';
+      }
+    } else if (allSessionsCache.length === 0) {
+      allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions found</div>';
+    }
+  } catch (error) {
+    if (allSessionsCache.length === 0) {
+      allSessionsList.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">Failed to load sessions: ${error.message}</div>`;
+    }
+    loadMoreBtn.disabled = false;
+    loadMoreBtn.textContent = 'Load More';
+  }
+}
+
+function renderAllSessions(sessions) {
+  const allSessionsList = document.getElementById('allSessionsList');
+  const searchInput = document.getElementById('sessionSearchInput');
+  const searchTerm = searchInput.value.toLowerCase();
+  
+  const filteredSessions = searchTerm 
+    ? sessions.filter(s => {
+        const promptText = s.prompt || s.displayName || '';
+        const sessionId = s.name?.split('/').pop() || '';
+        return promptText.toLowerCase().includes(searchTerm) || sessionId.toLowerCase().includes(searchTerm);
+      })
+    : sessions;
+  
+  if (filteredSessions.length === 0) {
+    allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions match your search</div>';
+    return;
+  }
+  
+  const stateEmoji = {
+    'PLANNING': '📝',
+    'IN_PROGRESS': '⚙️',
+    'AWAITING_USER_FEEDBACK': '💬',
+    'COMPLETED': '✅',
+    'FAILED': '❌',
+    'CANCELLED': '🚫'
+  };
+  
+  const stateLabel = {
+    'PLANNING': 'IN PROGRESS',
+    'IN_PROGRESS': 'IN PROGRESS',
+    'AWAITING_USER_FEEDBACK': 'AWAITING USER FEEDBACK',
+    'COMPLETED': 'COMPLETED',
+    'FAILED': 'FAILED',
+    'CANCELLED': 'CANCELLED'
+  };
+  
+  allSessionsList.innerHTML = filteredSessions.map(session => {
+    // Skip sessions that are subtasks (they have parentTask field)
+    if (session.parentTask) {
+      return '';
+    }
+    
+    const sessionId = session.name?.split('/').pop() || '';
+    const state = session.state || 'UNKNOWN';
+    const emoji = stateEmoji[state] || '❓';
+    const label = stateLabel[state] || state.replace(/_/g, ' ');
+    
+    // Use prompt text as title, fallback to displayName or sessionId
+    const promptText = session.prompt || session.displayName || sessionId;
+    const displayTitle = promptText.length > 100 ? promptText.substring(0, 100) + '...' : promptText;
+    
+    const createTime = session.createTime ? new Date(session.createTime).toLocaleString() : 'Unknown';
+    const updateTime = session.updateTime ? new Date(session.updateTime).toLocaleString() : 'Unknown';
+    
+    const prUrl = session.githubPrUrl || null;
+    const prLink = prUrl 
+      ? `<div style="margin-top:4px;" onclick="event.stopPropagation();"><a href="${prUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none;">🔗 View PR</a></div>`
+      : '';
+    
+    // Show subtask count if available
+    const subtaskCount = session.childTasks?.length || 0;
+    const subtaskInfo = subtaskCount > 0 
+      ? `<div style="font-size:11px; color:var(--muted); margin-top:4px;">📋 ${subtaskCount} subtask${subtaskCount > 1 ? 's' : ''}</div>`
+      : '';
+    
+    return `<div style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.03); cursor:pointer; transition:all 0.2s;"
+                 onmouseover="this.style.borderColor='var(--accent)'; this.style.background='rgba(255,255,255,0.06)'"
+                 onmouseout="this.style.borderColor='var(--border)'; this.style.background='rgba(255,255,255,0.03)'"
+                 onclick="window.open('https://jules.google.com/session/${sessionId}', '_blank')">
+      <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:6px;">
+        <div style="font-weight:600; font-size:13px; flex:1; margin-right:8px;">${displayTitle}</div>
+        <div style="font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(255,255,255,0.1); white-space:nowrap; margin-left:8px;">
+          ${emoji} ${label}
+        </div>
+      </div>
+      <div style="font-size:11px; color:var(--muted); margin-bottom:2px;">Created: ${createTime}</div>
+      <div style="font-size:11px; color:var(--muted);">Updated: ${updateTime}</div>
+      ${subtaskInfo}
+      ${prLink}
+    </div>`;
+  }).filter(html => html).join('');
 }
 
 export function showFreeInputModal() {
@@ -506,7 +1003,6 @@ export async function handleFreeInputAfterAuth() {
       showFreeInputForm();
     }
   } catch (error) {
-    console.error('Error in free input flow:', error);
     alert('An error occurred. Please try again.');
   }
 }
@@ -535,7 +1031,6 @@ export function showFreeInputForm() {
       // Submit directly as one (no split modal)
       await handleTryInJulesAfterAuth(promptText);
     } catch (error) {
-      console.error('Error submitting free input:', error);
       alert('Failed to submit prompt: ' + error.message);
     }
   };
@@ -553,7 +1048,6 @@ export function showFreeInputForm() {
       // Show subtask split modal
       showSubtaskSplitModal(promptText);
     } catch (error) {
-      console.error('Error with split:', error);
       alert('Failed to process prompt: ' + error.message);
     }
   };
@@ -586,7 +1080,6 @@ let splitMode = 'send-all'; // 'send-all' or 'split-tasks'
 let currentAnalysis = null; // Store analysis for mode switching
 
 export function showSubtaskSplitModal(promptText) {
-  console.log('[DEBUG] showSubtaskSplitModal called with prompt length:', promptText.length);
   currentFullPrompt = promptText;
   
   const modal = document.getElementById('subtaskSplitModal');
@@ -598,10 +1091,11 @@ export function showSubtaskSplitModal(promptText) {
   const analysis = analyzePromptStructure(promptText);
   currentSubtasks = analysis.subtasks;
   
-  console.log('[DEBUG] Analysis complete, subtasks:', currentSubtasks.length);
-
   // Show modal
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+
+  // Populate repository selection
+  populateSubtaskRepoSelection();
 
   // Render the checklist
   renderSplitEdit(currentSubtasks);
@@ -630,8 +1124,154 @@ export function showSubtaskSplitModal(promptText) {
   };
 }
 
+async function populateSubtaskRepoSelection() {
+  const favoriteContainer = document.getElementById('subtaskFavoriteReposContainer');
+  const allReposContainer = document.getElementById('subtaskAllReposContainer');
+  const dropdownBtn = document.getElementById('subtaskRepoDropdownBtn');
+  const dropdownText = document.getElementById('subtaskRepoDropdownText');
+  const dropdownMenu = document.getElementById('subtaskRepoDropdownMenu');
+  
+  const user = getCurrentUser();
+  if (!user) {
+    favoriteContainer.innerHTML = '<div style="color:var(--muted); text-align:center; padding:8px; font-size:13px;">Please sign in first</div>';
+    allReposContainer.style.display = 'none';
+    return;
+  }
+
+  const { DEFAULT_FAVORITE_REPOS, STORAGE_KEY_FAVORITE_REPOS } = await import('../utils/constants.js');
+  
+  const storedFavorites = localStorage.getItem(STORAGE_KEY_FAVORITE_REPOS);
+  const favorites = storedFavorites ? JSON.parse(storedFavorites) : DEFAULT_FAVORITE_REPOS;
+
+  favoriteContainer.innerHTML = '';
+  allReposContainer.style.display = 'block';
+  
+  // Render favorite buttons
+  if (favorites && favorites.length > 0) {
+    favorites.forEach(fav => {
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.style.cssText = 'padding:8px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:6px; font-weight:600; transition:all 0.2s; width:100%; font-size:13px;';
+      btn.textContent = `${fav.emoji || '📦'} ${fav.name}`;
+
+      // Check if this is the currently selected repo
+      if (fav.id === lastSelectedSourceId) {
+        btn.style.cssText += ' background:rgba(99,102,241,0.1); border-color:#6366f1;';
+      }
+      
+      btn.onclick = () => {
+        lastSelectedSourceId = fav.id;
+        lastSelectedBranch = fav.branch || 'master';
+        // Update button styling
+        favoriteContainer.querySelectorAll('button').forEach(b => {
+          b.style.cssText = 'padding:8px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:6px; font-weight:600; transition:all 0.2s; width:100%; font-size:13px;';
+        });
+        btn.style.cssText += ' background:rgba(99,102,241,0.1); border-color:#6366f1;';
+      };
+      favoriteContainer.appendChild(btn);
+    });
+  } else {
+    favoriteContainer.innerHTML = '<div style="color:var(--muted); text-align:center; padding:8px; font-size:13px;">No favorite repositories</div>';
+  }
+
+  let allReposLoaded = false;
+
+  const loadAllRepos = async () => {
+    if (allReposLoaded) return;
+    
+    dropdownText.textContent = 'Loading...';
+    dropdownBtn.disabled = true;
+    dropdownMenu.innerHTML = '';
+
+    try {
+      const { listJulesSources } = await import('./jules-api.js');
+      const { getDecryptedJulesKey } = await import('./jules-api.js');
+      
+      const apiKey = await getDecryptedJulesKey(user.uid);
+      if (!apiKey) {
+        dropdownText.textContent = 'No API key configured';
+        dropdownBtn.disabled = false;
+        return;
+      }
+
+      const sourcesData = await listJulesSources(apiKey);
+      const sources = sourcesData.sources || [];
+
+      if (sources.length === 0) {
+        dropdownText.textContent = 'No repositories found';
+        dropdownBtn.disabled = false;
+        return;
+      }
+
+      dropdownText.textContent = 'Select a repository...';
+      dropdownBtn.disabled = false;
+      
+      // Store branch information for each source
+      const sourceBranchMap = {};
+      
+      sources.forEach(source => {
+        const item = document.createElement('div');
+        item.className = 'custom-dropdown-item';
+        const pathParts = (source.name || source.id).split('/');
+        const repoName = pathParts.slice(-2).join('/');
+        item.textContent = repoName;
+        item.dataset.sourceId = source.name || source.id;
+        
+        // Try to get default branch from source, fallback to master
+        const defaultBranch = source.githubRepoContext?.defaultBranch || 
+                             source.defaultBranch || 
+                             'master';
+        sourceBranchMap[source.name || source.id] = defaultBranch;
+        item.dataset.branch = defaultBranch;
+        
+        item.onclick = () => {
+          lastSelectedSourceId = item.dataset.sourceId;
+          lastSelectedBranch = item.dataset.branch;
+          dropdownText.textContent = repoName;
+          
+          // Update selected styling
+          dropdownMenu.querySelectorAll('.custom-dropdown-item').forEach(i => {
+            i.classList.remove('selected');
+          });
+          item.classList.add('selected');
+          
+          // Close dropdown
+          dropdownMenu.style.display = 'none';
+        };
+        
+        dropdownMenu.appendChild(item);
+      });
+
+      allReposLoaded = true;
+      
+      // Auto-display the dropdown after loading
+      dropdownMenu.style.display = 'block';
+      
+    } catch (error) {
+      dropdownText.textContent = 'Failed to load - click to retry';
+      dropdownBtn.disabled = false;
+      allReposLoaded = false;
+    }
+  };
+
+  dropdownBtn.onclick = loadAllRepos;
+  
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+      dropdownMenu.style.display = 'none';
+    }
+  });
+}
+
 function renderSplitEdit(subtasks) {
   const editList = document.getElementById('splitEditList');
+  
+  if (!subtasks || subtasks.length === 0) {
+    editList.innerHTML = '<div style="padding: 16px; text-align: center; color: var(--muted); font-size: 13px;">No subtasks detected. This prompt will be sent as a single task.</div>';
+    return;
+  }
+  
   editList.innerHTML = subtasks
     .map((st, idx) => `
       <div style="padding: 8px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center;">
@@ -652,7 +1292,6 @@ function renderSplitEdit(subtasks) {
       currentSubtasks = subtasks.filter((_, i) => {
         return document.getElementById(`subtask-${i}`).checked;
       });
-      console.log('[DEBUG] Checkbox changed, currentSubtasks now:', currentSubtasks.length);
     });
   });
 }
@@ -665,7 +1304,6 @@ export function hideSubtaskSplitModal() {
 }
 
 async function submitSubtasks(subtasks) {
-  console.log('[DEBUG] submitSubtasks called with:', subtasks.length, 'subtasks');
   const sequenced = buildSubtaskSequence(currentFullPrompt, subtasks);
   
   // Show confirmation
@@ -686,7 +1324,6 @@ async function submitSubtasks(subtasks) {
     const subtask = sequenced[i];
     const status = `(${subtask.sequenceInfo.current}/${subtask.sequenceInfo.total})`;
     
-    console.log(`[Subtask] Sending part ${subtask.sequenceInfo.current}/${subtask.sequenceInfo.total}`);
     
     let retryCount = 0;
     let maxRetries = 3;
@@ -694,7 +1331,7 @@ async function submitSubtasks(subtasks) {
 
     while (retryCount < maxRetries && !submitted) {
       try {
-        const sessionUrl = await callRunJulesFunction(subtask.fullContent, 'myplanet');
+        const sessionUrl = await callRunJulesFunction(subtask.fullContent, lastSelectedSourceId, lastSelectedBranch);
         if (sessionUrl) {
           window.open(sessionUrl, '_blank', 'noopener,noreferrer');
         }
@@ -702,33 +1339,25 @@ async function submitSubtasks(subtasks) {
         successCount++;
         submitted = true;
       } catch (error) {
-        console.error(`Error submitting subtask ${subtask.sequenceInfo.current}:`, error);
         retryCount++;
-        console.log(`[Subtask] Error on attempt ${retryCount}/${maxRetries}`);
 
         if (retryCount < maxRetries) {
-          console.log(`[Subtask] Showing error modal for subtask ${subtask.sequenceInfo.current}`);
           const result = await showSubtaskErrorModal(
             subtask.sequenceInfo.current,
             subtask.sequenceInfo.total,
             error
           );
-          console.log(`[Subtask] User chose: ${result.action}`);
 
           if (result.action === 'cancel') {
-            console.log('[Subtask] Cancelling all remaining tasks');
             alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
             return;
           } else if (result.action === 'skip') {
-            console.log(`[Subtask] Skipping subtask ${subtask.sequenceInfo.current}`);
             skippedCount++;
             submitted = true;
           } else if (result.action === 'retry') {
             if (result.shouldDelay) {
-              console.log('[Subtask] Waiting 5 seconds before retry...');
               await new Promise(resolve => setTimeout(resolve, 5000));
             }
-            console.log(`[Subtask] Retrying subtask ${subtask.sequenceInfo.current} (attempt ${retryCount + 1}/${maxRetries})`);
           }
         } else {
           const result = await showSubtaskErrorModal(
@@ -738,7 +1367,6 @@ async function submitSubtasks(subtasks) {
           );
 
           if (result.action === 'cancel') {
-            console.log('[Subtask] Cancelling all remaining tasks');
             alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
             return;
           } else {
@@ -758,6 +1386,5 @@ async function submitSubtasks(subtasks) {
     `Successful: ${successCount}/${totalCount}\n` +
     `Skipped: ${skippedCount}/${totalCount}`;
   alert(summary);
-  console.log('[Subtask] Summary:', summary);
 }
 

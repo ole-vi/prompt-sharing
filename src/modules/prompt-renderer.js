@@ -131,7 +131,6 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
 
   let cached = cacheRaw.get(slug);
   if (cached) {
-    console.log('Using cached content:', typeof cached);
     if (typeof cached === 'string') {
       raw = cached;
     } else {

@@ -10,6 +10,17 @@ export const GIST_POINTER_REGEX = /^https:\/\/gist\.githubusercontent\.com\/\S+\
 export const GIST_URL_REGEX = /^https:\/\/gist\.github\.com\/[\w-]+\/[a-f0-9]+\/?(?:#file-[\w.-]+)?(?:\?file=[\w.-]+)?$/i;
 export const CODEX_URL_REGEX = /^https:\/\/chatgpt\.com\/s\/[a-f0-9_]+$/i;
 
+// Jules API
+export const JULES_API_BASE = "https://jules.googleapis.com/v1alpha";
+
+export const DEFAULT_FAVORITE_REPOS = [
+  { id: "sources/github/open-learning-exchange/planet", name: "open-learning-exchange/planet", emoji: "🌍", branch: "master" },
+  { id: "sources/github/open-learning-exchange/myplanet", name: "open-learning-exchange/myplanet", emoji: "🚀", branch: "master" },
+  { id: "sources/github/ole-vi/prompt-sharing", name: "ole-vi/prompt-sharing", emoji: "📝", branch: "main" }
+];
+
+export const STORAGE_KEY_FAVORITE_REPOS = "jules_favorite_repos";
+
 // Emoji classification keywords
 export const EMOJI_PATTERNS = {
   review: { emoji: "🔍", keywords: ["review", "pr", "rubric"] },

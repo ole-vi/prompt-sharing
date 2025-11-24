@@ -75,7 +75,6 @@ export function initAuthStateListener() {
     window.auth.onAuthStateChanged((user) => {
       updateAuthUI(user);
     });
-    console.log('Auth state listener initialized');
   } catch (error) {
     console.error('Failed to initialize auth listener:', error);
   }
