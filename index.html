@@ -117,12 +117,21 @@
   <!-- Jules Environment Modal -->
   <div id="julesEnvModal" style="display:none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; flex-direction:column; align-items:center; justify-content:center;">
     <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; max-width:400px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4);">
-      <h2 style="margin:0 0 12px; font-size:18px;">Choose Jules Environment</h2>
-      <p style="margin:0 0 16px; color:var(--muted); font-size:13px;">Which repository would you like to open?</p>
-      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
-        <button id="envPlanetBtn" class="btn" style="padding:12px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; font-weight:600; transition:all 0.2s;">🌍 Planet</button>
-        <button id="envMyplanetBtn" class="btn" style="padding:12px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; font-weight:600; transition:all 0.2s;">🚀 MyPlanet</button>
+      <h2 style="margin:0 0 12px; font-size:18px;">Choose Repository</h2>
+      <p style="margin:0 0 16px; color:var(--muted); font-size:13px;">Select a connected repository to open in Jules.</p>
+      
+      <div id="favoriteReposContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
+      
+      <div id="showMoreReposContainer" style="margin-bottom:16px; text-align:center;">
+        <button id="showMoreReposBtn" class="btn" style="padding:8px 16px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; font-size:13px; width:100%;">🔍 Show More Repositories...</button>
       </div>
+      
+      <div id="allReposContainer" style="display:none; margin-bottom:16px;">
+        <select id="julesRepoSelect" class="btn" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--text); font-size:14px; cursor:pointer;">
+          <option value="">Select a repository...</option>
+        </select>
+      </div>
+      
       <div style="display:flex; gap:8px; justify-content:flex-end;">
         <button id="julesEnvCancelBtn" class="btn" style="padding:8px 12px;">Cancel</button>
       </div>

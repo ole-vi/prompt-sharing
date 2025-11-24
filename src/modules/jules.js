@@ -9,6 +9,10 @@ import {
 } from './subtask-manager.js';
 import { loadJulesProfileInfo, listJulesSessions } from './jules-api.js';
 
+// Store the last selected repository for subtasks
+let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
+let lastSelectedBranch = 'master';
+
 export async function checkJulesKey(uid) {
   try {
     if (!window.db) {
@@ -54,11 +58,15 @@ export async function encryptAndStoreKey(plaintext, uid) {
   }
 }
 
-export async function callRunJulesFunction(promptText, environment = "myplanet") {
+export async function callRunJulesFunction(promptText, sourceId, branch = 'master') {
   const user = window.auth ? window.auth.currentUser : null;
   if (!user) {
     alert('Not logged in.');
     return null;
+  }
+
+  if (!sourceId) {
+    throw new Error('No repository selected');
   }
 
   try {
@@ -76,7 +84,7 @@ export async function callRunJulesFunction(promptText, environment = "myplanet")
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ promptText: promptText || '', environment: environment })
+      body: JSON.stringify({ promptText: promptText || '', sourceId: sourceId, branch: branch })
     });
 
     const result = await response.json();
@@ -198,77 +206,172 @@ export function hideJulesKeyModal() {
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 }
 
-export function showJulesEnvModal(promptText) {
+export async function showJulesEnvModal(promptText) {
   const modal = document.getElementById('julesEnvModal');
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 
-  const planetBtn = document.getElementById('envPlanetBtn');
-  const myplanetBtn = document.getElementById('envMyplanetBtn');
+  const favoriteContainer = document.getElementById('favoriteReposContainer');
+  const showMoreContainer = document.getElementById('showMoreReposContainer');
+  const allReposContainer = document.getElementById('allReposContainer');
+  const repoSelect = document.getElementById('julesRepoSelect');
+  const showMoreBtn = document.getElementById('showMoreReposBtn');
   const cancelBtn = document.getElementById('julesEnvCancelBtn');
+  
+  const user = getCurrentUser();
+  if (!user) {
+    favoriteContainer.innerHTML = '<div style="color:var(--muted); text-align:center; padding:12px;">Please sign in first</div>';
+    showMoreContainer.style.display = 'none';
+    return;
+  }
 
-  const handleSelect = async (environment) => {
-    hideJulesEnvModal();
+  const { DEFAULT_FAVORITE_REPOS, STORAGE_KEY_FAVORITE_REPOS } = await import('../utils/constants.js');
+  
+  const storedFavorites = localStorage.getItem(STORAGE_KEY_FAVORITE_REPOS);
+  const favorites = storedFavorites ? JSON.parse(storedFavorites) : DEFAULT_FAVORITE_REPOS;
+
+  favoriteContainer.innerHTML = '';
+  allReposContainer.style.display = 'none';
+  showMoreContainer.style.display = 'block';
+  
+  if (favorites && favorites.length > 0) {
+    favorites.forEach(fav => {
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.style.cssText = 'padding:12px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; font-weight:600; transition:all 0.2s; width:100%;';
+      btn.textContent = `${fav.emoji || '📦'} ${fav.name}`;
+      btn.onclick = () => handleRepoSelect(fav.id, fav.branch || 'master', promptText);
+      favoriteContainer.appendChild(btn);
+    });
+  } else {
+    favoriteContainer.innerHTML = '<div style="color:var(--muted); text-align:center; padding:12px;">No favorite repositories</div>';
+  }
+
+  let allReposLoaded = false;
+
+  showMoreBtn.onclick = async () => {
+    if (allReposLoaded) return;
     
-    let retryCount = 0;
-    let maxRetries = 3;
-    let submitted = false;
+    showMoreBtn.textContent = 'Loading...';
+    showMoreBtn.disabled = true;
 
-    while (retryCount < maxRetries && !submitted) {
-      try {
-        const sessionUrl = await callRunJulesFunction(promptText, environment);
-        if (sessionUrl) {
-          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-        }
-        submitted = true;
-      } catch (error) {
-        retryCount++;
-
-        if (retryCount < maxRetries) {
-          const result = await showSubtaskErrorModal(1, 1, error);
-
-          if (result.action === 'cancel') {
-            return;
-          } else if (result.action === 'skip') {
-            return;
-          } else if (result.action === 'retry') {
-            if (result.shouldDelay) {
-              await new Promise(resolve => setTimeout(resolve, 5000));
-            }
-          }
-        } else {
-          const result = await showSubtaskErrorModal(1, 1, error);
-          
-          if (result.action === 'retry') {
-            if (result.shouldDelay) {
-              await new Promise(resolve => setTimeout(resolve, 5000));
-            }
-            // One final attempt
-            try {
-              const sessionUrl = await callRunJulesFunction(promptText, environment);
-              if (sessionUrl) {
-                window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-              }
-              submitted = true;
-            } catch (finalError) {
-              alert('Failed to submit task after multiple retries. Please try again later.');
-            }
-          } else {
-          }
-          return;
-        }
+    try {
+      const { listJulesSources } = await import('./jules-api.js');
+      const { getDecryptedJulesKey } = await import('./jules-api.js');
+      
+      const apiKey = await getDecryptedJulesKey(user.uid);
+      if (!apiKey) {
+        showMoreBtn.textContent = 'No API key configured';
+        showMoreBtn.disabled = false;
+        return;
       }
 
-      if (!submitted) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      const sourcesData = await listJulesSources(apiKey);
+      const sources = sourcesData.sources || [];
+
+      if (sources.length === 0) {
+        showMoreBtn.textContent = 'No repositories found';
+        return;
       }
+
+      repoSelect.innerHTML = '<option value="">Select a repository...</option>';
+      
+      // Store branch information for each source
+      const sourceBranchMap = {};
+      
+      sources.forEach(source => {
+        const option = document.createElement('option');
+        const pathParts = (source.name || source.id).split('/');
+        const repoName = pathParts.slice(-2).join('/');
+        option.value = source.name || source.id;
+        option.textContent = repoName;
+        repoSelect.appendChild(option);
+        
+        // Try to get default branch from source, fallback to master
+        const defaultBranch = source.githubRepoContext?.defaultBranch || 
+                             source.defaultBranch || 
+                             'master';
+        sourceBranchMap[source.name || source.id] = defaultBranch;
+      });
+
+      repoSelect.onchange = () => {
+        if (repoSelect.value) {
+          const branch = sourceBranchMap[repoSelect.value] || 'master';
+          handleRepoSelect(repoSelect.value, branch, promptText);
+        }
+      };
+
+      allReposLoaded = true;
+      showMoreContainer.style.display = 'none';
+      allReposContainer.style.display = 'block';
+    } catch (error) {
+      showMoreBtn.textContent = 'Failed to load - try again';
+      showMoreBtn.disabled = false;
     }
   };
 
-  planetBtn.onclick = () => handleSelect('planet');
-  myplanetBtn.onclick = () => handleSelect('myplanet');
   cancelBtn.onclick = () => {
     hideJulesEnvModal();
   };
+}
+
+async function handleRepoSelect(sourceId, branch, promptText) {
+  hideJulesEnvModal();
+  
+  // Store the selected repository for future subtask submissions
+  lastSelectedSourceId = sourceId;
+  lastSelectedBranch = branch || 'master';
+  
+  let retryCount = 0;
+  let maxRetries = 3;
+  let submitted = false;
+
+  while (retryCount < maxRetries && !submitted) {
+    try {
+      const sessionUrl = await callRunJulesFunction(promptText, sourceId, lastSelectedBranch);
+      if (sessionUrl) {
+        window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+      }
+      submitted = true;
+    } catch (error) {
+      retryCount++;
+
+      if (retryCount < maxRetries) {
+        const result = await showSubtaskErrorModal(1, 1, error);
+
+        if (result.action === 'cancel') {
+          return;
+        } else if (result.action === 'skip') {
+          return;
+        } else if (result.action === 'retry') {
+          if (result.shouldDelay) {
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+        }
+      } else {
+        const result = await showSubtaskErrorModal(1, 1, error);
+        
+        if (result.action === 'retry') {
+          if (result.shouldDelay) {
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+          try {
+            const sessionUrl = await callRunJulesFunction(promptText, sourceId, lastSelectedBranch);
+            if (sessionUrl) {
+              window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+            }
+            submitted = true;
+          } catch (finalError) {
+            alert('Failed to submit task after multiple retries. Please try again later.');
+          }
+        }
+        return;
+      }
+    }
+
+    if (!submitted) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
 }
 
 export function hideJulesEnvModal() {
@@ -1068,7 +1171,7 @@ async function submitSubtasks(subtasks) {
 
     while (retryCount < maxRetries && !submitted) {
       try {
-        const sessionUrl = await callRunJulesFunction(subtask.fullContent, 'myplanet');
+        const sessionUrl = await callRunJulesFunction(subtask.fullContent, lastSelectedSourceId, lastSelectedBranch);
         if (sessionUrl) {
           if (successCount < 3) {
             window.open(sessionUrl, '_blank', 'noopener,noreferrer');
