@@ -921,6 +921,11 @@ function renderAllSessions(sessions) {
   };
   
   allSessionsList.innerHTML = filteredSessions.map(session => {
+    // Skip sessions that are subtasks (they have parentTask field)
+    if (session.parentTask) {
+      return '';
+    }
+    
     const sessionId = session.name?.split('/').pop() || '';
     const state = session.state || 'UNKNOWN';
     const emoji = stateEmoji[state] || '❓';
@@ -935,7 +940,13 @@ function renderAllSessions(sessions) {
     
     const prUrl = session.githubPrUrl || null;
     const prLink = prUrl 
-      ? `<div style="margin-top:4px;"><a href="${prUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none;">🔗 View PR</a></div>`
+      ? `<div style="margin-top:4px;" onclick="event.stopPropagation();"><a href="${prUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none;">🔗 View PR</a></div>`
+      : '';
+    
+    // Show subtask count if available
+    const subtaskCount = session.childTasks?.length || 0;
+    const subtaskInfo = subtaskCount > 0 
+      ? `<div style="font-size:11px; color:var(--muted); margin-top:4px;">📋 ${subtaskCount} subtask${subtaskCount > 1 ? 's' : ''}</div>`
       : '';
     
     return `<div style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.03); cursor:pointer; transition:all 0.2s;"
@@ -950,9 +961,10 @@ function renderAllSessions(sessions) {
       </div>
       <div style="font-size:11px; color:var(--muted); margin-bottom:2px;">Created: ${createTime}</div>
       <div style="font-size:11px; color:var(--muted);">Updated: ${updateTime}</div>
+      ${subtaskInfo}
       ${prLink}
     </div>`;
-  }).join('');
+  }).filter(html => html).join('');
 }
 
 export function showFreeInputModal() {
