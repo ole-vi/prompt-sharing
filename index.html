@@ -217,6 +217,20 @@
     <div class="modal-content modal-lg">
       <h2>Break into Subtasks</h2>
       
+      <!-- Repository Selection -->
+      <div style="margin-bottom: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.02);">
+        <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Repository:</label>
+        <div id="subtaskFavoriteReposContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;"></div>
+        <div id="subtaskShowMoreReposContainer">
+          <button id="subtaskShowMoreReposBtn" class="btn" style="width: 100%; padding: 8px; font-size: 13px;">Show More Repositories...</button>
+        </div>
+        <div id="subtaskAllReposContainer" style="display: none; margin-top: 8px;">
+          <select id="subtaskRepoSelect" class="modal-input" style="width: 100%; padding: 8px;">
+            <option value="">Select a repository...</option>
+          </select>
+        </div>
+      </div>
+      
       <!-- Subtask list for editing -->
       <div id="splitEditPanel" style="margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; max-height: 400px; overflow-y: auto; background: rgba(255,255,255,0.02);">
         <div id="splitEditList" style="padding: 8px;"></div>

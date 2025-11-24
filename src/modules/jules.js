@@ -1079,9 +1079,11 @@ export function showSubtaskSplitModal(promptText) {
   const analysis = analyzePromptStructure(promptText);
   currentSubtasks = analysis.subtasks;
   
-
   // Show modal
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+
+  // Populate repository selection
+  populateSubtaskRepoSelection();
 
   // Render the checklist
   renderSplitEdit(currentSubtasks);
@@ -1107,6 +1109,122 @@ export function showSubtaskSplitModal(promptText) {
 
   cancelBtn.onclick = () => {
     hideSubtaskSplitModal();
+  };
+}
+
+async function populateSubtaskRepoSelection() {
+  const favoriteContainer = document.getElementById('subtaskFavoriteReposContainer');
+  const showMoreContainer = document.getElementById('subtaskShowMoreReposContainer');
+  const allReposContainer = document.getElementById('subtaskAllReposContainer');
+  const repoSelect = document.getElementById('subtaskRepoSelect');
+  const showMoreBtn = document.getElementById('subtaskShowMoreReposBtn');
+  
+  const user = getCurrentUser();
+  if (!user) {
+    favoriteContainer.innerHTML = '<div style="color:var(--muted); text-align:center; padding:8px; font-size:13px;">Please sign in first</div>';
+    showMoreContainer.style.display = 'none';
+    return;
+  }
+
+  const { DEFAULT_FAVORITE_REPOS, STORAGE_KEY_FAVORITE_REPOS } = await import('../utils/constants.js');
+  
+  const storedFavorites = localStorage.getItem(STORAGE_KEY_FAVORITE_REPOS);
+  const favorites = storedFavorites ? JSON.parse(storedFavorites) : DEFAULT_FAVORITE_REPOS;
+
+  favoriteContainer.innerHTML = '';
+  allReposContainer.style.display = 'none';
+  showMoreContainer.style.display = 'block';
+  
+  // Render favorite buttons
+  if (favorites && favorites.length > 0) {
+    favorites.forEach(fav => {
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.style.cssText = 'padding:8px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:6px; font-weight:600; transition:all 0.2s; width:100%; font-size:13px;';
+      btn.textContent = `${fav.emoji || '📦'} ${fav.name}`;
+      
+      // Check if this is the currently selected repo
+      if (fav.id === lastSelectedSourceId) {
+        btn.style.cssText += ' background:rgba(99,102,241,0.1); border-color:#6366f1;';
+      }
+      
+      btn.onclick = () => {
+        lastSelectedSourceId = fav.id;
+        lastSelectedBranch = fav.branch || 'master';
+        // Update button styling
+        favoriteContainer.querySelectorAll('button').forEach(b => {
+          b.style.cssText = 'padding:8px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:6px; font-weight:600; transition:all 0.2s; width:100%; font-size:13px;';
+        });
+        btn.style.cssText += ' background:rgba(99,102,241,0.1); border-color:#6366f1;';
+      };
+      favoriteContainer.appendChild(btn);
+    });
+  } else {
+    favoriteContainer.innerHTML = '<div style="color:var(--muted); text-align:center; padding:8px; font-size:13px;">No favorite repositories</div>';
+  }
+
+  let allReposLoaded = false;
+
+  showMoreBtn.onclick = async () => {
+    if (allReposLoaded) return;
+    
+    showMoreBtn.textContent = 'Loading...';
+    showMoreBtn.disabled = true;
+
+    try {
+      const { listJulesSources } = await import('./jules-api.js');
+      const { getDecryptedJulesKey } = await import('./jules-api.js');
+      
+      const apiKey = await getDecryptedJulesKey(user.uid);
+      if (!apiKey) {
+        showMoreBtn.textContent = 'No API key configured';
+        showMoreBtn.disabled = false;
+        return;
+      }
+
+      const sourcesData = await listJulesSources(apiKey);
+      const sources = sourcesData.sources || [];
+
+      if (sources.length === 0) {
+        showMoreBtn.textContent = 'No repositories found';
+        return;
+      }
+
+      repoSelect.innerHTML = '<option value="">Select a repository...</option>';
+      
+      // Store branch information for each source
+      const sourceBranchMap = {};
+      
+      sources.forEach(source => {
+        const option = document.createElement('option');
+        const pathParts = (source.name || source.id).split('/');
+        const repoName = pathParts.slice(-2).join('/');
+        option.value = source.name || source.id;
+        option.textContent = repoName;
+        repoSelect.appendChild(option);
+        
+        // Try to get default branch from source, fallback to master
+        const defaultBranch = source.githubRepoContext?.defaultBranch || 
+                             source.defaultBranch || 
+                             'master';
+        sourceBranchMap[source.name || source.id] = defaultBranch;
+      });
+
+      repoSelect.onchange = () => {
+        if (repoSelect.value) {
+          const branch = sourceBranchMap[repoSelect.value] || 'master';
+          lastSelectedSourceId = repoSelect.value;
+          lastSelectedBranch = branch;
+        }
+      };
+
+      allReposLoaded = true;
+      showMoreContainer.style.display = 'none';
+      allReposContainer.style.display = 'block';
+    } catch (error) {
+      showMoreBtn.textContent = 'Failed to load - try again';
+      showMoreBtn.disabled = false;
+    }
   };
 }
 

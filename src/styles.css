@@ -550,6 +550,31 @@ footer code {
   font-size: 14px;
 }
 
+.modal select,
+.modal-input {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: #11152a;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, Noto Sans, Liberation Sans, Helvetica Neue, sans-serif;
+}
+
+.modal select option {
+  color: var(--text);
+  background: var(--card);
+}
+
+.modal select optgroup {
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--card);
+}
+
 .modal-buttons {
   display: flex;
   gap: 8px;
