@@ -17,6 +17,54 @@ export function extractTaskStubs(text) {
 }
 
 /**
+ * Extract numbered tasks (e.g., "Task 1:", "Task 2:") from plans
+ */
+export function extractNumberedTasks(text) {
+  const tasks = [];
+  const taskRegex = /^Task\s+(\d+):\s*(.+?)$/gim;
+  const lines = text.split('\n');
+  
+  let currentTask = null;
+  let currentContent = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const match = line.match(/^Task\s+(\d+):\s*(.+?)$/i);
+    
+    if (match) {
+      if (currentTask) {
+        tasks.push({
+          number: currentTask.number,
+          title: currentTask.title,
+          content: currentContent.join('\n').trim()
+        });
+      }
+      
+      currentTask = {
+        number: parseInt(match[1]),
+        title: match[2].trim()
+      };
+      currentContent = [];
+    } else if (currentTask) {
+      if (line.match(/^Task\s+\d+/i)) {
+        continue;
+      }
+      currentContent.push(line);
+    }
+  }
+  
+  if (currentTask && currentContent.length > 0) {
+    tasks.push({
+      number: currentTask.number,
+      title: currentTask.title,
+      content: currentContent.join('\n').trim()
+    });
+  }
+  
+  return tasks;
+}
+
+/**
  * Break prompt into paragraphs by blank lines and headings
  */
 export function breakIntoParagraphs(text) {
@@ -69,6 +117,20 @@ export function analyzePromptStructure(text) {
         type: 'task-stub'
       })),
       recommendation: `Detected ${taskStubs.length} task blocks. These are ideal for sequential submission.`
+    };
+  }
+
+  const numberedTasks = extractNumberedTasks(text);
+  if (numberedTasks.length > 1) {
+    return {
+      strategy: 'numbered-tasks',
+      subtasks: numberedTasks.map(task => ({
+        id: task.number,
+        title: task.title,
+        content: task.content,
+        type: 'numbered-task'
+      })),
+      recommendation: `Detected ${numberedTasks.length} numbered tasks. Perfect for structured plans.`
     };
   }
 
