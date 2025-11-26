@@ -1434,7 +1434,6 @@ function renderSplitEdit(subtasks, promptText) {
   
   const promptPreview = promptText.length > 200 ? promptText.substring(0, 200) + '...' : promptText;
   const promptDisplay = `<div style="padding: 12px; margin-bottom: 8px; background: rgba(77,217,255,0.05); border: 1px solid rgba(77,217,255,0.2); border-radius: 6px;">
-    <div style="font-size: 11px; color: var(--accent); font-weight: 600; margin-bottom: 6px;">PROMPT:</div>
     <div style="font-size: 12px; color: var(--text); line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;">${promptPreview}</div>
   </div>`;
   
@@ -1443,7 +1442,7 @@ function renderSplitEdit(subtasks, promptText) {
     return;
   }
   
-  editList.innerHTML = promptDisplay + subtasks
+  editList.innerHTML = subtasks
     .map((st, idx) => `
       <div style="padding: 8px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center;">
         <input type="checkbox" id="subtask-${idx}" checked style="cursor: pointer;" />
@@ -1484,7 +1483,6 @@ async function submitSubtasks(subtasks) {
           window.open(sessionUrl, '_blank', 'noopener,noreferrer');
         }
         submitted = true;
-        alert('✓ Task submitted successfully!');
       } catch (error) {
         retryCount++;
         if (retryCount < maxRetries) {
@@ -1510,7 +1508,6 @@ async function submitSubtasks(subtasks) {
                 window.open(sessionUrl, '_blank', 'noopener,noreferrer');
               }
               submitted = true;
-              alert('✓ Task submitted successfully!');
             } catch (finalError) {
               alert('Failed to submit task after multiple retries. Please try again later.');
             }
