@@ -261,6 +261,17 @@
     </div>
   </div>
 
+  <!-- Subtask Preview Modal -->
+  <div id="subtaskPreviewModal" class="modal" style="z-index: 1002;">
+    <div class="modal-content" style="max-width: 700px; max-height: 80vh; display: flex; flex-direction: column;">
+      <h2 id="subtaskPreviewTitle" style="margin: 0 0 16px; font-size: 18px;">Subtask Preview</h2>
+      <div id="subtaskPreviewContent" style="flex: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; color: var(--text);"></div>
+      <div class="modal-buttons" style="margin-top: 16px;">
+        <button id="subtaskPreviewCloseBtn" class="btn">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Subtask Error Modal -->
   <div id="subtaskErrorModal" class="modal">
     <div class="modal-content" style="max-width: 500px;">

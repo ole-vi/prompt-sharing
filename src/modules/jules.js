@@ -1450,17 +1450,62 @@ function renderSplitEdit(subtasks, promptText) {
           <strong>Part ${idx + 1}:</strong> ${st.title || `Part ${idx + 1}`}
         </label>
         <span style="font-size: 11px; color: var(--muted);">${st.content.length}c</span>
+        <button class="subtask-preview-btn" data-idx="${idx}" style="background: none; border: none; cursor: pointer; color: var(--accent); font-size: 16px; padding: 4px 8px; transition: transform 0.2s; line-height: 1;" title="Preview subtask" onclick="event.stopPropagation();">👁️</button>
       </div>
     `)
     .join('');
 
-  subtasks.forEach((_, idx) => {
+  subtasks.forEach((st, idx) => {
     const checkbox = document.getElementById(`subtask-${idx}`);
     checkbox.addEventListener('change', () => {
       currentSubtasks = subtasks.filter((_, i) => {
         return document.getElementById(`subtask-${i}`).checked;
       });
     });
+  });
+  
+  document.querySelectorAll('.subtask-preview-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.idx);
+      showSubtaskPreview(subtasks[idx], idx + 1);
+    });
+    
+    btn.addEventListener('mouseenter', (e) => {
+      e.target.style.transform = 'scale(1.2)';
+    });
+    
+    btn.addEventListener('mouseleave', (e) => {
+      e.target.style.transform = 'scale(1)';
+    });
+  });
+}
+
+function showSubtaskPreview(subtask, partNumber) {
+  const modal = document.getElementById('subtaskPreviewModal');
+  const title = document.getElementById('subtaskPreviewTitle');
+  const content = document.getElementById('subtaskPreviewContent');
+  const closeBtn = document.getElementById('subtaskPreviewCloseBtn');
+  
+  if (!modal) {
+    console.error('subtaskPreviewModal not found');
+    return;
+  }
+  
+  title.textContent = `Part ${partNumber}: ${subtask.title || `Part ${partNumber}`}`;
+  content.textContent = subtask.fullContent || subtask.content || '';
+  
+  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center;');
+  
+  closeBtn.onclick = () => {
+    modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center;');
+  };
+  
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center;');
+    }
   });
 }
 
