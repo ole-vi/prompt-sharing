@@ -1488,11 +1488,6 @@ function showSubtaskPreview(subtask, partNumber) {
   const content = document.getElementById('subtaskPreviewContent');
   const closeBtn = document.getElementById('subtaskPreviewCloseBtn');
   
-  if (!modal) {
-    console.error('subtaskPreviewModal not found');
-    return;
-  }
-  
   title.textContent = `Part ${partNumber}: ${subtask.title || `Part ${partNumber}`}`;
   content.textContent = subtask.fullContent || subtask.content || '';
   
