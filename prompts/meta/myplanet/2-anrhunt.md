@@ -160,6 +160,9 @@ SAFETY
 - Do not modify code; output text only.
 - No PII; no external links except repo blob URLs.
 
+do not work on coding
+focus on this report of 10 tasks
+
 whichs output you format the following way
 ```
 document  := { finding_section } [ testing_section ]
