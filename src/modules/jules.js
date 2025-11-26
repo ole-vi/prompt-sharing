@@ -1016,6 +1016,11 @@ export function showFreeInputForm() {
 
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
   textarea.value = '';
+  
+  // Populate repository and branch selection
+  populateFreeInputRepoSelection();
+  populateFreeInputBranchSelection();
+  
   textarea.focus();
 
   const handleSubmit = async () => {
@@ -1025,11 +1030,73 @@ export function showFreeInputForm() {
       return;
     }
 
+    // Validate that a repo is selected
+    if (!lastSelectedSourceId) {
+      alert('Please select a repository.');
+      return;
+    }
+
+    // Validate that a branch is selected
+    if (!lastSelectedBranch) {
+      alert('Please select a branch.');
+      return;
+    }
+
     hideFreeInputForm();
     
     try {
-      // Submit directly as one (no split modal)
-      await handleTryInJulesAfterAuth(promptText);
+      // Submit directly using the selected repo and branch (no modal popup)
+      let retryCount = 0;
+      let maxRetries = 3;
+      let submitted = false;
+
+      while (retryCount < maxRetries && !submitted) {
+        try {
+          const sessionUrl = await callRunJulesFunction(promptText, lastSelectedSourceId, lastSelectedBranch);
+          if (sessionUrl) {
+            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          }
+          submitted = true;
+        } catch (error) {
+          retryCount++;
+
+          if (retryCount < maxRetries) {
+            const result = await showSubtaskErrorModal(1, 1, error);
+
+            if (result.action === 'cancel') {
+              return;
+            } else if (result.action === 'skip') {
+              return;
+            } else if (result.action === 'retry') {
+              if (result.shouldDelay) {
+                await new Promise(resolve => setTimeout(resolve, 5000));
+              }
+            }
+          } else {
+            const result = await showSubtaskErrorModal(1, 1, error);
+            
+            if (result.action === 'retry') {
+              if (result.shouldDelay) {
+                await new Promise(resolve => setTimeout(resolve, 5000));
+              }
+              try {
+                const sessionUrl = await callRunJulesFunction(promptText, lastSelectedSourceId, lastSelectedBranch);
+                if (sessionUrl) {
+                  window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+                }
+                submitted = true;
+              } catch (finalError) {
+                alert('Failed to submit task after multiple retries. Please try again later.');
+              }
+            }
+            return;
+          }
+        }
+
+        if (!submitted) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
     } catch (error) {
       alert('Failed to submit prompt: ' + error.message);
     }
@@ -1039,6 +1106,18 @@ export function showFreeInputForm() {
     const promptText = textarea.value.trim();
     if (!promptText) {
       alert('Please enter a prompt.');
+      return;
+    }
+
+    // Validate that a repo is selected
+    if (!lastSelectedSourceId) {
+      alert('Please select a repository.');
+      return;
+    }
+
+    // Validate that a branch is selected
+    if (!lastSelectedBranch) {
+      alert('Please select a branch.');
       return;
     }
 
@@ -1070,6 +1149,277 @@ export function showFreeInputForm() {
 export function hideFreeInputForm() {
   const modal = document.getElementById('freeInputModal');
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+}
+
+// Populate repo selection for free input modal
+async function populateFreeInputRepoSelection() {
+  const favoriteContainer = document.getElementById('freeInputFavoriteReposContainer');
+  const allReposContainer = document.getElementById('freeInputAllReposContainer');
+  const dropdownBtn = document.getElementById('freeInputRepoDropdownBtn');
+  const dropdownText = document.getElementById('freeInputRepoDropdownText');
+  const dropdownMenu = document.getElementById('freeInputRepoDropdownMenu');
+  
+  const user = getCurrentUser();
+  if (!user) {
+    favoriteContainer.innerHTML = '<div style="color:var(--muted); text-align:center; padding:8px; font-size:13px;">Please sign in first</div>';
+    allReposContainer.style.display = 'none';
+    return;
+  }
+
+  const { DEFAULT_FAVORITE_REPOS, STORAGE_KEY_FAVORITE_REPOS } = await import('../utils/constants.js');
+  
+  const storedFavorites = localStorage.getItem(STORAGE_KEY_FAVORITE_REPOS);
+  const favorites = storedFavorites ? JSON.parse(storedFavorites) : DEFAULT_FAVORITE_REPOS;
+
+  favoriteContainer.innerHTML = '';
+  allReposContainer.style.display = 'block';
+  
+  // Render favorite buttons
+  if (favorites && favorites.length > 0) {
+    favorites.forEach(fav => {
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.style.cssText = 'padding:6px 8px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:6px; font-weight:600; transition:all 0.2s; width:100%; font-size:12px;';
+      btn.textContent = `${fav.emoji || '📦'} ${fav.name}`;
+
+      // Check if this is the currently selected repo
+      if (fav.id === lastSelectedSourceId) {
+        btn.style.cssText += ' background:rgba(99,102,241,0.1); border-color:#6366f1;';
+      }
+      
+      btn.onclick = () => {
+        lastSelectedSourceId = fav.id;
+        lastSelectedBranch = fav.branch || 'master';
+        
+        // Update button styling
+        favoriteContainer.querySelectorAll('button').forEach(b => {
+          b.style.cssText = 'padding:6px 8px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:6px; font-weight:600; transition:all 0.2s; width:100%; font-size:12px;';
+        });
+        btn.style.cssText += ' background:rgba(99,102,241,0.1); border-color:#6366f1;';
+        
+        // Update branch selection to match the repo
+        populateFreeInputBranchSelection();
+      };
+      favoriteContainer.appendChild(btn);
+    });
+  } else {
+    favoriteContainer.innerHTML = '<div style="color:var(--muted); text-align:center; padding:8px; font-size:13px;">No favorite repositories</div>';
+  }
+
+  let allReposLoaded = false;
+
+  const loadAllRepos = async () => {
+    if (allReposLoaded) {
+      // Toggle dropdown visibility
+      dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+      return;
+    }
+    
+    dropdownText.textContent = 'Loading...';
+    dropdownBtn.disabled = true;
+    dropdownMenu.innerHTML = '';
+
+    try {
+      const { listJulesSources } = await import('./jules-api.js');
+      const { getDecryptedJulesKey } = await import('./jules-api.js');
+      
+      const apiKey = await getDecryptedJulesKey(user.uid);
+      if (!apiKey) {
+        dropdownText.textContent = 'No API key configured';
+        dropdownBtn.disabled = false;
+        return;
+      }
+
+      const sourcesData = await listJulesSources(apiKey);
+      const sources = sourcesData.sources || [];
+
+      if (sources.length === 0) {
+        dropdownText.textContent = 'No repositories found';
+        dropdownBtn.disabled = false;
+        return;
+      }
+
+      dropdownText.textContent = 'Show more...';
+      dropdownBtn.disabled = false;
+      
+      sources.forEach(source => {
+        const item = document.createElement('div');
+        item.className = 'custom-dropdown-item';
+        const pathParts = (source.name || source.id).split('/');
+        const repoName = pathParts.slice(-2).join('/');
+        item.textContent = repoName;
+        item.dataset.sourceId = source.name || source.id;
+        
+        // Try to get default branch from source, fallback to master
+        const defaultBranch = source.githubRepoContext?.defaultBranch || 
+                             source.defaultBranch || 
+                             'master';
+        item.dataset.branch = defaultBranch;
+        
+        item.onclick = () => {
+          lastSelectedSourceId = item.dataset.sourceId;
+          lastSelectedBranch = item.dataset.branch;
+          dropdownText.textContent = repoName;
+          
+          // Update selected styling
+          dropdownMenu.querySelectorAll('.custom-dropdown-item').forEach(i => {
+            i.classList.remove('selected');
+          });
+          item.classList.add('selected');
+          
+          // Close dropdown
+          dropdownMenu.style.display = 'none';
+          
+          // Update branch selection to match the repo
+          populateFreeInputBranchSelection();
+        };
+        
+        dropdownMenu.appendChild(item);
+      });
+
+      allReposLoaded = true;
+      
+      // Auto-display the dropdown after loading
+      dropdownMenu.style.display = 'block';
+      
+    } catch (error) {
+      dropdownText.textContent = 'Failed to load - click to retry';
+      dropdownBtn.disabled = false;
+      allReposLoaded = false;
+    }
+  };
+
+  dropdownBtn.onclick = loadAllRepos;
+  
+  // Close dropdown when clicking outside
+  const closeDropdown = (e) => {
+    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+      dropdownMenu.style.display = 'none';
+    }
+  };
+  
+  // Remove existing listener if any and add new one
+  document.removeEventListener('click', closeDropdown);
+  document.addEventListener('click', closeDropdown);
+}
+
+// Populate branch selection for free input modal
+async function populateFreeInputBranchSelection() {
+  const favoriteContainer = document.getElementById('freeInputFavoriteBranchesContainer');
+  const allBranchesContainer = document.getElementById('freeInputAllBranchesContainer');
+  const dropdownBtn = document.getElementById('freeInputBranchDropdownBtn');
+  const dropdownText = document.getElementById('freeInputBranchDropdownText');
+  const dropdownMenu = document.getElementById('freeInputBranchDropdownMenu');
+  
+  favoriteContainer.innerHTML = '';
+  allBranchesContainer.style.display = 'block';
+  
+  // Set default branch if not set
+  if (!lastSelectedBranch) {
+    lastSelectedBranch = 'master';
+  }
+  
+  // Show the currently selected branch as the only "favorite"
+  const btn = document.createElement('button');
+  btn.className = 'btn';
+  btn.style.cssText = 'padding:6px 8px; text-align:left; border:1px solid var(--border); background:rgba(99,102,241,0.1); border-color:#6366f1; cursor:default; border-radius:6px; font-weight:600; transition:all 0.2s; width:100%; font-size:12px;';
+  btn.textContent = `🌿 ${lastSelectedBranch}`;
+  btn.disabled = true;
+  favoriteContainer.appendChild(btn);
+
+  let allBranchesLoaded = false;
+
+  const loadAllBranches = async () => {
+    if (allBranchesLoaded) {
+      // Toggle dropdown visibility
+      dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+      return;
+    }
+    
+    if (!lastSelectedSourceId) {
+      alert('Please select a repository first');
+      return;
+    }
+    
+    dropdownText.textContent = 'Loading...';
+    dropdownBtn.disabled = true;
+    dropdownMenu.innerHTML = '';
+
+    try {
+      // Extract owner/repo from sourceId (e.g., "sources/github/owner/repo")
+      const pathParts = lastSelectedSourceId.split('/');
+      const owner = pathParts[pathParts.length - 2];
+      const repo = pathParts[pathParts.length - 1];
+      
+      const { getBranches } = await import('./github-api.js');
+      const branches = await getBranches(owner, repo);
+
+      if (branches.length === 0) {
+        dropdownText.textContent = 'No branches found';
+        dropdownBtn.disabled = false;
+        return;
+      }
+
+      dropdownText.textContent = 'Show more...';
+      dropdownBtn.disabled = false;
+      
+      // Show all branches from the selected repository
+      branches.forEach(branch => {
+        const item = document.createElement('div');
+        item.className = 'custom-dropdown-item';
+        item.textContent = branch.name;
+        item.dataset.branch = branch.name;
+        
+        item.onclick = () => {
+          lastSelectedBranch = branch.name;
+          dropdownText.textContent = branch.name;
+          
+          // Update selected styling
+          dropdownMenu.querySelectorAll('.custom-dropdown-item').forEach(i => {
+            i.classList.remove('selected');
+          });
+          item.classList.add('selected');
+          
+          // Update the favorite display to show the newly selected branch
+          favoriteContainer.innerHTML = '';
+          const btn = document.createElement('button');
+          btn.className = 'btn';
+          btn.style.cssText = 'padding:6px 8px; text-align:left; border:1px solid var(--border); background:rgba(99,102,241,0.1); border-color:#6366f1; cursor:default; border-radius:6px; font-weight:600; transition:all 0.2s; width:100%; font-size:12px;';
+          btn.textContent = `🌿 ${branch.name}`;
+          btn.disabled = true;
+          favoriteContainer.appendChild(btn);
+          
+          // Close dropdown
+          dropdownMenu.style.display = 'none';
+        };
+        
+        dropdownMenu.appendChild(item);
+      });
+
+      allBranchesLoaded = true;
+      
+      // Auto-display the dropdown after loading
+      dropdownMenu.style.display = 'block';
+      
+    } catch (error) {
+      dropdownText.textContent = 'Failed to load - click to retry';
+      dropdownBtn.disabled = false;
+      allBranchesLoaded = false;
+    }
+  };
+
+  dropdownBtn.onclick = loadAllBranches;
+  
+  // Close dropdown when clicking outside
+  const closeBranchDropdown = (e) => {
+    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+      dropdownMenu.style.display = 'none';
+    }
+  };
+  
+  // Remove existing listener if any and add new one
+  document.removeEventListener('click', closeBranchDropdown);
+  document.addEventListener('click', closeBranchDropdown);
 }
 
 // ===== Subtask Split Flow =====
