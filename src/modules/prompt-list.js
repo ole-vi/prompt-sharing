@@ -373,6 +373,14 @@ export function updateActiveItem() {
 
 export function renderList(items, owner, repo, branch) {
   loadExpandedState(owner, repo, branch);
+  
+  // Show placeholder if no prompts are loaded yet
+  if (!items || items.length === 0) {
+    clearElement(listEl);
+    listEl.innerHTML = '<div style="color:var(--muted); padding:16px 8px; text-align:center; line-height:1.6;"><div style="font-size:32px; margin-bottom:8px;">📝</div><div style="font-weight:600; margin-bottom:4px;">No prompts yet</div><div style="font-size:12px;">Add markdown files to the <code>prompts/</code> folder in your repository to get started.</div></div>';
+    return;
+  }
+  
   const q = searchEl && searchEl.value ? searchEl.value.trim().toLowerCase() : '';
   const searchActive = Boolean(q);
   const filtered = !q

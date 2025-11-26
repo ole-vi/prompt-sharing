@@ -146,34 +146,42 @@ export async function loadBranches() {
     // User branches
     if (userBranchesArr.length > 0) {
       const showUsers = localStorage.getItem('showUserBranches') !== 'false';
-      const userGroup = document.createElement('optgroup');
-      userGroup.label = `${showUsers ? '▼' : '▶'} User Branches (${userBranchesArr.length})`;
+      
+      // Add toggle option
+      const toggleUserOpt = document.createElement('option');
+      toggleUserOpt.value = '__toggle_users__';
+      toggleUserOpt.textContent = `${showUsers ? '▼' : '▶'} User Branches (${userBranchesArr.length}) - click to ${showUsers ? 'collapse' : 'expand'}`;
+      toggleUserOpt.style.fontWeight = 'bold';
+      branchSelect.appendChild(toggleUserOpt);
 
       if (showUsers) {
         for (const b of userBranchesArr) {
           const opt = document.createElement('option');
           opt.value = b.name;
           opt.textContent = `  ${b.name}`;
-          userGroup.appendChild(opt);
+          branchSelect.appendChild(opt);
         }
       }
-      branchSelect.appendChild(userGroup);
     }
 
     if (featureBranches.length > 0) {
       const showFeatures = localStorage.getItem('showFeatureBranches') === 'true';
-      const featureGroup = document.createElement('optgroup');
-      featureGroup.label = `${showFeatures ? '▼' : '▶'} Feature Branches (${featureBranches.length})`;
+      
+      // Add toggle option
+      const toggleFeatureOpt = document.createElement('option');
+      toggleFeatureOpt.value = '__toggle_features__';
+      toggleFeatureOpt.textContent = `${showFeatures ? '▼' : '▶'} Feature Branches (${featureBranches.length}) - click to ${showFeatures ? 'collapse' : 'expand'}`;
+      toggleFeatureOpt.style.fontWeight = 'bold';
+      branchSelect.appendChild(toggleFeatureOpt);
 
       if (showFeatures) {
         for (const b of featureBranches) {
           const opt = document.createElement('option');
           opt.value = b.name;
           opt.textContent = `  ${b.name}`;
-          featureGroup.appendChild(opt);
+          branchSelect.appendChild(opt);
         }
       }
-      branchSelect.appendChild(featureGroup);
     }
 
     if (![...branchSelect.options].some(o => o.value === currentBranch)) {

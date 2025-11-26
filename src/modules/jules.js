@@ -551,7 +551,7 @@ export function showUserProfileModal() {
     julesKeyStatus.textContent = hasKey ? '✓ Saved' : '✗ Not saved';
     julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
     
-    // Show/hide buttons based on key status
+    // Show/hide buttons and sections based on key status
     if (hasKey) {
       addBtn.style.display = 'none';
       dangerZoneSection.style.display = 'block';
@@ -560,6 +560,7 @@ export function showUserProfileModal() {
       // Load Jules profile info automatically when key exists
       await loadAndDisplayJulesProfile(user.uid);
     } else {
+      // Hide everything when no API key is present
       addBtn.style.display = 'block';
       dangerZoneSection.style.display = 'none';
       julesProfileInfoSection.style.display = 'none';
@@ -674,8 +675,10 @@ async function loadAndDisplayJulesProfile(uid) {
     // Load profile data
     const profileData = await loadJulesProfileInfo(uid);
 
-    // Display sources
-    if (profileData.sources && profileData.sources.length > 0) {
+    // Display sources or show placeholder if no API key
+    if (!profileData.sources) {
+      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; font-style:italic; text-align:center; padding:20px;">Connect a Jules API key to view your repositories</div>';
+    } else if (profileData.sources.length > 0) {
       sourcesListDiv.innerHTML = profileData.sources.map((source, index) => {
         const repoName = source.githubRepo?.name || source.name || source.id;
         // Extract owner/repo from the full path (e.g., "sources/github/owner/repo" -> "owner/repo")
@@ -722,8 +725,10 @@ async function loadAndDisplayJulesProfile(uid) {
           ${branchList}
         </div>`;
       }).join('');
-    } else {
+    } else if (profileData.sources) {
       sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No connected repositories found.<br><small>Connect repos in the Jules UI.</small></div>';
+    } else {
+      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; font-style:italic; text-align:center; padding:20px;">Connect a Jules API key to view your repositories</div>';
     }
 
     // Display sessions
@@ -779,8 +784,10 @@ async function loadAndDisplayJulesProfile(uid) {
           </div>` : '<div style="color:var(--muted); font-size:11px;">Click to view session details →</div>'}
         </div>`;
       }).join('');
-    } else {
+    } else if (profileData.sessions) {
       sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No recent sessions found.</div>';
+    } else {
+      sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; font-style:italic; text-align:center; padding:20px;">Connect a Jules API key to view your sessions</div>';
     }
 
     // Reset button state
