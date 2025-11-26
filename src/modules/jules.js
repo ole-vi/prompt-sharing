@@ -151,8 +151,6 @@ export function showJulesKeyModal(onSave) {
   const modal = document.getElementById('julesKeyModal');
   const input = document.getElementById('julesKeyInput');
   
-  
-  // Use setAttribute to set display with !important
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
   input.value = '';
   input.focus();
@@ -246,7 +244,6 @@ export async function showJulesEnvModal(promptText) {
   }
 
   let allReposLoaded = false;
-  let sourceBranchMap = {};
 
   const loadAllRepos = async () => {
     if (allReposLoaded) return;
@@ -287,19 +284,16 @@ export async function showJulesEnvModal(promptText) {
         item.textContent = repoName;
         item.dataset.value = source.name || source.id;
         
-        // Try to get default branch from source, fallback to master
         const defaultBranch = source.githubRepoContext?.defaultBranch || 
                              source.defaultBranch || 
                              'master';
-        sourceBranchMap[source.name || source.id] = defaultBranch;
         
         item.onclick = () => {
           dropdownMenu.querySelectorAll('.custom-dropdown-item').forEach(i => i.classList.remove('selected'));
           item.classList.add('selected');
           dropdownText.textContent = repoName;
           dropdownMenu.style.display = 'none';
-          const branch = sourceBranchMap[item.dataset.value] || 'master';
-          handleRepoSelect(item.dataset.value, branch, promptText);
+          handleRepoSelect(item.dataset.value, defaultBranch, promptText);
         };
         
         dropdownMenu.appendChild(item);
@@ -322,7 +316,6 @@ export async function showJulesEnvModal(promptText) {
     }
   };
 
-  // Close dropdown when clicking outside
   document.addEventListener('click', (e) => {
     if (!allReposContainer.contains(e.target)) {
       dropdownMenu.style.display = 'none';
@@ -337,7 +330,6 @@ export async function showJulesEnvModal(promptText) {
 async function handleRepoSelect(sourceId, branch, promptText) {
   hideJulesEnvModal();
   
-  // Store the selected repository for future subtask submissions
   lastSelectedSourceId = sourceId;
   lastSelectedBranch = branch || 'master';
   
@@ -551,13 +543,11 @@ export function showUserProfileModal() {
     julesKeyStatus.textContent = hasKey ? '✓ Saved' : '✗ Not saved';
     julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
     
-    // Show/hide buttons based on key status
     if (hasKey) {
       addBtn.style.display = 'none';
       dangerZoneSection.style.display = 'block';
       julesProfileInfoSection.style.display = 'block';
       
-      // Load Jules profile info automatically when key exists
       await loadAndDisplayJulesProfile(user.uid);
     } else {
       addBtn.style.display = 'block';
@@ -566,11 +556,9 @@ export function showUserProfileModal() {
     }
   });
 
-  // Add button handler - shows key modal
   addBtn.onclick = () => {
     hideUserProfileModal();
     showJulesKeyModal(() => {
-      // After key is saved, reopen profile modal
       setTimeout(() => showUserProfileModal(), 500);
     });
   };
@@ -589,7 +577,6 @@ export function showUserProfileModal() {
         resetBtn.textContent = '🗑️ Delete Jules API Key';
         resetBtn.disabled = false;
         
-        // Update buttons
         addBtn.style.display = 'block';
         dangerZoneSection.style.display = 'none';
         julesProfileInfoSection.style.display = 'none';
@@ -605,10 +592,8 @@ export function showUserProfileModal() {
     }
   };
 
-  // Load Jules Info button handler
   loadJulesInfoBtn.onclick = async () => {
     await loadAndDisplayJulesProfile(user.uid);
-    // Re-attach the View All link handler after profile loads
     attachViewAllSessionsHandler();
   };
 
@@ -616,10 +601,8 @@ export function showUserProfileModal() {
     hideUserProfileModal();
   };
   
-  // Attach View All Sessions handler
   attachViewAllSessionsHandler();
   
-  // Sessions History Modal handlers
   const closeSessionsHistoryBtn = document.getElementById('closeSessionsHistoryBtn');
   const loadMoreSessionsBtn = document.getElementById('loadMoreSessionsBtn');
   const sessionSearchInput = document.getElementById('sessionSearchInput');
@@ -645,7 +628,6 @@ export function showUserProfileModal() {
   }
 }
 
-// Helper function to attach View All Sessions link handler
 function attachViewAllSessionsHandler() {
   const viewAllSessionsLink = document.getElementById('viewAllSessionsLink');
   if (viewAllSessionsLink) {
@@ -656,29 +638,22 @@ function attachViewAllSessionsHandler() {
   }
 }
 
-/**
- * Loads and displays Jules profile information in the profile modal
- */
 async function loadAndDisplayJulesProfile(uid) {
   const loadBtn = document.getElementById('loadJulesInfoBtn');
   const sourcesListDiv = document.getElementById('julesSourcesList');
   const sessionsListDiv = document.getElementById('julesSessionsList');
 
   try {
-    // Show loading state
     loadBtn.disabled = true;
     loadBtn.textContent = '⏳ Loading...';
     sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sources...</div>';
     sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
 
-    // Load profile data
     const profileData = await loadJulesProfileInfo(uid);
 
-    // Display sources
     if (profileData.sources && profileData.sources.length > 0) {
       sourcesListDiv.innerHTML = profileData.sources.map((source, index) => {
         const repoName = source.githubRepo?.name || source.name || source.id;
-        // Extract owner/repo from the full path (e.g., "sources/github/owner/repo" -> "owner/repo")
         const githubPath = repoName.includes('github/') 
           ? repoName.split('github/')[1] 
           : repoName.replace('sources/', '');
@@ -726,7 +701,6 @@ async function loadAndDisplayJulesProfile(uid) {
       sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No connected repositories found.<br><small>Connect repos in the Jules UI.</small></div>';
     }
 
-    // Display sessions
     if (profileData.sessions && profileData.sessions.length > 0) {
       sessionsListDiv.innerHTML = profileData.sessions.map(session => {
         const state = session.state || 'UNKNOWN';
@@ -739,7 +713,6 @@ async function loadAndDisplayJulesProfile(uid) {
           'AWAITING_USER_FEEDBACK': '💬'
         }[state] || '❓';
         
-        // Better state labels
         const stateLabel = {
           'COMPLETED': 'COMPLETED',
           'FAILED': 'FAILED',
@@ -754,8 +727,6 @@ async function loadAndDisplayJulesProfile(uid) {
         const createdAt = session.createTime ? new Date(session.createTime).toLocaleDateString() : 'Unknown';
         const prUrl = session.outputs?.[0]?.pullRequest?.url;
         
-        // Extract session ID from session name (format: "sessions/123abc")
-        // The ID after "sessions/" is the actual session identifier
         const sessionId = session.name?.split('sessions/')[1] || session.id?.split('sessions/')[1] || session.id;
         const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
         
@@ -783,16 +754,12 @@ async function loadAndDisplayJulesProfile(uid) {
       sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No recent sessions found.</div>';
     }
 
-    // Reset button state
     loadBtn.disabled = false;
     loadBtn.textContent = '🔄 Refresh Jules Info';
     
-    // Attach View All Sessions handler after content loads
     attachViewAllSessionsHandler();
 
   } catch (error) {
-    
-    // Display error
     sourcesListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
       Failed to load sources: ${error.message}
     </div>`;
@@ -800,7 +767,6 @@ async function loadAndDisplayJulesProfile(uid) {
       Failed to load sessions: ${error.message}
     </div>`;
 
-    // Reset button state
     loadBtn.disabled = false;
     loadBtn.textContent = '🔄 Refresh Jules Info';
   }
@@ -811,7 +777,6 @@ export function hideUserProfileModal() {
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
 }
 
-// Jules Sessions History Modal
 let allSessionsCache = [];
 let sessionNextPageToken = null;
 
@@ -823,12 +788,10 @@ export function showJulesSessionsHistoryModal() {
   
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
   
-  // Reset state
   allSessionsCache = [];
   sessionNextPageToken = null;
   searchInput.value = '';
   
-  // Load first page
   loadSessionsPage();
 }
 
@@ -849,7 +812,6 @@ async function loadSessionsPage() {
     loadMoreBtn.disabled = true;
     loadMoreBtn.textContent = 'Loading...';
     
-    // Get decrypted API key
     const { getDecryptedJulesKey } = await import('./jules-api.js');
     const apiKey = await getDecryptedJulesKey(user.uid);
     if (!apiKey) {
@@ -864,7 +826,6 @@ async function loadSessionsPage() {
       
       renderAllSessions(allSessionsCache);
       
-      // Show/hide load more button
       if (sessionNextPageToken) {
         loadMoreSection.style.display = 'block';
         loadMoreBtn.disabled = false;
@@ -921,7 +882,6 @@ function renderAllSessions(sessions) {
   };
   
   allSessionsList.innerHTML = filteredSessions.map(session => {
-    // Skip sessions that are subtasks (they have parentTask field)
     if (session.parentTask) {
       return '';
     }
@@ -931,7 +891,6 @@ function renderAllSessions(sessions) {
     const emoji = stateEmoji[state] || '❓';
     const label = stateLabel[state] || state.replace(/_/g, ' ');
     
-    // Use prompt text as title, fallback to displayName or sessionId
     const promptText = session.prompt || session.displayName || sessionId;
     const displayTitle = promptText.length > 100 ? promptText.substring(0, 100) + '...' : promptText;
     
@@ -943,7 +902,6 @@ function renderAllSessions(sessions) {
       ? `<div style="margin-top:4px;" onclick="event.stopPropagation();"><a href="${prUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none;">🔗 View PR</a></div>`
       : '';
     
-    // Show subtask count if available
     const subtaskCount = session.childTasks?.length || 0;
     const subtaskInfo = subtaskCount > 0 
       ? `<div style="font-size:11px; color:var(--muted); margin-top:4px;">📋 ${subtaskCount} subtask${subtaskCount > 1 ? 's' : ''}</div>`
@@ -1017,7 +975,6 @@ export function showFreeInputForm() {
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
   textarea.value = '';
   
-  // Populate repository and branch selection
   populateFreeInputRepoSelection();
   populateFreeInputBranchSelection();
   
@@ -1045,7 +1002,6 @@ export function showFreeInputForm() {
     hideFreeInputForm();
     
     try {
-      // Submit directly using the selected repo and branch (no modal popup)
       let retryCount = 0;
       let maxRetries = 3;
       let submitted = false;
@@ -1124,7 +1080,6 @@ export function showFreeInputForm() {
     hideFreeInputForm();
     
     try {
-      // Show subtask split modal
       showSubtaskSplitModal(promptText);
     } catch (error) {
       alert('Failed to process prompt: ' + error.message);
@@ -1151,7 +1106,6 @@ export function hideFreeInputForm() {
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 }
 
-// Populate repo selection for free input modal
 async function populateFreeInputRepoSelection() {
   const dropdownBtn = document.getElementById('freeInputRepoDropdownBtn');
   const dropdownText = document.getElementById('freeInputRepoDropdownText');
@@ -1169,7 +1123,6 @@ async function populateFreeInputRepoSelection() {
   const storedFavorites = localStorage.getItem(STORAGE_KEY_FAVORITE_REPOS);
   const favorites = storedFavorites ? JSON.parse(storedFavorites) : DEFAULT_FAVORITE_REPOS;
 
-  // Set initial text to the currently selected repo or default
   if (lastSelectedSourceId) {
     const pathParts = lastSelectedSourceId.split('/');
     const repoName = pathParts.slice(-2).join('/');
@@ -1185,10 +1138,8 @@ async function populateFreeInputRepoSelection() {
       return;
     }
     
-    // Render dropdown menu with favorites only (no API call yet)
     dropdownMenu.innerHTML = '';
     
-    // Add favorites section
     if (favorites && favorites.length > 0) {
       favorites.forEach(fav => {
         const item = document.createElement('div');
@@ -1211,13 +1162,11 @@ async function populateFreeInputRepoSelection() {
         dropdownMenu.appendChild(item);
       });
       
-      // Add show more button
       const showMoreBtn = document.createElement('div');
       showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
       showMoreBtn.textContent = '▼ Show more...';
       
       showMoreBtn.onclick = async () => {
-        // Load all repos on first click
         if (!allReposLoaded) {
           showMoreBtn.textContent = 'Loading...';
           showMoreBtn.style.pointerEvents = 'none';
@@ -1250,11 +1199,9 @@ async function populateFreeInputRepoSelection() {
           }
         }
         
-        // Hide show more button and display all repos
         showMoreBtn.style.display = 'none';
         
         allSources.forEach(source => {
-          // Skip if already in favorites
           if (favorites.some(f => f.id === (source.name || source.id))) return;
           
           const item = document.createElement('div');
@@ -1287,7 +1234,6 @@ async function populateFreeInputRepoSelection() {
       
       dropdownMenu.appendChild(showMoreBtn);
     } else {
-      // No favorites, show all repos directly
       allSources.forEach(source => {
         const item = document.createElement('div');
         item.className = 'custom-dropdown-item';
@@ -1322,7 +1268,6 @@ async function populateFreeInputRepoSelection() {
 
   dropdownBtn.onclick = toggleDropdown;
   
-  // Close dropdown when clicking outside
   const closeDropdown = (e) => {
     if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
       dropdownMenu.style.display = 'none';
@@ -1333,18 +1278,15 @@ async function populateFreeInputRepoSelection() {
   document.addEventListener('click', closeDropdown);
 }
 
-// Populate branch selection for free input modal
 async function populateFreeInputBranchSelection() {
   const dropdownBtn = document.getElementById('freeInputBranchDropdownBtn');
   const dropdownText = document.getElementById('freeInputBranchDropdownText');
   const dropdownMenu = document.getElementById('freeInputBranchDropdownMenu');
   
-  // Set default branch if not set
   if (!lastSelectedBranch) {
     lastSelectedBranch = 'master';
   }
   
-  // Update dropdown text to show current branch
   dropdownText.textContent = `🌿 ${lastSelectedBranch}`;
 
   let allBranchesLoaded = false;
@@ -1361,10 +1303,8 @@ async function populateFreeInputBranchSelection() {
       return;
     }
     
-    // Render dropdown menu with current branch only (no API call yet)
     dropdownMenu.innerHTML = '';
     
-    // Add current branch at the top
     const currentItem = document.createElement('div');
     currentItem.className = 'custom-dropdown-item selected';
     currentItem.textContent = `🌿 ${lastSelectedBranch}`;
@@ -1376,19 +1316,16 @@ async function populateFreeInputBranchSelection() {
     
     dropdownMenu.appendChild(currentItem);
     
-    // Add show more button
     const showMoreBtn = document.createElement('div');
     showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
     showMoreBtn.textContent = '▼ Show more...';
     
     showMoreBtn.onclick = async () => {
-      // Load all branches on first click
       if (!allBranchesLoaded) {
         showMoreBtn.textContent = 'Loading...';
         showMoreBtn.style.pointerEvents = 'none';
         
         try {
-          // Extract owner/repo from sourceId (e.g., "sources/github/owner/repo")
           const pathParts = lastSelectedSourceId.split('/');
           const owner = pathParts[pathParts.length - 2];
           const repo = pathParts[pathParts.length - 1];
@@ -1410,11 +1347,9 @@ async function populateFreeInputBranchSelection() {
         }
       }
       
-      // Hide show more button and display all branches
       showMoreBtn.style.display = 'none';
       
       allBranches.forEach(branch => {
-        // Skip current branch since it's already shown
         if (branch.name === lastSelectedBranch) return;
         
         const item = document.createElement('div');
@@ -1439,7 +1374,6 @@ async function populateFreeInputBranchSelection() {
 
   dropdownBtn.onclick = toggleBranchDropdown;
   
-  // Close dropdown when clicking outside
   const closeBranchDropdown = (e) => {
     if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
       dropdownMenu.style.display = 'none';
@@ -1450,33 +1384,30 @@ async function populateFreeInputBranchSelection() {
   document.addEventListener('click', closeBranchDropdown);
 }
 
-// ===== Subtask Split Flow =====
-
 let currentFullPrompt = '';
 let currentSubtasks = [];
-let splitMode = 'send-all'; // 'send-all' or 'split-tasks'
-let currentAnalysis = null; // Store analysis for mode switching
 
 export function showSubtaskSplitModal(promptText) {
   currentFullPrompt = promptText;
   
   const modal = document.getElementById('subtaskSplitModal');
-  const editPanel = document.getElementById('splitEditPanel');
   const confirmBtn = document.getElementById('splitConfirmBtn');
   const cancelBtn = document.getElementById('splitCancelBtn');
 
-  // Analyze the prompt structure
   const analysis = analyzePromptStructure(promptText);
   currentSubtasks = analysis.subtasks;
   
-  // Show modal
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 
-  // Render the checklist
-  renderSplitEdit(currentSubtasks);
+  renderSplitEdit(currentSubtasks, promptText);
 
-  // Button handlers
   confirmBtn.onclick = async () => {
+    if (!currentSubtasks || currentSubtasks.length === 0) {
+      hideSubtaskSplitModal();
+      await submitSubtasks([]);
+      return;
+    }
+    
     const validation = validateSubtasks(currentSubtasks);
     if (!validation.valid) {
       alert('Error:\n' + validation.errors.join('\n'));
@@ -1488,7 +1419,6 @@ export function showSubtaskSplitModal(promptText) {
       if (!proceed) return;
     }
 
-    // Save subtasks BEFORE hiding modal (which clears them)
     const subtasksToSubmit = [...currentSubtasks];
     hideSubtaskSplitModal();
     await submitSubtasks(subtasksToSubmit);
@@ -1499,15 +1429,21 @@ export function showSubtaskSplitModal(promptText) {
   };
 }
 
-function renderSplitEdit(subtasks) {
+function renderSplitEdit(subtasks, promptText) {
   const editList = document.getElementById('splitEditList');
   
+  const promptPreview = promptText.length > 200 ? promptText.substring(0, 200) + '...' : promptText;
+  const promptDisplay = `<div style="padding: 12px; margin-bottom: 8px; background: rgba(77,217,255,0.05); border: 1px solid rgba(77,217,255,0.2); border-radius: 6px;">
+    <div style="font-size: 11px; color: var(--accent); font-weight: 600; margin-bottom: 6px;">PROMPT:</div>
+    <div style="font-size: 12px; color: var(--text); line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;">${promptPreview}</div>
+  </div>`;
+  
   if (!subtasks || subtasks.length === 0) {
-    editList.innerHTML = '<div style="padding: 16px; text-align: center; color: var(--muted); font-size: 13px;">No subtasks detected. This prompt will be sent as a single task.</div>';
+    editList.innerHTML = promptDisplay + '<div style="padding: 16px; text-align: center; color: var(--muted); font-size: 13px;">No subtasks detected. This prompt will be sent as a single task.</div>';
     return;
   }
   
-  editList.innerHTML = subtasks
+  editList.innerHTML = promptDisplay + subtasks
     .map((st, idx) => `
       <div style="padding: 8px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center;">
         <input type="checkbox" id="subtask-${idx}" checked style="cursor: pointer;" />
@@ -1519,11 +1455,9 @@ function renderSplitEdit(subtasks) {
     `)
     .join('');
 
-  // Add change listeners to checkboxes
   subtasks.forEach((_, idx) => {
     const checkbox = document.getElementById(`subtask-${idx}`);
     checkbox.addEventListener('change', () => {
-      // Filter based on checked state
       currentSubtasks = subtasks.filter((_, i) => {
         return document.getElementById(`subtask-${i}`).checked;
       });
@@ -1535,13 +1469,65 @@ export function hideSubtaskSplitModal() {
   const modal = document.getElementById('subtaskSplitModal');
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
   currentSubtasks = [];
-  splitMode = 'send-all';
 }
 
 async function submitSubtasks(subtasks) {
+  if (!subtasks || subtasks.length === 0) {
+    let retryCount = 0;
+    let maxRetries = 3;
+    let submitted = false;
+
+    while (retryCount < maxRetries && !submitted) {
+      try {
+        const sessionUrl = await callRunJulesFunction(currentFullPrompt, lastSelectedSourceId, lastSelectedBranch);
+        if (sessionUrl) {
+          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+        }
+        submitted = true;
+        alert('✓ Task submitted successfully!');
+      } catch (error) {
+        retryCount++;
+        if (retryCount < maxRetries) {
+          const result = await showSubtaskErrorModal(1, 1, error);
+          if (result.action === 'cancel') {
+            return;
+          } else if (result.action === 'skip') {
+            return;
+          } else if (result.action === 'retry') {
+            if (result.shouldDelay) {
+              await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+          }
+        } else {
+          const result = await showSubtaskErrorModal(1, 1, error);
+          if (result.action === 'retry') {
+            if (result.shouldDelay) {
+              await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+            try {
+              const sessionUrl = await callRunJulesFunction(currentFullPrompt, lastSelectedSourceId, lastSelectedBranch);
+              if (sessionUrl) {
+                window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+              }
+              submitted = true;
+              alert('✓ Task submitted successfully!');
+            } catch (finalError) {
+              alert('Failed to submit task after multiple retries. Please try again later.');
+            }
+          }
+          return;
+        }
+      }
+
+      if (!submitted) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    return;
+  }
+  
   const sequenced = buildSubtaskSequence(currentFullPrompt, subtasks);
   
-  // Show confirmation
   const totalCount = sequenced.length;
   const proceed = confirm(
     `Ready to send ${totalCount} subtask${totalCount > 1 ? 's' : ''} to Jules.\n\n` +
@@ -1551,7 +1537,6 @@ async function submitSubtasks(subtasks) {
 
   if (!proceed) return;
 
-  // Submit each subtask with error handling
   let skippedCount = 0;
   let successCount = 0;
   
