@@ -16,6 +16,23 @@ export function extractTaskStubs(text) {
   return stubs;
 }
 
+export function extractManualSplits(text) {
+  const parts = text.split(/^---+$/m).map(p => p.trim()).filter(p => p.length > 0);
+  
+  if (parts.length <= 1) {
+    return [];
+  }
+  
+  return parts.map(content => {
+    const firstLine = content.split('\n')[0];
+    const title = firstLine.startsWith('#') 
+      ? firstLine.replace(/^#+\s*/, '').trim() 
+      : firstLine.substring(0, 50);
+    
+    return { title, content };
+  });
+}
+
 /**
  * Extract numbered tasks (e.g., "Task 1:", "Task 2:") from plans
  */
@@ -64,9 +81,6 @@ export function extractNumberedTasks(text) {
   return tasks;
 }
 
-/**
- * Break prompt into paragraphs by blank lines and headings
- */
 export function breakIntoParagraphs(text) {
   const sections = [];
   const lines = text.split('\n');
@@ -74,26 +88,29 @@ export function breakIntoParagraphs(text) {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    const isHeading = line.startsWith('#');
+    const isHeading = line.match(/^#+\s+(.+)/);
     const isBlank = line.trim() === '';
 
-    if ((isHeading || isBlank) && currentSection.length > 0) {
+    if (isHeading && currentSection.length > 0) {
       const sectionText = currentSection.join('\n').trim();
-      if (sectionText.length > 50) {
+      if (sectionText.length > 0) {
+        sections.push({ content: sectionText });
+      }
+      currentSection = [line];
+    } else if (isBlank && currentSection.length > 0) {
+      const sectionText = currentSection.join('\n').trim();
+      if (sectionText.length > 0) {
         sections.push({ content: sectionText });
       }
       currentSection = [];
-      if (isHeading) {
-        currentSection.push(line);
-      }
-    } else {
+    } else if (!isBlank) {
       currentSection.push(line);
     }
   }
 
   if (currentSection.length > 0) {
     const sectionText = currentSection.join('\n').trim();
-    if (sectionText.length > 50) {
+    if (sectionText.length > 0) {
       sections.push({ content: sectionText });
     }
   }
@@ -117,6 +134,20 @@ export function analyzePromptStructure(text) {
         type: 'task-stub'
       })),
       recommendation: `Detected ${taskStubs.length} task blocks. These are ideal for sequential submission.`
+    };
+  }
+
+  const manualSplits = extractManualSplits(text);
+  if (manualSplits.length > 1) {
+    return {
+      strategy: 'manual-splits',
+      subtasks: manualSplits.map((split, idx) => ({
+        id: idx + 1,
+        title: split.title,
+        content: split.content,
+        type: 'manual-split'
+      })),
+      recommendation: `Detected ${manualSplits.length} manual splits (separated by ---).`
     };
   }
 
