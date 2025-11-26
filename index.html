@@ -213,30 +213,24 @@
           <!-- Repository Selection -->
           <div style="flex: 1;">
             <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Repository:</label>
-            <div id="freeInputFavoriteReposContainer" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;"></div>
-            <div id="freeInputAllReposContainer" style="position: relative;">
-              <div id="freeInputRepoDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
-                <button id="freeInputRepoDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
-                  <span id="freeInputRepoDropdownText">Show more...</span>
-                  <span style="color: var(--muted);">▼</span>
-                </button>
-                <div id="freeInputRepoDropdownMenu" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 300px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
-              </div>
+            <div id="freeInputRepoDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
+              <button id="freeInputRepoDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+                <span id="freeInputRepoDropdownText">Select repository...</span>
+                <span style="color: var(--muted);">▼</span>
+              </button>
+              <div id="freeInputRepoDropdownMenu" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 300px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
             </div>
           </div>
           
           <!-- Branch Selection -->
           <div style="flex: 1;">
             <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Branch:</label>
-            <div id="freeInputFavoriteBranchesContainer" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;"></div>
-            <div id="freeInputAllBranchesContainer" style="position: relative;">
-              <div id="freeInputBranchDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
-                <button id="freeInputBranchDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
-                  <span id="freeInputBranchDropdownText">Show more...</span>
-                  <span style="color: var(--muted);">▼</span>
-                </button>
-                <div id="freeInputBranchDropdownMenu" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 300px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
-              </div>
+            <div id="freeInputBranchDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
+              <button id="freeInputBranchDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+                <span id="freeInputBranchDropdownText">Select branch...</span>
+                <span style="color: var(--muted);">▼</span>
+              </button>
+              <div id="freeInputBranchDropdownMenu" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 300px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
             </div>
           </div>
         </div>
@@ -254,22 +248,6 @@
   <div id="subtaskSplitModal" class="modal">
     <div class="modal-content modal-lg">
       <h2>Break into Subtasks</h2>
-      
-      <!-- Repository Selection -->
-      <div style="margin-bottom: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.02);">
-        <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Repository:</label>
-        <div id="subtaskFavoriteReposContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;"></div>
-        <div id="subtaskAllReposContainer" style="margin-top: 8px; position:relative;">
-          <div id="subtaskRepoDropdown" class="custom-dropdown" style="width:100%; position:relative;">
-            <button id="subtaskRepoDropdownBtn" class="custom-dropdown-btn" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--text); font-size:13px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;">
-              <span id="subtaskRepoDropdownText">Select a repository...</span>
-              <span style="color:var(--muted);">▼</span>
-            </button>
-            <div id="subtaskRepoDropdownMenu" class="custom-dropdown-menu" style="display:none; position:absolute; top:100%; left:0; right:0; margin-top:4px; max-height:300px; overflow-y:auto; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000;">
-            </div>
-          </div>
-        </div>
-      </div>
       
       <!-- Subtask list for editing -->
       <div id="splitEditPanel" style="margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; max-height: 400px; overflow-y: auto; background: rgba(255,255,255,0.02);">
