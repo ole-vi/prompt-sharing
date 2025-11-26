@@ -34,6 +34,8 @@ so it is easily reviewable
 also do not add unused code
 keep it as granular as possible
 
+do not work on coding
+focus on this report of 10 tasks
 
 whichs output you format the following way
 ```
