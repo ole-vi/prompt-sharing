@@ -204,11 +204,41 @@
   <div id="freeInputModal" class="modal">
     <div class="modal-content modal-lg">
       <h2>Free Input to Jules</h2>
-      <p>Enter your custom prompt below:</p>
+      <p>Enter your custom prompt below: <span style="font-size: 11px; color: var(--muted);">(Use --- to split into subtasks)</span></p>
       <textarea id="freeInputTextarea" placeholder="Enter your prompt here..." class="modal-textarea"></textarea>
+      
+      <!-- Repository and Branch Selection -->
+      <div style="margin: 16px 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.02);">
+        <div style="display: flex; gap: 12px; align-items: start;">
+          <!-- Repository Selection -->
+          <div style="flex: 1;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Repository:</label>
+            <div id="freeInputRepoDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
+              <button id="freeInputRepoDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+                <span id="freeInputRepoDropdownText">Select repository...</span>
+                <span style="color: var(--muted);">▼</span>
+              </button>
+              <div id="freeInputRepoDropdownMenu" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 300px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
+            </div>
+          </div>
+          
+          <!-- Branch Selection -->
+          <div style="flex: 1;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Branch:</label>
+            <div id="freeInputBranchDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
+              <button id="freeInputBranchDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+                <span id="freeInputBranchDropdownText">Select branch...</span>
+                <span style="color: var(--muted);">▼</span>
+              </button>
+              <div id="freeInputBranchDropdownMenu" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 300px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <div class="modal-buttons">
         <button id="freeInputCancelBtn" class="btn">Cancel</button>
-        <button id="freeInputSplitBtn" class="btn">✂️ Split into Subtasks</button>
+        <button id="freeInputSplitBtn" class="btn" title="Split into Subtasks">✂️</button>
         <button id="freeInputSubmitBtn" class="btn primary">Submit to Jules</button>
       </div>
     </div>
@@ -219,22 +249,6 @@
     <div class="modal-content modal-lg">
       <h2>Break into Subtasks</h2>
       
-      <!-- Repository Selection -->
-      <div style="margin-bottom: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.02);">
-        <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Repository:</label>
-        <div id="subtaskFavoriteReposContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;"></div>
-        <div id="subtaskAllReposContainer" style="margin-top: 8px; position:relative;">
-          <div id="subtaskRepoDropdown" class="custom-dropdown" style="width:100%; position:relative;">
-            <button id="subtaskRepoDropdownBtn" class="custom-dropdown-btn" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--text); font-size:13px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;">
-              <span id="subtaskRepoDropdownText">Select a repository...</span>
-              <span style="color:var(--muted);">▼</span>
-            </button>
-            <div id="subtaskRepoDropdownMenu" class="custom-dropdown-menu" style="display:none; position:absolute; top:100%; left:0; right:0; margin-top:4px; max-height:300px; overflow-y:auto; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000;">
-            </div>
-          </div>
-        </div>
-      </div>
-      
       <!-- Subtask list for editing -->
       <div id="splitEditPanel" style="margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; max-height: 400px; overflow-y: auto; background: rgba(255,255,255,0.02);">
         <div id="splitEditList" style="padding: 8px;"></div>
@@ -243,6 +257,17 @@
       <div class="modal-buttons">
         <button id="splitCancelBtn" class="btn">Cancel</button>
         <button id="splitConfirmBtn" class="btn primary">Send Subtasks</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subtask Preview Modal -->
+  <div id="subtaskPreviewModal" class="modal" style="z-index: 1002;">
+    <div class="modal-content" style="max-width: 700px; max-height: 80vh; display: flex; flex-direction: column;">
+      <h2 id="subtaskPreviewTitle" style="margin: 0 0 16px; font-size: 18px;">Subtask Preview</h2>
+      <div id="subtaskPreviewContent" style="flex: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; color: var(--text);"></div>
+      <div class="modal-buttons" style="margin-top: 16px;">
+        <button id="subtaskPreviewCloseBtn" class="btn">Close</button>
       </div>
     </div>
   </div>
