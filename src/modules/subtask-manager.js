@@ -193,7 +193,7 @@ export function buildSubtaskSequence(fullPrompt, selectedSubtasks) {
   return selectedSubtasks.map((subtask, idx) => {
     const header =
       subtask.title && subtask.title !== `Part ${idx + 1}`
-        ? `**Task:** ${subtask.title}\n\n`
+        ? `**${subtask.title}**\n\n`
         : '';
 
     const julesContent = header + subtask.content;
