@@ -49,7 +49,17 @@ export function initPromptRenderer() {
   if (julesBtn) {
     julesBtn.addEventListener('click', () => {
       if (handleTryInJulesCallback) {
-        handleTryInJulesCallback(currentPromptText);
+        const promptText = currentPromptText || '';
+        let title = '';
+        const lines = promptText.split(/\r?\n/);
+        if (lines.length > 0 && /^#\s+/.test(lines[0])) {
+          title = lines[0].replace(/^#\s+/, '').trim();
+        } else if (titleEl && titleEl.textContent) {
+          title = titleEl.textContent.trim();
+        } else if (lines.length > 0) {
+          title = lines[0].substring(0, 50).trim();
+        }
+        handleTryInJulesCallback(currentPromptText, title);
       }
     });
   }
