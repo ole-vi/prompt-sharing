@@ -1,6 +1,7 @@
 // ===== Prompt Renderer Module =====
 
 import { slugify } from '../utils/slug.js';
+import { extractTitleFromPrompt } from '../utils/title.js';
 import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './github-api.js';
 import { CODEX_URL_REGEX } from '../utils/constants.js';
 import { setElementDisplay } from '../utils/dom-helpers.js';
@@ -50,15 +51,8 @@ export function initPromptRenderer() {
     julesBtn.addEventListener('click', () => {
       if (handleTryInJulesCallback) {
         const promptText = currentPromptText || '';
-        let title = '';
-        const lines = promptText.split(/\r?\n/);
-        if (lines.length > 0 && /^#\s+/.test(lines[0])) {
-          title = lines[0].replace(/^#\s+/, '').trim();
-        } else if (titleEl && titleEl.textContent) {
-          title = titleEl.textContent.trim();
-        } else if (lines.length > 0) {
-          title = lines[0].substring(0, 50).trim();
-        }
+        let title = extractTitleFromPrompt(promptText);
+        if (!title && titleEl && titleEl.textContent) title = titleEl.textContent.trim();
         handleTryInJulesCallback(currentPromptText, title);
       }
     });

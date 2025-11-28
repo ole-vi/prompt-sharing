@@ -8,6 +8,7 @@ import {
   validateSubtasks 
 } from './subtask-manager.js';
 import { loadJulesProfileInfo, listJulesSessions } from './jules-api.js';
+import { extractTitleFromPrompt } from '../utils/title.js';
 
 // Store the last selected repository for subtasks
 let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
@@ -79,7 +80,7 @@ export async function callRunJulesFunction(promptText, sourceId, branch = 'maste
     const functionUrl = 'https://runjuleshttp-n7gaasoeoq-uc.a.run.app';
 
     const payload = { promptText: promptText || '', sourceId: sourceId, branch: branch, title: title };
-    console.debug('[Jules] Sending session creation payload:', payload);
+    
     const response = await fetch(functionUrl, {
       method: 'POST',
       headers: {
@@ -340,15 +341,7 @@ async function handleRepoSelect(sourceId, branch, promptText) {
   let submitted = false;
 
   // Extract title from promptText
-  let title = '';
-  if (promptText) {
-    const lines = promptText.split(/\r?\n/);
-    if (lines.length > 0 && /^#\s+/.test(lines[0])) {
-      title = lines[0].replace(/^#\s+/, '').trim();
-    } else if (lines.length > 0) {
-      title = lines[0].substring(0, 50).trim();
-    }
-  }
+  const title = extractTitleFromPrompt(promptText);
   while (retryCount < maxRetries && !submitted) {
     try {
       const sessionUrl = await callRunJulesFunction(promptText, sourceId, lastSelectedBranch, title);
@@ -379,7 +372,7 @@ async function handleRepoSelect(sourceId, branch, promptText) {
             await new Promise(resolve => setTimeout(resolve, 5000));
           }
           try {
-            const sessionUrl = await callRunJulesFunction(promptText, sourceId, lastSelectedBranch);
+            const sessionUrl = await callRunJulesFunction(promptText, sourceId, lastSelectedBranch, title);
             if (sessionUrl) {
               window.open(sessionUrl, '_blank', 'noopener,noreferrer');
             }
@@ -1011,7 +1004,6 @@ export function showFreeInputForm() {
       return;
     }
 
-    // Extract a descriptive title from the prompt
     let title = '';
     const lines = promptText.split(/\r?\n/);
     if (lines.length > 0 && /^#\s+/.test(lines[0])) {
@@ -1539,7 +1531,8 @@ async function submitSubtasks(subtasks) {
 
     while (retryCount < maxRetries && !submitted) {
       try {
-        const sessionUrl = await callRunJulesFunction(currentFullPrompt, lastSelectedSourceId, lastSelectedBranch);
+        const title = extractTitleFromPrompt(currentFullPrompt);
+        const sessionUrl = await callRunJulesFunction(currentFullPrompt, lastSelectedSourceId, lastSelectedBranch, title);
         if (sessionUrl) {
           window.open(sessionUrl, '_blank', 'noopener,noreferrer');
         }
@@ -1564,7 +1557,8 @@ async function submitSubtasks(subtasks) {
               await new Promise(resolve => setTimeout(resolve, 5000));
             }
             try {
-              const sessionUrl = await callRunJulesFunction(currentFullPrompt, lastSelectedSourceId, lastSelectedBranch);
+              const title = extractTitleFromPrompt(currentFullPrompt);
+              const sessionUrl = await callRunJulesFunction(currentFullPrompt, lastSelectedSourceId, lastSelectedBranch, title);
               if (sessionUrl) {
                 window.open(sessionUrl, '_blank', 'noopener,noreferrer');
               }
@@ -1609,7 +1603,8 @@ async function submitSubtasks(subtasks) {
 
     while (retryCount < maxRetries && !submitted) {
       try {
-        const sessionUrl = await callRunJulesFunction(subtask.fullContent, lastSelectedSourceId, lastSelectedBranch);
+        const title = extractTitleFromPrompt(subtask.fullContent) || subtask.title || '';
+        const sessionUrl = await callRunJulesFunction(subtask.fullContent, lastSelectedSourceId, lastSelectedBranch, title);
         if (sessionUrl) {
           window.open(sessionUrl, '_blank', 'noopener,noreferrer');
         }
