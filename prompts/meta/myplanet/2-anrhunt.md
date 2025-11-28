@@ -193,3 +193,7 @@ task_stub_block :=
 
 step_line := int "." space step_text
 ```
+ps there is no code output
+we want an easy copyable plan
+composed of at least 10 tasks
+in above grammar
