@@ -134,9 +134,12 @@ export async function createJulesSession(apiKey, sessionConfig) {
   try {
     const body = {
       prompt: sessionConfig.prompt,
-      source: {
-        id: sessionConfig.sourceId,
-        branch: sessionConfig.branch
+      title: sessionConfig.title || '',
+      sourceContext: {
+        source: sessionConfig.sourceId,
+        githubRepoContext: {
+          startingBranch: sessionConfig.branch
+        }
       }
     };
 

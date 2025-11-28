@@ -80,10 +80,8 @@ exports.runJules = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError("internal", "Failed to decrypt Jules API key");
     }
 
-    const startingBranch = environment === "meta" ? "main" : "master";
-
     const julesBody = {
-      title: "Prompt-Sharing Trigger",
+      title: (data && data.title) || 'Unnamed Session',
       prompt: promptText,
       sourceContext: {
         source: sourceId,
@@ -156,7 +154,6 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
     const source = sourceId || "sources/github/open-learning-exchange/myplanet";
     const startingBranch = branch || "master";
 
-    console.log(`[DEBUG] Request received - sourceId: ${source}, branch: ${startingBranch}`);
 
     if (!promptText || typeof promptText !== 'string' || promptText.length < 4) {
       res.status(400).json({ error: 'promptText must be a non-empty string (min 4 chars)' });
@@ -191,10 +188,8 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    const startingBranch = env === "meta" ? "main" : "master";
-
     const julesBody = {
-      title: "Prompt-Sharing Trigger",
+      title: req.body.title || 'Unnamed Session',
       prompt: promptText,
       sourceContext: {
         source: source,
