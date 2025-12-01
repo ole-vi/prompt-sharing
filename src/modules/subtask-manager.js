@@ -191,11 +191,12 @@ export function analyzePromptStructure(text) {
  */
 export function buildSubtaskSequence(fullPrompt, selectedSubtasks) {
   return selectedSubtasks.map((subtask, idx) => {
-    const header =
-      subtask.title && subtask.title !== `Part ${idx + 1}`
-        ? `${subtask.title}\n\n`
-        : '';
-
+    // Only add title as header if it's different from Part N and content doesn't already start with it
+    const shouldAddHeader = subtask.title && 
+                           subtask.title !== `Part ${idx + 1}` && 
+                           !subtask.content.trim().startsWith(subtask.title);
+    
+    const header = shouldAddHeader ? `${subtask.title}\n\n` : '';
     const julesContent = header + subtask.content;
 
     return {
