@@ -975,6 +975,7 @@ export function showFreeInputForm() {
   const textarea = document.getElementById('freeInputTextarea');
   const submitBtn = document.getElementById('freeInputSubmitBtn');
   const splitBtn = document.getElementById('freeInputSplitBtn');
+  const copenBtn = document.getElementById('freeInputCopenBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
 
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
@@ -1099,12 +1100,35 @@ export function showFreeInputForm() {
     }
   };
 
+  const handleCopen = async () => {
+    const promptText = textarea.value.trim();
+    if (!promptText) {
+      alert('Please enter a prompt.');
+      return;
+    }
+
+    try {
+      // Copy to clipboard
+      await navigator.clipboard.writeText(promptText);
+      copenBtn.textContent = 'Copied!';
+      setTimeout(() => {
+        copenBtn.textContent = '📋🔗 Copen';
+      }, 1000);
+
+      // Open blank tab
+      window.open('about:blank', '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      alert('Failed to copy prompt: ' + error.message);
+    }
+  };
+
   const handleCancel = () => {
     hideFreeInputForm();
   };
 
   submitBtn.onclick = handleSubmit;
   splitBtn.onclick = handleSplit;
+  copenBtn.onclick = handleCopen;
   cancelBtn.onclick = handleCancel;
 
   textarea.addEventListener('keydown', (e) => {
