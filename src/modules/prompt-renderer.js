@@ -342,7 +342,7 @@ async function handleCopenPrompt(target) {
     // Copy to clipboard
     await navigator.clipboard.writeText(promptText);
     copenBtn.textContent = 'Copied!';
-    setTimeout(() => (copenBtn.textContent = '📋🔗 Copen ▼'), 1000);
+    setTimeout(() => (copenBtn.textContent = '📋⤴ ▼'), 1000);
 
     // Open appropriate tab based on target
     let url;

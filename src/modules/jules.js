@@ -1112,7 +1112,7 @@ export function showFreeInputForm() {
       await navigator.clipboard.writeText(promptText);
       copenBtn.textContent = 'Copied!';
       setTimeout(() => {
-        copenBtn.textContent = '📋🔗 Copen ▼';
+        copenBtn.textContent = '📋⤴ ▼';
       }, 1000);
 
       // Open appropriate tab based on target
