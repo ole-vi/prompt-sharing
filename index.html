@@ -92,7 +92,14 @@
       <div id="meta" style="display:none"></div>
       <div id="actions" style="display:none">
         <button class="btn" id="copyBtn" title="Copy the entire prompt">📋 Copy prompt</button>
-        <button class="btn" id="copenBtn" title="Copy prompt and open Jules in new tab">📋🔗 Copen</button>
+        <div style="position:relative; display:inline-block;">
+          <button class="btn" id="copenBtn" title="Copy prompt and open in new tab">📋🔗 Copen ▼</button>
+          <div id="copenMenu" style="display:none; position:absolute; top:100%; left:0; margin-top:4px; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000; min-width:150px;">
+            <div class="custom-dropdown-item" data-target="blank">🌐 Blank</div>
+            <div class="custom-dropdown-item" data-target="claude">🤖 Claude</div>
+            <div class="custom-dropdown-item" data-target="codex">💬 Codex</div>
+          </div>
+        </div>
         <button class="btn" id="shareBtn" title="Copy a link to this prompt">🔗 Copy link</button>
         <button class="btn" id="julesBtn" title="Try this prompt in Jules">⚡ Try in Jules</button>
         <a class="btn" id="editBtn" target="_blank" rel="noopener" title="Edit the file on GitHub">✏️ Edit on GitHub</a>
@@ -240,7 +247,14 @@
       <div class="modal-buttons">
         <button id="freeInputCancelBtn" class="btn">Cancel</button>
         <button id="freeInputSplitBtn" class="btn" title="Split into Subtasks">✂️</button>
-        <button id="freeInputCopenBtn" class="btn" title="Copy prompt and open Jules in new tab">📋🔗 Copen</button>
+        <div style="position:relative; display:inline-block;">
+          <button id="freeInputCopenBtn" class="btn" title="Copy prompt and open in new tab">📋🔗 Copen ▼</button>
+          <div id="freeInputCopenMenu" style="display:none; position:absolute; bottom:100%; left:0; margin-bottom:4px; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000; min-width:150px;">
+            <div class="custom-dropdown-item" data-target="blank">🌐 Blank</div>
+            <div class="custom-dropdown-item" data-target="claude">🤖 Claude</div>
+            <div class="custom-dropdown-item" data-target="codex">💬 Codex</div>
+          </div>
+        </div>
         <button id="freeInputSubmitBtn" class="btn primary">Submit to Jules</button>
       </div>
     </div>

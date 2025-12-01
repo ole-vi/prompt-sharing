@@ -1100,7 +1100,7 @@ export function showFreeInputForm() {
     }
   };
 
-  const handleCopen = async () => {
+  const handleCopen = async (target) => {
     const promptText = textarea.value.trim();
     if (!promptText) {
       alert('Please enter a prompt.');
@@ -1112,11 +1112,24 @@ export function showFreeInputForm() {
       await navigator.clipboard.writeText(promptText);
       copenBtn.textContent = 'Copied!';
       setTimeout(() => {
-        copenBtn.textContent = '📋🔗 Copen';
+        copenBtn.textContent = '📋🔗 Copen ▼';
       }, 1000);
 
-      // Open blank tab
-      window.open('about:blank', '_blank', 'noopener,noreferrer');
+      // Open appropriate tab based on target
+      let url;
+      switch(target) {
+        case 'claude':
+          url = 'https://claude.ai/code';
+          break;
+        case 'codex':
+          url = 'https://chatgpt.com/codex';
+          break;
+        case 'blank':
+        default:
+          url = 'about:blank';
+          break;
+      }
+      window.open(url, '_blank', 'noopener,noreferrer');
     } catch (error) {
       alert('Failed to copy prompt: ' + error.message);
     }
@@ -1126,9 +1139,36 @@ export function showFreeInputForm() {
     hideFreeInputForm();
   };
 
+  // Setup Copen dropdown menu
+  const copenMenu = document.getElementById('freeInputCopenMenu');
+  
+  copenBtn.onclick = (e) => {
+    e.stopPropagation();
+    copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
+  };
+  
+  // Handle menu item clicks
+  if (copenMenu) {
+    copenMenu.querySelectorAll('.custom-dropdown-item').forEach(item => {
+      item.onclick = async (e) => {
+        e.stopPropagation();
+        const target = item.dataset.target;
+        await handleCopen(target);
+        copenMenu.style.display = 'none';
+      };
+    });
+  }
+  
+  // Close menu when clicking outside
+  const closeCopenMenu = (e) => {
+    if (!copenBtn.contains(e.target) && !copenMenu.contains(e.target)) {
+      copenMenu.style.display = 'none';
+    }
+  };
+  document.addEventListener('click', closeCopenMenu);
+
   submitBtn.onclick = handleSubmit;
   splitBtn.onclick = handleSplit;
-  copenBtn.onclick = handleCopen;
   cancelBtn.onclick = handleCancel;
 
   textarea.addEventListener('keydown', (e) => {

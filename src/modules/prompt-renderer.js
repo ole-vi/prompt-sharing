@@ -48,7 +48,31 @@ export function initPromptRenderer() {
   freeInputBtn = document.getElementById('freeInputBtn');
 
   if (copyBtn) copyBtn.addEventListener('click', handleCopyPrompt);
-  if (copenBtn) copenBtn.addEventListener('click', handleCopenPrompt);
+  if (copenBtn) {
+    const copenMenu = document.getElementById('copenMenu');
+    
+    copenBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    // Handle menu item clicks
+    if (copenMenu) {
+      copenMenu.querySelectorAll('.custom-dropdown-item').forEach(item => {
+        item.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const target = item.dataset.target;
+          await handleCopenPrompt(target);
+          copenMenu.style.display = 'none';
+        });
+      });
+    }
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', () => {
+      if (copenMenu) copenMenu.style.display = 'none';
+    });
+  }
   if (shareBtn) shareBtn.addEventListener('click', handleShareLink);
   if (julesBtn) {
     julesBtn.addEventListener('click', () => {
@@ -307,7 +331,7 @@ async function handleCopyPrompt() {
   }
 }
 
-async function handleCopenPrompt() {
+async function handleCopenPrompt(target) {
   try {
     const promptText = getCurrentPromptText();
     if (!promptText) {
@@ -318,10 +342,23 @@ async function handleCopenPrompt() {
     // Copy to clipboard
     await navigator.clipboard.writeText(promptText);
     copenBtn.textContent = 'Copied!';
-    setTimeout(() => (copenBtn.textContent = '📋🔗 Copen'), 1000);
+    setTimeout(() => (copenBtn.textContent = '📋🔗 Copen ▼'), 1000);
 
-    // Open blank tab
-    window.open('about:blank', '_blank', 'noopener,noreferrer');
+    // Open appropriate tab based on target
+    let url;
+    switch(target) {
+      case 'claude':
+        url = 'https://claude.ai/code';
+        break;
+      case 'codex':
+        url = 'https://chatgpt.com/codex';
+        break;
+      case 'blank':
+      default:
+        url = 'about:blank';
+        break;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
   } catch {
     alert('Clipboard blocked. Could not copy prompt.');
   }
