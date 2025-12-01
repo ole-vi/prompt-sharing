@@ -1139,7 +1139,6 @@ export function showFreeInputForm() {
     hideFreeInputForm();
   };
 
-  // Setup Copen dropdown menu
   const copenMenu = document.getElementById('freeInputCopenMenu');
   
   copenBtn.onclick = (e) => {
@@ -1147,7 +1146,6 @@ export function showFreeInputForm() {
     copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
   };
   
-  // Handle menu item clicks
   if (copenMenu) {
     copenMenu.querySelectorAll('.custom-dropdown-item').forEach(item => {
       item.onclick = async (e) => {
@@ -1159,7 +1157,6 @@ export function showFreeInputForm() {
     });
   }
   
-  // Close menu when clicking outside
   const closeCopenMenu = (e) => {
     if (!copenBtn.contains(e.target) && !copenMenu.contains(e.target)) {
       copenMenu.style.display = 'none';
