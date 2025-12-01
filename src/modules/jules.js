@@ -1,5 +1,3 @@
-// ===== Jules Integration Module =====
-
 import { getCurrentUser } from './auth.js';
 import { 
   analyzePromptStructure, 
@@ -11,7 +9,6 @@ import { loadJulesProfileInfo, listJulesSessions } from './jules-api.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 
-// Store the last selected repository for subtasks
 let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
 let lastSelectedBranch = 'master';
 
@@ -60,7 +57,6 @@ export async function encryptAndStoreKey(plaintext, uid) {
   }
 }
 
-// Add a task or set of subtasks to the user's Jules queue in Firestore
 export async function addToJulesQueue(uid, queueItem) {
   if (!window.db) throw new Error('Firestore not initialized');
   try {
@@ -78,7 +74,6 @@ export async function addToJulesQueue(uid, queueItem) {
   }
 }
 
-// Update fields on an existing queue item document
 export async function updateJulesQueueItem(uid, docId, updates) {
   if (!window.db) throw new Error('Firestore not initialized');
   try {
@@ -168,7 +163,6 @@ function renderQueueList(items) {
     const status = item.status || 'pending';
     const remainingCount = Array.isArray(item.remaining) ? item.remaining.length : 0;
     
-    // For subtasks, show each individual subtask with a checkbox
     if (item.type === 'subtasks' && Array.isArray(item.remaining) && item.remaining.length > 0) {
       const subtasksHtml = item.remaining.map((subtask, index) => {
         const preview = (subtask.fullContent || '').substring(0, 150);
@@ -206,7 +200,6 @@ function renderQueueList(items) {
       `;
     }
 
-    // For single items
     const promptPreview = (item.prompt || '').substring(0, 200);
     return `
       <div class="queue-item" data-docid="${item.id}" style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.02); margin-bottom:8px;">
@@ -234,7 +227,6 @@ async function deleteSelectedSubtasks(docId, indices) {
   const item = queueCache.find(i => i.id === docId);
   if (!item || !Array.isArray(item.remaining)) return;
 
-  // Sort indices in descending order to avoid index shifting issues
   const sortedIndices = indices.sort((a, b) => b - a);
   const newRemaining = item.remaining.slice();
   
@@ -261,7 +253,6 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false) {
   const item = queueCache.find(i => i.id === docId);
   if (!item || !Array.isArray(item.remaining)) return;
 
-  // Sort indices in ascending order to run in sequence
   const sortedIndices = indices.sort((a, b) => a - b);
   const toRun = sortedIndices.map(i => item.remaining[i]).filter(Boolean);
 
@@ -279,7 +270,6 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false) {
     }
   }
 
-  // After successful run, delete those subtasks
   await deleteSelectedSubtasks(docId, indices);
 }
 
@@ -297,13 +287,11 @@ function attachQueueModalHandlers() {
     };
   }
 
-  // Add handlers for queue-level checkboxes to control their subtasks
   document.querySelectorAll('.queue-checkbox').forEach(queueCb => {
     queueCb.onclick = (e) => {
       e.stopPropagation();
       const docId = queueCb.dataset.docid;
       const checked = queueCb.checked;
-      // Find all subtask checkboxes for this queue item and toggle them
       document.querySelectorAll(`.subtask-checkbox[data-docid="${docId}"]`).forEach(subtaskCb => {
         subtaskCb.checked = checked;
       });
@@ -322,12 +310,10 @@ function getSelectedQueueIds() {
   const queueSelections = [];
   const subtaskSelections = {};
   
-  // Get queue-level selections
   document.querySelectorAll('.queue-checkbox:checked').forEach(cb => {
     queueSelections.push(cb.dataset.docid);
   });
   
-  // Get individual subtask selections
   document.querySelectorAll('.subtask-checkbox:checked').forEach(cb => {
     const docId = cb.dataset.docid;
     const index = parseInt(cb.dataset.index);
@@ -355,14 +341,11 @@ async function deleteSelectedQueueItems() {
   if (!confirm(`Delete ${totalCount} selected item(s)?`)) return;
   
   try {
-    // Delete entire queue items
     for (const id of queueSelections) {
       await deleteFromJulesQueue(user.uid, id);
     }
     
-    // Delete individual subtasks
     for (const [docId, indices] of Object.entries(subtaskSelections)) {
-      // Skip if entire queue item was already deleted
       if (queueSelections.includes(docId)) continue;
       
       await deleteSelectedSubtasks(docId, indices);
@@ -386,9 +369,7 @@ async function runSelectedQueueItems() {
     return;
   }
 
-  // Option: suppress opening new windows/popups while processing
   const suppressPopups = document.getElementById('queueSuppressPopupsCheckbox')?.checked || false;
-  // Optional Pause button - if present, clicking it will pause after the current subtask
   const pauseBtn = document.getElementById('queuePauseBtn');
   let paused = false;
   if (pauseBtn) {
@@ -396,12 +377,10 @@ async function runSelectedQueueItems() {
     pauseBtn.onclick = () => {
       paused = true;
       pauseBtn.disabled = true;
-      // user feedback
       statusBar.showMessage('Pausing queue processing after the current subtask', { timeout: 4000 });
     };
   }
 
-  // Show overall running status and provide pause action in status bar
   statusBar.showMessage('Processing queue...', { timeout: 0 });
   statusBar.setAction('Pause', () => {
     paused = true;
@@ -410,16 +389,13 @@ async function runSelectedQueueItems() {
     if (pauseBtn) pauseBtn.disabled = true;
   });
 
-  // First, run individual subtasks
   for (const [docId, indices] of Object.entries(subtaskSelections)) {
     if (paused) break;
-    // Skip if entire queue item is also selected (will be run later)
     if (queueSelections.includes(docId)) continue;
     
     await runSelectedSubtasks(docId, indices, suppressPopups);
   }
   
-  // Then, run entire queue items
   for (const id of queueSelections) {
     if (paused) break;
     const item = queueCache.find(i => i.id === id);
@@ -430,16 +406,13 @@ async function runSelectedQueueItems() {
         const title = extractTitleFromPrompt(item.prompt || '');
         const sessionUrl = await callRunJulesFunction(item.prompt || '', item.sourceId, item.branch || 'master', title);
         if (sessionUrl && !suppressPopups && item.autoOpen !== false) window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-        // remove on success
         await deleteFromJulesQueue(user.uid, id);
       } else if (item.type === 'subtasks') {
-        // process remaining subtasks and persist progress so the queue can be resumed
         let remaining = Array.isArray(item.remaining) ? item.remaining.slice() : [];
 
         const initialCount = remaining.length;
         while (remaining.length > 0) {
           if (paused) {
-            // persist current remaining and mark paused
             try {
               await updateJulesQueueItem(user.uid, id, {
                 remaining,
