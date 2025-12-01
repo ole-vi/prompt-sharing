@@ -66,7 +66,6 @@ export async function addToJulesQueue(uid, queueItem) {
     const collectionRef = window.db.collection('julesQueues').doc(uid).collection('items');
     const docRef = await collectionRef.add({
       ...queueItem,
-      // whether to auto-open session URLs when this item is processed
       autoOpen: queueItem.autoOpen !== false,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       status: 'pending'
@@ -74,21 +73,6 @@ export async function addToJulesQueue(uid, queueItem) {
     return docRef.id;
   } catch (err) {
     console.error('Failed to add to queue', err);
-    // If this failure is due to Firestore permissions, fall back to localStorage queue
-    const msg = (err && err.message) ? String(err.message).toLowerCase() : '';
-    const code = err && err.code ? err.code : null;
-    if (code === 'permission-denied' || msg.includes('permission') || msg.includes('missing or insufficient')) {
-      try {
-        const { SubtaskQueue } = await import('./subtask-queue.js');
-        const localQueue = new SubtaskQueue({ storage: 'local', userId: uid });
-        await localQueue.init();
-        const item = await localQueue.enqueue(Object.assign({}, queueItem, { firebaseFallback: true }));
-        try { statusBar.showMessage('Saved to local queue (offline fallback)', { timeout: 4000 }); } catch (e) {}
-        return item.id || null;
-      } catch (localErr) {
-        console.error('Local fallback failed', localErr);
-      }
-    }
     throw err;
   }
 }
