@@ -1465,6 +1465,7 @@ export function showFreeInputForm() {
   const textarea = document.getElementById('freeInputTextarea');
   const submitBtn = document.getElementById('freeInputSubmitBtn');
   const splitBtn = document.getElementById('freeInputSplitBtn');
+  const copenBtn = document.getElementById('freeInputCopenBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
 
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
@@ -1629,9 +1630,69 @@ export function showFreeInputForm() {
     }
   };
 
+  const handleCopen = async (target) => {
+    const promptText = textarea.value.trim();
+    if (!promptText) {
+      alert('Please enter a prompt.');
+      return;
+    }
+
+    try {
+      // Copy to clipboard
+      await navigator.clipboard.writeText(promptText);
+      copenBtn.textContent = 'Copied!';
+      setTimeout(() => {
+        copenBtn.textContent = '📋⤴ ▼';
+      }, 1000);
+
+      // Open appropriate tab based on target
+      let url;
+      switch(target) {
+        case 'claude':
+          url = 'https://claude.ai/code';
+          break;
+        case 'codex':
+          url = 'https://chatgpt.com/codex';
+          break;
+        case 'blank':
+        default:
+          url = 'about:blank';
+          break;
+      }
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      alert('Failed to copy prompt: ' + error.message);
+    }
+  };
+
   const handleCancel = () => {
     hideFreeInputForm();
   };
+
+  const copenMenu = document.getElementById('freeInputCopenMenu');
+  
+  copenBtn.onclick = (e) => {
+    e.stopPropagation();
+    copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
+  };
+  
+  if (copenMenu) {
+    copenMenu.querySelectorAll('.custom-dropdown-item').forEach(item => {
+      item.onclick = async (e) => {
+        e.stopPropagation();
+        const target = item.dataset.target;
+        await handleCopen(target);
+        copenMenu.style.display = 'none';
+      };
+    });
+  }
+  
+  const closeCopenMenu = (e) => {
+    if (!copenBtn.contains(e.target) && !copenMenu.contains(e.target)) {
+      copenMenu.style.display = 'none';
+    }
+  };
+  document.addEventListener('click', closeCopenMenu);
 
   submitBtn.onclick = handleSubmit;
   splitBtn.onclick = handleSplit;

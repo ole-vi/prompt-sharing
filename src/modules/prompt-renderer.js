@@ -23,6 +23,7 @@ let metaEl = null;
 let emptyEl = null;
 let actionsEl = null;
 let copyBtn = null;
+let copenBtn = null;
 let rawBtn = null;
 let ghBtn = null;
 let editBtn = null;
@@ -37,6 +38,7 @@ export function initPromptRenderer() {
   emptyEl = document.getElementById('empty');
   actionsEl = document.getElementById('actions');
   copyBtn = document.getElementById('copyBtn');
+  copenBtn = document.getElementById('copenBtn');
   rawBtn = document.getElementById('rawBtn');
   ghBtn = document.getElementById('ghBtn');
   editBtn = document.getElementById('editBtn');
@@ -45,6 +47,31 @@ export function initPromptRenderer() {
   freeInputBtn = document.getElementById('freeInputBtn');
 
   if (copyBtn) copyBtn.addEventListener('click', handleCopyPrompt);
+  if (copenBtn) {
+    const copenMenu = document.getElementById('copenMenu');
+    
+    copenBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    // Handle menu item clicks
+    if (copenMenu) {
+      copenMenu.querySelectorAll('.custom-dropdown-item').forEach(item => {
+        item.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const target = item.dataset.target;
+          await handleCopenPrompt(target);
+          copenMenu.style.display = 'none';
+        });
+      });
+    }
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', () => {
+      if (copenMenu) copenMenu.style.display = 'none';
+    });
+  }
   if (shareBtn) shareBtn.addEventListener('click', handleShareLink);
   if (julesBtn) {
     julesBtn.addEventListener('click', () => {
@@ -297,6 +324,39 @@ async function handleCopyPrompt() {
     setTimeout(() => (copyBtn.textContent = buttonText), 1000);
   } catch {
     alert('Clipboard blocked. Select and copy manually.');
+  }
+}
+
+async function handleCopenPrompt(target) {
+  try {
+    const promptText = getCurrentPromptText();
+    if (!promptText) {
+      alert('No prompt available.');
+      return;
+    }
+
+    // Copy to clipboard
+    await navigator.clipboard.writeText(promptText);
+    copenBtn.textContent = 'Copied!';
+    setTimeout(() => (copenBtn.textContent = '📋⤴ ▼'), 1000);
+
+    // Open appropriate tab based on target
+    let url;
+    switch(target) {
+      case 'claude':
+        url = 'https://claude.ai/code';
+        break;
+      case 'codex':
+        url = 'https://chatgpt.com/codex';
+        break;
+      case 'blank':
+      default:
+        url = 'about:blank';
+        break;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  } catch {
+    alert('Clipboard blocked. Could not copy prompt.');
   }
 }
 
