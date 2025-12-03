@@ -5,7 +5,7 @@ import { APP_VERSION } from '../utils/constants.js';
 import statusBar from './status-bar.js';
 
 const VERSION_CHECK_KEY = 'lastVersionCheckTime';
-const CHECK_INTERVAL = 1000 * 60 * 15; // Check every 15 minutes
+const CHECK_INTERVAL = 1000 * 60 * 60;
 const DISMISSED_VERSION_KEY = 'dismissedVersionUpdate';
 
 let versionCheckTimer = null;
