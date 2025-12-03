@@ -165,6 +165,14 @@
       <div id="julesProfileInfoSection" style="display:none; margin-bottom:16px;">
         <h3 style="margin:0 0 12px; font-size:16px; padding-bottom:8px; border-bottom:1px solid var(--border);">Jules Account Info</h3>
         
+        <!-- View Queue Button -->
+        <div style="margin-bottom:16px;">
+          <button id="viewQueueLink" class="btn" style="width:100%; padding:12px; border:2px solid var(--accent); background:rgba(52,152,219,0.1); cursor:pointer; border-radius:8px; font-weight:600; font-size:14px; color:var(--accent); display:flex; align-items:center; justify-content:center; gap:8px; transition: all 0.2s;">
+            <span style="font-size:18px;">📋</span>
+            <span>View My Queue</span>
+          </button>
+        </div>
+        
         <!-- Recent Sessions -->
         <div style="margin-bottom:16px;">
           <div style="font-size:13px; font-weight:600; color:var(--muted); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
@@ -254,6 +262,13 @@
         <div id="splitEditList" style="padding: 8px;"></div>
       </div>
 
+      <div style="margin-bottom: 12px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+          <input id="splitSuppressPopupsCheckbox" type="checkbox" style="cursor: pointer;" />
+          <span>Suppress popup windows (run all in background)</span>
+        </label>
+      </div>
+
       <div class="modal-buttons">
         <button id="splitCancelBtn" class="btn">Cancel</button>
         <button id="splitConfirmBtn" class="btn primary">Send Subtasks</button>
@@ -294,6 +309,7 @@
       <div class="modal-buttons" style="display: flex; gap: 8px; justify-content: flex-end;">
         <button id="subtaskErrorCancelBtn" class="btn" style="padding: 8px 16px;">Cancel All</button>
         <button id="subtaskErrorSkipBtn" class="btn" style="padding: 8px 16px; border-color: #f39c12; color: #f39c12;">Skip This</button>
+        <button id="subtaskErrorQueueBtn" class="btn" style="padding: 8px 16px; border-color: #2980b9; color: #2980b9;">Queue Remainder</button>
         <button id="subtaskErrorRetryBtn" class="btn primary" style="padding: 8px 16px; border-color: #27ae60; background: rgba(39,174,96,0.2); color: #27ae60;">Retry</button>
       </div>
     </div>
@@ -321,6 +337,40 @@
     </div>
   </div>
 
+  <!-- Jules Queue Modal -->
+  <div id="julesQueueModal" style="display:none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1003; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;">
+    <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; max-width:800px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4); max-height:90vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 style="margin:0; font-size:18px;">🧾 Jules Queue</h2>
+        <button id="closeQueueBtn" class="btn" style="padding:8px 16px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px;">✕ Close</button>
+      </div>
+
+      <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueSelectAll" type="checkbox" /> Select All</label>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueSuppressPopupsCheckbox" type="checkbox" /> Suppress Popups</label>
+          <button id="queuePauseBtn" class="btn" style="padding:8px 12px;">Pause</button>
+          <button id="queueRunBtn" class="btn primary" style="padding:8px 12px;">Run Selected</button>
+          <button id="queueDeleteBtn" class="btn" style="padding:8px 12px; border-color:#c0504d; color:#c0504d;">Delete Selected</button>
+        </div>
+      </div>
+
+      <div id="allQueueList" style="display:flex; flex-direction:column; gap:8px;">
+        <div style="color:var(--muted); text-align:center; padding:24px;">Loading queue...</div>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="src/app.js"></script>
+  <!-- Status Bar -->
+  <div id="statusBar" style="display:none;" aria-live="polite">
+    <div class="status-inner">
+      <div class="status-msg" style="flex:1;">Ready</div>
+      <div class="status-progress" style="display:none; margin-left:12px; color:var(--muted); font-size:13px;"></div>
+      <button class="status-action btn" style="display:none; margin-left:12px; padding:6px 10px;">Action</button>
+    </div>
+  </div>
 </body>
 </html>

@@ -1,7 +1,6 @@
 // ===== Prompt Renderer Module =====
 
 import { slugify } from '../utils/slug.js';
-import { extractTitleFromPrompt } from '../utils/title.js';
 import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './github-api.js';
 import { CODEX_URL_REGEX } from '../utils/constants.js';
 import { setElementDisplay } from '../utils/dom-helpers.js';
@@ -50,10 +49,7 @@ export function initPromptRenderer() {
   if (julesBtn) {
     julesBtn.addEventListener('click', () => {
       if (handleTryInJulesCallback) {
-        const promptText = currentPromptText || '';
-        let title = extractTitleFromPrompt(promptText);
-        if (!title && titleEl && titleEl.textContent) title = titleEl.textContent.trim();
-        handleTryInJulesCallback(currentPromptText, title);
+        handleTryInJulesCallback(currentPromptText);
       }
     });
   }
