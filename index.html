@@ -281,8 +281,26 @@
       <div style="margin-bottom: 12px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px;">
         <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
           <input id="splitSuppressPopupsCheckbox" type="checkbox" style="cursor: pointer;" />
-          <span>Suppress popup windows (run all in background)</span>
+          <span>Suppress popups</span>
         </label>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; margin-top: 8px;">
+          <input id="splitOpenInBackgroundCheckbox" type="checkbox" style="cursor: pointer;" />
+          <span>Open in background</span>
+        </label>
+        <script>
+          (function() {
+            const suppressCheckbox = document.getElementById('splitSuppressPopupsCheckbox');
+            const backgroundCheckbox = document.getElementById('splitOpenInBackgroundCheckbox');
+            if (suppressCheckbox && backgroundCheckbox) {
+              suppressCheckbox.addEventListener('change', () => {
+                if (suppressCheckbox.checked) backgroundCheckbox.checked = false;
+              });
+              backgroundCheckbox.addEventListener('change', () => {
+                if (backgroundCheckbox.checked) suppressCheckbox.checked = false;
+              });
+            }
+          })();
+        </script>
       </div>
 
       <div class="modal-buttons">
@@ -367,6 +385,21 @@
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
           <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueSuppressPopupsCheckbox" type="checkbox" /> Suppress Popups</label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueOpenInBackgroundCheckbox" type="checkbox" /> Open in Background</label>
+          <script>
+            (function() {
+              const suppressCheckbox = document.getElementById('queueSuppressPopupsCheckbox');
+              const backgroundCheckbox = document.getElementById('queueOpenInBackgroundCheckbox');
+              if (suppressCheckbox && backgroundCheckbox) {
+                suppressCheckbox.addEventListener('change', () => {
+                  if (suppressCheckbox.checked) backgroundCheckbox.checked = false;
+                });
+                backgroundCheckbox.addEventListener('change', () => {
+                  if (backgroundCheckbox.checked) suppressCheckbox.checked = false;
+                });
+              }
+            })();
+          </script>
           <button id="queuePauseBtn" class="btn" style="padding:8px 12px;">Pause</button>
           <button id="queueRunBtn" class="btn primary" style="padding:8px 12px;">Run Selected</button>
           <button id="queueDeleteBtn" class="btn" style="padding:8px 12px; border-color:#c0504d; color:#c0504d;">Delete Selected</button>

@@ -12,6 +12,29 @@ import statusBar from './status-bar.js';
 let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
 let lastSelectedBranch = 'master';
 
+function openUrlInBackground(url) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  
+  const evt = new MouseEvent('click', {
+    view: window,
+    bubbles: true,
+    cancelable: true,
+    ctrlKey: true,
+    metaKey: true
+  });
+  
+  a.dispatchEvent(evt);
+  
+  setTimeout(() => {
+    document.body.removeChild(a);
+  }, 100);
+}
+
 export async function checkJulesKey(uid) {
   try {
     if (!window.db) {
@@ -246,7 +269,7 @@ async function deleteSelectedSubtasks(docId, indices) {
   }
 }
 
-async function runSelectedSubtasks(docId, indices, suppressPopups = false) {
+async function runSelectedSubtasks(docId, indices, suppressPopups = false, openInBackground = false) {
   const user = window.auth?.currentUser;
   if (!user) return;
 
@@ -261,7 +284,11 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false) {
       const title = extractTitleFromPrompt(subtask.fullContent);
       const sessionUrl = await callRunJulesFunction(subtask.fullContent, item.sourceId, item.branch || 'master', title);
       if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
-        window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+        if (openInBackground) {
+          openUrlInBackground(sessionUrl);
+        } else {
+          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+        }
       }
       await new Promise(r => setTimeout(r, 800));
     } catch (err) {
@@ -370,6 +397,7 @@ async function runSelectedQueueItems() {
   }
 
   const suppressPopups = document.getElementById('queueSuppressPopupsCheckbox')?.checked || false;
+  const openInBackground = document.getElementById('queueOpenInBackgroundCheckbox')?.checked || false;
   const pauseBtn = document.getElementById('queuePauseBtn');
   let paused = false;
   if (pauseBtn) {
@@ -393,7 +421,7 @@ async function runSelectedQueueItems() {
     if (paused) break;
     if (queueSelections.includes(docId)) continue;
     
-    await runSelectedSubtasks(docId, indices, suppressPopups);
+    await runSelectedSubtasks(docId, indices, suppressPopups, openInBackground);
   }
   
   for (const id of queueSelections) {
@@ -405,7 +433,13 @@ async function runSelectedQueueItems() {
       if (item.type === 'single') {
         const title = extractTitleFromPrompt(item.prompt || '');
         const sessionUrl = await callRunJulesFunction(item.prompt || '', item.sourceId, item.branch || 'master', title);
-        if (sessionUrl && !suppressPopups && item.autoOpen !== false) window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+        if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
+          if (openInBackground) {
+            openUrlInBackground(sessionUrl);
+          } else {
+            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          }
+        }
         await deleteFromJulesQueue(user.uid, id);
       } else if (item.type === 'subtasks') {
         let remaining = Array.isArray(item.remaining) ? item.remaining.slice() : [];
@@ -433,7 +467,13 @@ async function runSelectedQueueItems() {
           try {
             const title = extractTitleFromPrompt(s.fullContent);
             const sessionUrl = await callRunJulesFunction(s.fullContent, item.sourceId, item.branch || 'master', title);
-            if (sessionUrl && !suppressPopups && item.autoOpen !== false) window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+            if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
+              if (openInBackground) {
+                openUrlInBackground(sessionUrl);
+              } else {
+                window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+              }
+            }
 
             // remove the completed subtask from remaining
             remaining.shift();
@@ -2117,6 +2157,7 @@ export function hideSubtaskSplitModal() {
 async function submitSubtasks(subtasks) {
   // Get suppress popups preference from the modal
   const suppressPopups = document.getElementById('splitSuppressPopupsCheckbox')?.checked || false;
+  const openInBackground = document.getElementById('splitOpenInBackgroundCheckbox')?.checked || false;
   
   if (!subtasks || subtasks.length === 0) {
     let retryCount = 0;
@@ -2128,7 +2169,11 @@ async function submitSubtasks(subtasks) {
         const title = extractTitleFromPrompt(currentFullPrompt);
         const sessionUrl = await callRunJulesFunction(currentFullPrompt, lastSelectedSourceId, lastSelectedBranch, title);
         if (sessionUrl && !suppressPopups) {
-          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          if (openInBackground) {
+            openUrlInBackground(sessionUrl);
+          } else {
+            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          }
         }
         submitted = true;
       } catch (error) {
@@ -2154,7 +2199,11 @@ async function submitSubtasks(subtasks) {
               const title = extractTitleFromPrompt(currentFullPrompt);
               const sessionUrl = await callRunJulesFunction(currentFullPrompt, lastSelectedSourceId, lastSelectedBranch, title);
               if (sessionUrl) {
-                window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+                if (openInBackground) {
+                  openUrlInBackground(sessionUrl);
+                } else {
+                  window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+                }
               }
               submitted = true;
             } catch (finalError) {
@@ -2209,7 +2258,11 @@ async function submitSubtasks(subtasks) {
         const title = extractTitleFromPrompt(subtask.fullContent) || subtask.title || '';
         const sessionUrl = await callRunJulesFunction(subtask.fullContent, lastSelectedSourceId, lastSelectedBranch, title);
         if (sessionUrl && !suppressPopups) {
-          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          if (openInBackground) {
+            openUrlInBackground(sessionUrl);
+          } else {
+            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          }
         }
         
         successCount++;
