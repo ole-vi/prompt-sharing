@@ -138,6 +138,14 @@ export function showJulesQueueModal() {
     return;
   }
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1003; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  
+  // Close modal when clicking on backdrop
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      hideJulesQueueModal();
+    }
+  };
+  
   loadQueuePage();
 }
 
