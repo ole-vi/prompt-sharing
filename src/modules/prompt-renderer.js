@@ -30,6 +30,7 @@ let editBtn = null;
 let shareBtn = null;
 let julesBtn = null;
 let freeInputBtn = null;
+let moreBtn = null;
 
 export function initPromptRenderer() {
   contentEl = document.getElementById('content');
@@ -45,6 +46,7 @@ export function initPromptRenderer() {
   shareBtn = document.getElementById('shareBtn');
   julesBtn = document.getElementById('julesBtn');
   freeInputBtn = document.getElementById('freeInputBtn');
+  moreBtn = document.getElementById('moreBtn');
 
   if (copyBtn) copyBtn.addEventListener('click', handleCopyPrompt);
   if (copenBtn) {
@@ -84,6 +86,56 @@ export function initPromptRenderer() {
     freeInputBtn.addEventListener('click', async () => {
       const { showFreeInputModal } = await import('./jules.js');
       showFreeInputModal();
+    });
+  }
+
+  // Handle More menu
+  if (moreBtn) {
+    const moreMenu = document.getElementById('moreMenu');
+    
+    moreBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      moreMenu.style.display = moreMenu.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    // Handle menu item clicks
+    const moreEditBtn = document.getElementById('moreEditBtn');
+    const moreGhBtn = document.getElementById('moreGhBtn');
+    const moreRawBtn = document.getElementById('moreRawBtn');
+    
+    if (moreEditBtn) {
+      moreEditBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (editBtn && editBtn.href) {
+          window.open(editBtn.href, '_blank', 'noopener,noreferrer');
+        }
+        moreMenu.style.display = 'none';
+      });
+    }
+    
+    if (moreGhBtn) {
+      moreGhBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (ghBtn && ghBtn.href) {
+          window.open(ghBtn.href, '_blank', 'noopener,noreferrer');
+        }
+        moreMenu.style.display = 'none';
+      });
+    }
+    
+    if (moreRawBtn) {
+      moreRawBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (rawBtn && rawBtn.href) {
+          window.open(rawBtn.href, '_blank', 'noopener,noreferrer');
+        }
+        moreMenu.style.display = 'none';
+      });
+    }
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', () => {
+      if (moreMenu) moreMenu.style.display = 'none';
     });
   }
 
@@ -211,12 +263,20 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   }
 
   // Update button states and links
+  const moreEditBtn = document.getElementById('moreEditBtn');
+  const moreGhBtn = document.getElementById('moreGhBtn');
+  const moreRawBtn = document.getElementById('moreRawBtn');
+  
   if (isGistContent && gistUrl) {
     editBtn.textContent = '✏️ Edit Link';
     editBtn.title = 'Edit the gist link';
+    if (moreEditBtn) moreEditBtn.textContent = '✏️ Edit Link';
+    
     ghBtn.textContent = '🗂️ View on Gist';
     ghBtn.title = 'Open the gist on GitHub';
     ghBtn.href = gistUrl;
+    if (moreGhBtn) moreGhBtn.textContent = '🗂️ View on Gist';
+    
     const blob = new Blob([raw], { type: 'text/plain' });
     const dataUrl = URL.createObjectURL(blob);
     rawBtn.href = dataUrl;
@@ -225,10 +285,14 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   } else if (isCodexContent && codexUrl) {
     editBtn.textContent = '✏️ Edit Link';
     editBtn.title = 'Edit the codex link';
+    if (moreEditBtn) moreEditBtn.textContent = '✏️ Edit Link';
+    
     ghBtn.textContent = '💬 View on Codex';
     ghBtn.title = 'Open the conversation on Codex';
     ghBtn.href = codexUrl;
     ghBtn.target = '_blank';
+    if (moreGhBtn) moreGhBtn.textContent = '💬 View on Codex';
+    
     const blob = new Blob([codexUrl], { type: 'text/plain' });
     const dataUrl = URL.createObjectURL(blob);
     rawBtn.href = dataUrl;
@@ -238,13 +302,16 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   } else {
     editBtn.textContent = '✏️ Edit on GitHub';
     editBtn.title = 'Edit the file on GitHub';
+    if (moreEditBtn) moreEditBtn.textContent = '✏️ Edit on GitHub';
+    
     ghBtn.textContent = '🗂️ View on GitHub';
     ghBtn.title = 'Open the file on GitHub';
     ghBtn.href = `https://github.com/${owner}/${repo}/blob/${branch}/${f.path}`;
+    if (moreGhBtn) moreGhBtn.textContent = '🗂️ View on GitHub';
+    
     rawBtn.href = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${f.path}`;
     rawBtn.title = 'Open raw markdown';
   }
-  editBtn.style.display = '';
   editBtn.href = `https://github.com/${owner}/${repo}/edit/${branch}/${f.path}`;
 
   if (isCodexContent) {

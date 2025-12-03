@@ -91,20 +91,28 @@
       <h1 id="title" style="display:none"></h1>
       <div id="meta" style="display:none"></div>
       <div id="actions" style="display:none">
-        <button class="btn" id="copyBtn" title="Copy the entire prompt">📋 Copy prompt</button>
+        <button class="btn" id="copyBtn" title="Copy the entire prompt">📋 Copy</button>
         <div style="position:relative; display:inline-block;">
-          <button class="btn" id="copenBtn" title="Copy prompt and open in new tab">📋⤴ ▼</button>
+          <button class="btn" id="copenBtn" title="Copy prompt and open in new tab">📋⤴ Copen ▼</button>
           <div id="copenMenu" style="display:none; position:absolute; top:100%; left:0; margin-top:4px; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000; min-width:150px;">
             <div class="custom-dropdown-item" data-target="blank">🌐 Blank</div>
             <div class="custom-dropdown-item" data-target="claude">🤖 Claude</div>
             <div class="custom-dropdown-item" data-target="codex">💬 Codex</div>
           </div>
         </div>
-        <button class="btn" id="shareBtn" title="Copy a link to this prompt">🔗 Copy link</button>
         <button class="btn" id="julesBtn" title="Try this prompt in Jules">⚡ Try in Jules</button>
-        <a class="btn" id="editBtn" target="_blank" rel="noopener" title="Edit the file on GitHub">✏️ Edit on GitHub</a>
-        <a class="btn" id="ghBtn" target="_blank" rel="noopener" title="Open the file on GitHub">🗂️ View on GitHub</a>
-        <a class="btn" id="rawBtn" target="_blank" rel="noopener" title="Open raw markdown">📄 Open raw</a>
+        <button class="btn" id="shareBtn" title="Copy a link to this prompt">🔗 Copy link</button>
+        <div style="position:relative; display:inline-block;">
+          <button class="btn" id="moreBtn" title="More actions">⋯ More</button>
+          <div id="moreMenu" style="display:none; position:absolute; top:100%; right:0; margin-top:4px; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000; min-width:180px;">
+            <div class="custom-dropdown-item" id="moreEditBtn" style="cursor:pointer;">✏️ Edit on GitHub</div>
+            <div class="custom-dropdown-item" id="moreGhBtn" style="cursor:pointer;">🗂️ View on GitHub</div>
+            <div class="custom-dropdown-item" id="moreRawBtn" style="cursor:pointer;">📄 Open raw</div>
+          </div>
+        </div>
+        <a class="btn" id="editBtn" target="_blank" rel="noopener" title="Edit the file on GitHub" style="display:none;">✏️ Edit on GitHub</a>
+        <a class="btn" id="ghBtn" target="_blank" rel="noopener" title="Open the file on GitHub" style="display:none;">🗂️ View on GitHub</a>
+        <a class="btn" id="rawBtn" target="_blank" rel="noopener" title="Open raw markdown" style="display:none;">📄 Open raw</a>
       </div>
       <article id="content"></article>
     </main>
@@ -144,6 +152,8 @@
       
       <div style="display:flex; gap:8px; justify-content:flex-end;">
         <button id="julesEnvCancelBtn" class="btn" style="padding:8px 12px;">Cancel</button>
+        <button id="julesEnvQueueBtn" class="btn" style="padding:8px 12px;" disabled>Queue</button>
+        <button id="julesEnvSubmitBtn" class="btn" style="padding:8px 12px; border-color: var(--accent); color: var(--accent);" disabled>Submit</button>
       </div>
     </div>
   </div>

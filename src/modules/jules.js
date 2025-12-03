@@ -692,6 +692,11 @@ export async function showJulesEnvModal(promptText) {
   const dropdownText = document.getElementById('julesRepoDropdownText');
   const dropdownMenu = document.getElementById('julesRepoDropdownMenu');
   const cancelBtn = document.getElementById('julesEnvCancelBtn');
+  const submitBtn = document.getElementById('julesEnvSubmitBtn');
+  const queueBtn = document.getElementById('julesEnvQueueBtn');
+  
+  let selectedSourceId = null;
+  let selectedBranch = null;
   
   const user = getCurrentUser();
   if (!user) {
@@ -714,7 +719,22 @@ export async function showJulesEnvModal(promptText) {
       btn.className = 'btn';
       btn.style.cssText = 'padding:12px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; font-weight:600; transition:all 0.2s; width:100%;';
       btn.textContent = `${fav.emoji || '📦'} ${fav.name}`;
-      btn.onclick = () => handleRepoSelect(fav.id, fav.branch || 'master', promptText);
+      btn.onclick = () => {
+        selectedSourceId = fav.id;
+        selectedBranch = fav.branch || 'master';
+        submitBtn.disabled = false;
+        queueBtn.disabled = false;
+        favoriteContainer.querySelectorAll('button').forEach(b => {
+          b.style.background = 'transparent';
+          b.style.color = 'var(--text)';
+          b.style.borderColor = 'var(--border)';
+          b.style.boxShadow = '';
+        });
+        btn.style.borderColor = 'var(--accent)';
+        btn.style.background = 'linear-gradient(135deg, rgba(77,217,255,0.2), rgba(77,217,255,0.08))';
+        btn.style.boxShadow = '0 0 12px rgba(77, 217, 255, 0.2)';
+        btn.style.color = 'var(--accent)';
+      };
       favoriteContainer.appendChild(btn);
     });
   } else {
@@ -771,7 +791,16 @@ export async function showJulesEnvModal(promptText) {
           item.classList.add('selected');
           dropdownText.textContent = repoName;
           dropdownMenu.style.display = 'none';
-          handleRepoSelect(item.dataset.value, defaultBranch, promptText);
+          selectedSourceId = item.dataset.value;
+          selectedBranch = defaultBranch;
+          submitBtn.disabled = false;
+          queueBtn.disabled = false;
+          favoriteContainer.querySelectorAll('button').forEach(b => {
+            b.style.background = 'transparent';
+            b.style.color = 'var(--text)';
+            b.style.borderColor = 'var(--border)';
+            b.style.boxShadow = '';
+          });
         };
         
         dropdownMenu.appendChild(item);
@@ -800,6 +829,37 @@ export async function showJulesEnvModal(promptText) {
     }
   });
 
+  submitBtn.onclick = () => {
+    if (selectedSourceId && selectedBranch) {
+      handleRepoSelect(selectedSourceId, selectedBranch, promptText);
+    }
+  };
+  
+  queueBtn.onclick = async () => {
+    if (!selectedSourceId || !selectedBranch) return;
+    
+    const user = window.auth?.currentUser;
+    if (!user) {
+      alert('Please sign in to queue prompts.');
+      return;
+    }
+    
+    try {
+      const title = extractTitleFromPrompt(promptText);
+      await addToJulesQueue(user.uid, {
+        type: 'single',
+        prompt: promptText,
+        sourceId: selectedSourceId,
+        branch: selectedBranch,
+        note: 'Queued from Try in Jules modal'
+      });
+      alert('Prompt queued successfully!');
+      hideJulesEnvModal();
+    } catch (err) {
+      alert('Failed to queue prompt: ' + err.message);
+    }
+  };
+  
   cancelBtn.onclick = () => {
     hideJulesEnvModal();
   };
