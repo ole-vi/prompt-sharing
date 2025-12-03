@@ -1,5 +1,4 @@
 // ===== Version Checker Module =====
-// Checks for version updates and alerts users when they need to refresh
 
 import { APP_VERSION } from '../utils/constants.js';
 import statusBar from './status-bar.js';
@@ -10,14 +9,8 @@ const DISMISSED_VERSION_KEY = 'dismissedVersionUpdate';
 
 let versionCheckTimer = null;
 
-/**
- * Fetches the deployed version from GitHub Pages
- * @returns {Promise<string|null>} The version string or null if fetch fails
- */
 async function fetchDeployedVersion() {
   try {
-    // Fetch the constants.js file from the deployed GitHub Pages site
-    // Add cache-busting parameter to avoid cached responses
     const response = await fetch(`https://ole-vi.github.io/prompt-sharing/src/utils/constants.js?t=${Date.now()}`);
     
     if (!response.ok) {
@@ -26,8 +19,6 @@ async function fetchDeployedVersion() {
     }
     
     const text = await response.text();
-    
-    // Extract version using regex
     const versionMatch = text.match(/export const APP_VERSION = ["']([^"']+)["']/);
     
     if (versionMatch && versionMatch[1]) {
@@ -42,12 +33,6 @@ async function fetchDeployedVersion() {
   }
 }
 
-/**
- * Compares two version strings (semantic versioning)
- * @param {string} v1 - First version
- * @param {string} v2 - Second version
- * @returns {number} -1 if v1 < v2, 0 if equal, 1 if v1 > v2
- */
 function compareVersions(v1, v2) {
   const parts1 = v1.split('.').map(Number);
   const parts2 = v2.split('.').map(Number);
@@ -63,12 +48,7 @@ function compareVersions(v1, v2) {
   return 0;
 }
 
-/**
- * Shows an alert banner to the user about a version update
- * @param {string} newVersion - The new version available
- */
 function showUpdateAlert(newVersion) {
-  // Check if user dismissed this version already
   const dismissed = sessionStorage.getItem(DISMISSED_VERSION_KEY);
   if (dismissed === newVersion) {
     return;
@@ -121,87 +101,65 @@ function showUpdateAlert(newVersion) {
   `;
   
   document.body.prepend(banner);
-  
-  // Adjust body padding to account for banner
   document.body.style.paddingTop = banner.offsetHeight + 'px';
   
-  // Add event listeners
   document.getElementById('refreshBtn')?.addEventListener('click', () => {
-    // Hard refresh to clear cache
     window.location.reload(true);
   });
   
   document.getElementById('dismissBtn')?.addEventListener('click', () => {
-    // Store dismissed version in session storage
     sessionStorage.setItem(DISMISSED_VERSION_KEY, newVersion);
     banner.remove();
     document.body.style.paddingTop = '0';
   });
 }
 
-/**
- * Performs the version check
- */
 async function checkVersion() {
   const now = Date.now();
   const lastCheck = sessionStorage.getItem(VERSION_CHECK_KEY);
   
-  // Skip check if we checked recently
   if (lastCheck && (now - parseInt(lastCheck)) < CHECK_INTERVAL) {
     return;
   }
   
-  // Update last check time
   sessionStorage.setItem(VERSION_CHECK_KEY, now.toString());
   
   const deployedVersion = await fetchDeployedVersion();
   
   if (!deployedVersion) {
-    return; // Couldn't fetch version, silently skip
+    return;
   }
   
-  // Compare versions
   const comparison = compareVersions(APP_VERSION, deployedVersion);
   
   if (comparison < 0) {
-    // Local version is older than deployed version
     console.log(`Version update available: ${APP_VERSION} -> ${deployedVersion}`);
     showUpdateAlert(deployedVersion);
     statusBar.show(`New version ${deployedVersion} available! Click to refresh.`, 'warning', () => {
       window.location.reload(true);
     });
   } else if (comparison > 0) {
-    // Local version is newer (likely on a dev branch)
     console.log(`Running dev version: ${APP_VERSION} (deployed: ${deployedVersion})`);
   } else {
     console.log(`Running latest version: ${APP_VERSION}`);
   }
 }
 
-/**
- * Initializes the version checker
- */
 export function initVersionChecker() {
-  // Update the version display in the UI
   const versionElement = document.getElementById('appVersion');
   if (versionElement) {
     versionElement.textContent = `v${APP_VERSION}`;
   }
   
-  // Do initial check after a short delay to not block app startup
   setTimeout(() => {
     checkVersion();
   }, 3000);
   
-  // Set up periodic checks
   versionCheckTimer = setInterval(() => {
     checkVersion();
   }, CHECK_INTERVAL);
 }
 
-/**
- * Stops the version checker
- */
 export function stopVersionChecker() {
   if (versionCheckTimer) {
     clearInterval(versionCheckTimer);
@@ -209,9 +167,6 @@ export function stopVersionChecker() {
   }
 }
 
-/**
- * Manually trigger a version check
- */
 export function forceVersionCheck() {
   sessionStorage.removeItem(VERSION_CHECK_KEY);
   return checkVersion();
