@@ -56,48 +56,15 @@ function showUpdateAlert(newVersion) {
   
   const banner = document.createElement('div');
   banner.id = 'versionUpdateBanner';
-  banner.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    z-index: 10000;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    font-size: 14px;
-  `;
   
   banner.innerHTML = `
-    <span style="flex: 1; text-align: center;">
+    <span>
       🎉 <strong>New version available!</strong> 
       You're on v${APP_VERSION}, but v${newVersion} is now deployed. 
       Please refresh to get the latest features and fixes.
     </span>
-    <button id="refreshBtn" style="
-      background: white;
-      color: #667eea;
-      border: none;
-      padding: 6px 16px;
-      border-radius: 4px;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-    ">Refresh Now</button>
-    <button id="dismissBtn" style="
-      background: transparent;
-      color: white;
-      border: 1px solid rgba(255,255,255,0.5);
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      white-space: nowrap;
-    ">Dismiss</button>
+    <button id="refreshBtn">Refresh Now</button>
+    <button id="dismissBtn">Dismiss</button>
   `;
   
   document.body.prepend(banner);
