@@ -837,7 +837,9 @@ export async function showJulesEnvModal(promptText) {
 
   submitBtn.onclick = () => {
     if (selectedSourceId && selectedBranch) {
-      handleRepoSelect(selectedSourceId, selectedBranch, promptText);
+      const suppressPopups = document.getElementById('julesEnvSuppressPopupsCheckbox')?.checked || false;
+      const openInBackground = document.getElementById('julesEnvOpenInBackgroundCheckbox')?.checked || false;
+      handleRepoSelect(selectedSourceId, selectedBranch, promptText, suppressPopups, openInBackground);
     }
   };
   
@@ -871,7 +873,7 @@ export async function showJulesEnvModal(promptText) {
   };
 }
 
-async function handleRepoSelect(sourceId, branch, promptText) {
+async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = false, openInBackground = false) {
   hideJulesEnvModal();
   
   lastSelectedSourceId = sourceId;
@@ -886,8 +888,12 @@ async function handleRepoSelect(sourceId, branch, promptText) {
   while (retryCount < maxRetries && !submitted) {
     try {
       const sessionUrl = await callRunJulesFunction(promptText, sourceId, lastSelectedBranch, title);
-      if (sessionUrl) {
-        window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+      if (sessionUrl && !suppressPopups) {
+        if (openInBackground) {
+          openUrlInBackground(sessionUrl);
+        } else {
+          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+        }
       }
       submitted = true;
     } catch (error) {
