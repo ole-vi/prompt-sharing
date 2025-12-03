@@ -1504,6 +1504,7 @@ export function showFreeInputForm() {
   const modal = document.getElementById('freeInputModal');
   const textarea = document.getElementById('freeInputTextarea');
   const submitBtn = document.getElementById('freeInputSubmitBtn');
+  const queueBtn = document.getElementById('freeInputQueueBtn');
   const splitBtn = document.getElementById('freeInputSplitBtn');
   const copenBtn = document.getElementById('freeInputCopenBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
@@ -1709,6 +1710,44 @@ export function showFreeInputForm() {
     hideFreeInputForm();
   };
 
+  const handleQueue = async () => {
+    const promptText = textarea.value.trim();
+    if (!promptText) {
+      alert('Please enter a prompt.');
+      return;
+    }
+
+    if (!lastSelectedSourceId) {
+      alert('Please select a repository.');
+      return;
+    }
+
+    if (!lastSelectedBranch) {
+      alert('Please select a branch.');
+      return;
+    }
+
+    const user = window.auth?.currentUser;
+    if (!user) {
+      alert('Please sign in to queue prompts.');
+      return;
+    }
+
+    try {
+      await addToJulesQueue(user.uid, {
+        type: 'single',
+        prompt: promptText,
+        sourceId: lastSelectedSourceId,
+        branch: lastSelectedBranch,
+        note: 'Queued from Free Input'
+      });
+      alert('Prompt queued successfully!');
+      hideFreeInputForm();
+    } catch (err) {
+      alert('Failed to queue prompt: ' + err.message);
+    }
+  };
+
   const copenMenu = document.getElementById('freeInputCopenMenu');
   
   copenBtn.onclick = (e) => {
@@ -1735,6 +1774,7 @@ export function showFreeInputForm() {
   document.addEventListener('click', closeCopenMenu);
 
   submitBtn.onclick = handleSubmit;
+  queueBtn.onclick = handleQueue;
   splitBtn.onclick = handleSplit;
   cancelBtn.onclick = handleCancel;
 
@@ -2036,6 +2076,7 @@ export function showSubtaskSplitModal(promptText) {
   
   const modal = document.getElementById('subtaskSplitModal');
   const confirmBtn = document.getElementById('splitConfirmBtn');
+  const queueBtn = document.getElementById('splitQueueBtn');
   const cancelBtn = document.getElementById('splitCancelBtn');
 
   const analysis = analyzePromptStructure(promptText);
@@ -2070,6 +2111,72 @@ export function showSubtaskSplitModal(promptText) {
 
   cancelBtn.onclick = () => {
     hideSubtaskSplitModal();
+  };
+
+  queueBtn.onclick = async () => {
+    const user = window.auth?.currentUser;
+    if (!user) {
+      alert('Please sign in to queue subtasks.');
+      return;
+    }
+
+    if (!lastSelectedSourceId) {
+      alert('Please select a repository first.');
+      return;
+    }
+
+    if (!lastSelectedBranch) {
+      alert('Please select a branch first.');
+      return;
+    }
+
+    if (!currentSubtasks || currentSubtasks.length === 0) {
+      try {
+        await addToJulesQueue(user.uid, {
+          type: 'single',
+          prompt: currentFullPrompt,
+          sourceId: lastSelectedSourceId,
+          branch: lastSelectedBranch,
+          note: 'Queued from Split Dialog (no subtasks)'
+        });
+        alert('Prompt queued successfully!');
+        hideSubtaskSplitModal();
+      } catch (err) {
+        alert('Failed to queue prompt: ' + err.message);
+      }
+      return;
+    }
+
+    const validation = validateSubtasks(currentSubtasks);
+    if (!validation.valid) {
+      alert('Error:\n' + validation.errors.join('\n'));
+      return;
+    }
+
+    if (validation.warnings.length > 0) {
+      const proceed = confirm('Warnings:\n' + validation.warnings.join('\n') + '\n\nQueue anyway?');
+      if (!proceed) return;
+    }
+
+    try {
+      const sequenced = buildSubtaskSequence(currentFullPrompt, currentSubtasks);
+      const remaining = sequenced.map(s => ({ fullContent: s.fullContent, sequenceInfo: s.sequenceInfo }));
+
+      await addToJulesQueue(user.uid, {
+        type: 'subtasks',
+        prompt: currentFullPrompt,
+        sourceId: lastSelectedSourceId,
+        branch: lastSelectedBranch,
+        remaining,
+        totalCount: remaining.length,
+        note: 'Queued from Split Dialog'
+      });
+
+      alert(`${remaining.length} subtask(s) queued successfully!`);
+      hideSubtaskSplitModal();
+    } catch (err) {
+      alert('Failed to queue subtasks: ' + err.message);
+    }
   };
 }
 
