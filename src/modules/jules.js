@@ -202,6 +202,8 @@ function renderQueueList(items) {
         `;
       }).join('');
 
+      const repoDisplay = item.sourceId ? `<div style="font-size:11px; color:var(--accent); margin-top:4px;">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+      
       return `
         <div class="queue-item" data-docid="${item.id}" style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.02); margin-bottom:8px;">
           <div style="display:flex; gap:12px; align-items:flex-start; margin-bottom:12px;">
@@ -214,6 +216,7 @@ function renderQueueList(items) {
                 <span style="color:var(--muted); font-size:12px; margin-left:8px;">(${remainingCount} remaining)</span>
               </div>
               <div style="font-size:11px; color:var(--muted);">Created: ${created} • ID: <span style="font-family:monospace;">${item.id}</span></div>
+              ${repoDisplay}
             </div>
           </div>
           <div style="margin-left:40px;">
@@ -224,6 +227,8 @@ function renderQueueList(items) {
     }
 
     const promptPreview = (item.prompt || '').substring(0, 200);
+    const repoDisplay = item.sourceId ? `<div style="font-size:11px; color:var(--accent); margin-top:4px;">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+    
     return `
       <div class="queue-item" data-docid="${item.id}" style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.02); margin-bottom:8px;">
         <div style="display:flex; gap:12px; align-items:flex-start;">
@@ -235,7 +240,8 @@ function renderQueueList(items) {
               Single Prompt <span style="color:var(--muted); font-size:12px; margin-left:8px;">${status}</span>
             </div>
             <div style="font-size:11px; color:var(--muted); margin-bottom:8px;">Created: ${created} • ID: <span style="font-family:monospace;">${item.id}</span></div>
-            <div style="font-size:12px; color:var(--text); white-space:pre-wrap; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px;">${escapeHtml(promptPreview)}${promptPreview.length >= 200 ? '...' : ''}</div>
+            ${repoDisplay}
+            <div style="font-size:12px; color:var(--text); white-space:pre-wrap; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px; margin-top:8px;">${escapeHtml(promptPreview)}${promptPreview.length >= 200 ? '...' : ''}</div>
           </div>
         </div>
       </div>
