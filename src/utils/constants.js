@@ -23,9 +23,9 @@ export const STORAGE_KEY_FAVORITE_REPOS = "jules_favorite_repos";
 
 // Emoji classification keywords
 export const EMOJI_PATTERNS = {
-  review: { emoji: "🔍", keywords: ["review", "pr", "rubric"] },
+  review: { emoji: "🔍", keywords: ["review", "\\bpr\\b", "rubric"] },
   bug: { emoji: "🩹", keywords: ["bug", "triage", "fix"] },
-  design: { emoji: "🧭", keywords: ["spec", "design", "plan"] },
+  design: { emoji: "📚", keywords: ["spec", "design", "plan", "explorer"] },
   refactor: { emoji: "🧹", keywords: ["refactor"] }
 };
 
