@@ -25,7 +25,7 @@ export const STORAGE_KEY_FAVORITE_REPOS = "jules_favorite_repos";
 export const EMOJI_PATTERNS = {
   review: { emoji: "🔍", keywords: ["review", "\\bpr\\b", "rubric"] },
   bug: { emoji: "🩹", keywords: ["bug", "triage", "fix"] },
-  design: { emoji: "📚", keywords: ["spec", "design", "plan", "explorer"] },
+  design: { emoji: "📖", keywords: ["spec", "design", "plan", "explorer"] },
   refactor: { emoji: "🧹", keywords: ["refactor"] }
 };
 
