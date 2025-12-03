@@ -1607,6 +1607,9 @@ export function showFreeInputForm() {
       alert('Please select a branch.');
       return;
     }
+    
+    const suppressPopups = document.getElementById('freeInputSuppressPopupsCheckbox')?.checked || false;
+    const openInBackground = document.getElementById('freeInputOpenInBackgroundCheckbox')?.checked || false;
 
     let title = '';
     const lines = promptText.split(/\r?\n/);
@@ -1626,8 +1629,12 @@ export function showFreeInputForm() {
       while (retryCount < maxRetries && !submitted) {
         try {
           const sessionUrl = await callRunJulesFunction(promptText, lastSelectedSourceId, lastSelectedBranch, title);
-          if (sessionUrl) {
-            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          if (sessionUrl && !suppressPopups) {
+            if (openInBackground) {
+              openUrlInBackground(sessionUrl);
+            } else {
+              window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+            }
           }
           submitted = true;
         } catch (error) {
