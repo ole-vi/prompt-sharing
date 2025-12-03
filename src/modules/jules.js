@@ -12,6 +12,29 @@ import statusBar from './status-bar.js';
 let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
 let lastSelectedBranch = 'master';
 
+function openUrlInBackground(url) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  
+  const evt = new MouseEvent('click', {
+    view: window,
+    bubbles: true,
+    cancelable: true,
+    ctrlKey: true,
+    metaKey: true
+  });
+  
+  a.dispatchEvent(evt);
+  
+  setTimeout(() => {
+    document.body.removeChild(a);
+  }, 100);
+}
+
 export async function checkJulesKey(uid) {
   try {
     if (!window.db) {
@@ -115,6 +138,14 @@ export function showJulesQueueModal() {
     return;
   }
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1003; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  
+  // Close modal when clicking on backdrop
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      hideJulesQueueModal();
+    }
+  };
+  
   loadQueuePage();
 }
 
@@ -179,6 +210,8 @@ function renderQueueList(items) {
         `;
       }).join('');
 
+      const repoDisplay = item.sourceId ? `<div style="font-size:11px; color:var(--accent); margin-top:4px;">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+      
       return `
         <div class="queue-item" data-docid="${item.id}" style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.02); margin-bottom:8px;">
           <div style="display:flex; gap:12px; align-items:flex-start; margin-bottom:12px;">
@@ -191,6 +224,7 @@ function renderQueueList(items) {
                 <span style="color:var(--muted); font-size:12px; margin-left:8px;">(${remainingCount} remaining)</span>
               </div>
               <div style="font-size:11px; color:var(--muted);">Created: ${created} • ID: <span style="font-family:monospace;">${item.id}</span></div>
+              ${repoDisplay}
             </div>
           </div>
           <div style="margin-left:40px;">
@@ -201,6 +235,8 @@ function renderQueueList(items) {
     }
 
     const promptPreview = (item.prompt || '').substring(0, 200);
+    const repoDisplay = item.sourceId ? `<div style="font-size:11px; color:var(--accent); margin-top:4px;">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+    
     return `
       <div class="queue-item" data-docid="${item.id}" style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.02); margin-bottom:8px;">
         <div style="display:flex; gap:12px; align-items:flex-start;">
@@ -212,7 +248,8 @@ function renderQueueList(items) {
               Single Prompt <span style="color:var(--muted); font-size:12px; margin-left:8px;">${status}</span>
             </div>
             <div style="font-size:11px; color:var(--muted); margin-bottom:8px;">Created: ${created} • ID: <span style="font-family:monospace;">${item.id}</span></div>
-            <div style="font-size:12px; color:var(--text); white-space:pre-wrap; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px;">${escapeHtml(promptPreview)}${promptPreview.length >= 200 ? '...' : ''}</div>
+            ${repoDisplay}
+            <div style="font-size:12px; color:var(--text); white-space:pre-wrap; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px; margin-top:8px;">${escapeHtml(promptPreview)}${promptPreview.length >= 200 ? '...' : ''}</div>
           </div>
         </div>
       </div>
@@ -246,7 +283,7 @@ async function deleteSelectedSubtasks(docId, indices) {
   }
 }
 
-async function runSelectedSubtasks(docId, indices, suppressPopups = false) {
+async function runSelectedSubtasks(docId, indices, suppressPopups = false, openInBackground = false) {
   const user = window.auth?.currentUser;
   if (!user) return;
 
@@ -261,7 +298,11 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false) {
       const title = extractTitleFromPrompt(subtask.fullContent);
       const sessionUrl = await callRunJulesFunction(subtask.fullContent, item.sourceId, item.branch || 'master', title);
       if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
-        window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+        if (openInBackground) {
+          openUrlInBackground(sessionUrl);
+        } else {
+          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+        }
       }
       await new Promise(r => setTimeout(r, 800));
     } catch (err) {
@@ -370,6 +411,7 @@ async function runSelectedQueueItems() {
   }
 
   const suppressPopups = document.getElementById('queueSuppressPopupsCheckbox')?.checked || false;
+  const openInBackground = document.getElementById('queueOpenInBackgroundCheckbox')?.checked || false;
   const pauseBtn = document.getElementById('queuePauseBtn');
   let paused = false;
   if (pauseBtn) {
@@ -393,7 +435,7 @@ async function runSelectedQueueItems() {
     if (paused) break;
     if (queueSelections.includes(docId)) continue;
     
-    await runSelectedSubtasks(docId, indices, suppressPopups);
+    await runSelectedSubtasks(docId, indices, suppressPopups, openInBackground);
   }
   
   for (const id of queueSelections) {
@@ -405,7 +447,13 @@ async function runSelectedQueueItems() {
       if (item.type === 'single') {
         const title = extractTitleFromPrompt(item.prompt || '');
         const sessionUrl = await callRunJulesFunction(item.prompt || '', item.sourceId, item.branch || 'master', title);
-        if (sessionUrl && !suppressPopups && item.autoOpen !== false) window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+        if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
+          if (openInBackground) {
+            openUrlInBackground(sessionUrl);
+          } else {
+            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          }
+        }
         await deleteFromJulesQueue(user.uid, id);
       } else if (item.type === 'subtasks') {
         let remaining = Array.isArray(item.remaining) ? item.remaining.slice() : [];
@@ -433,7 +481,13 @@ async function runSelectedQueueItems() {
           try {
             const title = extractTitleFromPrompt(s.fullContent);
             const sessionUrl = await callRunJulesFunction(s.fullContent, item.sourceId, item.branch || 'master', title);
-            if (sessionUrl && !suppressPopups && item.autoOpen !== false) window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+            if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
+              if (openInBackground) {
+                openUrlInBackground(sessionUrl);
+              } else {
+                window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+              }
+            }
 
             // remove the completed subtask from remaining
             remaining.shift();
@@ -652,6 +706,11 @@ export async function showJulesEnvModal(promptText) {
   const dropdownText = document.getElementById('julesRepoDropdownText');
   const dropdownMenu = document.getElementById('julesRepoDropdownMenu');
   const cancelBtn = document.getElementById('julesEnvCancelBtn');
+  const submitBtn = document.getElementById('julesEnvSubmitBtn');
+  const queueBtn = document.getElementById('julesEnvQueueBtn');
+  
+  let selectedSourceId = null;
+  let selectedBranch = null;
   
   const user = getCurrentUser();
   if (!user) {
@@ -674,7 +733,22 @@ export async function showJulesEnvModal(promptText) {
       btn.className = 'btn';
       btn.style.cssText = 'padding:12px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; font-weight:600; transition:all 0.2s; width:100%;';
       btn.textContent = `${fav.emoji || '📦'} ${fav.name}`;
-      btn.onclick = () => handleRepoSelect(fav.id, fav.branch || 'master', promptText);
+      btn.onclick = () => {
+        selectedSourceId = fav.id;
+        selectedBranch = fav.branch || 'master';
+        submitBtn.disabled = false;
+        queueBtn.disabled = false;
+        favoriteContainer.querySelectorAll('button').forEach(b => {
+          b.style.background = 'transparent';
+          b.style.color = 'var(--text)';
+          b.style.borderColor = 'var(--border)';
+          b.style.boxShadow = '';
+        });
+        btn.style.borderColor = 'var(--accent)';
+        btn.style.background = 'linear-gradient(135deg, rgba(77,217,255,0.2), rgba(77,217,255,0.08))';
+        btn.style.boxShadow = '0 0 12px rgba(77, 217, 255, 0.2)';
+        btn.style.color = 'var(--accent)';
+      };
       favoriteContainer.appendChild(btn);
     });
   } else {
@@ -731,7 +805,16 @@ export async function showJulesEnvModal(promptText) {
           item.classList.add('selected');
           dropdownText.textContent = repoName;
           dropdownMenu.style.display = 'none';
-          handleRepoSelect(item.dataset.value, defaultBranch, promptText);
+          selectedSourceId = item.dataset.value;
+          selectedBranch = defaultBranch;
+          submitBtn.disabled = false;
+          queueBtn.disabled = false;
+          favoriteContainer.querySelectorAll('button').forEach(b => {
+            b.style.background = 'transparent';
+            b.style.color = 'var(--text)';
+            b.style.borderColor = 'var(--border)';
+            b.style.boxShadow = '';
+          });
         };
         
         dropdownMenu.appendChild(item);
@@ -760,12 +843,45 @@ export async function showJulesEnvModal(promptText) {
     }
   });
 
+  submitBtn.onclick = () => {
+    if (selectedSourceId && selectedBranch) {
+      const suppressPopups = document.getElementById('julesEnvSuppressPopupsCheckbox')?.checked || false;
+      const openInBackground = document.getElementById('julesEnvOpenInBackgroundCheckbox')?.checked || false;
+      handleRepoSelect(selectedSourceId, selectedBranch, promptText, suppressPopups, openInBackground);
+    }
+  };
+  
+  queueBtn.onclick = async () => {
+    if (!selectedSourceId || !selectedBranch) return;
+    
+    const user = window.auth?.currentUser;
+    if (!user) {
+      alert('Please sign in to queue prompts.');
+      return;
+    }
+    
+    try {
+      const title = extractTitleFromPrompt(promptText);
+      await addToJulesQueue(user.uid, {
+        type: 'single',
+        prompt: promptText,
+        sourceId: selectedSourceId,
+        branch: selectedBranch,
+        note: 'Queued from Try in Jules modal'
+      });
+      alert('Prompt queued successfully!');
+      hideJulesEnvModal();
+    } catch (err) {
+      alert('Failed to queue prompt: ' + err.message);
+    }
+  };
+  
   cancelBtn.onclick = () => {
     hideJulesEnvModal();
   };
 }
 
-async function handleRepoSelect(sourceId, branch, promptText) {
+async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = false, openInBackground = false) {
   hideJulesEnvModal();
   
   lastSelectedSourceId = sourceId;
@@ -780,8 +896,12 @@ async function handleRepoSelect(sourceId, branch, promptText) {
   while (retryCount < maxRetries && !submitted) {
     try {
       const sessionUrl = await callRunJulesFunction(promptText, sourceId, lastSelectedBranch, title);
-      if (sessionUrl) {
-        window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+      if (sessionUrl && !suppressPopups) {
+        if (openInBackground) {
+          openUrlInBackground(sessionUrl);
+        } else {
+          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+        }
       }
       submitted = true;
     } catch (error) {
@@ -1464,6 +1584,7 @@ export function showFreeInputForm() {
   const modal = document.getElementById('freeInputModal');
   const textarea = document.getElementById('freeInputTextarea');
   const submitBtn = document.getElementById('freeInputSubmitBtn');
+  const queueBtn = document.getElementById('freeInputQueueBtn');
   const splitBtn = document.getElementById('freeInputSplitBtn');
   const copenBtn = document.getElementById('freeInputCopenBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
@@ -1494,6 +1615,9 @@ export function showFreeInputForm() {
       alert('Please select a branch.');
       return;
     }
+    
+    const suppressPopups = document.getElementById('freeInputSuppressPopupsCheckbox')?.checked || false;
+    const openInBackground = document.getElementById('freeInputOpenInBackgroundCheckbox')?.checked || false;
 
     let title = '';
     const lines = promptText.split(/\r?\n/);
@@ -1513,8 +1637,12 @@ export function showFreeInputForm() {
       while (retryCount < maxRetries && !submitted) {
         try {
           const sessionUrl = await callRunJulesFunction(promptText, lastSelectedSourceId, lastSelectedBranch, title);
-          if (sessionUrl) {
-            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          if (sessionUrl && !suppressPopups) {
+            if (openInBackground) {
+              openUrlInBackground(sessionUrl);
+            } else {
+              window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+            }
           }
           submitted = true;
         } catch (error) {
@@ -1669,6 +1797,44 @@ export function showFreeInputForm() {
     hideFreeInputForm();
   };
 
+  const handleQueue = async () => {
+    const promptText = textarea.value.trim();
+    if (!promptText) {
+      alert('Please enter a prompt.');
+      return;
+    }
+
+    if (!lastSelectedSourceId) {
+      alert('Please select a repository.');
+      return;
+    }
+
+    if (!lastSelectedBranch) {
+      alert('Please select a branch.');
+      return;
+    }
+
+    const user = window.auth?.currentUser;
+    if (!user) {
+      alert('Please sign in to queue prompts.');
+      return;
+    }
+
+    try {
+      await addToJulesQueue(user.uid, {
+        type: 'single',
+        prompt: promptText,
+        sourceId: lastSelectedSourceId,
+        branch: lastSelectedBranch,
+        note: 'Queued from Free Input'
+      });
+      alert('Prompt queued successfully!');
+      hideFreeInputForm();
+    } catch (err) {
+      alert('Failed to queue prompt: ' + err.message);
+    }
+  };
+
   const copenMenu = document.getElementById('freeInputCopenMenu');
   
   copenBtn.onclick = (e) => {
@@ -1695,6 +1861,7 @@ export function showFreeInputForm() {
   document.addEventListener('click', closeCopenMenu);
 
   submitBtn.onclick = handleSubmit;
+  queueBtn.onclick = handleQueue;
   splitBtn.onclick = handleSplit;
   cancelBtn.onclick = handleCancel;
 
@@ -1996,6 +2163,7 @@ export function showSubtaskSplitModal(promptText) {
   
   const modal = document.getElementById('subtaskSplitModal');
   const confirmBtn = document.getElementById('splitConfirmBtn');
+  const queueBtn = document.getElementById('splitQueueBtn');
   const cancelBtn = document.getElementById('splitCancelBtn');
 
   const analysis = analyzePromptStructure(promptText);
@@ -2030,6 +2198,72 @@ export function showSubtaskSplitModal(promptText) {
 
   cancelBtn.onclick = () => {
     hideSubtaskSplitModal();
+  };
+
+  queueBtn.onclick = async () => {
+    const user = window.auth?.currentUser;
+    if (!user) {
+      alert('Please sign in to queue subtasks.');
+      return;
+    }
+
+    if (!lastSelectedSourceId) {
+      alert('Please select a repository first.');
+      return;
+    }
+
+    if (!lastSelectedBranch) {
+      alert('Please select a branch first.');
+      return;
+    }
+
+    if (!currentSubtasks || currentSubtasks.length === 0) {
+      try {
+        await addToJulesQueue(user.uid, {
+          type: 'single',
+          prompt: currentFullPrompt,
+          sourceId: lastSelectedSourceId,
+          branch: lastSelectedBranch,
+          note: 'Queued from Split Dialog (no subtasks)'
+        });
+        alert('Prompt queued successfully!');
+        hideSubtaskSplitModal();
+      } catch (err) {
+        alert('Failed to queue prompt: ' + err.message);
+      }
+      return;
+    }
+
+    const validation = validateSubtasks(currentSubtasks);
+    if (!validation.valid) {
+      alert('Error:\n' + validation.errors.join('\n'));
+      return;
+    }
+
+    if (validation.warnings.length > 0) {
+      const proceed = confirm('Warnings:\n' + validation.warnings.join('\n') + '\n\nQueue anyway?');
+      if (!proceed) return;
+    }
+
+    try {
+      const sequenced = buildSubtaskSequence(currentFullPrompt, currentSubtasks);
+      const remaining = sequenced.map(s => ({ fullContent: s.fullContent, sequenceInfo: s.sequenceInfo }));
+
+      await addToJulesQueue(user.uid, {
+        type: 'subtasks',
+        prompt: currentFullPrompt,
+        sourceId: lastSelectedSourceId,
+        branch: lastSelectedBranch,
+        remaining,
+        totalCount: remaining.length,
+        note: 'Queued from Split Dialog'
+      });
+
+      alert(`${remaining.length} subtask(s) queued successfully!`);
+      hideSubtaskSplitModal();
+    } catch (err) {
+      alert('Failed to queue subtasks: ' + err.message);
+    }
   };
 }
 
@@ -2117,6 +2351,7 @@ export function hideSubtaskSplitModal() {
 async function submitSubtasks(subtasks) {
   // Get suppress popups preference from the modal
   const suppressPopups = document.getElementById('splitSuppressPopupsCheckbox')?.checked || false;
+  const openInBackground = document.getElementById('splitOpenInBackgroundCheckbox')?.checked || false;
   
   if (!subtasks || subtasks.length === 0) {
     let retryCount = 0;
@@ -2128,7 +2363,11 @@ async function submitSubtasks(subtasks) {
         const title = extractTitleFromPrompt(currentFullPrompt);
         const sessionUrl = await callRunJulesFunction(currentFullPrompt, lastSelectedSourceId, lastSelectedBranch, title);
         if (sessionUrl && !suppressPopups) {
-          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          if (openInBackground) {
+            openUrlInBackground(sessionUrl);
+          } else {
+            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          }
         }
         submitted = true;
       } catch (error) {
@@ -2154,7 +2393,11 @@ async function submitSubtasks(subtasks) {
               const title = extractTitleFromPrompt(currentFullPrompt);
               const sessionUrl = await callRunJulesFunction(currentFullPrompt, lastSelectedSourceId, lastSelectedBranch, title);
               if (sessionUrl) {
-                window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+                if (openInBackground) {
+                  openUrlInBackground(sessionUrl);
+                } else {
+                  window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+                }
               }
               submitted = true;
             } catch (finalError) {
@@ -2209,7 +2452,11 @@ async function submitSubtasks(subtasks) {
         const title = extractTitleFromPrompt(subtask.fullContent) || subtask.title || '';
         const sessionUrl = await callRunJulesFunction(subtask.fullContent, lastSelectedSourceId, lastSelectedBranch, title);
         if (sessionUrl && !suppressPopups) {
-          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          if (openInBackground) {
+            openUrlInBackground(sessionUrl);
+          } else {
+            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          }
         }
         
         successCount++;
