@@ -1,0 +1,94 @@
+name: Auto Version Bump
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '.github/**'
+      - 'README.md'
+      - 'package.json'
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Check if package.json exists
+        id: check_package
+        run: |
+          if [ -f "package.json" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create package.json if needed
+        if: steps.check_package.outputs.exists == 'false'
+        run: |
+          cat > package.json << 'EOF'
+          {
+            "name": "prompt-sharing",
+            "version": "1.0.0",
+            "description": "Share and amplify your team's AI knowledge",
+            "private": true
+          }
+          EOF
+          git add package.json
+      
+      - name: Bump patch version
+        run: npm version patch -m "chore bump version to %s [skip ci]"
+      
+      - name: Extract new version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "new_version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Update constants.js with new version
+        run: |
+          VERSION=${{ steps.version.outputs.new_version }}
+          sed -i "s/export const APP_VERSION = \".*\";/export const APP_VERSION = \"$VERSION\";/" src/utils/constants.js
+          git add src/utils/constants.js
+          git commit --amend --no-edit
+      
+      - name: Push changes
+        run: git push --follow-tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create release notes
+        run: |
+          VERSION=${{ steps.version.outputs.new_version }}
+          echo "Version $VERSION deployed" > release_notes.txt
+          echo "" >> release_notes.txt
+          git log -1 --skip=1 --pretty=format:"### Changes%n%n- %s%n%n%b" >> release_notes.txt
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.new_version }}
+          name: Release v${{ steps.version.outputs.new_version }}
+          body_path: release_notes.txt
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,5 +1,8 @@
 // ===== All Constants, Regex Patterns, and Magic Strings =====
 
+// App version - update this when releasing new versions
+export const APP_VERSION = "1.0.0";
+
 export const OWNER = "ole-vi";
 export const REPO = "prompt-sharing";
 export const BRANCH = "main";
