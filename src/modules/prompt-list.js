@@ -170,7 +170,25 @@ function buildTree(items) {
   return root;
 }
 
-function renderTree(node, container, forcedExpanded, owner, repo, branch) {
+function highlightMatches(text, query) {
+  if (!query) {
+    return [document.createTextNode(text)];
+  }
+  const regex = new RegExp(`(${query})`, 'gi');
+  const parts = text.split(regex);
+
+  return parts.map(part => {
+    if (part.toLowerCase() === query.toLowerCase()) {
+      const span = document.createElement('span');
+      span.className = 'highlight';
+      span.textContent = part;
+      return span;
+    }
+    return document.createTextNode(part);
+  }).filter(node => node.textContent.length > 0);
+}
+
+function renderTree(node, container, forcedExpanded, owner, repo, branch, query) {
   const entries = Array.from(node.children.values());
   entries.sort((a, b) => {
     if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
@@ -202,7 +220,9 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
 
       const label = document.createElement('span');
       label.className = 'folder-name';
-      label.textContent = entry.name;
+      highlightMatches(entry.name, query).forEach(node => {
+        label.appendChild(node);
+      });
 
       const iconsContainer = document.createElement('div');
       iconsContainer.className = 'folder-icons';
@@ -323,7 +343,7 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       const childList = document.createElement('ul');
       childList.style.display = isExpanded ? 'block' : 'none';
       li.appendChild(childList);
-      renderTree(entry, childList, forcedExpanded, owner, repo, branch);
+      renderTree(entry, childList, forcedExpanded, owner, repo, branch, query);
       if (!childList.children.length) {
         continue;
       }
@@ -351,7 +371,10 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       left.style.gap = '2px';
       const t = document.createElement('div');
       t.className = 'item-title';
-      t.textContent = prettyTitle(file.name);
+      const titleText = prettyTitle(file.name);
+      highlightMatches(titleText, query).forEach(node => {
+        t.appendChild(node);
+      });
       left.appendChild(t);
       a.appendChild(left);
       li.appendChild(a);
@@ -402,7 +425,7 @@ export function renderList(items, owner, repo, branch) {
   const rootList = document.createElement('ul');
   listEl.appendChild(rootList);
   const tree = buildTree(filtered);
-  renderTree(tree, rootList, forcedExpanded, owner, repo, branch);
+  renderTree(tree, rootList, forcedExpanded, owner, repo, branch, q);
   updateActiveItem();
 }
 
