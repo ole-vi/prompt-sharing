@@ -8,6 +8,7 @@ import statusBar from './modules/status-bar.js';
 import { initPromptList, loadList, loadExpandedState, renderList, setSelectFileCallback, setRepoContext } from './modules/prompt-list.js';
 import { initPromptRenderer, selectBySlug, selectFile, setHandleTryInJulesCallback } from './modules/prompt-renderer.js';
 import { initBranchSelector, loadBranches, setCurrentBranch, setCurrentRepo } from './modules/branch-selector.js';
+import { initDropdowns } from './modules/dropdown.js';
 
 // App state
 let currentOwner = OWNER;
@@ -30,6 +31,7 @@ function initApp() {
   initPromptRenderer();
   initBranchSelector(currentOwner, currentRepo, currentBranch);
   initJulesKeyModalListeners();
+  initDropdowns();
   
   // Init status bar
   statusBar.init();

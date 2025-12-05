@@ -804,7 +804,7 @@ export async function showJulesEnvModal(promptText) {
           dropdownMenu.querySelectorAll('.custom-dropdown-item').forEach(i => i.classList.remove('selected'));
           item.classList.add('selected');
           dropdownText.textContent = repoName;
-          dropdownMenu.style.display = 'none';
+          item.closest('[data-dropdown]').classList.remove('active');
           selectedSourceId = item.dataset.value;
           selectedBranch = defaultBranch;
           submitBtn.disabled = false;
@@ -830,18 +830,8 @@ export async function showJulesEnvModal(promptText) {
   };
 
   dropdownBtn.onclick = () => {
-    if (dropdownMenu.style.display === 'block') {
-      dropdownMenu.style.display = 'none';
-    } else {
-      loadAllRepos();
-    }
+    loadAllRepos();
   };
-
-  document.addEventListener('click', (e) => {
-    if (!allReposContainer.contains(e.target)) {
-      dropdownMenu.style.display = 'none';
-    }
-  });
 
   submitBtn.onclick = () => {
     if (selectedSourceId && selectedBranch) {
@@ -1837,29 +1827,16 @@ export function showFreeInputForm() {
 
   const copenMenu = document.getElementById('freeInputCopenMenu');
   
-  copenBtn.onclick = (e) => {
-    e.stopPropagation();
-    copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
-  };
-  
   if (copenMenu) {
     copenMenu.querySelectorAll('.custom-dropdown-item').forEach(item => {
       item.onclick = async (e) => {
-        e.stopPropagation();
         const target = item.dataset.target;
         await handleCopen(target);
-        copenMenu.style.display = 'none';
+        item.closest('[data-dropdown]').classList.remove('active');
       };
     });
   }
   
-  const closeCopenMenu = (e) => {
-    if (!copenBtn.contains(e.target) && !copenMenu.contains(e.target)) {
-      copenMenu.style.display = 'none';
-    }
-  };
-  document.addEventListener('click', closeCopenMenu);
-
   submitBtn.onclick = handleSubmit;
   queueBtn.onclick = handleQueue;
   splitBtn.onclick = handleSplit;
@@ -1926,7 +1903,7 @@ async function populateFreeInputRepoSelection() {
           lastSelectedSourceId = fav.id;
           lastSelectedBranch = fav.branch || 'master';
           dropdownText.textContent = `${fav.emoji || '📦'} ${fav.name}`;
-          dropdownMenu.style.display = 'none';
+          item.closest('[data-dropdown]').classList.remove('active');
           populateFreeInputBranchSelection();
         };
         
@@ -1995,7 +1972,7 @@ async function populateFreeInputRepoSelection() {
             lastSelectedSourceId = item.dataset.sourceId;
             lastSelectedBranch = item.dataset.branch;
             dropdownText.textContent = repoName;
-            dropdownMenu.style.display = 'none';
+            item.closest('[data-dropdown]').classList.remove('active');
             populateFreeInputBranchSelection();
           };
           
@@ -2038,15 +2015,6 @@ async function populateFreeInputRepoSelection() {
   };
 
   dropdownBtn.onclick = toggleDropdown;
-  
-  const closeDropdown = (e) => {
-    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-      dropdownMenu.style.display = 'none';
-    }
-  };
-  
-  document.removeEventListener('click', closeDropdown);
-  document.addEventListener('click', closeDropdown);
 }
 
 async function populateFreeInputBranchSelection() {
@@ -2082,7 +2050,7 @@ async function populateFreeInputBranchSelection() {
     currentItem.dataset.branch = lastSelectedBranch;
     
     currentItem.onclick = () => {
-      dropdownMenu.style.display = 'none';
+      currentItem.closest('[data-dropdown]').classList.remove('active');
     };
     
     dropdownMenu.appendChild(currentItem);
@@ -2131,7 +2099,7 @@ async function populateFreeInputBranchSelection() {
         item.onclick = () => {
           lastSelectedBranch = branch.name;
           dropdownText.textContent = `🌿 ${branch.name}`;
-          dropdownMenu.style.display = 'none';
+          item.closest('[data-dropdown]').classList.remove('active');
         };
         
         dropdownMenu.appendChild(item);
@@ -2144,15 +2112,6 @@ async function populateFreeInputBranchSelection() {
   };
 
   dropdownBtn.onclick = toggleBranchDropdown;
-  
-  const closeBranchDropdown = (e) => {
-    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-      dropdownMenu.style.display = 'none';
-    }
-  };
-  
-  document.removeEventListener('click', closeBranchDropdown);
-  document.addEventListener('click', closeBranchDropdown);
 }
 
 let currentFullPrompt = '';

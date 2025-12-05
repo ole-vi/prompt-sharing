@@ -51,28 +51,15 @@ export function initPromptRenderer() {
   if (copyBtn) copyBtn.addEventListener('click', handleCopyPrompt);
   if (copenBtn) {
     const copenMenu = document.getElementById('copenMenu');
-    
-    copenBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
-    });
-    
-    // Handle menu item clicks
     if (copenMenu) {
       copenMenu.querySelectorAll('.custom-dropdown-item').forEach(item => {
         item.addEventListener('click', async (e) => {
-          e.stopPropagation();
           const target = item.dataset.target;
           await handleCopenPrompt(target);
-          copenMenu.style.display = 'none';
+          item.closest('[data-dropdown]').classList.remove('active');
         });
       });
     }
-    
-    // Close menu when clicking outside
-    document.addEventListener('click', () => {
-      if (copenMenu) copenMenu.style.display = 'none';
-    });
   }
   if (shareBtn) shareBtn.addEventListener('click', handleShareLink);
   if (julesBtn) {
@@ -93,50 +80,36 @@ export function initPromptRenderer() {
   if (moreBtn) {
     const moreMenu = document.getElementById('moreMenu');
     
-    moreBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      moreMenu.style.display = moreMenu.style.display === 'none' ? 'block' : 'none';
-    });
-    
-    // Handle menu item clicks
     const moreEditBtn = document.getElementById('moreEditBtn');
     const moreGhBtn = document.getElementById('moreGhBtn');
     const moreRawBtn = document.getElementById('moreRawBtn');
     
     if (moreEditBtn) {
       moreEditBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
         if (editBtn && editBtn.href) {
           window.open(editBtn.href, '_blank', 'noopener,noreferrer');
         }
-        moreMenu.style.display = 'none';
+        moreEditBtn.closest('[data-dropdown]').classList.remove('active');
       });
     }
     
     if (moreGhBtn) {
       moreGhBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
         if (ghBtn && ghBtn.href) {
           window.open(ghBtn.href, '_blank', 'noopener,noreferrer');
         }
-        moreMenu.style.display = 'none';
+        moreGhBtn.closest('[data-dropdown]').classList.remove('active');
       });
     }
     
     if (moreRawBtn) {
       moreRawBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
         if (rawBtn && rawBtn.href) {
           window.open(rawBtn.href, '_blank', 'noopener,noreferrer');
         }
-        moreMenu.style.display = 'none';
+        moreRawBtn.closest('[data-dropdown]').classList.remove('active');
       });
     }
-    
-    // Close menu when clicking outside
-    document.addEventListener('click', () => {
-      if (moreMenu) moreMenu.style.display = 'none';
-    });
   }
 
   // Clear prompt when branch changes

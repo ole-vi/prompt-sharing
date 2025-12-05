@@ -92,9 +92,9 @@
       <div id="meta" style="display:none"></div>
       <div id="actions" style="display:none">
         <button class="btn" id="copyBtn" title="Copy the entire prompt">📋 Copy</button>
-        <div style="position:relative; display:inline-block;">
-          <button class="btn" id="copenBtn" title="Copy prompt and open in new tab">📋⤴ Copen ▼</button>
-          <div id="copenMenu" style="display:none; position:absolute; top:100%; left:0; margin-top:4px; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000; min-width:150px;">
+        <div class="dropdown" data-dropdown>
+          <button class="btn" data-dropdown-button id="copenBtn" title="Copy prompt and open in new tab">📋⤴ Copen ▼</button>
+          <div id="copenMenu" class="dropdown-menu">
             <div class="custom-dropdown-item" data-target="blank">🌐 Blank</div>
             <div class="custom-dropdown-item" data-target="claude">🤖 Claude</div>
             <div class="custom-dropdown-item" data-target="codex">💬 Codex</div>
@@ -102,9 +102,9 @@
         </div>
         <button class="btn" id="julesBtn" title="Try this prompt in Jules">⚡ Try in Jules</button>
         <button class="btn" id="shareBtn" title="Copy a link to this prompt">🔗 Copy link</button>
-        <div style="position:relative; display:inline-block;">
-          <button class="btn" id="moreBtn" title="More actions">⋯ More</button>
-          <div id="moreMenu" style="display:none; position:absolute; top:100%; right:0; margin-top:4px; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000; min-width:180px;">
+        <div class="dropdown" data-dropdown>
+          <button class="btn" data-dropdown-button id="moreBtn" title="More actions">⋯ More</button>
+          <div id="moreMenu" class="dropdown-menu dropdown-menu-right">
             <div class="custom-dropdown-item" id="moreEditBtn" style="cursor:pointer;">✏️ Edit on GitHub</div>
             <div class="custom-dropdown-item" id="moreGhBtn" style="cursor:pointer;">🗂️ View on GitHub</div>
             <div class="custom-dropdown-item" id="moreRawBtn" style="cursor:pointer;">📄 Open raw</div>
@@ -140,12 +140,12 @@
       <div id="favoriteReposContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
       
       <div id="allReposContainer" style="margin-bottom:16px; position:relative;">
-        <div id="julesRepoDropdown" class="custom-dropdown" style="width:100%; position:relative;">
-          <button id="julesRepoDropdownBtn" class="custom-dropdown-btn" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--text); font-size:14px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;">
+        <div id="julesRepoDropdown" class="dropdown" data-dropdown>
+          <button id="julesRepoDropdownBtn" class="custom-dropdown-btn" data-dropdown-button>
             <span id="julesRepoDropdownText">Select a repository...</span>
             <span style="color:var(--muted);">▼</span>
           </button>
-          <div id="julesRepoDropdownMenu" class="custom-dropdown-menu" style="display:none; position:absolute; top:100%; left:0; right:0; margin-top:4px; max-height:300px; overflow-y:auto; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000;">
+          <div id="julesRepoDropdownMenu" class="dropdown-menu">
           </div>
         </div>
       </div>
@@ -267,24 +267,24 @@
           <!-- Repository Selection -->
           <div style="flex: 1;">
             <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Repository:</label>
-            <div id="freeInputRepoDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
-              <button id="freeInputRepoDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+            <div id="freeInputRepoDropdown" class="dropdown" data-dropdown>
+              <button id="freeInputRepoDropdownBtn" class="custom-dropdown-btn" data-dropdown-button>
                 <span id="freeInputRepoDropdownText">Select repository...</span>
                 <span style="color: var(--muted);">▼</span>
               </button>
-              <div id="freeInputRepoDropdownMenu" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 300px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
+              <div id="freeInputRepoDropdownMenu" class="dropdown-menu"></div>
             </div>
           </div>
           
           <!-- Branch Selection -->
           <div style="flex: 1;">
             <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Branch:</label>
-            <div id="freeInputBranchDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
-              <button id="freeInputBranchDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+            <div id="freeInputBranchDropdown" class="dropdown" data-dropdown>
+              <button id="freeInputBranchDropdownBtn" class="custom-dropdown-btn" data-dropdown-button>
                 <span id="freeInputBranchDropdownText">Select branch...</span>
                 <span style="color: var(--muted);">▼</span>
               </button>
-              <div id="freeInputBranchDropdownMenu" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 300px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
+              <div id="freeInputBranchDropdownMenu" class="dropdown-menu"></div>
             </div>
           </div>
         </div>
@@ -304,9 +304,9 @@
       <div class="modal-buttons">
 
         <button id="freeInputSplitBtn" class="btn" title="Split into Subtasks">✂️</button>
-        <div style="position:relative; display:inline-block;">
-          <button id="freeInputCopenBtn" class="btn" title="Copy prompt and open in new tab">📋⤴ ▼</button>
-          <div id="freeInputCopenMenu" style="display:none; position:absolute; bottom:100%; left:0; margin-bottom:4px; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000; min-width:150px;">
+        <div class="dropdown" data-dropdown>
+          <button id="freeInputCopenBtn" class="btn" data-dropdown-button title="Copy prompt and open in new tab">📋⤴ ▼</button>
+          <div id="freeInputCopenMenu" class="dropdown-menu dropdown-menu-top">
             <div class="custom-dropdown-item" data-target="blank">🌐 Blank</div>
             <div class="custom-dropdown-item" data-target="claude">🤖 Claude</div>
             <div class="custom-dropdown-item" data-target="codex">💬 Codex</div>
