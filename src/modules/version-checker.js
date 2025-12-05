@@ -71,7 +71,7 @@ function showUpdateAlert(newVersion) {
   document.body.style.paddingTop = banner.offsetHeight + 'px';
   
   document.getElementById('refreshBtn')?.addEventListener('click', () => {
-    window.location.reload(true);
+    window.location.reload();
   });
   
   document.getElementById('dismissBtn')?.addEventListener('click', () => {
