@@ -51,8 +51,8 @@ exports.runJules = functions.https.onCall(async (data, context) => {
   const sourceId = (data && data.sourceId) || "sources/github/open-learning-exchange/myplanet";
   const branch = (data && data.branch) || "master";
 
-  if (!promptText || typeof promptText !== "string" || promptText.length < 4) {
-    throw new functions.https.HttpsError("invalid-argument", "Prompt text is required (minimum 4 characters)");
+  if (!promptText || typeof promptText !== "string" || promptText.trim() === "") {
+    throw new functions.https.HttpsError("invalid-argument", "Prompt text is required");
   }
 
   if (!sourceId || typeof sourceId !== "string" || !sourceId.startsWith("sources/github/")) {
@@ -155,8 +155,8 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
     const startingBranch = branch || "master";
 
 
-    if (!promptText || typeof promptText !== 'string' || promptText.length < 4) {
-      res.status(400).json({ error: 'promptText must be a non-empty string (min 4 chars)' });
+    if (!promptText || typeof promptText !== 'string' || promptText.trim() === '') {
+      res.status(400).json({ error: 'promptText must be a non-empty string' });
       return;
     }
 
