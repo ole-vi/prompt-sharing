@@ -80,7 +80,7 @@ jobs:
           VERSION=${{ steps.version.outputs.new_version }}
           echo "Version $VERSION deployed" > release_notes.txt
           echo "" >> release_notes.txt
-          git log -1 --skip=1 --pretty=format:"### Changes%n%n- %s%n%n%b" >> release_notes.txt
+          git log -1 HEAD^ --pretty=format:"### Changes%n%n- %s%n%n%b" >> release_notes.txt
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
