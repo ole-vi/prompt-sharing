@@ -1,6 +1,6 @@
 // ===== Version Checker Module =====
 
-import { APP_VERSION } from '../utils/constants.js';
+import { APP_VERSION, DEPLOYMENT_BASE_URL } from '../utils/constants.js';
 import statusBar from './status-bar.js';
 
 const VERSION_CHECK_KEY = 'lastVersionCheckTime';
@@ -11,7 +11,7 @@ let versionCheckTimer = null;
 
 async function fetchDeployedVersion() {
   try {
-    const response = await fetch(`https://ole-vi.github.io/prompt-sharing/src/utils/constants.js?t=${Date.now()}`);
+    const response = await fetch(`${DEPLOYMENT_BASE_URL}/src/utils/constants.js?t=${Date.now()}`);
     
     if (!response.ok) {
       console.warn('Could not fetch deployed version:', response.status);
@@ -49,7 +49,7 @@ function compareVersions(v1, v2) {
 }
 
 function showUpdateAlert(newVersion) {
-  const dismissed = sessionStorage.getItem(DISMISSED_VERSION_KEY);
+  const dismissed = localStorage.getItem(DISMISSED_VERSION_KEY);
   if (dismissed === newVersion) {
     return;
   }
@@ -75,7 +75,7 @@ function showUpdateAlert(newVersion) {
   });
   
   document.getElementById('dismissBtn')?.addEventListener('click', () => {
-    sessionStorage.setItem(DISMISSED_VERSION_KEY, newVersion);
+    localStorage.setItem(DISMISSED_VERSION_KEY, newVersion);
     banner.remove();
     document.body.style.paddingTop = '0';
   });
@@ -83,13 +83,13 @@ function showUpdateAlert(newVersion) {
 
 async function checkVersion() {
   const now = Date.now();
-  const lastCheck = sessionStorage.getItem(VERSION_CHECK_KEY);
+  const lastCheck = localStorage.getItem(VERSION_CHECK_KEY);
   
   if (lastCheck && (now - parseInt(lastCheck)) < CHECK_INTERVAL) {
     return;
   }
   
-  sessionStorage.setItem(VERSION_CHECK_KEY, now.toString());
+  localStorage.setItem(VERSION_CHECK_KEY, now.toString());
   
   const deployedVersion = await fetchDeployedVersion();
   

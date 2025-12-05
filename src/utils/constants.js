@@ -6,6 +6,7 @@ export const APP_VERSION = "1.0.0";
 export const OWNER = "ole-vi";
 export const REPO = "prompt-sharing";
 export const BRANCH = "main";
+export const DEPLOYMENT_BASE_URL = `https://${OWNER}.github.io/${REPO}`;
 export const PRETTY_TITLES = true;
 
 // GitHub API
