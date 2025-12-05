@@ -102,9 +102,6 @@ async function checkVersion() {
   if (comparison < 0) {
     console.log(`Version update available: ${APP_VERSION} -> ${deployedVersion}`);
     showUpdateAlert(deployedVersion);
-    statusBar.show(`New version ${deployedVersion} available! Click to refresh.`, 'warning', () => {
-      window.location.reload(true);
-    });
   } else if (comparison > 0) {
     console.log(`Running dev version: ${APP_VERSION} (deployed: ${deployedVersion})`);
   } else {
