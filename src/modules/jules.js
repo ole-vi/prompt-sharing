@@ -1045,7 +1045,6 @@ export function hideSubtaskErrorModal() {
 export function initJulesKeyModalListeners() {
   const keyModal = document.getElementById('julesKeyModal');
   const envModal = document.getElementById('julesEnvModal');
-  const freeInputModal = document.getElementById('freeInputModal');
   const profileModal = document.getElementById('userProfileModal');
   const sessionsHistoryModal = document.getElementById('julesSessionsHistoryModal');
   const errorModal = document.getElementById('subtaskErrorModal');
@@ -1059,7 +1058,8 @@ export function initJulesKeyModalListeners() {
       if (envModal.style.display === 'flex') {
         hideJulesEnvModal();
       }
-      if (freeInputModal && freeInputModal.style.display === 'flex') {
+      const freeInputSection = document.getElementById('freeInputSection');
+      if (freeInputSection && freeInputSection.style.display === 'flex') {
         hideFreeInputForm();
       }
       if (profileModal.style.display === 'flex') {
@@ -1082,14 +1082,6 @@ export function initJulesKeyModalListeners() {
       hideJulesEnvModal();
     }
   });
-
-  if (freeInputModal) {
-    freeInputModal.addEventListener('click', (e) => {
-      if (e.target === freeInputModal) {
-        hideFreeInputForm();
-      }
-    });
-  }
 
   profileModal.addEventListener('click', (e) => {
     if (e.target === profileModal) {
@@ -1581,7 +1573,21 @@ export async function handleFreeInputAfterAuth() {
 }
 
 export function showFreeInputForm() {
-  const modal = document.getElementById('freeInputModal');
+  const freeInputSection = document.getElementById('freeInputSection');
+  const empty = document.getElementById('empty');
+  const title = document.getElementById('title');
+  const meta = document.getElementById('meta');
+  const actions = document.getElementById('actions');
+  const content = document.getElementById('content');
+  
+  empty.style.display = 'none';
+  title.style.display = 'none';
+  meta.style.display = 'none';
+  actions.style.display = 'none';
+  content.style.display = 'none';
+  
+  freeInputSection.style.display = 'flex';
+  
   const textarea = document.getElementById('freeInputTextarea');
   const submitBtn = document.getElementById('freeInputSubmitBtn');
   const queueBtn = document.getElementById('freeInputQueueBtn');
@@ -1589,7 +1595,6 @@ export function showFreeInputForm() {
   const copenBtn = document.getElementById('freeInputCopenBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
 
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
   textarea.value = '';
   
   populateFreeInputRepoSelection();
@@ -1873,8 +1878,11 @@ export function showFreeInputForm() {
 }
 
 export function hideFreeInputForm() {
-  const modal = document.getElementById('freeInputModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  const freeInputSection = document.getElementById('freeInputSection');
+  const empty = document.getElementById('empty');
+  
+  freeInputSection.style.display = 'none';
+  empty.style.display = 'flex';
 }
 
 async function populateFreeInputRepoSelection() {

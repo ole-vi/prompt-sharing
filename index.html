@@ -88,6 +88,69 @@
       <div id="empty" style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; min-height:300px; color:var(--muted); font-size:16px;">
         <span>Please select a prompt from the list.</span>
       </div>
+      
+      <!-- Free Input Section (shown in main area) -->
+      <div id="freeInputSection" style="display:none; flex-direction:column; flex:1;">
+        <h2 style="margin:0 0 12px; font-size:20px;">Free Input</h2>
+        <p style="margin:0 0 16px; color:var(--muted); font-size:13px;">Enter your custom prompt below: <span style="font-size: 11px; color: var(--muted);">(Use --- to split into subtasks)</span></p>
+        <textarea id="freeInputTextarea" placeholder="Enter your prompt here..." style="width:100%; min-height:250px; padding:12px; border:1px solid var(--border); border-radius:8px; background:#12162a; color:var(--text); outline:none; margin-bottom:16px; box-sizing:border-box; resize:vertical; font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, Noto Sans, Liberation Sans, Helvetica Neue, sans-serif; font-size:14px; flex:1;"></textarea>
+        
+        <!-- Repository and Branch Selection -->
+        <div style="margin: 16px 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.02);">
+          <div style="display: flex; gap: 12px; align-items: start;">
+            <!-- Repository Selection -->
+            <div style="flex: 1;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Repository:</label>
+              <div id="freeInputRepoDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
+                <button id="freeInputRepoDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+                  <span id="freeInputRepoDropdownText">Select repository...</span>
+                  <span style="color: var(--muted);">▼</span>
+                </button>
+                <div id="freeInputRepoDropdownMenu" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 300px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
+              </div>
+            </div>
+            
+            <!-- Branch Selection -->
+            <div style="flex: 1;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Branch:</label>
+              <div id="freeInputBranchDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
+                <button id="freeInputBranchDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+                  <span id="freeInputBranchDropdownText">Select branch...</span>
+                  <span style="color: var(--muted);">▼</span>
+                </button>
+                <div id="freeInputBranchDropdownMenu" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 300px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px; padding:8px; background:rgba(255,255,255,0.02); border-radius:8px;">
+          <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+            <input type="checkbox" id="freeInputSuppressPopupsCheckbox" style="cursor:pointer;" />
+            <span>Suppress Popups</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+            <input type="checkbox" id="freeInputOpenInBackgroundCheckbox" style="cursor:pointer;" />
+            <span>Open in Background</span>
+          </label>
+        </div>
+        
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+          <button id="freeInputSplitBtn" class="btn" title="Split into Subtasks">✂️</button>
+          <div style="position:relative; display:inline-block;">
+            <button id="freeInputCopenBtn" class="btn" title="Copy prompt and open in new tab">📋⤴ ▼</button>
+            <div id="freeInputCopenMenu" style="display:none; position:absolute; bottom:100%; left:0; margin-bottom:4px; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000; min-width:150px;">
+              <div class="custom-dropdown-item" data-target="blank">🌐 Blank</div>
+              <div class="custom-dropdown-item" data-target="claude">🤖 Claude</div>
+              <div class="custom-dropdown-item" data-target="codex">💬 Codex</div>
+            </div>
+          </div>
+          <button id="freeInputCancelBtn" class="btn">Cancel</button>
+          <button id="freeInputQueueBtn" class="btn">Queue</button>
+          <button id="freeInputSubmitBtn" class="btn primary" style="border-color:var(--accent); color:var(--accent);">Submit to Jules</button>
+        </div>
+      </div>
+      
       <h1 id="title" style="display:none"></h1>
       <div id="meta" style="display:none"></div>
       <div id="actions" style="display:none">
@@ -254,73 +317,8 @@
     </div>
   </div>
 
-  <!-- Free Input Modal -->
-  <div id="freeInputModal" class="modal">
-    <div class="modal-content modal-lg">
-      <h2>Free Input</h2>
-      <p>Enter your custom prompt below: <span style="font-size: 11px; color: var(--muted);">(Use --- to split into subtasks)</span></p>
-      <textarea id="freeInputTextarea" placeholder="Enter your prompt here..." class="modal-textarea"></textarea>
-      
-      <!-- Repository and Branch Selection -->
-      <div style="margin: 16px 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.02);">
-        <div style="display: flex; gap: 12px; align-items: start;">
-          <!-- Repository Selection -->
-          <div style="flex: 1;">
-            <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Repository:</label>
-            <div id="freeInputRepoDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
-              <button id="freeInputRepoDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
-                <span id="freeInputRepoDropdownText">Select repository...</span>
-                <span style="color: var(--muted);">▼</span>
-              </button>
-              <div id="freeInputRepoDropdownMenu" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 300px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
-            </div>
-          </div>
-          
-          <!-- Branch Selection -->
-          <div style="flex: 1;">
-            <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Branch:</label>
-            <div id="freeInputBranchDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
-              <button id="freeInputBranchDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
-                <span id="freeInputBranchDropdownText">Select branch...</span>
-                <span style="color: var(--muted);">▼</span>
-              </button>
-              <div id="freeInputBranchDropdownMenu" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 300px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px; padding:8px; background:rgba(255,255,255,0.02); border-radius:8px;">
-        <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
-          <input type="checkbox" id="freeInputSuppressPopupsCheckbox" style="cursor:pointer;" />
-          <span>Suppress Popups</span>
-        </label>
-        <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
-          <input type="checkbox" id="freeInputOpenInBackgroundCheckbox" style="cursor:pointer;" />
-          <span>Open in Background</span>
-        </label>
-      </div>
-      
-      <div class="modal-buttons">
-
-        <button id="freeInputSplitBtn" class="btn" title="Split into Subtasks">✂️</button>
-        <div style="position:relative; display:inline-block;">
-          <button id="freeInputCopenBtn" class="btn" title="Copy prompt and open in new tab">📋⤴ ▼</button>
-          <div id="freeInputCopenMenu" style="display:none; position:absolute; bottom:100%; left:0; margin-bottom:4px; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000; min-width:150px;">
-            <div class="custom-dropdown-item" data-target="blank">🌐 Blank</div>
-            <div class="custom-dropdown-item" data-target="claude">🤖 Claude</div>
-            <div class="custom-dropdown-item" data-target="codex">💬 Codex</div>
-          </div>
-        </div>
-        <button id="freeInputCancelBtn" class="btn">Cancel</button>
-        <button id="freeInputQueueBtn" class="btn">Queue</button>
-        <button id="freeInputSubmitBtn" class="btn primary">Submit to Jules</button>
-      </div>
-    </div>
-  </div>
-  
   <script>
-    // Mutual exclusivity for Free Input Modal checkboxes
+    // Mutual exclusivity for Free Input checkboxes
     (function() {
       const suppressCheckbox = document.getElementById('freeInputSuppressPopupsCheckbox');
       const backgroundCheckbox = document.getElementById('freeInputOpenInBackgroundCheckbox');

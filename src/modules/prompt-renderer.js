@@ -183,10 +183,19 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     return;
   }
 
+  const freeInputSection = document.getElementById('freeInputSection');
+  if (freeInputSection) {
+    freeInputSection.style.display = 'none';
+  }
+
   setElementDisplay(emptyEl, false);
   setElementDisplay(titleEl, true);
   setElementDisplay(metaEl, true);
   setElementDisplay(actionsEl, true);
+  
+  if (contentEl) {
+    contentEl.style.display = '';
+  }
 
   titleEl.textContent = f.name.replace(/\.md$/i, '');
   metaEl.textContent = `File: ${f.path}`;
