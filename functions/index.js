@@ -47,16 +47,18 @@ exports.runJules = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "Must be signed in to use Jules");
   }
 
-  const promptText = (data && data.promptText) || "";
-  const sourceId = (data && data.sourceId) || "sources/github/open-learning-exchange/myplanet";
-  const branch = (data && data.branch) || "master";
+  const { promptText, sourceId, branch } = data || {};
 
   if (!promptText || typeof promptText !== "string" || promptText.trim() === "") {
     throw new functions.https.HttpsError("invalid-argument", "Prompt text is required");
   }
 
   if (!sourceId || typeof sourceId !== "string" || !sourceId.startsWith("sources/github/")) {
-    throw new functions.https.HttpsError("invalid-argument", "Invalid sourceId format");
+    throw new functions.https.HttpsError("invalid-argument", "A valid sourceId is required");
+  }
+
+  if (!branch || typeof branch !== "string" || branch.trim() === "") {
+    throw new functions.https.HttpsError("invalid-argument", "A valid branch is required");
   }
 
   try {
@@ -151,17 +153,19 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
     const uid = decodedToken.uid;
 
     const { promptText, sourceId, branch } = req.body || {};
-    const source = sourceId || "sources/github/open-learning-exchange/myplanet";
-    const startingBranch = branch || "master";
-
 
     if (!promptText || typeof promptText !== 'string' || promptText.trim() === '') {
       res.status(400).json({ error: 'promptText must be a non-empty string' });
       return;
     }
 
-    if (!source || typeof source !== 'string' || !source.startsWith('sources/github/')) {
-      res.status(400).json({ error: 'Invalid sourceId format' });
+    if (!sourceId || typeof sourceId !== 'string' || !sourceId.startsWith('sources/github/')) {
+      res.status(400).json({ error: 'A valid sourceId is required' });
+      return;
+    }
+
+    if (!branch || typeof branch !== 'string' || branch.trim() === '') {
+      res.status(400).json({ error: 'A valid branch is required' });
       return;
     }
 
@@ -192,8 +196,8 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
       title: req.body.title || 'Unnamed Session',
       prompt: promptText,
       sourceContext: {
-        source: source,
-        githubRepoContext: { startingBranch: startingBranch }
+        source: sourceId,
+        githubRepoContext: { startingBranch: branch }
       }
     };
 
