@@ -431,14 +431,34 @@ async function runSelectedQueueItems() {
     if (pauseBtn) pauseBtn.disabled = true;
   });
 
-  for (const [docId, indices] of Object.entries(subtaskSelections)) {
+  // Sort subtask selections by their parent item's createdAt (oldest first)
+  const sortedSubtaskEntries = Object.entries(subtaskSelections).sort(([docIdA], [docIdB]) => {
+    const itemA = queueCache.find(i => i.id === docIdA);
+    const itemB = queueCache.find(i => i.id === docIdB);
+    const timeA = itemA?.createdAt?.seconds || 0;
+    const timeB = itemB?.createdAt?.seconds || 0;
+    return timeA - timeB;
+  });
+
+  for (const [docId, indices] of sortedSubtaskEntries) {
     if (paused) break;
     if (queueSelections.includes(docId)) continue;
     
-    await runSelectedSubtasks(docId, indices, suppressPopups, openInBackground);
+    // Sort subtask indices in ascending order (1, 2, 3...)
+    const sortedIndices = indices.slice().sort((a, b) => a - b);
+    await runSelectedSubtasks(docId, sortedIndices, suppressPopups, openInBackground);
   }
   
-  for (const id of queueSelections) {
+  // Sort queue selections by createdAt (oldest first)
+  const sortedQueueSelections = queueSelections.slice().sort((idA, idB) => {
+    const itemA = queueCache.find(i => i.id === idA);
+    const itemB = queueCache.find(i => i.id === idB);
+    const timeA = itemA?.createdAt?.seconds || 0;
+    const timeB = itemB?.createdAt?.seconds || 0;
+    return timeA - timeB;
+  });
+  
+  for (const id of sortedQueueSelections) {
     if (paused) break;
     const item = queueCache.find(i => i.id === id);
     if (!item) continue;
