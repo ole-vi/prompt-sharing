@@ -1,7 +1,7 @@
 // ===== Prompt List & Tree Module =====
 
 import { slugify } from '../utils/slug.js';
-import { STORAGE_KEYS, PRETTY_TITLES, EMOJI_PATTERNS } from '../utils/constants.js';
+import { STORAGE_KEYS, PRETTY_TITLES, TAG_DEFINITIONS } from '../utils/constants.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
 import { clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
 
@@ -71,7 +71,7 @@ function prettyTitle(name) {
   const base = name.replace(/\.md$/i, "");
   if (!PRETTY_TITLES) return base;
   
-  for (const [key, { emoji, keywords }] of Object.entries(EMOJI_PATTERNS)) {
+  for (const [key, { emoji, keywords }] of Object.entries(TAG_DEFINITIONS)) {
     if (keywords.some(kw => new RegExp(kw, 'i').test(base))) {
       return emoji + " " + base;
     }
