@@ -399,6 +399,14 @@ async function deleteSelectedQueueItems() {
   }
 }
 
+function sortByCreatedAt(ids) {
+  return ids.slice().sort((a, b) => {
+    const itemA = queueCache.find(i => i.id === a);
+    const itemB = queueCache.find(i => i.id === b);
+    return (itemA?.createdAt?.seconds || 0) - (itemB?.createdAt?.seconds || 0);
+  });
+}
+
 async function runSelectedQueueItems() {
   const user = window.auth?.currentUser;
   if (!user) { alert('Not signed in'); return; }
@@ -431,31 +439,18 @@ async function runSelectedQueueItems() {
     if (pauseBtn) pauseBtn.disabled = true;
   });
 
-  const sortedSubtaskEntries = Object.entries(subtaskSelections).sort(([docIdA], [docIdB]) => {
-    const itemA = queueCache.find(i => i.id === docIdA);
-    const itemB = queueCache.find(i => i.id === docIdB);
-    const timeA = itemA?.createdAt?.seconds || 0;
-    const timeB = itemB?.createdAt?.seconds || 0;
-    return timeA - timeB;
-  });
+  const sortedSubtaskEntries = Object.entries(subtaskSelections).sort(([a], [b]) => 
+    (queueCache.find(i => i.id === a)?.createdAt?.seconds || 0) - (queueCache.find(i => i.id === b)?.createdAt?.seconds || 0)
+  );
 
   for (const [docId, indices] of sortedSubtaskEntries) {
     if (paused) break;
     if (queueSelections.includes(docId)) continue;
     
-    const sortedIndices = indices.slice().sort((a, b) => a - b);
-    await runSelectedSubtasks(docId, sortedIndices, suppressPopups, openInBackground);
+    await runSelectedSubtasks(docId, indices.slice().sort((a, b) => a - b), suppressPopups, openInBackground);
   }
   
-  const sortedQueueSelections = queueSelections.slice().sort((idA, idB) => {
-    const itemA = queueCache.find(i => i.id === idA);
-    const itemB = queueCache.find(i => i.id === idB);
-    const timeA = itemA?.createdAt?.seconds || 0;
-    const timeB = itemB?.createdAt?.seconds || 0;
-    return timeA - timeB;
-  });
-  
-  for (const id of sortedQueueSelections) {
+  for (const id of sortByCreatedAt(queueSelections)) {
     if (paused) break;
     const item = queueCache.find(i => i.id === id);
     if (!item) continue;
