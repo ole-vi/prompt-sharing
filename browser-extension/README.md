@@ -115,11 +115,7 @@ browser-extension/
 ├── content.js             # Extracts page content (runs on every page)
 ├── popup.html             # Extension popup UI
 ├── popup.js               # Popup logic
-├── icons/                 # Extension icons
-│   ├── icon16.svg
-│   ├── icon48.svg
-│   └── icon128.svg
-└── README.md             # This file
+└── README.md              # This file
 ```
 
 ## Customization
