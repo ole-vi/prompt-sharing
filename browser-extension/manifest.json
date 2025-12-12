@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "PromptSync Web Clipper",
+  "version": "1.0.0",
+  "description": "Capture any webpage as Markdown and download it locally",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
