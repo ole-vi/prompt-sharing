@@ -431,7 +431,6 @@ async function runSelectedQueueItems() {
     if (pauseBtn) pauseBtn.disabled = true;
   });
 
-  // Sort subtask selections by their parent item's createdAt (oldest first)
   const sortedSubtaskEntries = Object.entries(subtaskSelections).sort(([docIdA], [docIdB]) => {
     const itemA = queueCache.find(i => i.id === docIdA);
     const itemB = queueCache.find(i => i.id === docIdB);
@@ -444,12 +443,10 @@ async function runSelectedQueueItems() {
     if (paused) break;
     if (queueSelections.includes(docId)) continue;
     
-    // Sort subtask indices in ascending order (1, 2, 3...)
     const sortedIndices = indices.slice().sort((a, b) => a - b);
     await runSelectedSubtasks(docId, sortedIndices, suppressPopups, openInBackground);
   }
   
-  // Sort queue selections by createdAt (oldest first)
   const sortedQueueSelections = queueSelections.slice().sort((idA, idB) => {
     const itemA = queueCache.find(i => i.id === idA);
     const itemB = queueCache.find(i => i.id === idB);
