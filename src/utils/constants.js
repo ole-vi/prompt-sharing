@@ -3,7 +3,7 @@
 export const OWNER = "ole-vi";
 export const REPO = "prompt-sharing";
 export const BRANCH = "main";
-export const PRETTY_TITLES = true;
+export const PRETTY_TITLES = false;
 
 // GitHub API
 export const GIST_POINTER_REGEX = /^https:\/\/gist\.githubusercontent\.com\/\S+\/raw\/\S+$/i;
