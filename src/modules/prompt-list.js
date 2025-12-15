@@ -20,6 +20,7 @@ let currentBranch = null;
 // Sidebar elements
 let listEl = null;
 let searchEl = null;
+let newPromptBtn = null;
 
 // Callback for selectFile - set by app.js to avoid circular dependency
 let selectFileCallback = null;
@@ -34,12 +35,105 @@ export function setRepoContext(owner, repo, branch) {
   currentBranch = branch;
 }
 
+function createSubmenu(owner, repo, branch, path, triggerElement) {
+  const submenu = document.createElement('div');
+  submenu.style.position = 'absolute';
+  submenu.style.background = 'var(--card)';
+  submenu.style.border = '1px solid var(--border)';
+  submenu.style.borderRadius = '8px';
+  submenu.style.padding = '6px 0';
+  submenu.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
+  submenu.style.display = 'none';
+  submenu.style.zIndex = '10';
+
+  const makeMenuItem = (label, emoji, onClick) => {
+    const item = document.createElement('div');
+    item.textContent = `${emoji} ${label}`;
+    item.style.padding = '6px 14px';
+    item.style.cursor = 'pointer';
+    item.style.fontSize = '13px';
+    item.style.color = 'var(--text)';
+    item.addEventListener('mouseenter', () => item.style.background = '#1a1f35');
+    item.addEventListener('mouseleave', () => item.style.background = 'transparent');
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      submenu.style.display = 'none';
+      onClick();
+    });
+    return item;
+  };
+
+  submenu.appendChild(makeMenuItem("Prompt (blank)", "📝", () => {
+    const newFilePath = path ? `${path}/new-prompt.md` : 'new-prompt.md';
+    const ghUrl = `https://github.com/${owner}/${repo}/new/${branch}?filename=${encodeURIComponent(newFilePath)}&ref=${encodeURIComponent(branch)}`;
+    window.open(ghUrl, '_blank', 'noopener,noreferrer');
+  }));
+
+  submenu.appendChild(makeMenuItem("Conversation (template)", "💬", () => {
+    const template = `**Conversation Link (Codex, Jules, etc):** [https://chatgpt.com/s/...]\n\n### Prompt\n[paste your full prompt here]\n\n### Additional Info\n[context, notes, or follow-up thoughts]\n`;
+    const encoded = encodeURIComponent(template);
+    const newFilePath = path ? `${path}/new-conversation.md` : 'new-conversation.md';
+    const ghUrl = `https://github.com/${owner}/${repo}/new/${branch}?filename=${encodeURIComponent(newFilePath)}&value=${encoded}&ref=${encodeURIComponent(branch)}`;
+    window.open(ghUrl, '_blank', 'noopener,noreferrer');
+  }));
+
+  document.body.appendChild(submenu);
+
+  const wasOpen = submenu.style.display === 'block';
+  closeAllSubmenus();
+
+  if (!wasOpen) {
+    const rect = triggerElement.getBoundingClientRect();
+
+    submenu.style.display = 'block';
+    submenu.style.visibility = 'hidden';
+    const submenuRect = submenu.getBoundingClientRect();
+
+    let left = rect.right;
+    let top = rect.top;
+
+    if (left + submenuRect.width > window.innerWidth - 10) {
+      left = rect.left - submenuRect.width;
+    }
+
+    if (top + submenuRect.height > window.innerHeight - 10) {
+      top = rect.bottom - submenuRect.height;
+    }
+
+    if (left < 10) {
+      left = 10;
+    }
+
+    if (top < 10) {
+      top = 10;
+    }
+
+    submenu.style.left = left + 'px';
+    submenu.style.top = top + 'px';
+    submenu.style.visibility = 'visible';
+    openSubmenus.add(submenu);
+    if (triggerElement.parentElement.classList.contains('tree-dir')) {
+      triggerElement.parentElement.classList.add('submenu-open');
+      activeSubmenuHeaders.add(triggerElement.parentElement);
+    }
+  }
+}
+
 export function initPromptList() {
   listEl = document.getElementById('list');
   searchEl = document.getElementById('search');
+  newPromptBtn = document.getElementById('newPromptBtn');
+
   if (searchEl) {
     searchEl.addEventListener('input', () => renderList(files, currentOwner, currentRepo, currentBranch));
   }
+  if (newPromptBtn) {
+    newPromptBtn.addEventListener('click', (ev) => {
+      stopPropagation(ev);
+      createSubmenu(currentOwner, currentRepo, currentBranch, 'prompts', newPromptBtn);
+    });
+  }
+  document.addEventListener('click', () => closeAllSubmenus());
 }
 
 export function getFiles() {
@@ -221,96 +315,10 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       addIcon.className = 'add-file-icon';
       addIcon.textContent = '+';
       addIcon.title = 'Create new file in this directory';
-
-      const submenu = document.createElement('div');
-      submenu.style.position = 'absolute';
-      submenu.style.background = 'var(--card)';
-      submenu.style.border = '1px solid var(--border)';
-      submenu.style.borderRadius = '8px';
-      submenu.style.padding = '6px 0';
-      submenu.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
-      submenu.style.display = 'none';
-      submenu.style.zIndex = '10';
-
-      const makeMenuItem = (label, emoji, onClick) => {
-        const item = document.createElement('div');
-        item.textContent = `${emoji} ${label}`;
-        item.style.padding = '6px 14px';
-        item.style.cursor = 'pointer';
-        item.style.fontSize = '13px';
-        item.style.color = 'var(--text)';
-        item.addEventListener('mouseenter', () => item.style.background = '#1a1f35');
-        item.addEventListener('mouseleave', () => item.style.background = 'transparent');
-        item.addEventListener('click', (e) => {
-          e.stopPropagation();
-          submenu.style.display = 'none';
-          onClick();
-        });
-        return item;
-      };
-
-      submenu.appendChild(makeMenuItem("Prompt (blank)", "📝", () => {
-        const newFilePath = entry.path ? `${entry.path}/new-prompt.md` : 'new-prompt.md';
-        // GitHub's /new/{branch} endpoint: uses branch if it exists on the repo
-        // Include ref parameter to ensure correct branch is selected in the web UI
-        const ghUrl = `https://github.com/${owner}/${repo}/new/${branch}?filename=${encodeURIComponent(newFilePath)}&ref=${encodeURIComponent(branch)}`;
-        window.open(ghUrl, '_blank', 'noopener,noreferrer');
-      }));
-
-      submenu.appendChild(makeMenuItem("Conversation (template)", "💬", () => {
-        const template = `**Conversation Link (Codex, Jules, etc):** [https://chatgpt.com/s/...]\n\n### Prompt\n[paste your full prompt here]\n\n### Additional Info\n[context, notes, or follow-up thoughts]\n`;
-        const encoded = encodeURIComponent(template);
-        const newFilePath = entry.path ? `${entry.path}/new-conversation.md` : 'new-conversation.md';
-        // GitHub's /new/{branch} endpoint: uses branch if it exists on the repo
-        // Include ref parameter to ensure correct branch is selected in the web UI
-        const ghUrl = `https://github.com/${owner}/${repo}/new/${branch}?filename=${encodeURIComponent(newFilePath)}&value=${encoded}&ref=${encodeURIComponent(branch)}`;
-        window.open(ghUrl, '_blank', 'noopener,noreferrer');
-      }));
-
-      document.body.appendChild(submenu);
-
       addIcon.addEventListener('click', (ev) => {
         stopPropagation(ev);
-
-        const wasOpen = submenu.style.display === 'block';
-        closeAllSubmenus();
-
-        if (!wasOpen) {
-          const rect = addIcon.getBoundingClientRect();
-
-          submenu.style.display = 'block';
-          submenu.style.visibility = 'hidden';
-          const submenuRect = submenu.getBoundingClientRect();
-
-          let left = rect.right;
-          let top = rect.top;
-
-          if (left + submenuRect.width > window.innerWidth - 10) {
-            left = rect.left - submenuRect.width;
-          }
-
-          if (top + submenuRect.height > window.innerHeight - 10) {
-            top = rect.bottom - submenuRect.height;
-          }
-
-          if (left < 10) {
-            left = 10;
-          }
-
-          if (top < 10) {
-            top = 10;
-          }
-
-          submenu.style.left = left + 'px';
-          submenu.style.top = top + 'px';
-          submenu.style.visibility = 'visible';
-          openSubmenus.add(submenu);
-          header.classList.add('submenu-open');
-          activeSubmenuHeaders.add(header);
-        }
+        createSubmenu(owner, repo, branch, entry.path, addIcon);
       });
-
-      document.addEventListener('click', () => closeAllSubmenus());
 
       iconsContainer.appendChild(ghIcon);
       iconsContainer.appendChild(addIcon);
