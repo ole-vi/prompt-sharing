@@ -2,13 +2,30 @@
   "manifest_version": 3,
   "name": "PromptSync Web Clipper",
   "version": "1.0.0",
-  "description": "Capture any webpage as Markdown and download it locally",
+  "description": "Capture any webpage as Markdown and sync to GitHub",
+  "icons": {
+    "16": "promptclipper.png",
+    "48": "promptclipper.png",
+    "128": "promptclipper.png"
+  },
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://api.github.com/*",
+    "https://*.cloudfunctions.net/*",
+    "https://*.firebaseapp.com/*"
   ],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "promptclipper.png",
+      "48": "promptclipper.png",
+      "128": "promptclipper.png"
+    }
   },
   "content_scripts": [
     {
@@ -16,5 +33,11 @@
       "js": ["content.js"],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "externally_connectable": {
+    "matches": ["https://prompt-sharing-f8eeb.firebaseapp.com/*"]
+  }
 }

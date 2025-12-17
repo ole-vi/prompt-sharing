@@ -290,3 +290,142 @@ exports.getJulesKeyInfo = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("internal", `Error retrieving key info: ${error.message}`);
   }
 });
+
+// ===== GitHub OAuth for Browser Extension =====
+
+// Exchange OAuth code for GitHub access token
+exports.githubOAuthExchange = functions.https.onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    res.status(400).json({ error: 'Method not allowed. Use POST.' });
+    return;
+  }
+
+  try {
+    const { code, state } = req.body;
+
+    if (!code) {
+      res.status(400).json({ error: 'Missing authorization code' });
+      return;
+    }
+
+    // Verify state starts with "extension-" to ensure this is from our extension
+    if (!state || !state.startsWith('extension-')) {
+      res.status(400).json({ error: 'Invalid state parameter' });
+      return;
+    }
+
+    // Get GitHub OAuth credentials from environment
+    const clientId = process.env.GITHUB_CLIENT_ID;
+    const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      console.error('GitHub OAuth credentials not configured');
+      res.status(500).json({ error: 'Server configuration error' });
+      return;
+    }
+
+    // Exchange code for access token
+    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code: code
+      })
+    });
+
+    const tokenData = await tokenResponse.json();
+
+    if (tokenData.error) {
+      console.error('GitHub OAuth error:', tokenData.error_description);
+      res.status(400).json({ 
+        error: tokenData.error_description || 'Failed to exchange code for token' 
+      });
+      return;
+    }
+
+    if (!tokenData.access_token) {
+      res.status(500).json({ error: 'No access token received from GitHub' });
+      return;
+    }
+
+    // Return token to extension
+    res.json({
+      access_token: tokenData.access_token,
+      scope: tokenData.scope,
+      token_type: tokenData.token_type
+    });
+
+  } catch (error) {
+    console.error('Error in githubOAuthExchange:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get GitHub user information using access token
+exports.getGitHubUser = functions.https.onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  if (req.method !== 'GET') {
+    res.status(400).json({ error: 'Method not allowed. Use GET.' });
+    return;
+  }
+
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({ error: 'Missing or invalid Authorization header' });
+      return;
+    }
+
+    const token = authHeader.substring('Bearer '.length);
+
+    // Fetch user info from GitHub
+    const userResponse = await fetch('https://api.github.com/user', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'PromptSync-WebClipper'
+      }
+    });
+
+    if (!userResponse.ok) {
+      res.status(userResponse.status).json({ error: 'Failed to fetch user info from GitHub' });
+      return;
+    }
+
+    const userData = await userResponse.json();
+
+    res.json({
+      login: userData.login,
+      name: userData.name,
+      avatar_url: userData.avatar_url,
+      email: userData.email
+    });
+
+  } catch (error) {
+    console.error('Error in getGitHubUser:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});

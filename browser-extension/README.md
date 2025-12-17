@@ -1,6 +1,6 @@
 # PromptSync Web Clipper Browser Extension
 
-A simple browser extension that captures any webpage as Markdown and downloads it locally to your computer.
+A browser extension that captures any webpage as Markdown and syncs it directly to your GitHub repository.
 
 ## Features
 
@@ -8,8 +8,10 @@ A simple browser extension that captures any webpage as Markdown and downloads i
 - 📝 **Markdown Conversion**: Automatically converts HTML to clean Markdown
 - 🔗 **Preserves Links**: Keeps all hyperlinks and images intact
 - 📊 **Smart Extraction**: Removes navigation, ads, and other clutter
-- ⚡ **Instant Download**: Downloads directly to your Downloads folder
-- 🎯 **No Setup Required**: Works immediately after installation
+- ☁️ **GitHub Sync**: Automatically sync clips to your GitHub repository
+- ⚡ **Instant Download**: Option to download locally to your Downloads folder
+- 🔐 **Secure OAuth**: Connect via GitHub OAuth (no PAT needed)
+- 👥 **Multi-User**: Each user gets their own folder in the repository
 
 ## Installation
 
@@ -47,7 +49,20 @@ A simple browser extension that captures any webpage as Markdown and downloads i
 
 ## Usage
 
-### Capturing a Webpage
+### First Time Setup - Connect to GitHub
+
+1. **Click the extension icon** to open the popup
+
+2. **Click "🔗 Connect to GitHub"**
+
+3. **Authorize the application** on GitHub
+   - You'll be redirected to GitHub
+   - Click "Authorize" to grant access
+   - The extension will automatically complete authentication
+
+4. **You're connected!** Your GitHub username will appear in the popup
+
+### Syncing a Webpage to GitHub
 
 1. **Navigate to any webpage** you want to save (ChatGPT conversation, article, documentation, etc.)
 
@@ -58,9 +73,18 @@ A simple browser extension that captures any webpage as Markdown and downloads i
    - Suggested filename (editable)
    - Preview of converted Markdown
 
-4. **Click "💾 Download Markdown"**
+4. **Choose your action**:
+   - **💾 Download**: Save locally to your Downloads folder
+   - **☁️ Sync to GitHub**: Commit directly to the repository
 
-5. **Done!** The `.md` file is downloaded to your Downloads folder
+5. **Done!** Your clip is synced to `webclips/{your-username}/{filename}.md`
+
+### Viewing Your Clips
+
+Your synced clips appear at:
+```
+https://github.com/jessewashburn/prompt-sharing/tree/main/webclips/{your-username}
+```
 
 ### File Format
 
@@ -102,10 +126,31 @@ When you make changes to the extension code:
 - Refresh the webpage you're trying to clip
 - The extension needs to inject its content script first
 
-### Extension disappeared (Firefox only)
+### "Not connected to GitHub"
 
+- Click "Connect to GitHub" in the popup
+- Make sure you authorize the application on GitHub
+- Check that pop-ups are not blocked
+
+### "Permission denied" when syncing
+
+- You need to be added as a collaborator to the repository
+- Contact the repository owner to grant you access
+
+### Extension disappeared (Firefox only)
+ and GitHub sync
+├── config.js              # OAuth and GitHub configuration
+├── github-auth.js         # GitHub OAuth authentication
+├── github-sync.js         # GitHub API sync logic
+├── background.js          # Service worker for OAuth callbacks
 - Temporary extensions are removed when Firefox closes
 - Reload it from `about:debugging` each time, or use Chrome for permanent local installation
+
+### OAuth errors
+
+- Make sure the Firebase Functions are deployed
+- Check browser console for detailed error messages
+- Verify your GitHub OAuth app is configured correctly
 
 ## File Structure
 
@@ -139,12 +184,31 @@ function generateFilename(title, domain) {
 ## Limitations
 
 - Cannot capture pages behind authentication that require cookies (but CAN capture pages you're viewing while logged in)
-- Canvas/WebGL content is not captured
-- Some dynamic content may not be preserved
-- Large images are linked, not embedded
+- CConfiguration
+
+The extension is pre-configured to sync with the `prompt-sharing` repository. If you want to fork this and use your own repository:
+
+1. Edit [config.js](config.js)
+2. Update `github.targetRepo.owner` and `github.targetRepo.repo`
+3. Register your own GitHub OAuth app
+4. Update `github.clientId` in config.js
+5. Configure Firebase Functions with your OAuth credentials
+
+## Security
+
+- GitHub OAuth client secret is stored securely in Firebase Functions (server-side)
+- Access tokens are stored in Chrome's encrypted sync storage
+- State parameter prevents CSRF attacks
+- All OAuth token exchanges happen server-side, not in the extension
 
 ## Next Steps
 
+- Add support for selecting specific page regions
+- Add templates for different types of pages (ChatGPT, documentation, articles)
+- Add bulk capture for multiple tabs
+- Add image downloading and embedding
+- Add conflict resolution for duplicate filenames
+- Add sync history and status indicators
 - Add support for selecting specific page regions
 - Add templates for different types of pages (ChatGPT, documentation, articles)
 - Add bulk capture for multiple tabs

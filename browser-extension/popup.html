@@ -155,6 +155,22 @@
   <h1>💾 PromptSync Clipper</h1>
 
   <div id="mainView">
+    <!-- GitHub Connection Status -->
+    <div class="section" id="githubSection">
+      <div id="githubDisconnected">
+        <button class="button secondary" id="connectGitHubBtn">🔗 Connect to GitHub</button>
+        <div class="info-text">Connect to sync clips to your repository</div>
+      </div>
+      <div id="githubConnected" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <img id="githubAvatar" src="" alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%;">
+          <span id="githubUsername" style="color: #27ae60; font-weight: 500;"></span>
+          <button class="button secondary" id="disconnectBtn" style="margin-left: auto; padding: 4px 8px; font-size: 11px;">Disconnect</button>
+        </div>
+        <div class="info-text">Syncing to: <span id="repoPath"></span></div>
+      </div>
+    </div>
+
     <div class="section">
       <label>Page Title:</label>
       <input type="text" id="pageTitle" placeholder="Loading..." disabled>
@@ -163,18 +179,24 @@
     <div class="section">
       <label>Save as:</label>
       <input type="text" id="filename" placeholder="filename.md">
-      <div class="info-text">File will be downloaded to your Downloads folder</div>
     </div>
 
     <div class="preview" id="preview">
       <em>Extracting page content...</em>
     </div>
 
-    <button class="button" id="saveBtn" disabled>💾 Download Markdown</button>
+    <!-- Action Buttons -->
+    <div style="display: flex; gap: 8px;">
+      <button class="button secondary" id="downloadBtn" disabled style="flex: 1;">💾 Download</button>
+      <button class="button" id="syncBtn" disabled style="flex: 1;">☁️ Sync to GitHub</button>
+    </div>
     
     <div class="status" id="status"></div>
   </div>
 
+  <script src="config.js"></script>
+  <script src="github-auth.js"></script>
+  <script src="github-sync.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
