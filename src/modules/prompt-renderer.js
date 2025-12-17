@@ -139,23 +139,18 @@ export function initPromptRenderer() {
     });
   }
 
-  // Clear prompt when branch changes
   window.addEventListener('branchChanged', async () => {
-    // Hide stored prompt view
     setElementDisplay(titleEl, false);
     setElementDisplay(metaEl, false);
     setElementDisplay(actionsEl, false);
     setElementDisplay(emptyEl, false);
 
-    // Clear content
     if (contentEl) contentEl.innerHTML = '';
 
-    // Reset state
     setCurrentSlug(null);
     currentPromptText = null;
     updateActiveItem();
     
-    // Show free input section by default
     const { showFreeInputForm } = await import('./jules.js');
     showFreeInputForm();
   });

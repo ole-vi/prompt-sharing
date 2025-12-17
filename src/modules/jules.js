@@ -903,7 +903,6 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
   let maxRetries = 3;
   let submitted = false;
 
-  // Extract title from promptText
   const title = extractTitleFromPrompt(promptText);
   while (retryCount < maxRetries && !submitted) {
     try {
@@ -2373,7 +2372,6 @@ export function hideSubtaskSplitModal() {
 }
 
 async function submitSubtasks(subtasks) {
-  // Get suppress popups preference from the modal
   const suppressPopups = document.getElementById('splitSuppressPopupsCheckbox')?.checked || false;
   const openInBackground = document.getElementById('splitOpenInBackgroundCheckbox')?.checked || false;
   
