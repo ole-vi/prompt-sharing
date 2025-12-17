@@ -1,16 +1,10 @@
-// ===== Popup Script - UI Logic =====
-
 let currentPageData = null;
-
-// DOM elements
 const pageTitleInput = document.getElementById('pageTitle');
 const filenameInput = document.getElementById('filename');
 const previewDiv = document.getElementById('preview');
 const downloadBtn = document.getElementById('downloadBtn');
 const syncBtn = document.getElementById('syncBtn');
 const statusDiv = document.getElementById('status');
-
-// GitHub elements
 const connectGitHubBtn = document.getElementById('connectGitHubBtn');
 const disconnectBtn = document.getElementById('disconnectBtn');
 const githubDisconnected = document.getElementById('githubDisconnected');
@@ -18,17 +12,9 @@ const githubConnected = document.getElementById('githubConnected');
 const githubUsername = document.getElementById('githubUsername');
 const repoPath = document.getElementById('repoPath');
 
-/**
- * Initialize popup
- */
 async function init() {
-  // Update GitHub connection status
   await updateGitHubStatus();
-  
-  // Extract page content
   extractContent();
-  
-  // Listen for auth success messages
   chrome.runtime.onMessage.addListener((request) => {
     if (request.action === 'authSuccess') {
       updateGitHubStatus();
@@ -37,9 +23,6 @@ async function init() {
   });
 }
 
-/**
- * Extract content from current tab
- */
 async function extractContent() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -62,32 +45,22 @@ async function extractContent() {
   }
 }
 
-/**
- * Display extracted page data
- */
 function displayPageData(data) {
   pageTitleInput.value = data.title;
   pageTitleInput.disabled = false;
   
-  // Generate filename
   const filename = generateFilename(data.title, data.domain);
   filenameInput.value = filename;
   
-  // Show preview (first 500 chars)
   const previewText = data.markdown.substring(0, 500) + '...';
   previewDiv.textContent = previewText;
   
   downloadBtn.disabled = false;
-  
-  // Enable sync button only if connected to GitHub
   GitHubAuth.isAuthenticated().then(isAuth => {
     syncBtn.disabled = !isAuth;
   });
 }
 
-/**
- * Generate safe filename
- */
 function generateFilename(title, domain) {
   const timestamp = new Date().toISOString().slice(0, 10);
   const safeName = title
@@ -101,9 +74,6 @@ function generateFilename(title, domain) {
   return `${timestamp}-${domainShort}-${safeName || 'page'}.md`;
 }
 
-/**
- * Download markdown file locally
- */
 function downloadMarkdown() {
   if (!currentPageData) {
     showStatus('No content to save', 'error');
@@ -116,7 +86,6 @@ function downloadMarkdown() {
     return;
   }
   
-  // Ensure .md extension
   const finalFilename = filename.endsWith('.md') ? filename : filename + '.md';
   
   downloadBtn.disabled = true;
@@ -124,18 +93,14 @@ function downloadMarkdown() {
   showStatus('Preparing download...', 'info');
   
   try {
-    // Create blob with markdown content
     const blob = new Blob([currentPageData.markdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     
-    // Create download link
     const a = document.createElement('a');
     a.href = url;
     a.download = finalFilename;
     document.body.appendChild(a);
     a.click();
-    
-    // Cleanup
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
@@ -151,9 +116,6 @@ function downloadMarkdown() {
   }
 }
 
-/**
- * Sync markdown to GitHub
- */
 async function syncToGitHub() {
   if (!currentPageData) {
     showStatus('No content to sync', 'error');
@@ -183,7 +145,6 @@ async function syncToGitHub() {
     if (result.success) {
       showStatus(`✅ ${result.message}`, 'success');
       
-      // Show link to view file on GitHub
       setTimeout(() => {
         const link = document.createElement('a');
         link.href = result.url;
@@ -207,9 +168,6 @@ async function syncToGitHub() {
   }
 }
 
-/**
- * Update GitHub connection status UI
- */
 async function updateGitHubStatus() {
   const status = await GitHubSync.getSyncStatus();
   
@@ -219,7 +177,6 @@ async function updateGitHubStatus() {
     githubUsername.textContent = `@${status.username}`;
     repoPath.textContent = status.repo;
     
-    // Enable sync button (will be functional once content loads)
     syncBtn.disabled = false;
   } else {
     githubDisconnected.style.display = 'block';
@@ -228,9 +185,6 @@ async function updateGitHubStatus() {
   }
 }
 
-/**
- * Connect to GitHub
- */
 async function connectToGitHub() {
   try {
     await GitHubAuth.startOAuthFlow();
@@ -240,9 +194,6 @@ async function connectToGitHub() {
   }
 }
 
-/**
- * Disconnect from GitHub
- */
 async function disconnectFromGitHub() {
   const confirmed = confirm('Are you sure you want to disconnect from GitHub?');
   if (!confirmed) return;
@@ -256,20 +207,15 @@ async function disconnectFromGitHub() {
   }
 }
 
-/**
- * Show status message
- */
 function showStatus(message, type) {
   statusDiv.textContent = message;
   statusDiv.className = `status ${type}`;
   statusDiv.style.display = 'block';
 }
 
-// Event listeners
 downloadBtn.addEventListener('click', downloadMarkdown);
 syncBtn.addEventListener('click', syncToGitHub);
 connectGitHubBtn.addEventListener('click', connectToGitHub);
 disconnectBtn.addEventListener('click', disconnectFromGitHub);
 
-// Initialize
 init();

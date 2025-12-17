@@ -1,13 +1,7 @@
-// ===== GitHub Authentication Module =====
-// Handles OAuth flow for GitHub authentication
-
 const GitHubAuth = (function() {
   const STORAGE_KEY = 'github_access_token';
   const USER_STORAGE_KEY = 'github_user';
 
-  /**
-   * Generate random state for OAuth security
-   */
   function generateState() {
     const array = new Uint8Array(32);
     crypto.getRandomValues(array);
@@ -22,9 +16,6 @@ const GitHubAuth = (function() {
     return !!token;
   }
 
-  /**
-   * Get stored access token
-   */
   async function getAccessToken() {
     try {
       const result = await chrome.storage.sync.get([STORAGE_KEY]);
@@ -35,9 +26,6 @@ const GitHubAuth = (function() {
     }
   }
 
-  /**
-   * Get stored user info
-   */
   async function getUserInfo() {
     try {
       const result = await chrome.storage.sync.get([USER_STORAGE_KEY]);
@@ -48,9 +36,6 @@ const GitHubAuth = (function() {
     }
   }
 
-  /**
-   * Store access token
-   */
   async function storeToken(token) {
     try {
       await chrome.storage.sync.set({ [STORAGE_KEY]: token });
@@ -61,9 +46,6 @@ const GitHubAuth = (function() {
     }
   }
 
-  /**
-   * Store user info
-   */
   async function storeUserInfo(userInfo) {
     try {
       await chrome.storage.sync.set({ [USER_STORAGE_KEY]: userInfo });
@@ -74,14 +56,10 @@ const GitHubAuth = (function() {
     }
   }
 
-  /**
-   * Initiate GitHub OAuth flow
-   */
   async function startOAuthFlow() {
     const extensionId = chrome.runtime.id;
     const state = generateState() + '-' + extensionId;
     
-    // Store state for verification
     await chrome.storage.local.set({ oauth_state: state });
 
     const authUrl = new URL('https://github.com/login/oauth/authorize');
@@ -90,22 +68,16 @@ const GitHubAuth = (function() {
     authUrl.searchParams.set('scope', CONFIG.github.scopes.join(' '));
     authUrl.searchParams.set('state', state);
 
-    // Open OAuth page in new tab
     chrome.tabs.create({ url: authUrl.toString() });
   }
 
-  /**
-   * Exchange authorization code for access token
-   */
   async function exchangeCodeForToken(code, state) {
     try {
-      // Verify state matches
       const storedState = await chrome.storage.local.get(['oauth_state']);
       if (!storedState.oauth_state || storedState.oauth_state !== state) {
         throw new Error('State mismatch - possible CSRF attack');
       }
 
-      // Exchange code for token via Firebase Function
       const url = CONFIG.firebase.functionsUrl + CONFIG.firebase.endpoints.oauthExchange;
       
       const response = await fetch(url, {
@@ -131,16 +103,13 @@ const GitHubAuth = (function() {
         throw new Error('No access token received');
       }
 
-      // Store token
       await storeToken(data.access_token);
 
-      // Fetch and store user info
       const userInfo = await fetchUserInfo(data.access_token);
       if (userInfo) {
         await storeUserInfo(userInfo);
       }
 
-      // Clean up state
       await chrome.storage.local.remove(['oauth_state']);
 
       return { success: true, user: userInfo };
@@ -150,9 +119,6 @@ const GitHubAuth = (function() {
     }
   }
 
-  /**
-   * Fetch GitHub user info
-   */
   async function fetchUserInfo(token) {
     try {
       const response = await fetch(
@@ -178,9 +144,6 @@ const GitHubAuth = (function() {
     }
   }
 
-  /**
-   * Logout - clear stored credentials
-   */
   async function logout() {
     try {
       await chrome.storage.sync.remove([STORAGE_KEY, USER_STORAGE_KEY]);
@@ -192,15 +155,10 @@ const GitHubAuth = (function() {
     }
   }
 
-  /**
-   * Handle OAuth callback
-   * This is called from the callback page
-   */
   async function handleOAuthCallback(code, state) {
     return await exchangeCodeForToken(code, state);
   }
 
-  // Public API
   return {
     isAuthenticated,
     getAccessToken,
@@ -211,7 +169,6 @@ const GitHubAuth = (function() {
   };
 })();
 
-// Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = GitHubAuth;
 }

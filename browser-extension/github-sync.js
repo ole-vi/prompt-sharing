@@ -1,11 +1,5 @@
-// ===== GitHub Sync Module =====
-// Handles committing markdown files to GitHub repository
-
 const GitHubSync = (function() {
   
-  /**
-   * Get sync status
-   */
   async function getSyncStatus() {
     const isAuth = await GitHubAuth.isAuthenticated();
     if (!isAuth) {
@@ -20,12 +14,8 @@ const GitHubSync = (function() {
     };
   }
 
-  /**
-   * Sync web clip to GitHub
-   */
   async function syncWebClip(title, url, markdown, filename) {
     try {
-      // Check authentication
       const token = await GitHubAuth.getAccessToken();
       if (!token) {
         throw new Error('Not authenticated. Please connect to GitHub first.');
@@ -36,13 +26,9 @@ const GitHubSync = (function() {
         throw new Error('Could not get user information');
       }
 
-      // Use provided filename or generate from title
       const finalFilename = filename || generateFilename(title);
-      
-      // Construct file path: webclips/{username}/{filename}
       const filePath = `${CONFIG.github.targetRepo.path}/${user.login}/${finalFilename}`;
 
-      // Commit file to GitHub
       const result = await commitMarkdownFile(token, filePath, markdown);
       
       return {
@@ -60,11 +46,8 @@ const GitHubSync = (function() {
     }
   }
 
-  /**
-   * Generate filename from title
-   */
   function generateFilename(title) {
-    const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const date = new Date().toISOString().split('T')[0];
     const slug = title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
@@ -74,19 +57,12 @@ const GitHubSync = (function() {
     return `${date}-${slug}.md`;
   }
 
-  /**
-   * Commit markdown file to GitHub repository
-   */
   async function commitMarkdownFile(token, path, content) {
     const repo = CONFIG.github.targetRepo;
     
-    // Encode content to base64
     const base64Content = btoa(unescape(encodeURIComponent(content)));
-
-    // GitHub API endpoint for creating/updating files
     const apiUrl = `https://api.github.com/repos/${repo.owner}/${repo.repo}/contents/${path}`;
 
-    // First, try to get the file to see if it exists (to get its SHA for updating)
     let sha = null;
     try {
       const getResponse = await fetch(apiUrl, {
@@ -102,10 +78,8 @@ const GitHubSync = (function() {
         sha = fileData.sha;
       }
     } catch (error) {
-      // File doesn't exist, which is fine for new files
     }
 
-    // Create or update the file
     const requestBody = {
       message: `Add web clip: ${path.split('/').pop()}`,
       content: base64Content,
@@ -113,7 +87,7 @@ const GitHubSync = (function() {
     };
 
     if (sha) {
-      requestBody.sha = sha; // Include SHA if updating existing file
+      requestBody.sha = sha;
     }
 
     const response = await fetch(apiUrl, {
@@ -150,14 +124,12 @@ const GitHubSync = (function() {
     };
   }
 
-  // Public API
   return {
     getSyncStatus,
     syncWebClip
   };
 })();
 
-// Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = GitHubSync;
 }
