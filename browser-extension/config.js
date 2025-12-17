@@ -1,6 +1,6 @@
 const CONFIG = {
   github: {
-    clientId: 'Ov23li7TLYK9S9yuNWMP',
+    clientId: 'Ov23li5DWLIT2xCt7qQo',
     redirectUri: 'https://prompt-sharing-f8eeb.firebaseapp.com/oauth-callback.html',
     scopes: ['repo'],
     targetRepo: {
