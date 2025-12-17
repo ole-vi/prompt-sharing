@@ -2,7 +2,7 @@
 
 **Source:** [https://medium.com/@dwgray/a-very-simple-website-back-to-the-basics-1dffdc43d19b](https://medium.com/@dwgray/a-very-simple-website-back-to-the-basics-1dffdc43d19b)
 
-**Captured:** 12/17/2025, 2:11:10 PM
+**Captured:** 12/17/2025, 2:12:59 PM
 
 ---
 
@@ -18,7 +18,7 @@ The thing that got lost in translation was some of the basics of how such a site
 
 ## What is a Web Site?
 
-All you *really*need to build a website is a text editor, somewhere to store the files you create, and a program to serve those files to a browser. There doesn’t *have*to be a build process, complicated systems to manage the site’s components, or dependencies on a bunch of different libraries.
+All you *really* need to build a website is a text editor, somewhere to store the files you create, and a program to serve those files to a browser. There doesn’t *have* to be a build process, complicated systems to manage the site’s components, or dependencies on a bunch of different libraries.
 
 Now, you’ll want all those things and possibly more for a production website in the real world. But if you’re learning how things work, getting back to basics has some real value.
 
@@ -26,7 +26,7 @@ So, what are some examples of those three components?
 
 I won’t spend much time on the text editor. [Visual Studio Code](https://code.visualstudio.com/) tends to be the industry default these days, but Notepad, Edit, or any basic text editor will work.
 
-The software used to serve up the website is generically called a [web server](https://en.wikipedia.org/wiki/Web_server). When I first built websites in the mid-nineties, I ran [Internet Information Server](https://www.iis.net/) on a PC sitting in my spare bedroom, and the file store was just the Windows file system. The key to making this a public-facing website was that the computer was connected to the internet via my [ISP](https://en.wikipedia.org/wiki/Internet_service_provider), and IIS was capable of communicating with the rest of the internet via HTTP, HTTPS, and other protocols.[¹](#6c6a)
+The software used to serve up the website is generically called a [web server](https://en.wikipedia.org/wiki/Web_server) . When I first built websites in the mid-nineties, I ran [Internet Information Server](https://www.iis.net/) on a PC sitting in my spare bedroom, and the file store was just the Windows file system. The key to making this a public-facing website was that the computer was connected to the internet via my [ISP](https://en.wikipedia.org/wiki/Internet_service_provider) , and IIS was capable of communicating with the rest of the internet via HTTP, HTTPS, and other protocols.[¹](#6c6a)
 
 ## Creating a Website Locally
 
@@ -44,9 +44,9 @@ Press enter or click to view image in full size
 
 A screenshot of my very simple pageOr see it live at [dwgray.github.io/simple.html](https://dwgray.github.io/simple.html)
 
-Now, I’m terrible with graphics design in the niceties of CSS, so I will fudge my rules and start with[Bootstrap’s](https://getbootstrap.com/)[minimal template](https://github.com/twbs/examples/tree/main/starter/). That will give me some HTML scaffolding and pull Bootstrap from a [CDN](https://en.wikipedia.org/wiki/Content_delivery_network) to get me started with something that isn’t the total ugliness I’d create on my own. Using libraries like this is explicitly disallowed by the student project that got me started down this path, but since I’m not getting graded on my work, I’ll let myself “cheat” in this one aspect.
+Now, I’m terrible with graphics design in the niceties of CSS, so I will fudge my rules and start with[Bootstrap’s](https://getbootstrap.com/) [minimal template](https://github.com/twbs/examples/tree/main/starter/) . That will give me some HTML scaffolding and pull Bootstrap from a [CDN](https://en.wikipedia.org/wiki/Content_delivery_network) to get me started with something that isn’t the total ugliness I’d create on my own. Using libraries like this is explicitly disallowed by the student project that got me started down this path, but since I’m not getting graded on my work, I’ll let myself “cheat” in this one aspect.
 
-Now I have a site that looks like the image below and has`index.html,` `main.js`, and `style.css` files. The index file references the `.css` and `.js` files using relative URLs.
+Now I have a site that looks like the image below and has`index.html,` `main.js` , and `style.css` files. The index file references the `.css` and `.js` files using relative URLs.
 
 Press enter or click to view image in full size
 ![image](https://miro.medium.com/v2/resize:fit:700/1*QbxCEsutFXQg7QCy2bFHfA.png)
@@ -58,15 +58,15 @@ A very simple site using the bootstrap CDN templateUsing [relative URLs](https:/
 <link rel="stylesheet" href="styles.css"><script src="main.js"></script>
 ```
 
-You can peruse this code on [github](http://dwgray/dwgray.github.io at 2feaa0a6675c7e05d42b48d7ad3450c6cf39a70b)— ignore the other files for now; we’ll get to them later.
+You can peruse this code on [github](http://dwgray/dwgray.github.io at 2feaa0a6675c7e05d42b48d7ad3450c6cf39a70b) — ignore the other files for now; we’ll get to them later.
 
 ## Get David W. Gray’s stories in your inbox
 
 Join Medium for free to get updates from this writer.
 
-SubscribeSubscribeThe other important thing about this setup is that I have full access to the developer tools in my browser, so I can inspect my website and use many of the same tools I’d use in real-world development to debug it. If you’re doing anything with web development and don’t know the browser developer tools, stop now and get to know them. ([Edge](https://learn.microsoft.com/en-us/microsoft-edge/devtools-guide-chromium/overview), [Chrome](https://developer.chrome.com/docs/devtools/), [Firefox](https://www.mozilla.org/en-US/firefox/developer/), [Safari](https://developer.apple.com/safari/tools/)).
+SubscribeSubscribeThe other important thing about this setup is that I have full access to the developer tools in my browser, so I can inspect my website and use many of the same tools I’d use in real-world development to debug it. If you’re doing anything with web development and don’t know the browser developer tools, stop now and get to know them. ([Edge](https://learn.microsoft.com/en-us/microsoft-edge/devtools-guide-chromium/overview) , [Chrome](https://developer.chrome.com/docs/devtools/) , [Firefox](https://www.mozilla.org/en-US/firefox/developer/) , [Safari](https://developer.apple.com/safari/tools/) ).
 
-If you’ve worked with more complex development tools like [Vite](https://vitejs.dev/) or [WebPack](https://webpack.js.org/), they use various mechanisms that cause the site to update in your browser as soon as you save the file. These go by names like “Hot Reload” or “Live Update”. If you’re working with Visual Studio Code, one way to achieve a version of live updating is by installing [LiveServer](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) and running it against your workspace. LiveServer now acts as the web server and performs the magic to update your site anytime you save it. Now, you’re running the site as a local website communicating over HTTP rather than as a file system site.
+If you’ve worked with more complex development tools like [Vite](https://vitejs.dev/) or [WebPack](https://webpack.js.org/) , they use various mechanisms that cause the site to update in your browser as soon as you save the file. These go by names like “Hot Reload” or “Live Update”. If you’re working with Visual Studio Code, one way to achieve a version of live updating is by installing [LiveServer](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) and running it against your workspace. LiveServer now acts as the web server and performs the magic to update your site anytime you save it. Now, you’re running the site as a local website communicating over HTTP rather than as a file system site.
 
 But the plain file system site works just fine overall; you just have to remember to hit the refresh button on your browser to see the changes you’ve made.
 
@@ -80,9 +80,9 @@ I’m more interested in GitHub Pages since that’s something that the projects
 
 But that’s not what I was looking for in this case. I wanted the most straightforward system I could manage and still have a viable website.
 
-It turns out that I can disable Jekyll by adding a `.nojekyll` file to the root of my project, and then the deploy step is to directly copy the `main` branch of my GitHub repo to whatever they’re using to serve up the pages. I didn’t figure out what they’re using as a web server or file store, but if I were implementing a system like this, I’d consider something like [Azure Front Door](https://azure.microsoft.com/en-us/products/frontdoor/) to serve the pages from [Azure Storage](https://learn.microsoft.com/en-us/azure/frontdoor/integrate-storage-account) or [Amazon CloudFront](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/IntroductionUseCases.html#IntroductionUseCasesStaticWebsite) to serve pages from [S3](https://aws.amazon.com/pm/serv-s3). In any case, this is about as simple as I could manage.
+It turns out that I can disable Jekyll by adding a `.nojekyll` file to the root of my project, and then the deploy step is to directly copy the `main` branch of my GitHub repo to whatever they’re using to serve up the pages. I didn’t figure out what they’re using as a web server or file store, but if I were implementing a system like this, I’d consider something like [Azure Front Door](https://azure.microsoft.com/en-us/products/frontdoor/) to serve the pages from [Azure Storage](https://learn.microsoft.com/en-us/azure/frontdoor/integrate-storage-account) or [Amazon CloudFront](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/IntroductionUseCases.html#IntroductionUseCasesStaticWebsite) to serve pages from [S3](https://aws.amazon.com/pm/serv-s3) . In any case, this is about as simple as I could manage.
 
-So I created a GitHub Pages site with Jekyll turned off and started playing around. I created a repo with the required name ([dwgray.github.io](https://dwgray.github.io/)) for a personal site and cloned it to my local machine. I added the files I grabbed from the Bootstrap template on my local repo and tested them to ensure the site was still behaving as expected. Then I pushed my change to my main branch, which deployed to [dwgray.github.io](https://dwgray.github.io/)[²](#cbd1). There is a slight latency between the push and when the deployment completes, but after waiting less than a minute, my site was live.
+So I created a GitHub Pages site with Jekyll turned off and started playing around. I created a repo with the required name ([dwgray.github.io](https://dwgray.github.io/) ) for a personal site and cloned it to my local machine. I added the files I grabbed from the Bootstrap template on my local repo and tested them to ensure the site was still behaving as expected. Then I pushed my change to my main branch, which deployed to [dwgray.github.io](https://dwgray.github.io/) [²](#cbd1) . There is a slight latency between the push and when the deployment completes, but after waiting less than a minute, my site was live.
 
 Press enter or click to view image in full size
 ![image](https://miro.medium.com/v2/resize:fit:700/1*yL1Kh3DO7CoNzP2RZHF31Q.png)
@@ -91,7 +91,7 @@ My slightly less simple multi-page site## Conclusion
 
 I created a simple site using just a vanilla text editor, ran it as a file system site on my local machine, and published it to a GitHub Pages site. I did all of this without using complex build systems or libraries to show some of the fundamentals of how a website works. If you’re new to web development, hopefully this helped you fill in some holes in your mental model of the systems you’re working with.
 
-The sample website is available at [dwgray.github.io](http://dwgray.github.io), and the source code can be found at [dwgray / dwgray.github.io / multi-page](https://github.com/dwgray/dwgray.github.io/tree/multi-page).[³](http://3cdb)
+The sample website is available at [dwgray.github.io](http://dwgray.github.io) , and the source code can be found at [dwgray / dwgray.github.io / multi-page](https://github.com/dwgray/dwgray.github.io/tree/multi-page) .[³](http://3cdb)
 
 ¹ In order for the web browser to find the website, you’ll need to configure [DNS](https://www.cloudflare.com/learning/dns/what-is-dns/) and have a static IP or some other method of pointing the DNS record to a server that the browser can communicate with, but that’s beyond the scope of this article.
 
