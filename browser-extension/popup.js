@@ -16,7 +16,6 @@ const disconnectBtn = document.getElementById('disconnectBtn');
 const githubDisconnected = document.getElementById('githubDisconnected');
 const githubConnected = document.getElementById('githubConnected');
 const githubUsername = document.getElementById('githubUsername');
-const githubAvatar = document.getElementById('githubAvatar');
 const repoPath = document.getElementById('repoPath');
 
 /**
