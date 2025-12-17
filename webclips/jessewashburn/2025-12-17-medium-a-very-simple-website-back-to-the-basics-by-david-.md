@@ -2,7 +2,7 @@
 title: "A Very Simple Website: Back to the Basics | by David W. Gray | Medium"
 source: https://medium.com/@dwgray/a-very-simple-website-back-to-the-basics-1dffdc43d19b
 domain: medium.com
-captured: 2025-12-17T18:46:04.853Z
+captured: 2025-12-17T18:53:34.488Z
 type: web-clip
 ---
 
@@ -10,7 +10,7 @@ type: web-clip
 
 **Source:** [https://medium.com/@dwgray/a-very-simple-website-back-to-the-basics-1dffdc43d19b](https://medium.com/@dwgray/a-very-simple-website-back-to-the-basics-1dffdc43d19b)
 
-**Captured:** 12/17/2025, 1:46:04 PM
+**Captured:** 12/17/2025, 1:53:34 PM
 
 ---
 
@@ -46,7 +46,7 @@ For instance, I can create an extremely simple page by saving the following to a
 <!doctype html><body>Testing a simple page</body>
 ```
 
-Press enter or click to view image in full size![image](https://miro.medium.com/v2/resize:fit:1050/1*sKTwkSojemB-fki9xksFeQ.png)
+Press enter or click to view image in full size![image](https://miro.medium.com/v2/resize:fit:700/1*sKTwkSojemB-fki9xksFeQ.png)
 
 A screenshot of my very simple pageOr see it live at [dwgray.github.io/simple.html](https://dwgray.github.io/simple.html)
 
@@ -54,7 +54,7 @@ Now, I’m terrible with graphics design in the niceties of CSS, so I will fudge
 
 Now I have a site that looks like the image below and has`index.html,` `main.js`, and `style.css` files. The index file references the `.css` and `.js` files using relative URLs.
 
-Press enter or click to view image in full size![image](https://miro.medium.com/v2/resize:fit:1050/1*QbxCEsutFXQg7QCy2bFHfA.png)
+Press enter or click to view image in full size![image](https://miro.medium.com/v2/resize:fit:700/1*QbxCEsutFXQg7QCy2bFHfA.png)
 
 A very simple site using the bootstrap CDN templateUsing [relative URLs](https://www.tutorialspoint.com/difference-between-an-absolute-url-and-a-relative-url) is essential since it will let me use code without modification as a public website and a locally running file system “site.”
 
@@ -88,7 +88,7 @@ It turns out that I can disable Jekyll by adding a `.nojekyll` file to the root 
 
 So I created a GitHub Pages site with Jekyll turned off and started playing around. I created a repo with the required name ([dwgray.github.io](https://dwgray.github.io/)) for a personal site and cloned it to my local machine. I added the files I grabbed from the Bootstrap template on my local repo and tested them to ensure the site was still behaving as expected. Then I pushed my change to my main branch, which deployed to [dwgray.github.io](https://dwgray.github.io/)[²](#cbd1). There is a slight latency between the push and when the deployment completes, but after waiting less than a minute, my site was live.
 
-Press enter or click to view image in full size![image](https://miro.medium.com/v2/resize:fit:1050/1*yL1Kh3DO7CoNzP2RZHF31Q.png)
+Press enter or click to view image in full size![image](https://miro.medium.com/v2/resize:fit:700/1*yL1Kh3DO7CoNzP2RZHF31Q.png)
 
 My slightly less simple multi-page site## Conclusion
 
