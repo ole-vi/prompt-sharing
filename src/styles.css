@@ -861,3 +861,17 @@ footer code {
     max-height: 1000px;
   }
 }
+
+.tags-container {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.prompt-tag {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background-color: var(--border);
+  color: var(--muted);
+}
