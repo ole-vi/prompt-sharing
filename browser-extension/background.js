@@ -25,9 +25,12 @@ async function handleOAuthCallback(code, state) {
     const result = await GitHubAuth.handleOAuthCallback(code, state);
     
     if (result.success) {
+      // Try to notify popup if it's open, but don't fail if it's closed
       chrome.runtime.sendMessage({ 
         action: 'authSuccess', 
         user: result.user 
+      }).catch(() => {
+        // Popup may be closed, ignore error
       });
     }
     
