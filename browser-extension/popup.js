@@ -172,15 +172,15 @@ async function updateGitHubStatus() {
   const status = await GitHubSync.getSyncStatus();
   
   if (status.connected && status.username) {
-    githubDisconnected.style.display = 'none';
-    githubConnected.style.display = 'block';
+    githubDisconnected.classList.add('hidden');
+    githubConnected.classList.remove('hidden');
     githubUsername.textContent = `@${status.username}`;
     repoPath.textContent = status.repo;
     
     syncBtn.disabled = false;
   } else {
-    githubDisconnected.style.display = 'block';
-    githubConnected.style.display = 'none';
+    githubDisconnected.classList.remove('hidden');
+    githubConnected.classList.add('hidden');
     syncBtn.disabled = true;
   }
 }
