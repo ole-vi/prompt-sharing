@@ -81,6 +81,10 @@ async function loadPrompts() {
   const hashSlug = getHashParam('p');
   if (hashSlug) {
     await selectBySlug(hashSlug, files, currentOwner, currentRepo, currentBranch);
+  } else {
+    // No prompt selected - show free input section by default
+    const { showFreeInputForm } = await import('./modules/jules.js');
+    showFreeInputForm();
   }
 }
 

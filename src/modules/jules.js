@@ -1644,7 +1644,8 @@ export function showFreeInputForm() {
       title = lines[0].substring(0, 50).trim();
     }
 
-    hideFreeInputForm();
+    textarea.value = '';
+    textarea.focus();
 
     try {
       let retryCount = 0;
@@ -2213,11 +2214,13 @@ export function showSubtaskSplitModal(promptText) {
 
     const subtasksToSubmit = [...currentSubtasks];
     hideSubtaskSplitModal();
+    showFreeInputForm();
     await submitSubtasks(subtasksToSubmit);
   };
 
   cancelBtn.onclick = () => {
     hideSubtaskSplitModal();
+    showFreeInputForm();
   };
 
   queueBtn.onclick = async () => {
@@ -2279,8 +2282,9 @@ export function showSubtaskSplitModal(promptText) {
         note: 'Queued from Split Dialog'
       });
 
-      alert(`${remaining.length} subtask(s) queued successfully!`);
       hideSubtaskSplitModal();
+      showFreeInputForm();
+      alert(`${remaining.length} subtask(s) queued successfully!`);
     } catch (err) {
       alert('Failed to queue subtasks: ' + err.message);
     }
