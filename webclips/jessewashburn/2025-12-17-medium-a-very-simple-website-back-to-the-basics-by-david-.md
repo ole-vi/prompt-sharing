@@ -2,7 +2,7 @@
 title: "A Very Simple Website: Back to the Basics | by David W. Gray | Medium"
 source: https://medium.com/@dwgray/a-very-simple-website-back-to-the-basics-1dffdc43d19b
 domain: medium.com
-captured: 2025-12-17T18:26:36.100Z
+captured: 2025-12-17T18:27:34.954Z
 type: web-clip
 ---
 
@@ -10,7 +10,7 @@ type: web-clip
 
 **Source:** [https://medium.com/@dwgray/a-very-simple-website-back-to-the-basics-1dffdc43d19b](https://medium.com/@dwgray/a-very-simple-website-back-to-the-basics-1dffdc43d19b)
 
-**Captured:** 12/17/2025, 1:26:36 PM
+**Captured:** 12/17/2025, 1:27:34 PM
 
 ---
 
