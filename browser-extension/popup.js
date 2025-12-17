@@ -118,7 +118,7 @@ function downloadMarkdown() {
 
 async function syncToGitHub() {
   if (!currentPageData) {
-    showStatus('No content to sync', 'error');
+    showStatus('No content to send', 'error');
     return;
   }
   
