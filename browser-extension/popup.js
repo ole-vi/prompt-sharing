@@ -170,8 +170,8 @@ async function syncToGitHub() {
   const finalFilename = filename.endsWith('.md') ? filename : filename + '.md';
   
   syncBtn.disabled = true;
-  syncBtn.textContent = '⏳ Syncing...';
-  showStatus('Syncing to GitHub...', 'info');
+  syncBtn.textContent = '⏳ Sending...';
+  showStatus('Sending to GitHub...', 'info');
   
   try {
     const result = await GitHubSync.syncWebClip(
