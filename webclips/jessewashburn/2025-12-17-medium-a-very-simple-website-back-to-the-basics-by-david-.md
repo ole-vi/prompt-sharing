@@ -2,7 +2,7 @@
 
 **Source:** [https://medium.com/@dwgray/a-very-simple-website-back-to-the-basics-1dffdc43d19b](https://medium.com/@dwgray/a-very-simple-website-back-to-the-basics-1dffdc43d19b)
 
-**Captured:** 12/17/2025, 2:16:30 PM
+**Captured:** 12/17/2025, 2:17:23 PM
 
 ---
 
