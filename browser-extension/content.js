@@ -128,7 +128,7 @@
       case 'pre':
         const codeElement = element.querySelector('code');
         const code = codeElement ? codeElement.textContent : element.textContent;
-        markdown += `\`\`\`\n${code.trim()}\n\`\`\`\n\n`;
+        markdown += `\n\`\`\`\n${code.trim()}\n\`\`\`\n\n`;
         break;
       case 'a':
         const href = element.getAttribute('href') || '';
@@ -138,12 +138,12 @@
       case 'img':
         const src = element.getAttribute('src') || '';
         const alt = element.getAttribute('alt') || 'image';
-        markdown += `![${alt}](${src})\n\n`;
+        markdown += `\n![${alt}](${src})\n\n`;
         break;
       case 'ul':
       case 'ol':
         const isOrdered = tagName === 'ol';
-        let listMarkdown = '';
+        let listMarkdown = '\n';
         Array.from(element.children).forEach((li, index) => {
           if (li.tagName.toLowerCase() === 'li') {
             const marker = isOrdered ? `${index + 1}.` : '-';
@@ -154,7 +154,7 @@
         break;
       case 'blockquote':
         const quoteText = processInlineElements(element);
-        markdown += quoteText.split('\n').map(line => `> ${line}`).join('\n') + '\n\n';
+        markdown += '\n' + quoteText.split('\n').map(line => `> ${line}`).join('\n') + '\n\n';
         break;
       case 'hr':
         markdown += '---\n\n';
@@ -224,15 +224,7 @@
   function buildMarkdownDocument(pageData) {
     const { title, url, content, timestamp, domain } = pageData;
     
-    let markdown = '---\n';
-    markdown += `title: "${title}"\n`;
-    markdown += `source: ${url}\n`;
-    markdown += `domain: ${domain}\n`;
-    markdown += `captured: ${timestamp}\n`;
-    markdown += 'type: web-clip\n';
-    markdown += '---\n\n';
-    
-    markdown += `# ${title}\n\n`;
+    let markdown = `# ${title}\n\n`;
     markdown += `**Source:** [${url}](${url})\n\n`;
     markdown += `**Captured:** ${new Date(timestamp).toLocaleString()}\n\n`;
     markdown += '---\n\n';
