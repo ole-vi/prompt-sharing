@@ -78,7 +78,8 @@ const GitHubAuth = (function() {
    * Initiate GitHub OAuth flow
    */
   async function startOAuthFlow() {
-    const state = generateState();
+    const extensionId = chrome.runtime.id;
+    const state = generateState() + '-' + extensionId;
     
     // Store state for verification
     await chrome.storage.local.set({ oauth_state: state });

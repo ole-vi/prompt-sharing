@@ -72,7 +72,6 @@
   <script>
     (async function() {
       const statusDiv = document.getElementById('status');
-      const EXTENSION_ID = 'hofiapdelconjpmmindlpbjdodiilgho';
       
       try {
         // Parse URL parameters
@@ -96,10 +95,13 @@
 
         // Check if this is for the extension (state starts with "extension-")
         if (state.startsWith('extension-')) {
-          // Send message to extension background script using extension ID
+          // Extract extension ID from state (format: extension-{random}-{extensionId})
+          const parts = state.split('-');
+          const extensionId = parts[parts.length - 1];
+          // Send message to extension background script using dynamic extension ID
           try {
             chrome.runtime.sendMessage(
-              EXTENSION_ID,
+              extensionId,
               {
                 action: 'oauthCallback',
                 code: code,
