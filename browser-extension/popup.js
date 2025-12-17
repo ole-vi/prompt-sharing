@@ -170,8 +170,8 @@ async function syncToGitHub() {
   const finalFilename = filename.endsWith('.md') ? filename : filename + '.md';
   
   syncBtn.disabled = true;
-  syncBtn.textContent = '⏳ Sending...';
-  showStatus('Sending to GitHub...', 'info');
+  syncBtn.innerHTML = '⏳ Sending...';
+  showStatus('Sending to PromptSync...', 'info');
   
   try {
     const result = await GitHubSync.syncWebClip(
@@ -200,11 +200,11 @@ async function syncToGitHub() {
     }
     
     syncBtn.disabled = false;
-    syncBtn.textContent = '☁️ Send to GitHub';
+    syncBtn.innerHTML = '<img src="PromptSyncLogo.svg" alt="" class="button-icon">Send to PromptSync';
   } catch (error) {
     showStatus('Error: ' + error.message, 'error');
     syncBtn.disabled = false;
-    syncBtn.textContent = '☁️ Send to GitHub';
+    syncBtn.innerHTML = '<img src="PromptSyncLogo.svg" alt="" class="button-icon">Send to PromptSync';
   }
 }
 

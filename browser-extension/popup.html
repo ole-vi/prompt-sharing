@@ -88,6 +88,13 @@
       background: #34495e;
     }
 
+    .button-icon {
+      width: 16px;
+      height: 16px;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
     .status {
       padding: 8px 12px;
       border-radius: 6px;
@@ -149,10 +156,17 @@
     .link:hover {
       text-decoration: underline;
     }
+
+    .header-icon {
+      width: 24px;
+      height: 24px;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
   </style>
 </head>
 <body>
-  <h1>💾 PromptSync Clipper</h1>
+  <h1><img src="promptclipper.png" alt="PromptSync" class="header-icon">PromptSync Web Capture</h1>
 
   <div id="mainView">
     <!-- GitHub Connection Status -->
@@ -188,7 +202,7 @@
     <!-- Action Buttons -->
     <div style="display: flex; gap: 8px;">
       <button class="button secondary" id="downloadBtn" disabled style="flex: 1;">💾 Download</button>
-      <button class="button" id="syncBtn" disabled style="flex: 1;">☁️ Send to GitHub</button>
+      <button class="button" id="syncBtn" disabled style="flex: 1;"><img src="PromptSyncLogo.svg" alt="" class="button-icon">Send to PromptSync</button>
     </div>
     
     <div class="status" id="status"></div>
