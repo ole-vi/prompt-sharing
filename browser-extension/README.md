@@ -1,4 +1,4 @@
-# PromptSync Web Clipper Browser Extension
+# PromptSync Web Capture Browser Extension
 
 A browser extension that captures any webpage as Markdown and syncs it directly to your GitHub repository.
 
@@ -32,7 +32,7 @@ A browser extension that captures any webpage as Markdown and syncs it directly 
 
 4. **Pin the Extension** (optional):
    - Click the puzzle piece icon in the browser toolbar
-   - Find "PromptSync Web Clipper"
+   - Find "PromptSync Web Capture"
    - Click the pin icon to keep it visible
 
 ### Firefox
@@ -115,7 +115,7 @@ type: web-clip
 When you make changes to the extension code:
 
 1. Go to your browser's extensions page
-2. Find "PromptSync Web Clipper"
+2. Find "PromptSync Web Capture"
 3. Click the refresh/reload icon
 4. The extension is now updated with your changes
 

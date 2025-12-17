@@ -11,7 +11,7 @@ Hosted for free with GitHub Pages, backed by simple `.md` files.
 
 PromptSync is a zero-build web application for managing and sharing AI prompts as markdown files. It provides a browsable library interface with deep linking, GitHub integration, and direct integration with Google's Jules AI assistant. Teams can organize prompts in folders, switch between branches, and send prompts directly to Jules with full context awareness.
 
-**NEW**: Now includes a browser extension that lets you capture any webpage as Markdown and sync it directly to your GitHub repository! See [browser-extension/README.md](browser-extension/README.md) for details.
+Also includes a browser extension that lets you capture any webpage as Markdown and download it or send it directly to PromptSync! See [browser-extension/README.md](browser-extension/README.md) for details.
 
 ## Local development
 
@@ -72,7 +72,7 @@ prompt-sharing/
 │   └── promptsync/       # PromptSync repo onboarding
 ├── webclips/             # User web clips from browser extension
 │   └── {username}/       # Each user's synced clips
-├── browser-extension/    # Web clipper browser extension
+├── browser-extension/    # Web capture browser extension
 │   ├── manifest.json     # Extension configuration
 │   ├── content.js        # Page content extraction
 │   ├── popup.html/js     # Extension UI
@@ -221,7 +221,7 @@ Click your username after signing in to access:
 * **Cache Management**: Automatic caching with session storage
 * **Real-Time Updates**: Changes appear 1-2 minutes after pushing to GitHub
 
-## Browser Extension - Web Clipper
+## Browser Extension - Web Capture
 
 PromptSync includes a powerful browser extension that captures any webpage as Markdown and syncs it to GitHub.
 

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "PromptSync Web Clipper",
+  "name": "PromptSync Web Capture",
   "version": "1.0.0",
   "description": "Capture any webpage as Markdown and send to GitHub",
   "icons": {
