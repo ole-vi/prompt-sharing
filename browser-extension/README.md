@@ -75,7 +75,7 @@ A browser extension that captures any webpage as Markdown and syncs it directly 
 
 4. **Choose your action**:
    - **💾 Download**: Save locally to your Downloads folder
-   - **☁️ Sync to GitHub**: Commit directly to the repository
+   - **☁️ Send to GitHub**: Commit directly to the repository
 
 5. **Done!** Your clip is synced to `webclips/{your-username}/{filename}.md`
 

@@ -200,11 +200,11 @@ async function syncToGitHub() {
     }
     
     syncBtn.disabled = false;
-    syncBtn.textContent = '☁️ Sync to GitHub';
+    syncBtn.textContent = '☁️ Send to GitHub';
   } catch (error) {
     showStatus('Error: ' + error.message, 'error');
     syncBtn.disabled = false;
-    syncBtn.textContent = '☁️ Sync to GitHub';
+    syncBtn.textContent = '☁️ Send to GitHub';
   }
 }
 
