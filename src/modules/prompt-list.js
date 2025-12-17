@@ -79,6 +79,19 @@ function prettyTitle(name) {
   return base;
 }
 
+function generateTags(filename) {
+  const tags = new Set();
+  const name = filename.replace(/\.md$/, '').toLowerCase();
+
+  for (const category in EMOJI_PATTERNS) {
+    const { keywords } = EMOJI_PATTERNS[category];
+    if (keywords.some(kw => name.includes(kw))) {
+      tags.add(category);
+    }
+  }
+  return [...tags];
+}
+
 function getExpandedStateKey(owner, repo, branch) {
   return STORAGE_KEYS.expandedState(owner, repo, branch);
 }
@@ -353,6 +366,26 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       t.className = 'item-title';
       t.textContent = prettyTitle(file.name);
       left.appendChild(t);
+
+      const tags = generateTags(file.name);
+      if (tags.length > 0) {
+        const tagsContainer = document.createElement('div');
+        tagsContainer.className = 'tags-container';
+        tags.forEach(tag => {
+          const tagEl = document.createElement('span');
+          tagEl.className = 'tag-badge';
+          tagEl.textContent = tag;
+          tagEl.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            ev.preventDefault();
+            searchEl.value = tag;
+            renderList(files, currentOwner, currentRepo, currentBranch);
+          });
+          tagsContainer.appendChild(tagEl);
+        });
+        left.appendChild(tagsContainer);
+      }
+
       a.appendChild(left);
       li.appendChild(a);
       container.appendChild(li);
