@@ -222,7 +222,7 @@
    * Build full Markdown document
    */
   function buildMarkdownDocument(pageData) {
-    const { title, url, content, timestamp, domain } = pageData;
+    const { title, url, content, timestamp } = pageData;
     
     let markdown = `# ${title}\n\n`;
     markdown += `**Source:** [${url}](${url})\n\n`;

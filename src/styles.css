@@ -400,12 +400,13 @@ footer code {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: #11152a;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--accent);
+  background: var(--accent-glow);
   font-size: 12px;
-  color: var(--muted);
+  color: var(--accent);
+  font-weight: 500;
 }
 
 /* ===== Branch Selector ===== */

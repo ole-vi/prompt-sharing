@@ -42,10 +42,11 @@ export async function listPromptsViaContents(owner, repo, branch, path = 'prompt
   return results;
 }
 
-export async function listPromptsViaTrees(owner, repo, branch) {
+export async function listPromptsViaTrees(owner, repo, branch, path = 'prompts') {
   const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1&ts=${Date.now()}`;
   const data = await fetchJSON(url);
-  const items = (data.tree || []).filter(n => n.type === 'blob' && /^prompts\/.+\.md$/i.test(n.path));
+  const pathRegex = new RegExp(`^${path}/.+\\.md$`, 'i');
+  const items = (data.tree || []).filter(n => n.type === 'blob' && pathRegex.test(n.path));
   return items.map(n => ({
     type: 'file',
     name: n.path.split('/').pop(),

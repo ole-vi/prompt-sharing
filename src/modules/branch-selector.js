@@ -1,5 +1,3 @@
-// ===== Branch Selector Module =====
-
 import { USER_BRANCHES, FEATURE_PATTERNS, STORAGE_KEYS } from '../utils/constants.js';
 import { getBranches } from './github-api.js';
 
@@ -16,6 +14,26 @@ export function initBranchSelector(owner, repo, branch) {
 
   if (branchSelect) {
     branchSelect.addEventListener('change', handleBranchChange);
+  }
+
+  const webCapturesBtn = document.getElementById('webCapturesBtn');
+  if (webCapturesBtn) {
+    webCapturesBtn.addEventListener('click', () => {
+      currentBranch = 'web-captures';
+      
+      const qs = new URLSearchParams(location.search);
+      qs.set('branch', 'web-captures');
+      const newUrl = `${location.pathname}?${qs.toString()}`;
+      
+      history.replaceState(null, '', newUrl);
+      sessionStorage.clear();
+      
+      if (branchSelect) {
+        branchSelect.value = 'web-captures';
+      }
+      
+      window.dispatchEvent(new CustomEvent('branchChanged', { detail: { branch: 'web-captures' } }));
+    });
   }
 }
 
@@ -61,8 +79,6 @@ function classifyBranch(branchName) {
 }
 
 function toggleFeatureBranches() {
-
-  // localStorage: branch visibility preference persists across sessions
   const showFeatures = localStorage.getItem('showFeatureBranches') === 'true';
   const newShowFeatures = !showFeatures;
   localStorage.setItem('showFeatureBranches', newShowFeatures.toString());
@@ -179,7 +195,7 @@ export async function loadBranches() {
     if (![...branchSelect.options].some(o => o.value === currentBranch)) {
       const opt = document.createElement('option');
       opt.value = currentBranch;
-      opt.textContent = `${currentBranch} (unlisted)`;
+      opt.textContent = `${currentBranch}`;
       branchSelect.appendChild(opt);
     }
 
