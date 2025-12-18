@@ -6,8 +6,8 @@ const CONFIG = {
     targetRepo: {
       owner: 'ole-vi',
       repo: 'prompt-sharing',
-      branch: 'main',
-      path: 'webclips'
+      branch: 'web-captures',
+      path: 'webcaptures'
     }
   },
   
