@@ -4,8 +4,6 @@ const fetch = require("node-fetch");
 
 admin.initializeApp();
 
-// Decrypt Jules API key using Web Crypto API (Node 22+)
-// Must match client encryption: key padded to 32 bytes with '\0', IV first 12 chars padded with '0'
 async function decryptJulesKeyBase64(b64, uid) {
   try {
     const enc = Buffer.from(b64, "base64");
@@ -27,7 +25,6 @@ async function decryptJulesKeyBase64(b64, uid) {
   }
 }
 
-// Callable function - requires Firebase Auth context
 exports.runJules = functions.https.onCall(async (data, context) => {
   let uid = context.auth?.uid;
   
@@ -38,9 +35,7 @@ exports.runJules = functions.https.onCall(async (data, context) => {
         const decodedToken = await admin.auth().verifyIdToken(authHeader);
         uid = decodedToken.uid;
       }
-    } catch (e) {
-      // Fallback auth attempt
-    }
+    } catch (e) {}
   }
 
   if (!uid) {
@@ -123,7 +118,6 @@ exports.runJules = functions.https.onCall(async (data, context) => {
   }
 });
 
-// HTTPS endpoint version - avoids compat SDK auth context issue
 exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -231,7 +225,6 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
   }
 });
 
-// Validates a Jules API key by testing a request
 exports.validateJulesKey = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Must be signed in");
@@ -264,7 +257,6 @@ exports.validateJulesKey = functions.https.onCall(async (data, context) => {
   }
 });
 
-// Returns metadata about stored Jules API key (not the key itself)
 exports.getJulesKeyInfo = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Must be signed in");
@@ -291,9 +283,6 @@ exports.getJulesKeyInfo = functions.https.onCall(async (data, context) => {
   }
 });
 
-// ===== GitHub OAuth for Browser Extension =====
-
-// Exchange OAuth code for GitHub access token
 exports.githubOAuthExchange = functions.https.onRequest(async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -317,13 +306,11 @@ exports.githubOAuthExchange = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    // Verify state starts with "extension-" to ensure this is from our extension
     if (!state || !state.startsWith('extension-')) {
       res.status(400).json({ error: 'Invalid state parameter' });
       return;
     }
 
-    // Get GitHub OAuth credentials from environment
     const clientId = process.env.GITHUB_CLIENT_ID;
     const clientSecret = process.env.GITHUB_CLIENT_SECRET;
 
@@ -333,7 +320,6 @@ exports.githubOAuthExchange = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    // Exchange code for access token
     const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
       headers: {
@@ -362,7 +348,6 @@ exports.githubOAuthExchange = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    // Return token to extension
     res.json({
       access_token: tokenData.access_token,
       scope: tokenData.scope,
@@ -375,7 +360,6 @@ exports.githubOAuthExchange = functions.https.onRequest(async (req, res) => {
   }
 });
 
-// Get GitHub user information using access token
 exports.getGitHubUser = functions.https.onRequest(async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -401,7 +385,6 @@ exports.getGitHubUser = functions.https.onRequest(async (req, res) => {
 
     const token = authHeader.substring('Bearer '.length);
 
-    // Fetch user info from GitHub
     const userResponse = await fetch('https://api.github.com/user', {
       headers: {
         'Authorization': `Bearer ${token}`,

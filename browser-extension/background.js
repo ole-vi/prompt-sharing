@@ -6,7 +6,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .then(result => sendResponse(result))
       .catch(error => sendResponse({ success: false, error: error.message }));
     
-    return true; // Keep channel open for async response
+    return true;
   }
 });
 
@@ -16,7 +16,7 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => 
       .then(result => sendResponse(result))
       .catch(error => sendResponse({ success: false, error: error.message }));
     
-    return true; // Keep channel open for async response
+    return true;
   }
 });
 
@@ -25,13 +25,10 @@ async function handleOAuthCallback(code, state) {
     const result = await GitHubAuth.handleOAuthCallback(code, state);
     
     if (result.success) {
-      // Try to notify popup if it's open, but don't fail if it's closed
       chrome.runtime.sendMessage({ 
         action: 'authSuccess', 
         user: result.user 
-      }).catch(() => {
-        // Popup may be closed, ignore error
-      });
+      }).catch(() => {});
     }
     
     return result;

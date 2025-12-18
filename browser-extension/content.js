@@ -1,20 +1,12 @@
-// ===== Content Script - Runs on every webpage =====
-// Extracts page content and converts to Markdown
-
 (function() {
   'use strict';
 
-  /**
-   * Extract the main content from the current page
-   */
   function extractPageContent() {
     const title = document.title || 'Untitled Page';
     const url = window.location.href;
     
-    // Try to find the main content area
     let mainContent = null;
     
-    // Common content selectors (ordered by priority)
     const selectors = [
       'article',
       'main',
@@ -38,10 +30,8 @@
       mainContent = document.body;
     }
     
-    // Clone to avoid modifying the actual page
     const content = mainContent.cloneNode(true);
     
-    // Remove unwanted elements
     const unwantedSelectors = [
       'script',
       'style',
@@ -71,20 +61,15 @@
     };
   }
 
-  /**
-   * Convert HTML element to Markdown
-   */
   function htmlToMarkdown(element) {
     if (!element) return '';
     
     let markdown = '';
     
-    // Handle text nodes
     if (element.nodeType === Node.TEXT_NODE) {
       return element.textContent.trim();
     }
     
-    // Handle element nodes
     const tagName = element.tagName ? element.tagName.toLowerCase() : '';
     
     switch (tagName) {
@@ -160,7 +145,6 @@
         markdown += '---\n\n';
         break;
       default:
-        // For other elements, process children
         Array.from(element.childNodes).forEach(child => {
           markdown += htmlToMarkdown(child);
         });
@@ -170,16 +154,10 @@
     return markdown;
   }
 
-  /**
-   * Get text content from element
-   */
   function getTextContent(element) {
     return element.textContent.trim().replace(/\s+/g, ' ');
   }
 
-  /**
-   * Process inline elements (bold, italic, links, etc.)
-   */
   function processInlineElements(element) {
     let result = '';
     
@@ -218,9 +196,6 @@
     return result.trim();
   }
 
-  /**
-   * Build full Markdown document
-   */
   function buildMarkdownDocument(pageData) {
     const { title, url, content, timestamp } = pageData;
     
@@ -229,13 +204,11 @@
     markdown += `**Captured:** ${new Date(timestamp).toLocaleString()}\n\n`;
     markdown += '---\n\n';
     
-    // Convert content to markdown
     markdown += htmlToMarkdown(content);
     
     return markdown;
   }
 
-  // Listen for messages from popup
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'extractContent') {
       try {

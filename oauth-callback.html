@@ -74,31 +74,25 @@
       const statusDiv = document.getElementById('status');
       
       try {
-        // Parse URL parameters
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
         const state = params.get('state');
         const error = params.get('error');
         const errorDescription = params.get('error_description');
 
-        // Check for OAuth errors
         if (error) {
           showError(`GitHub OAuth Error: ${errorDescription || error}`);
           return;
         }
 
-        // Verify we have required parameters
         if (!code || !state) {
           showError('Missing authorization code or state parameter');
           return;
         }
 
-        // Check if this is for the extension (state starts with "extension-")
         if (state.startsWith('extension-')) {
-          // Extract extension ID from state (format: extension-{random}-{extensionId})
           const parts = state.split('-');
           const extensionId = parts[parts.length - 1];
-          // Send message to extension background script using dynamic extension ID
           try {
             chrome.runtime.sendMessage(
               extensionId,
@@ -127,7 +121,6 @@
             showError(`Error communicating with extension: ${err.message}`);
           }
         } else {
-          // This is for the web app, let Firebase Auth handle it
           console.log('Web app OAuth callback, Firebase Auth will handle this');
         }
 

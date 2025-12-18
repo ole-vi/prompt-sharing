@@ -11,7 +11,6 @@ const CONFIG = {
     }
   },
   
-  // Firebase Functions endpoints
   firebase: {
     projectId: 'prompt-sharing-f8eeb',
     functionsUrl: 'https://us-central1-prompt-sharing-f8eeb.cloudfunctions.net',
