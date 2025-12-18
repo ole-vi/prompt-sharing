@@ -19,20 +19,17 @@ export function initBranchSelector(owner, repo, branch) {
   const webCapturesBtn = document.getElementById('webCapturesBtn');
   if (webCapturesBtn) {
     webCapturesBtn.addEventListener('click', () => {
-      currentBranch = 'web-captures';
+      const targetBranch = 'web-captures';
       
       const qs = new URLSearchParams(location.search);
-      qs.set('branch', 'web-captures');
+      qs.set('branch', targetBranch);
       const newUrl = `${location.pathname}?${qs.toString()}`;
       
       history.replaceState(null, '', newUrl);
       sessionStorage.clear();
       
-      if (branchSelect) {
-        branchSelect.value = 'web-captures';
-      }
-      
-      window.dispatchEvent(new CustomEvent('branchChanged', { detail: { branch: 'web-captures' } }));
+      setCurrentBranch(targetBranch);
+      window.dispatchEvent(new CustomEvent('branchChanged', { detail: { branch: targetBranch } }));
     });
   }
 }
@@ -54,7 +51,7 @@ export function setCurrentRepo(owner, repo) {
 }
 
 function classifyBranch(branchName) {
-  if (branchName === 'main' || branchName === 'master') {
+  if (branchName === 'main' || branchName === 'master' || branchName === 'web-captures') {
     return 'main';
   }
 
