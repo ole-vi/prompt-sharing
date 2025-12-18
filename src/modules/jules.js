@@ -903,7 +903,6 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
   let maxRetries = 3;
   let submitted = false;
 
-  // Extract title from promptText
   const title = extractTitleFromPrompt(promptText);
   while (retryCount < maxRetries && !submitted) {
     try {
@@ -1644,7 +1643,8 @@ export function showFreeInputForm() {
       title = lines[0].substring(0, 50).trim();
     }
 
-    hideFreeInputForm();
+    textarea.value = '';
+    textarea.focus();
 
     try {
       let retryCount = 0;
@@ -2213,11 +2213,13 @@ export function showSubtaskSplitModal(promptText) {
 
     const subtasksToSubmit = [...currentSubtasks];
     hideSubtaskSplitModal();
+    showFreeInputForm();
     await submitSubtasks(subtasksToSubmit);
   };
 
   cancelBtn.onclick = () => {
     hideSubtaskSplitModal();
+    showFreeInputForm();
   };
 
   queueBtn.onclick = async () => {
@@ -2279,8 +2281,9 @@ export function showSubtaskSplitModal(promptText) {
         note: 'Queued from Split Dialog'
       });
 
-      alert(`${remaining.length} subtask(s) queued successfully!`);
       hideSubtaskSplitModal();
+      showFreeInputForm();
+      alert(`${remaining.length} subtask(s) queued successfully!`);
     } catch (err) {
       alert('Failed to queue subtasks: ' + err.message);
     }
@@ -2369,7 +2372,6 @@ export function hideSubtaskSplitModal() {
 }
 
 async function submitSubtasks(subtasks) {
-  // Get suppress popups preference from the modal
   const suppressPopups = document.getElementById('splitSuppressPopupsCheckbox')?.checked || false;
   const openInBackground = document.getElementById('splitOpenInBackgroundCheckbox')?.checked || false;
   
@@ -2444,7 +2446,11 @@ async function submitSubtasks(subtasks) {
     `Proceed?`
   );
 
-  if (!proceed) return;
+  if (!proceed) {
+    statusBar.clearProgress();
+    statusBar.clearAction();
+    return;
+  }
 
   let skippedCount = 0;
   let successCount = 0;
@@ -2525,6 +2531,8 @@ async function submitSubtasks(subtasks) {
           );
 
           if (result.action === 'cancel') {
+            statusBar.clearProgress();
+            statusBar.clearAction();
             alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
             return;
           } else if (result.action === 'skip') {
@@ -2533,6 +2541,8 @@ async function submitSubtasks(subtasks) {
           } else if (result.action === 'queue') {
             const user = window.auth?.currentUser;
             if (!user) {
+              statusBar.clearProgress();
+              statusBar.clearAction();
               alert('Please sign in to queue subtasks.');
               return;
             }
@@ -2547,8 +2557,12 @@ async function submitSubtasks(subtasks) {
                 totalCount,
                 note: 'Queued remaining subtasks'
               });
+              statusBar.clearProgress();
+              statusBar.clearAction();
               alert(`Queued ${remaining.length} remaining subtasks to your account.`);
             } catch (err) {
+              statusBar.clearProgress();
+              statusBar.clearAction();
               alert('Failed to queue subtasks: ' + err.message);
             }
             return;
@@ -2565,12 +2579,16 @@ async function submitSubtasks(subtasks) {
           );
 
           if (result.action === 'cancel') {
+            statusBar.clearProgress();
+            statusBar.clearAction();
             alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
             return;
           } else {
             if (result.action === 'queue') {
               const user = window.auth?.currentUser;
               if (!user) {
+                statusBar.clearProgress();
+                statusBar.clearAction();
                 alert('Please sign in to queue subtasks.');
                 return;
               }
@@ -2585,8 +2603,12 @@ async function submitSubtasks(subtasks) {
                   totalCount,
                   note: 'Queued remaining subtasks (final failure)'
                 });
+                statusBar.clearProgress();
+                statusBar.clearAction();
                 alert(`Queued ${remaining.length} remaining subtasks to your account.`);
               } catch (err) {
+                statusBar.clearProgress();
+                statusBar.clearAction();
                 alert('Failed to queue subtasks: ' + err.message);
               }
               return;
@@ -2603,6 +2625,10 @@ async function submitSubtasks(subtasks) {
     }
   }
 
+  statusBar.clearProgress();
+  statusBar.clearAction();
+  statusBar.showMessage('All subtasks completed', { timeout: 3000 });
+  
   const summary = `✓ Completed!\n\n` +
     `Successful: ${successCount}/${totalCount}\n` +
     `Skipped: ${skippedCount}/${totalCount}`;

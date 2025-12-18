@@ -77,15 +77,16 @@ async function loadPrompts() {
   const cacheKey = STORAGE_KEYS.promptsCache(currentOwner, currentRepo, currentBranch);
   const files = await loadList(currentOwner, currentRepo, currentBranch, cacheKey);
 
-  // Check for hash param to auto-load prompt
   const hashSlug = getHashParam('p');
   if (hashSlug) {
     await selectBySlug(hashSlug, files, currentOwner, currentRepo, currentBranch);
+  } else {
+    const { showFreeInputForm } = await import('./modules/jules.js');
+    showFreeInputForm();
   }
 }
 
 function setupEventListeners() {
-  // Handle hash changes (prompt selection)
   window.addEventListener('hashchange', async () => {
     try {
       const p = parseParams();
