@@ -15,23 +15,6 @@ export function initBranchSelector(owner, repo, branch) {
   if (branchSelect) {
     branchSelect.addEventListener('change', handleBranchChange);
   }
-
-  const webCapturesBtn = document.getElementById('webCapturesBtn');
-  if (webCapturesBtn) {
-    webCapturesBtn.addEventListener('click', () => {
-      const targetBranch = 'web-captures';
-      
-      const qs = new URLSearchParams(location.search);
-      qs.set('branch', targetBranch);
-      const newUrl = `${location.pathname}?${qs.toString()}`;
-      
-      history.replaceState(null, '', newUrl);
-      sessionStorage.clear();
-      
-      setCurrentBranch(targetBranch);
-      window.dispatchEvent(new CustomEvent('branchChanged', { detail: { branch: targetBranch } }));
-    });
-  }
 }
 
 export function setCurrentBranch(branch) {
