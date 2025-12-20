@@ -41,8 +41,10 @@ function initApp() {
   const repoPill = document.getElementById('repoPill');
   if (repoPill) {
     repoPill.textContent = `${currentOwner}/${currentRepo}`;
-
   }
+
+  // Update version display from package.json
+  fetchVersion();
 
   // Load prompts
   loadPrompts();
@@ -61,6 +63,19 @@ function initApp() {
       updateAuthUI(window.auth.currentUser);
     }
   });
+}
+
+async function fetchVersion() {
+  try {
+    const response = await fetch('package.json');
+    const packageData = await response.json();
+    const appVersion = document.getElementById('appVersion');
+    if (appVersion && packageData.version) {
+      appVersion.textContent = `v${packageData.version}`;
+    }
+  } catch (error) {
+    console.error('Failed to fetch version:', error);
+  }
 }
 
 function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
