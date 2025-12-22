@@ -23,10 +23,10 @@ export const STORAGE_KEY_FAVORITE_REPOS = "jules_favorite_repos";
 
 // Emoji classification keywords
 export const EMOJI_PATTERNS = {
-  review: { emoji: "🔍", keywords: ["review", "\\bpr\\b", "rubric", "audit", "inspect", "check", "analyze", "investigation"] },
-  bug: { emoji: "🩹", keywords: ["bug", "triage", "fix", "issue", "solve", "repair", "patch", "hotfix"] },
-  design: { emoji: "📖", keywords: ["spec", "design", "plan", "explorer", "guide", "tutorial", "documentation", "readme", "onboard"] },
-  refactor: { emoji: "🧹", keywords: ["refactor", "cleanup", "sweep", "maintenance", "optimize", "improve", "reorganize", "deadcode"] }
+  review: { emoji: "🔍", keywords: ["review", "\\bpr\\b", "rubric", "audit", "inspect", "check", "analyze", "investigation", "validate", "verify", "pull-request"] },
+  bug: { emoji: "🩹", keywords: ["bug", "triage", "fix", "issue", "solve", "repair", "patch", "hotfix", "error", "defect", "glitch"] },
+  design: { emoji: "📖", keywords: ["spec", "design", "plan", "explorer", "guide", "tutorial", "documentation", "readme", "onboard", "architecture", "specification", "docs"] },
+  refactor: { emoji: "🧹", keywords: ["refactor", "cleanup", "sweep", "maintenance", "optimize", "improve", "reorganize", "deadcode", "chore", "tidy", "restructure"] }
 };
 
 // Branch classification

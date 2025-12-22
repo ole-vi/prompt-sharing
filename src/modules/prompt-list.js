@@ -67,16 +67,20 @@ export function ensureAncestorsExpanded(path) {
   return changed;
 }
 
-function prettyTitle(name) {
-  const base = name.replace(/\.md$/i, "");
-  if (!PRETTY_TITLES) return base;
-  
+function generateTitleAndTags(name) {
+  const title = name.replace(/\.md$/i, "");
+  if (!PRETTY_TITLES) {
+    return { title, tags: [] };
+  }
+
+  const tags = [];
   for (const [key, { emoji, keywords }] of Object.entries(EMOJI_PATTERNS)) {
-    if (keywords.some(kw => new RegExp(kw, 'i').test(base))) {
-      return emoji + " " + base;
+    if (keywords.some(kw => new RegExp(kw, 'i').test(title))) {
+      tags.push({ key, emoji });
     }
   }
-  return base;
+
+  return { title, tags };
 }
 
 function getExpandedStateKey(owner, repo, branch) {
@@ -349,10 +353,26 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       left.style.display = 'flex';
       left.style.flexDirection = 'column';
       left.style.gap = '2px';
+
+      const { title, tags } = generateTitleAndTags(file.name);
+
       const t = document.createElement('div');
       t.className = 'item-title';
-      t.textContent = prettyTitle(file.name);
+      t.textContent = title;
       left.appendChild(t);
+
+      if (tags.length > 0) {
+        const tagsContainer = document.createElement('div');
+        tagsContainer.className = 'tags-container';
+        tags.forEach(tag => {
+          const tagEl = document.createElement('span');
+          tagEl.className = `tag tag-${tag.key}`;
+          tagEl.textContent = `${tag.emoji} ${tag.key}`;
+          tagsContainer.appendChild(tagEl);
+        });
+        left.appendChild(tagsContainer);
+      }
+
       a.appendChild(left);
       li.appendChild(a);
       container.appendChild(li);

@@ -280,6 +280,29 @@ header {
   box-shadow: 0 0 12px rgba(77, 217, 255, 0.2);
 }
 
+/* ===== Tags ===== */
+.tags-container {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  text-transform: capitalize;
+}
+
+.tag-review { background: #3b82f633; color: #60a5fa; }
+.tag-bug { background: #ef444433; color: #f87171; }
+.tag-design { background: #a855f733; color: #c084fc; }
+.tag-refactor { background: #14b8a633; color: #2dd4bf; }
+
 /* ===== Main Content ===== */
 #main {
   padding: 14px;
