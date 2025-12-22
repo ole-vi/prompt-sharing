@@ -1,7 +1,7 @@
 // ===== Prompt List & Tree Module =====
 
 import { slugify } from '../utils/slug.js';
-import { STORAGE_KEYS, PRETTY_TITLES, EMOJI_PATTERNS } from '../utils/constants.js';
+import { STORAGE_KEYS, PRETTY_TITLES, TAG_DEFINITIONS } from '../utils/constants.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
 import { clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
 
@@ -67,16 +67,17 @@ export function ensureAncestorsExpanded(path) {
   return changed;
 }
 
-function prettyTitle(name) {
+function getTagsForFile(name) {
   const base = name.replace(/\.md$/i, "");
-  if (!PRETTY_TITLES) return base;
-  
-  for (const [key, { emoji, keywords }] of Object.entries(EMOJI_PATTERNS)) {
+  const tags = [];
+  if (!PRETTY_TITLES) return tags;
+
+  for (const [key, { keywords, className, label }] of Object.entries(TAG_DEFINITIONS)) {
     if (keywords.some(kw => new RegExp(kw, 'i').test(base))) {
-      return emoji + " " + base;
+      tags.push({ className, label });
     }
   }
-  return base;
+  return tags;
 }
 
 function getExpandedStateKey(owner, repo, branch) {
@@ -349,10 +350,28 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       left.style.display = 'flex';
       left.style.flexDirection = 'column';
       left.style.gap = '2px';
-      const t = document.createElement('div');
-      t.className = 'item-title';
-      t.textContent = prettyTitle(file.name);
-      left.appendChild(t);
+
+      const titleContainer = document.createElement('div');
+      titleContainer.className = 'item-title';
+
+      const titleSpan = document.createElement('span');
+      titleSpan.textContent = file.name.replace(/\.md$/i, "");
+      titleContainer.appendChild(titleSpan);
+
+      const tags = getTagsForFile(file.name);
+      if (tags.length > 0) {
+        const tagsContainer = document.createElement('div');
+        tagsContainer.className = 'tags-container';
+        for (const tag of tags) {
+          const tagEl = document.createElement('span');
+          tagEl.className = `tag ${tag.className}`;
+          tagEl.textContent = tag.label;
+          tagsContainer.appendChild(tagEl);
+        }
+        titleContainer.appendChild(tagsContainer);
+      }
+
+      left.appendChild(titleContainer);
       a.appendChild(left);
       li.appendChild(a);
       container.appendChild(li);
