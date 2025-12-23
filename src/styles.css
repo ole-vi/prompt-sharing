@@ -280,6 +280,17 @@ header {
   box-shadow: 0 0 12px rgba(77, 217, 255, 0.2);
 }
 
+.folder-tag {
+  background-color: var(--border);
+  color: var(--muted);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  margin-left: 8px;
+}
+
 /* ===== Main Content ===== */
 #main {
   padding: 14px;

@@ -353,10 +353,28 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       left.style.display = 'flex';
       left.style.flexDirection = 'column';
       left.style.gap = '2px';
+
+      const titleAndTag = document.createElement('div');
+      titleAndTag.style.display = 'flex';
+      titleAndTag.style.alignItems = 'center';
+
       const t = document.createElement('div');
       t.className = 'item-title';
       t.textContent = prettyTitle(file.name);
-      left.appendChild(t);
+      titleAndTag.appendChild(t);
+
+      const parts = file.path.split('/');
+      if (parts.length > 2) {
+        const folderName = parts[parts.length - 2];
+        if (folderName) {
+          const tag = document.createElement('span');
+          tag.className = 'folder-tag';
+          tag.textContent = folderName;
+          titleAndTag.appendChild(tag);
+        }
+      }
+
+      left.appendChild(titleAndTag);
       a.appendChild(left);
       li.appendChild(a);
       container.appendChild(li);
