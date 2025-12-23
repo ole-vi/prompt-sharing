@@ -73,27 +73,6 @@
     </div>
   </header>
 
-  <nav id="navbar">
-    <div class="nav-container">
-      <a href="index.html" class="nav-item">
-        <span class="nav-icon">🏠</span>
-        <span class="nav-label">Home</span>
-      </a>
-      <a href="queue.html" class="nav-item">
-        <span class="nav-icon">📋</span>
-        <span class="nav-label">Queue</span>
-      </a>
-      <a href="jules.html" class="nav-item">
-        <span class="nav-icon">🤖</span>
-        <span class="nav-label">Jules</span>
-      </a>
-      <button id="navAuthBtn" class="nav-item" style="display:none; border:none; background:transparent; cursor:pointer; font:inherit;">
-        <span class="nav-icon">🔑</span>
-        <span class="nav-label" id="navAuthLabel">Sign In</span>
-      </button>
-    </div>
-  </nav>
-
   <div class="wrap" style="grid-template-columns: 1fr;">
     <main class="card" style="padding:32px;">
       <h2 style="margin:0 0 24px; font-size:24px; font-weight:700;">👤 User Profile</h2>
@@ -124,6 +103,7 @@
   </div>
 
   <script type="module">
+    import { loadNavbar } from './src/modules/navbar.js';
     import { initAuthStateListener, updateAuthUI } from './src/modules/auth.js';
     import { initBranchSelector, loadBranches } from './src/modules/branch-selector.js';
     import { loadProfileDirectly } from './src/modules/jules.js';
@@ -207,9 +187,12 @@
     }
 
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initApp);
+      document.addEventListener('DOMContentLoaded', async () => {
+        await loadNavbar('profile');
+        initApp();
+      });
     } else {
-      initApp();
+      loadNavbar('profile').then(() => initApp());
     }
   </script>
 </body>

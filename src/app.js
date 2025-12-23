@@ -14,7 +14,7 @@ let currentOwner = OWNER;
 let currentRepo = REPO;
 let currentBranch = BRANCH;
 
-function initApp() {
+export function initApp() {
   // Parse URL params
   const params = parseParams();
   if (params.owner) currentOwner = params.owner;
@@ -175,11 +175,4 @@ function setupEventListeners() {
       console.error('Error handling branch change:', error);
     }
   });
-}
-
-// Initialize app when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initApp);
-} else {
-  initApp();
 }

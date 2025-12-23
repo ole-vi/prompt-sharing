@@ -74,27 +74,6 @@
     </div>
   </header>
 
-  <nav id="navbar">
-    <div class="nav-container">
-      <a href="index.html" class="nav-item active">
-        <span class="nav-icon">🏠</span>
-        <span class="nav-label">Home</span>
-      </a>
-      <a href="queue.html" class="nav-item">
-        <span class="nav-icon">📋</span>
-        <span class="nav-label">Queue</span>
-      </a>
-      <a href="jules.html" class="nav-item">
-        <span class="nav-icon">🤖</span>
-        <span class="nav-label">Jules</span>
-      </a>
-      <button id="navAuthBtn" class="nav-item" style="display:none; border:none; background:transparent; cursor:pointer; font:inherit;">
-        <span class="nav-icon">🔑</span>
-        <span class="nav-label" id="navAuthLabel">Sign In</span>
-      </button>
-    </div>
-  </nav>
-
   <div class="wrap">
     <aside id="sidebar" class="card">
       <input id="search" placeholder="Search prompts..." />
@@ -496,7 +475,19 @@
     </div>
   </div>
 
-  <script type="module" src="src/app.js"></script>
+  <script type="module">
+    import { loadNavbar } from './src/modules/navbar.js';
+    import { initApp } from './src/app.js';
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', async () => {
+        await loadNavbar('home');
+        initApp();
+      });
+    } else {
+      loadNavbar('home').then(() => initApp());
+    }
+  </script>
   <!-- Status Bar -->
   <div id="statusBar" style="display:none;" aria-live="polite">
     <div class="status-inner">
