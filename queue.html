@@ -155,14 +155,14 @@
 
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', async () => {
-        await loadHeader();
-        await loadNavbar('queue');
+        // Load header and navbar in parallel
+        await Promise.all([loadHeader(), loadNavbar('queue')]);
         initApp();
       });
     } else {
       (async () => {
-        await loadHeader();
-        await loadNavbar('queue');
+        // Load header and navbar in parallel
+        await Promise.all([loadHeader(), loadNavbar('queue')]);
         initApp();
       })();
     }
