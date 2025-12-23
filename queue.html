@@ -62,8 +62,7 @@
   </div>
 
   <script type="module">
-    import { loadHeader } from './src/modules/header.js';
-    import { loadNavbar } from './src/modules/navbar.js';
+    import { initializePage } from './src/modules/page-init.js';
     import { initAuthStateListener, updateAuthUI } from './src/modules/auth.js';
     import { initBranchSelector, loadBranches } from './src/modules/branch-selector.js';
     import { listJulesQueue, renderQueueListDirectly, attachQueueHandlers } from './src/modules/jules.js';
@@ -153,19 +152,7 @@
       });
     }
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', async () => {
-        // Load header and navbar in parallel
-        await Promise.all([loadHeader(), loadNavbar('queue')]);
-        initApp();
-      });
-    } else {
-      (async () => {
-        // Load header and navbar in parallel
-        await Promise.all([loadHeader(), loadNavbar('queue')]);
-        initApp();
-      })();
-    }
+    initializePage('queue', initApp);
   </script>
 
   <!-- Status Bar -->
