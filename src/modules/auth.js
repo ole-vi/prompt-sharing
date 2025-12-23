@@ -55,6 +55,12 @@ export function updateAuthUI(user) {
     if (userName) {
       userName.textContent = user.displayName || user.email || 'User';
     }
+    const userAvatar = document.getElementById('userAvatar');
+    if (userAvatar && user.photoURL) {
+      userAvatar.src = user.photoURL;
+      userAvatar.alt = user.displayName || 'User avatar';
+      userAvatar.style.display = 'block';
+    }
   } else {
     // User is signed out
     if (navAuthBtn) {
