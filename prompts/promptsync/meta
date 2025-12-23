@@ -1,0 +1,55 @@
+---
+name: vision
+description: Long term plan and operating principles for the prompt-sharing repository.
+version: 1.0
+---
+
+# prompt-sharing: Long Term Plan
+
+## What this repository is
+This repository is intended to become a provider neutral, reusable prompt layer for agentic work.
+
+Think of it as a "virtual operator" for prompts:
+- It does not own the underlying model infrastructure.
+- It adds portability, routing, and operational discipline on top of whichever models and agent runtimes people use.
+
+## Core outcomes we are building toward
+
+### 1) Provider neutrality and roaming
+- Prompts should work across major agentic LLM environments with minimal changes.
+- Avoid vendor lock in by keeping the source of truth in Git, not inside any single chat product or proprietary UI.
+- Enable "roaming" so teams can move between models and tools without losing practices or quality.
+
+### 2) Universal prompt artifacts
+- Treat prompts like portable artifacts: write once, run anywhere.
+- Standardize structure (frontmatter, sections, constraints, outputs) so multiple agents can consume the same prompt reliably.
+- Prefer small composable prompts that can be chained over one giant prompt whenever possible.
+
+### 3) GitOps for prompts (PromptOps)
+- Prompts are code.
+- Every prompt change should be reviewable via pull request, diffable, and reversible.
+- Establish conventions: naming, templates, style rules, and versioning so the library stays consistent as it grows.
+- Aim for CI checks over time (linting, schema validation, basic evals).
+
+### 4) Alignment with open standards (MCP direction)
+- Track and align with the Model Context Protocol ecosystem so this repo can evolve from static files into a shared prompt service.
+- Long term goal: expose prompts as structured resources to any MCP compatible client, while still keeping the authoritative source in Git.
+
+### 5) Recursive maintenance (self healing library)
+This should not become a graveyard of outdated prompts.
+Long term, we want an automation loop that can:
+- Sweep: identify duplicates, stale prompts, broken links, and outdated assumptions.
+- Evaluate: run lightweight evals or spot checks on representative tasks.
+- Heal: propose improvements via pull requests, including changelogs and rationale.
+
+## Contribution rules for agents and humans
+When adding or updating prompts:
+- Preserve portability: avoid tool specific assumptions unless clearly scoped and labeled.
+- Prefer explicit inputs, outputs, and constraints.
+- Keep prompts testable: include examples, expected structure, and failure modes where useful.
+- Keep changes small and reviewable.
+- Document intent: why this prompt exists and when to use it.
+
+## Agent operating instruction
+Before executing any task that touches this repository, adopt the principles above.
+Optimize for portability, clarity, and version controlled improvement.
