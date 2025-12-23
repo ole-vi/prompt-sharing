@@ -190,16 +190,66 @@
   <script type="module">
     import { initializePage } from './src/modules/page-init.js';
     import { initAuthStateListener, updateAuthUI } from './src/modules/auth.js';
+    import { initBranchSelector, loadBranches } from './src/modules/branch-selector.js';
+    import { OWNER, REPO, BRANCH } from './src/utils/constants.js';
+    import statusBar from './src/modules/status-bar.js';
+
+    function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
+      if (window.firebaseReady) {
+        callback();
+      } else if (attempts < maxAttempts) {
+        setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), 100);
+      } else {
+        console.error('Firebase failed to initialize');
+      }
+    }
+
+    async function fetchVersion() {
+      try {
+        const response = await fetch('package.json');
+        const packageData = await response.json();
+        const appVersion = document.getElementById('appVersion');
+        if (appVersion && packageData.version) {
+          appVersion.textContent = `v${packageData.version}`;
+        }
+      } catch (error) {
+        console.error('Failed to fetch version:', error);
+      }
+    }
 
     async function initApp() {
-      // Initialize auth state listener
-      initAuthStateListener();
-      
-      // Update auth UI if already signed in
-      const user = window.auth?.currentUser;
-      if (user) {
-        updateAuthUI(user);
-      }
+      waitForFirebase(async () => {
+        // Initialize auth state listener
+        initAuthStateListener();
+        
+        // Update auth UI if already signed in
+        const user = window.auth?.currentUser;
+        if (user) {
+          updateAuthUI(user);
+        }
+        
+        // Initialize branch selector
+        initBranchSelector(OWNER, REPO, BRANCH);
+        
+        // Load branches
+        try {
+          await loadBranches();
+        } catch (error) {
+          console.error('Failed to load branches:', error);
+        }
+        
+        // Update repo pill
+        const repoPill = document.getElementById('repoPill');
+        if (repoPill) {
+          repoPill.innerHTML = `<strong>${OWNER}/${REPO}</strong>`;
+        }
+        
+        // Fetch version
+        fetchVersion();
+        
+        // Initialize status bar
+        statusBar.init();
+      });
       
       // Download extension button
       const downloadBtn = document.getElementById('downloadExtensionBtn');
@@ -273,6 +323,15 @@
 
     initializePage('webcapture', initApp);
   </script>
+
+  <!-- Status Bar -->
+  <div id="statusBar" style="display:none;" aria-live="polite">
+    <div class="status-inner">
+      <div class="status-msg" style="flex:1;">Ready</div>
+      <div class="status-progress" style="display:none; margin-left:12px; color:var(--muted); font-size:13px;"></div>
+      <button class="status-action btn" style="display:none; margin-left:12px; padding:6px 10px;">Action</button>
+    </div>
+  </div>
 
 </body>
 </html>
