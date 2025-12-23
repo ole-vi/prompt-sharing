@@ -11,6 +11,8 @@ Hosted for free with GitHub Pages, backed by simple `.md` files.
 
 PromptSync is a zero-build web application for managing and sharing AI prompts as markdown files. It provides a browsable library interface with deep linking, GitHub integration, and direct integration with Google's Jules AI assistant. Teams can organize prompts in folders, switch between branches, and send prompts directly to Jules with full context awareness.
 
+Also includes a browser extension that lets you capture any webpage as Markdown and download it or send it directly to PromptSync! See [browser-extension/README.md](browser-extension/README.md) for details.
+
 ## Local development
 
 To test the app locally, you must serve it over HTTP (not open the HTML file directly):
@@ -44,6 +46,7 @@ prompt-sharing/
 ├── firebase-init.js        # Firebase SDK initialization
 ├── firebase.json           # Firebase hosting config
 ├── firestore.rules         # Firestore security rules
+├── oauth-callback.html     # GitHub OAuth callback for extension
 ├── src/
 │   ├── app.js             # Main application initialization
 │   ├── styles.css         # All application styles
@@ -67,8 +70,18 @@ prompt-sharing/
 │   ├── planet/           # Planet repo onboarding
 │   ├── myplanet/         # myPlanet repo onboarding
 │   └── promptsync/       # PromptSync repo onboarding
-└── functions/            # Firebase Cloud Functions (Jules backend)
-    ├── index.js
+├── webclips/             # User web clips from browser extension
+│   └── {username}/       # Each user's synced clips
+├── browser-extension/    # Web capture browser extension
+│   ├── manifest.json     # Extension configuration
+│   ├── content.js        # Page content extraction
+│   ├── popup.html/js     # Extension UI
+│   ├── config.js         # OAuth configuration
+│   ├── github-auth.js    # GitHub OAuth flow
+│   ├── github-sync.js    # GitHub sync logic
+│   └── background.js     # Service worker
+└── functions/            # Firebase Cloud Functions
+    ├── index.js          # Jules backend + GitHub OAuth proxy
     └── package.json
 ```
 
@@ -207,6 +220,31 @@ Click your username after signing in to access:
 * **URL Parameters**: Share links with custom owner/repo/branch
 * **Cache Management**: Automatic caching with session storage
 * **Real-Time Updates**: Changes appear 1-2 minutes after pushing to GitHub
+
+## Browser Extension - Web Capture
+
+PromptSync includes a powerful browser extension that captures any webpage as Markdown and syncs it to GitHub.
+
+### Features
+
+* **📸 One-Click Capture**: Save any webpage as clean Markdown
+* **☁️ GitHub Sync**: Automatically commit clips to this repository
+* **🔐 OAuth Login**: Secure GitHub authentication (no PAT needed)
+* **💾 Local Download**: Option to save locally without GitHub
+* **👥 Multi-User**: Each user gets their own folder in `webclips/`
+
+### Quick Start
+
+1. **Install Extension**: Load `browser-extension` folder in Chrome (`chrome://extensions/`)
+2. **Connect GitHub**: Click "🔗 Connect to GitHub" in extension popup
+3. **Clip Pages**: Click extension icon, then "☁️ Sync to GitHub"
+4. **View Clips**: Find them at `webclips/{your-username}/`
+
+See [browser-extension/README.md](browser-extension/README.md) for full documentation.
+
+### For Administrators
+
+See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for setup instructions and [QUICKSTART.md](QUICKSTART.md) for user guide.
 
 ## Getting Started with Jules
 

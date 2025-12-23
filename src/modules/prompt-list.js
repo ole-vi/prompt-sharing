@@ -140,14 +140,18 @@ function ancestorPaths(path) {
   return ancestors;
 }
 
-function buildTree(items) {
-  const root = { type: 'dir', name: 'prompts', path: 'prompts', children: new Map() };
+function getPromptFolder(branch) {
+  return branch === 'web-captures' ? 'webcaptures' : 'prompts';
+}
+
+function buildTree(items, folder = 'prompts') {
+  const root = { type: 'dir', name: folder, path: folder, children: new Map() };
   for (const item of items) {
     if (!item.path) continue;
-    const relative = item.path.replace(/^prompts\/?/, '');
+    const relative = item.path.replace(new RegExp(`^${folder}/?`), '');
     const segments = relative.split('/');
     let node = root;
-    let currentPath = 'prompts';
+    let currentPath = folder;
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i];
       const isFile = i === segments.length - 1;
@@ -401,7 +405,8 @@ export function renderList(items, owner, repo, branch) {
   clearElement(listEl);
   const rootList = document.createElement('ul');
   listEl.appendChild(rootList);
-  const tree = buildTree(filtered);
+  const folder = getPromptFolder(branch);
+  const tree = buildTree(filtered, folder);
   renderTree(tree, rootList, forcedExpanded, owner, repo, branch);
   updateActiveItem();
 }
@@ -419,9 +424,10 @@ export async function loadList(owner, repo, branch, cacheKey) {
     await refreshList(owner, repo, branch, cacheKey);
     return files;
   } catch (e) {
+    const folder = getPromptFolder(branch);
     clearElement(listEl);
     listEl.innerHTML = `<div style="color:var(--muted); padding:8px;">
-      Could not load prompts from <code>${owner}/${repo}@${branch}/prompts</code>.<br/>${e.message}
+      Could not load prompts from <code>${owner}/${repo}@${branch}/${folder}</code>.<br/>${e.message}
     </div>`;
     return [];
   }
@@ -429,11 +435,12 @@ export async function loadList(owner, repo, branch, cacheKey) {
 
 export async function refreshList(owner, repo, branch, cacheKey) {
   let data;
+  const folder = getPromptFolder(branch);
   try {
-    data = await listPromptsViaContents(owner, repo, branch);
+    data = await listPromptsViaContents(owner, repo, branch, folder);
   } catch (e) {
     if (e.status === 403 || e.status === 404) {
-      data = await listPromptsViaTrees(owner, repo, branch);
+      data = await listPromptsViaTrees(owner, repo, branch, folder);
     } else {
       throw e;
     }

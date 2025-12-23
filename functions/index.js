@@ -4,8 +4,6 @@ const fetch = require("node-fetch");
 
 admin.initializeApp();
 
-// Decrypt Jules API key using Web Crypto API (Node 22+)
-// Must match client encryption: key padded to 32 bytes with '\0', IV first 12 chars padded with '0'
 async function decryptJulesKeyBase64(b64, uid) {
   try {
     const enc = Buffer.from(b64, "base64");
@@ -27,7 +25,6 @@ async function decryptJulesKeyBase64(b64, uid) {
   }
 }
 
-// Callable function - requires Firebase Auth context
 exports.runJules = functions.https.onCall(async (data, context) => {
   let uid = context.auth?.uid;
   
@@ -38,9 +35,7 @@ exports.runJules = functions.https.onCall(async (data, context) => {
         const decodedToken = await admin.auth().verifyIdToken(authHeader);
         uid = decodedToken.uid;
       }
-    } catch (e) {
-      // Fallback auth attempt
-    }
+    } catch (e) {}
   }
 
   if (!uid) {
@@ -123,7 +118,6 @@ exports.runJules = functions.https.onCall(async (data, context) => {
   }
 });
 
-// HTTPS endpoint version - avoids compat SDK auth context issue
 exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -231,7 +225,6 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
   }
 });
 
-// Validates a Jules API key by testing a request
 exports.validateJulesKey = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Must be signed in");
@@ -264,7 +257,6 @@ exports.validateJulesKey = functions.https.onCall(async (data, context) => {
   }
 });
 
-// Returns metadata about stored Jules API key (not the key itself)
 exports.getJulesKeyInfo = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Must be signed in");
@@ -288,5 +280,135 @@ exports.getJulesKeyInfo = functions.https.onCall(async (data, context) => {
 
   } catch (error) {
     throw new functions.https.HttpsError("internal", `Error retrieving key info: ${error.message}`);
+  }
+});
+
+exports.githubOAuthExchange = functions.https.onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    res.status(400).json({ error: 'Method not allowed. Use POST.' });
+    return;
+  }
+
+  try {
+    const { code, state } = req.body;
+
+    if (!code) {
+      res.status(400).json({ error: 'Missing authorization code' });
+      return;
+    }
+
+    if (!state || !state.startsWith('extension-')) {
+      res.status(400).json({ error: 'Invalid state parameter' });
+      return;
+    }
+
+    const clientId = process.env.GITHUB_CLIENT_ID;
+    const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      console.error('GitHub OAuth credentials not configured');
+      res.status(500).json({ error: 'Server configuration error' });
+      return;
+    }
+
+    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code: code
+      })
+    });
+
+    const tokenData = await tokenResponse.json();
+
+    if (tokenData.error) {
+      console.error('GitHub OAuth error:', tokenData.error_description);
+      res.status(400).json({ 
+        error: tokenData.error_description || 'Failed to exchange code for token' 
+      });
+      return;
+    }
+
+    if (!tokenData.access_token) {
+      res.status(500).json({ error: 'No access token received from GitHub' });
+      return;
+    }
+
+    res.json({
+      access_token: tokenData.access_token,
+      scope: tokenData.scope,
+      token_type: tokenData.token_type
+    });
+
+  } catch (error) {
+    console.error('Error in githubOAuthExchange:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+exports.getGitHubUser = functions.https.onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  if (req.method !== 'GET') {
+    res.status(400).json({ error: 'Method not allowed. Use GET.' });
+    return;
+  }
+
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({ error: 'Missing or invalid Authorization header' });
+      return;
+    }
+
+    const token = authHeader.substring('Bearer '.length);
+
+    const userResponse = await fetch('https://api.github.com/user', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'PromptSync-WebClipper'
+      }
+    });
+
+    if (!userResponse.ok) {
+      res.status(userResponse.status).json({ error: 'Failed to fetch user info from GitHub' });
+      return;
+    }
+
+    const userData = await userResponse.json();
+
+    res.json({
+      login: userData.login,
+      name: userData.name,
+      avatar_url: userData.avatar_url,
+      email: userData.email
+    });
+
+  } catch (error) {
+    console.error('Error in getGitHubUser:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });

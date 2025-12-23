@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Authentication</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .container {
+      text-align: center;
+      padding: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      max-width: 400px;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+    .spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px 0;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .message {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-top: 16px;
+    }
+    .error {
+      color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.2);
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+    .success {
+      color: #51cf66;
+      background: rgba(81, 207, 102, 0.2);
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔐 Connecting to GitHub</h1>
+    <div class="spinner"></div>
+    <p class="message">Processing authentication...</p>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    (async function() {
+      const statusDiv = document.getElementById('status');
+      
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        const state = params.get('state');
+        const error = params.get('error');
+        const errorDescription = params.get('error_description');
+
+        if (error) {
+          showError(`GitHub OAuth Error: ${errorDescription || error}`);
+          return;
+        }
+
+        if (!code || !state) {
+          showError('Missing authorization code or state parameter');
+          return;
+        }
+
+        if (state.startsWith('extension-')) {
+          const parts = state.split('-');
+          const extensionId = parts[parts.length - 1];
+          try {
+            chrome.runtime.sendMessage(
+              extensionId,
+              {
+                action: 'oauthCallback',
+                code: code,
+                state: state
+              },
+              (response) => {
+                if (chrome.runtime.lastError) {
+                  console.error('Chrome runtime error:', chrome.runtime.lastError);
+                  showError('Failed to communicate with extension');
+                  return;
+                }
+
+                if (response && response.success) {
+                  showSuccess('✅ Successfully connected to GitHub!');
+                  setTimeout(() => window.close(), 2000);
+                } else {
+                  showError(response?.error || 'Failed to complete authentication');
+                }
+              }
+            );
+          } catch (err) {
+            console.error('Extension message error:', err);
+            showError(`Error communicating with extension: ${err.message}`);
+          }
+        } else {
+          console.log('Web app OAuth callback, Firebase Auth will handle this');
+        }
+
+      } catch (error) {
+        console.error('OAuth callback error:', error);
+        showError(`Error: ${error.message}`);
+      }
+
+      function showError(message) {
+        const messageEl = document.querySelector('.message');
+        const spinner = document.querySelector('.spinner');
+        spinner.style.display = 'none';
+        messageEl.style.display = 'none';
+        statusDiv.innerHTML = `<div class="error">${message}</div>`;
+      }
+
+      function showSuccess(message) {
+        const messageEl = document.querySelector('.message');
+        const spinner = document.querySelector('.spinner');
+        spinner.style.display = 'none';
+        messageEl.style.display = 'none';
+        statusDiv.innerHTML = `<div class="success">${message}</div>`;
+      }
+    })();
+  </script>
+</body>
+</html>

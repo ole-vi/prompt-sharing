@@ -1,5 +1,3 @@
-// ===== Branch Selector Module =====
-
 import { USER_BRANCHES, FEATURE_PATTERNS, STORAGE_KEYS } from '../utils/constants.js';
 import { getBranches } from './github-api.js';
 
@@ -36,7 +34,7 @@ export function setCurrentRepo(owner, repo) {
 }
 
 function classifyBranch(branchName) {
-  if (branchName === 'main' || branchName === 'master') {
+  if (branchName === 'main' || branchName === 'master' || branchName === 'web-captures') {
     return 'main';
   }
 
@@ -61,8 +59,6 @@ function classifyBranch(branchName) {
 }
 
 function toggleFeatureBranches() {
-
-  // localStorage: branch visibility preference persists across sessions
   const showFeatures = localStorage.getItem('showFeatureBranches') === 'true';
   const newShowFeatures = !showFeatures;
   localStorage.setItem('showFeatureBranches', newShowFeatures.toString());
@@ -179,7 +175,7 @@ export async function loadBranches() {
     if (![...branchSelect.options].some(o => o.value === currentBranch)) {
       const opt = document.createElement('option');
       opt.value = currentBranch;
-      opt.textContent = `${currentBranch} (unlisted)`;
+      opt.textContent = `${currentBranch}`;
       branchSelect.appendChild(opt);
     }
 

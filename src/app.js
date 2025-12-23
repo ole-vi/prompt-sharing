@@ -161,12 +161,16 @@ function setupEventListeners() {
     }
   });
 
-  // Handle branch change event
   window.addEventListener('branchChanged', async (e) => {
     try {
       currentBranch = e.detail.branch;
       setRepoContext(currentOwner, currentRepo, currentBranch);
       await loadPrompts();
+      
+      const repoPill = document.getElementById('repoPill');
+      if (repoPill) {
+        repoPill.textContent = `${currentOwner}/${currentRepo}`;
+      }
     } catch (error) {
       console.error('Error handling branch change:', error);
     }
