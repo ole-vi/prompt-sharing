@@ -18,6 +18,11 @@
     <main class="card" style="padding:32px;">
       <h2 style="margin:0 0 24px; font-size:24px; font-weight:700;">🤖 Jules Account</h2>
       
+      <!-- Loading Message -->
+      <div id="julesLoading" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:48px; text-align:center;">
+        <div style="color:var(--muted); font-size:16px;">Loading Jules account information...</div>
+      </div>
+      
       <!-- Not Signed In Message -->
       <div id="julesNotSignedIn" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:48px; text-align:center;">
         <div style="color:var(--muted); font-size:16px;">Please sign in to view Jules account information.</div>
@@ -91,18 +96,29 @@
     async function loadJulesInfo() {
       const user = window.auth?.currentUser;
       
+      const loadingDiv = document.getElementById('julesLoading');
+      const notSignedInDiv = document.getElementById('julesNotSignedIn');
+      const profileSection = document.getElementById('julesProfileInfoSection');
+      
       if (!user) {
-        document.getElementById('julesProfileInfoSection').style.display = 'none';
-        document.getElementById('julesNotSignedIn').style.display = 'block';
+        loadingDiv.style.display = 'none';
+        profileSection.style.display = 'none';
+        notSignedInDiv.style.display = 'block';
         return;
       }
 
       try {
+        loadingDiv.style.display = 'block';
+        notSignedInDiv.style.display = 'none';
+        profileSection.style.display = 'none';
+        
         await loadJulesAccountInfo(user);
-        document.getElementById('julesProfileInfoSection').style.display = 'block';
-        document.getElementById('julesNotSignedIn').style.display = 'none';
+        
+        loadingDiv.style.display = 'none';
+        profileSection.style.display = 'block';
       } catch (err) {
         console.error('Jules info loading error:', err);
+        loadingDiv.style.display = 'none';
       }
     }
 
