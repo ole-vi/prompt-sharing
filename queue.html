@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Queue - PromptSync</title>
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+  <link rel="stylesheet" href="src/styles.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
+  <script src="firebase-init.js"></script>
+</head>
+<body>
+  <header>
+    <style>
+      @media (max-width: 900px) {
+        #headerContainer {
+          flex-direction: column !important;
+          gap: 8px !important;
+          align-items: center !important;
+        }
+        #headerContainer > div:first-child {
+          width: 100%;
+          flex-direction: column !important;
+          align-items: center !important;
+          gap: 8px !important;
+        }
+        #headerBranding a {
+          flex-direction: column;
+          text-align: center;
+        }
+        #headerControls {
+          width: 100%;
+          justify-content: center !important;
+        }
+        #authStatus {
+          width: 100%;
+          align-items: center !important;
+        }
+      }
+    </style>
+    <div id="headerContainer" style="display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 16px; width:100%;">
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div id="headerBranding" style="display:flex; align-items:center; gap:12px;">
+          <a id="logoLink" href="/" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:12px;">
+            <img src="assets/PromptSyncLogo.svg" alt="PromptSync" style="width:36px; height:36px; flex-shrink:0; object-fit:contain;">
+            <div>
+              <div style="font-size:24px; font-weight:900; letter-spacing:0.5px; line-height:1.2;">PromptSync</div>
+              <div style="color:var(--muted); font-size:12px; margin-top:2px; word-break:break-word;">Share and amplify your team's AI knowledge.</div>
+              <div id="appVersion" style="color:var(--muted); font-size:10px; opacity:0.7; margin-top:2px;"></div>
+            </div>
+          </a>
+        </div>
+
+        <div id="headerControls" style="display:flex; gap:8px; align-items:center;">
+          <div class="pill" id="repoPill" style="white-space:nowrap;">Loading repo...</div>
+          <label style="display:flex; align-items:center; gap:4px; white-space:nowrap;">
+            <span title="Choose a branch">▼</span>
+            <select id="branchSelect" class="btn" style="min-width:140px;">
+              <option>Loading branches…</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div id="authStatus" style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; font-size:13px; flex-shrink:0;">
+        <div style="display:flex; gap:8px;">
+          <button class="btn" id="authBtn" style="padding:6px 10px; font-size:12px;">Sign in with GitHub</button>
+          <button class="btn" id="signOutBtn" style="padding:6px 10px; font-size:12px; background:#e74c3c; color:white; display:none;" title="Sign out">Sign Out</button>
+        </div>
+        <span id="userDisplay" style="display:none; font-size:11px; color:var(--muted);">          <strong id="userName" style="cursor:pointer; text-decoration:underline;" title="Click to manage Jules API key"></strong>
+        </span>
+        <a href="https://github.com/ole-vi/prompt-sharing/blob/main/README.md" target="_blank" rel="noopener" class="help-link" title="View documentation" style="padding:6px 10px; font-size:12px;">📖 Help</a>
+      </div>
+    </div>
+  </header>
+
+  <nav id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </a>
+      <a href="queue.html" class="nav-item active">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Queue</span>
+      </a>
+      <a href="profile.html" class="nav-item">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">Profile</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="wrap" style="grid-template-columns: 1fr;">
+    <main class="card" style="display:flex; flex-direction:column; padding:32px; min-height:500px;">
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; text-align:center;">
+        <div style="font-size:64px; margin-bottom:24px;">📋</div>
+        <h1 style="margin:0 0 12px; font-size:32px; font-weight:700;">Queue</h1>
+        <p style="margin:0; color:var(--muted); font-size:16px; max-width:500px;">
+          Loading your queue...
+        </p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Jules Queue Modal -->
+  <div id="julesQueueModal" style="display:flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1003; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;">
+    <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; max-width:800px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4); max-height:90vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 style="margin:0; font-size:18px;">🧾 Jules Queue</h2>
+        <a href="index.html" class="btn" style="padding:8px 16px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; text-decoration:none;">✕ Close</a>
+      </div>
+
+      <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueSelectAll" type="checkbox" /> Select All</label>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueSuppressPopupsCheckbox" type="checkbox" /> Suppress Popups</label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueOpenInBackgroundCheckbox" type="checkbox" /> Open in Background</label>
+          <script>
+            (function() {
+              const suppressCheckbox = document.getElementById('queueSuppressPopupsCheckbox');
+              const backgroundCheckbox = document.getElementById('queueOpenInBackgroundCheckbox');
+              if (suppressCheckbox && backgroundCheckbox) {
+                suppressCheckbox.addEventListener('change', () => {
+                  if (suppressCheckbox.checked) backgroundCheckbox.checked = false;
+                });
+                backgroundCheckbox.addEventListener('change', () => {
+                  if (backgroundCheckbox.checked) suppressCheckbox.checked = false;
+                });
+              }
+            })();
+          </script>
+          <button id="queuePauseBtn" class="btn" style="padding:8px 12px;">Pause</button>
+          <button id="queueRunBtn" class="btn primary" style="padding:8px 12px;">Run Selected</button>
+          <button id="queueDeleteBtn" class="btn" style="padding:8px 12px; border-color:#c0504d; color:#c0504d;">Delete Selected</button>
+        </div>
+      </div>
+
+      <div id="allQueueList" style="display:flex; flex-direction:column; gap:8px;">
+        <div style="color:var(--muted); text-align:center; padding:24px;">Loading queue...</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initAuthStateListener, updateAuthUI } from './src/modules/auth.js';
+    import { initBranchSelector } from './src/modules/branch-selector.js';
+    import statusBar from './src/modules/status-bar.js';
+    import { OWNER, REPO, BRANCH } from './src/utils/constants.js';
+
+    function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
+      if (window.firebaseReady) {
+        callback();
+      } else if (attempts < maxAttempts) {
+        setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), 100);
+      } else {
+        console.error('Firebase failed to initialize');
+      }
+    }
+
+    async function fetchVersion() {
+      try {
+        const response = await fetch('package.json');
+        const packageData = await response.json();
+        const appVersion = document.getElementById('appVersion');
+        if (appVersion && packageData.version) {
+          appVersion.textContent = `v${packageData.version}`;
+        }
+      } catch (error) {
+        console.error('Failed to fetch version:', error);
+      }
+    }
+
+    async function showQueueModal() {
+      const user = window.auth?.currentUser;
+      const listDiv = document.getElementById('allQueueList');
+      if (!user) {
+        listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">Please sign in to view your queue.</div>';
+        return;
+      }
+
+      try {
+        listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">Loading queue...</div>';
+        
+        // Dynamically import and call the existing loadQueuePage function
+        const julesModule = await import('./src/modules/jules.js');
+        
+        // Get the queue items
+        const items = await julesModule.listJulesQueue(user.uid);
+        
+        // Use internal rendering (we'll need to expose these functions)
+        if (window.renderQueueList) {
+          window.renderQueueList(items);
+        } else {
+          // Fallback: manually call the module's internal function
+          // We need to expose renderQueueList and attachQueueModalHandlers
+          const queueCache = items;
+          
+          // Render the list
+          if (!items || items.length === 0) {
+            listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No queued items.</div>';
+          } else {
+            // We need to access the internal rendering, so let's trigger the existing loadQueuePage
+            // Set up a temporary function to reload
+            window.queueCache = items;
+            
+            // Just reload the page using the existing mechanism
+            const event = new CustomEvent('loadQueue');
+            window.dispatchEvent(event);
+          }
+        }
+      } catch (err) {
+        console.error('Queue loading error:', err);
+        listDiv.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">Failed to load queue: ${err.message}</div>`;
+      }
+    }
+
+    function initApp() {
+      const repoPill = document.getElementById('repoPill');
+      if (repoPill) {
+        repoPill.textContent = `${OWNER}/${REPO}`;
+      }
+
+      fetchVersion();
+      initBranchSelector(OWNER, REPO, BRANCH);
+      statusBar.init();
+
+      waitForFirebase(async () => {
+        initAuthStateListener();
+        
+        window.auth.onAuthStateChanged(async (user) => {
+          if (user) {
+            updateAuthUI(user);
+            // Load the queue modal using existing jules.js functions
+            const julesModule = await import('./src/modules/jules.js');
+            // Trigger the existing showJulesQueueModal which handles everything
+            julesModule.showJulesQueueModal();
+          } else {
+            const listDiv = document.getElementById('allQueueList');
+            if (listDiv) {
+              listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:48px;">Please sign in to view your queue.</div>';
+            }
+          }
+        });
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+  </script>
+
+  <!-- Status Bar -->
+  <div id="statusBar" style="display:none;" aria-live="polite">
+    <div class="status-inner">
+      <div class="status-msg" style="flex:1;">Ready</div>
+      <div class="status-progress" style="display:none; margin-left:12px; color:var(--muted); font-size:13px;"></div>
+      <button class="status-action btn" style="display:none; margin-left:12px; padding:6px 10px;">Action</button>
+    </div>
+  </div>
+</body>
+</html>

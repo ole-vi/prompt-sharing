@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Profile - PromptSync</title>
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+  <link rel="stylesheet" href="src/styles.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
+  <script src="firebase-init.js"></script>
+</head>
+<body>
+  <header>
+    <style>
+      @media (max-width: 900px) {
+        #headerContainer {
+          flex-direction: column !important;
+          gap: 8px !important;
+          align-items: center !important;
+        }
+        #headerContainer > div:first-child {
+          width: 100%;
+          flex-direction: column !important;
+          align-items: center !important;
+          gap: 8px !important;
+        }
+        #headerBranding a {
+          flex-direction: column;
+          text-align: center;
+        }
+        #headerControls {
+          width: 100%;
+          justify-content: center !important;
+        }
+        #authStatus {
+          width: 100%;
+          align-items: center !important;
+        }
+      }
+    </style>
+    <div id="headerContainer" style="display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 16px; width:100%;">
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div id="headerBranding" style="display:flex; align-items:center; gap:12px;">
+          <a id="logoLink" href="/" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:12px;">
+            <img src="assets/PromptSyncLogo.svg" alt="PromptSync" style="width:36px; height:36px; flex-shrink:0; object-fit:contain;">
+            <div>
+              <div style="font-size:24px; font-weight:900; letter-spacing:0.5px; line-height:1.2;">PromptSync</div>
+              <div style="color:var(--muted); font-size:12px; margin-top:2px; word-break:break-word;">Share and amplify your team's AI knowledge.</div>
+              <div id="appVersion" style="color:var(--muted); font-size:10px; opacity:0.7; margin-top:2px;"></div>
+            </div>
+          </a>
+        </div>
+
+        <div id="headerControls" style="display:flex; gap:8px; align-items:center;">
+          <div class="pill" id="repoPill" style="white-space:nowrap;">Loading repo...</div>
+          <label style="display:flex; align-items:center; gap:4px; white-space:nowrap;">
+            <span title="Choose a branch">▼</span>
+            <select id="branchSelect" class="btn" style="min-width:140px;">
+              <option>Loading branches…</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div id="authStatus" style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; font-size:13px; flex-shrink:0;">
+        <div style="display:flex; gap:8px;">
+          <button class="btn" id="authBtn" style="padding:6px 10px; font-size:12px;">Sign in with GitHub</button>
+          <button class="btn" id="signOutBtn" style="padding:6px 10px; font-size:12px; background:#e74c3c; color:white; display:none;" title="Sign out">Sign Out</button>
+        </div>
+        <span id="userDisplay" style="display:none; font-size:11px; color:var(--muted);">          <strong id="userName" style="cursor:pointer; text-decoration:underline;" title="Click to manage Jules API key"></strong>
+        </span>
+        <a href="https://github.com/ole-vi/prompt-sharing/blob/main/README.md" target="_blank" rel="noopener" class="help-link" title="View documentation" style="padding:6px 10px; font-size:12px;">📖 Help</a>
+      </div>
+    </div>
+  </header>
+
+  <nav id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </a>
+      <a href="queue.html" class="nav-item">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Queue</span>
+      </a>
+      <a href="profile.html" class="nav-item active">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">Profile</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="wrap" style="grid-template-columns: 1fr;">
+    <main class="card" style="display:flex; flex-direction:column; padding:32px; min-height:500px;">
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; text-align:center;">
+        <div style="font-size:64px; margin-bottom:24px;">👤</div>
+        <h1 style="margin:0 0 12px; font-size:32px; font-weight:700;">Profile</h1>
+        <p style="margin:0 0 24px; color:var(--muted); font-size:16px; max-width:500px;">
+          Manage your account settings, preferences, and connected services.
+        </p>
+        <div style="padding:20px; background:rgba(77,217,255,0.05); border:1px solid var(--border); border-radius:12px; max-width:600px;">
+          <p style="margin:0; color:var(--muted); font-size:14px;">
+            💡 Coming soon: User preferences, Jules API key management, and activity history
+          </p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initAuthStateListener, updateAuthUI } from './src/modules/auth.js';
+    import { initBranchSelector } from './src/modules/branch-selector.js';
+    import { OWNER, REPO, BRANCH } from './src/utils/constants.js';
+
+    function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
+      if (window.firebaseReady) {
+        callback();
+      } else if (attempts < maxAttempts) {
+        setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), 100);
+      } else {
+        console.error('Firebase failed to initialize');
+      }
+    }
+
+    async function fetchVersion() {
+      try {
+        const response = await fetch('package.json');
+        const packageData = await response.json();
+        const appVersion = document.getElementById('appVersion');
+        if (appVersion && packageData.version) {
+          appVersion.textContent = `v${packageData.version}`;
+        }
+      } catch (error) {
+        console.error('Failed to fetch version:', error);
+      }
+    }
+
+    function initApp() {
+      const repoPill = document.getElementById('repoPill');
+      if (repoPill) {
+        repoPill.textContent = `${OWNER}/${REPO}`;
+      }
+
+      fetchVersion();
+      initBranchSelector(OWNER, REPO, BRANCH);
+
+      waitForFirebase(() => {
+        initAuthStateListener();
+        if (window.auth && window.auth.currentUser) {
+          updateAuthUI(window.auth.currentUser);
+        }
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+  </script>
+</body>
+</html>
