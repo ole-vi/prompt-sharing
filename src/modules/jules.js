@@ -1404,23 +1404,20 @@ async function loadAndDisplayJulesProfile(uid) {
         const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
         
         const prLink = prUrl 
-          ? `<a href="${prUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:none; font-size:11px; margin-right:8px;" 
+          ? `<a href="${prUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:none; font-size:11px;" 
               onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">🔗 View PR</a>` 
           : '';
         
-        return `<div style="padding:10px; margin-bottom:8px; border:1px solid var(--border); border-radius:8px; font-size:12px; cursor:pointer; transition:all 0.2s; background:rgba(255,255,255,0.02);"
-                     onmouseover="this.style.background='rgba(77,217,255,0.05)'; this.style.borderColor='var(--accent)'"
-                     onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.borderColor='var(--border)'"
-                     onclick="window.open('${sessionUrl}', '_blank', 'noopener,noreferrer')">
+        return `<div style="padding:10px; margin-bottom:8px; border:1px solid var(--border); border-radius:8px; font-size:12px; background:rgba(255,255,255,0.02);">
           <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:6px;">
             <div style="font-weight:600; flex:1;">${stateEmoji} ${stateLabel}</div>
             <div style="color:var(--muted); font-size:11px;">${createdAt}</div>
           </div>
-          <div style="color:var(--text); margin-bottom:6px; line-height:1.4;">${displayPrompt}</div>
-          ${prLink ? `<div style="display:flex; gap:8px; align-items:center;" onclick="event.stopPropagation();">
-            ${prLink}
-            <span style="color:var(--muted); font-size:11px;">Click card to view session →</span>
-          </div>` : '<div style="color:var(--muted); font-size:11px;">Click to view session details →</div>'}
+          <div style="color:var(--text); margin-bottom:10px; line-height:1.4;">${displayPrompt}</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            ${prLink ? `<div style="display:flex; align-items:center;">${prLink}</div>` : '<div></div>'}
+            <button class="btn primary" onclick="window.open('${sessionUrl}', '_blank', 'noopener,noreferrer')" style="padding:6px 12px; font-size:12px;">View Session</button>
+          </div>
         </div>`;
       }).join('');
     } else {
