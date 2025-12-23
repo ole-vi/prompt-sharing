@@ -95,89 +95,72 @@
   </nav>
 
   <div class="wrap" style="grid-template-columns: 1fr;">
-    <main class="card" style="display:flex; flex-direction:column; padding:32px; min-height:500px;">
-      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; text-align:center;">
-        <div style="font-size:64px; margin-bottom:24px;">👤</div>
-        <h1 style="margin:0 0 12px; font-size:32px; font-weight:700;">Profile</h1>
-        <p style="margin:0; color:var(--muted); font-size:16px; max-width:500px;">
-          Loading your profile...
-        </p>
-      </div>
-    </main>
-  </div>
-
-  <!-- User Profile Modal -->
-  <div id="userProfileModal" style="display:flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;">
-    <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; max-width:600px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4); max-height:90vh; overflow-y:auto;">
-      <h2 style="margin:0 0 16px; font-size:18px;">User Profile</h2>
+    <main class="card" style="padding:32px; max-width:800px; margin:0 auto;">
+      <h2 style="margin:0 0 24px; font-size:24px; font-weight:700;">👤 User Profile</h2>
       
       <!-- User Info Section -->
-      <div style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:16px;">
-        <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Signed in as</div>
-        <div id="profileUserName" style="font-weight:600; font-size:14px;"></div>
+      <div style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px;">
+        <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">Signed in as</div>
+        <div id="profileUserName" style="font-weight:600; font-size:16px;">Loading...</div>
       </div>
       
       <!-- Jules API Key Section -->
-      <div id="julesKeyStatusDiv" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:16px;">
-        <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Jules API Key</div>
-        <div id="julesKeyStatus" style="font-weight:600; font-size:14px; color:var(--muted);">Loading...</div>
+      <div id="julesKeyStatusDiv" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px;">
+        <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">Jules API Key</div>
+        <div id="julesKeyStatus" style="font-weight:600; font-size:16px; color:var(--muted);">Loading...</div>
       </div>
       
       <div style="display:flex; gap:8px; flex-direction:column; margin-bottom:16px;">
-        <button id="addJulesKeyBtn" class="btn" style="padding:10px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; text-align:center; display:none;">➕ Add Jules API Key</button>
+        <button id="addJulesKeyBtn" class="btn" style="padding:12px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; text-align:center; display:none;">➕ Add Jules API Key</button>
       </div>
       
       <!-- Jules Profile Info Section -->
       <div id="julesProfileInfoSection" style="display:none; margin-bottom:16px;">
-        <h3 style="margin:0 0 12px; font-size:16px; padding-bottom:8px; border-bottom:1px solid var(--border);">Jules Account Info</h3>
+        <h3 style="margin:0 0 16px; font-size:18px; padding-bottom:12px; border-bottom:1px solid var(--border);">Jules Account Info</h3>
         
         <!-- View Queue Button -->
-        <div style="margin-bottom:16px;">
-          <a href="queue.html" class="btn" style="width:100%; padding:12px; border:2px solid var(--accent); background:rgba(52,152,219,0.1); cursor:pointer; border-radius:8px; font-weight:600; font-size:14px; color:var(--accent); display:flex; align-items:center; justify-content:center; gap:8px; transition: all 0.2s; text-decoration:none;">
-            <span style="font-size:18px;">📋</span>
+        <div style="margin-bottom:20px;">
+          <a href="queue.html" class="btn" style="width:100%; padding:14px; border:2px solid var(--accent); background:rgba(52,152,219,0.1); cursor:pointer; border-radius:8px; font-weight:600; font-size:15px; color:var(--accent); display:flex; align-items:center; justify-content:center; gap:10px; transition: all 0.2s; text-decoration:none;">
+            <span style="font-size:20px;">📋</span>
             <span>View My Queue</span>
           </a>
         </div>
         
         <!-- Recent Sessions -->
-        <div style="margin-bottom:16px;">
-          <div style="font-size:13px; font-weight:600; color:var(--muted); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="margin-bottom:20px;">
+          <div style="font-size:14px; font-weight:600; color:var(--muted); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
             <span>📖 Recent Sessions</span>
-            <a id="viewAllSessionsLink" href="#" style="font-size:12px; color:var(--accent); text-decoration:none; font-weight:500;">View All →</a>
+            <a id="viewAllSessionsLink" href="#" style="font-size:13px; color:var(--accent); text-decoration:none; font-weight:500;">View All →</a>
           </div>
-          <div id="julesSessionsList" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:12px; max-height:250px; overflow-y:auto;">
-            <div style="color:var(--muted); font-size:13px;">Loading sessions...</div>
+          <div id="julesSessionsList" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:14px; max-height:300px; overflow-y:auto;">
+            <div style="color:var(--muted); font-size:14px;">Loading sessions...</div>
           </div>
         </div>
         
         <!-- Connected Sources -->
-        <div style="margin-bottom:16px;">
-          <div style="font-size:13px; font-weight:600; color:var(--muted); margin-bottom:8px;">🔗 Connected Repositories</div>
-          <div id="julesSourcesList" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:12px; max-height:200px; overflow-y:auto;">
-            <div style="color:var(--muted); font-size:13px;">Loading sources...</div>
+        <div style="margin-bottom:20px;">
+          <div style="font-size:14px; font-weight:600; color:var(--muted); margin-bottom:10px;">🔗 Connected Repositories</div>
+          <div id="julesSourcesList" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:14px; max-height:250px; overflow-y:auto;">
+            <div style="color:var(--muted); font-size:14px;">Loading sources...</div>
           </div>
         </div>
         
-        <button id="loadJulesInfoBtn" class="btn" style="padding:10px; width:100%; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; text-align:center;">🔄 Refresh Jules Info</button>
+        <button id="loadJulesInfoBtn" class="btn" style="padding:12px; width:100%; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; text-align:center; font-size:14px;">🔄 Refresh Jules Info</button>
       </div>
       
       <!-- Danger Zone -->
-      <div id="dangerZoneSection" style="display:none; margin-top:24px; padding:16px; border:1px solid #c0504d; border-radius:8px; background:rgba(192,80,77,0.08);">
-        <div style="font-size:14px; font-weight:600; color:#c0504d; margin-bottom:8px;">⚠️ Danger Zone</div>
-        <div style="font-size:12px; color:var(--muted); margin-bottom:12px;">This action will delete your stored Jules API key. You'll need to enter a new one next time.</div>
-        <button id="resetJulesKeyBtn" class="btn" style="padding:10px; width:100%; border:1px solid #c0504d; background:rgba(192,80,77,0.2); color:#ff9a97; cursor:pointer; border-radius:8px; text-align:center; font-weight:600;">🗑️ Delete Jules API Key</button>
+      <div id="dangerZoneSection" style="display:none; margin-top:28px; padding:18px; border:1px solid #c0504d; border-radius:8px; background:rgba(192,80,77,0.08);">
+        <div style="font-size:15px; font-weight:600; color:#c0504d; margin-bottom:10px;">⚠️ Danger Zone</div>
+        <div style="font-size:13px; color:var(--muted); margin-bottom:14px;">This action will delete your stored Jules API key. You'll need to enter a new one next time.</div>
+        <button id="resetJulesKeyBtn" class="btn" style="padding:12px; width:100%; border:1px solid #c0504d; background:rgba(192,80,77,0.2); color:#ff9a97; cursor:pointer; border-radius:8px; text-align:center; font-weight:600;">🗑️ Delete Jules API Key</button>
       </div>
-      
-      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
-        <a href="index.html" class="btn" style="padding:8px 12px; text-decoration:none;">Close</a>
-      </div>
-    </div>
+    </main>
   </div>
 
   <script type="module">
     import { initAuthStateListener, updateAuthUI } from './src/modules/auth.js';
-    import { initBranchSelector } from './src/modules/branch-selector.js';
-    import { initJulesKeyModalListeners } from './src/modules/jules.js';
+    import { initBranchSelector, loadBranches } from './src/modules/branch-selector.js';
+    import { loadProfileDirectly } from './src/modules/jules.js';
     import { OWNER, REPO, BRANCH } from './src/utils/constants.js';
 
     function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
@@ -203,7 +186,7 @@
       }
     }
 
-    async function showProfileModal() {
+    async function loadProfile() {
       const user = window.auth?.currentUser;
       
       if (!user) {
@@ -215,9 +198,7 @@
       }
 
       try {
-        // Import the jules module and show profile
-        const julesModule = await import('./src/modules/jules.js');
-        julesModule.showUserProfileModal();
+        await loadProfileDirectly(user);
       } catch (err) {
         console.error('Profile loading error:', err);
       }
@@ -231,7 +212,8 @@
 
       fetchVersion();
       initBranchSelector(OWNER, REPO, BRANCH);
-      initJulesKeyModalListeners();
+      loadBranches();
+      loadBranches();
 
       waitForFirebase(() => {
         initAuthStateListener();
@@ -239,7 +221,7 @@
         window.auth.onAuthStateChanged((user) => {
           if (user) {
             updateAuthUI(user);
-            showProfileModal();
+            loadProfile();
           } else {
             const profileUserName = document.getElementById('profileUserName');
             if (profileUserName) {

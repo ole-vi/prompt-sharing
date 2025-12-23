@@ -2666,3 +2666,88 @@ async function submitSubtasks(subtasks) {
   alert(summary);
 }
 
+export async function loadProfileDirectly(user) {
+  const profileUserName = document.getElementById('profileUserName');
+  const julesKeyStatus = document.getElementById('julesKeyStatus');
+  const addBtn = document.getElementById('addJulesKeyBtn');
+  const resetBtn = document.getElementById('resetJulesKeyBtn');
+  const dangerZoneSection = document.getElementById('dangerZoneSection');
+  const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
+  const julesProfileInfoSection = document.getElementById('julesProfileInfoSection');
+
+  if (profileUserName) {
+    profileUserName.textContent = user.displayName || user.email || 'Unknown User';
+  }
+
+  const hasKey = await checkJulesKey(user.uid);
+  
+  if (julesKeyStatus) {
+    julesKeyStatus.textContent = hasKey ? '✓ Saved' : '✗ Not saved';
+    julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+  }
+  
+  if (hasKey) {
+    if (addBtn) addBtn.style.display = 'none';
+    if (dangerZoneSection) dangerZoneSection.style.display = 'block';
+    if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'block';
+    
+    await loadAndDisplayJulesProfile(user.uid);
+  } else {
+    if (addBtn) addBtn.style.display = 'block';
+    if (dangerZoneSection) dangerZoneSection.style.display = 'none';
+    if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+  }
+
+  // Attach event handlers
+  if (addBtn) {
+    addBtn.onclick = () => {
+      showJulesKeyModal(() => {
+        setTimeout(() => loadProfileDirectly(user), 500);
+      });
+    };
+  }
+
+  if (resetBtn) {
+    resetBtn.onclick = async () => {
+      if (!confirm('This will delete your stored Jules API key. You\'ll need to enter a new one next time.')) {
+        return;
+      }
+      try {
+        resetBtn.disabled = true;
+        resetBtn.textContent = 'Deleting...';
+        const deleted = await deleteStoredJulesKey(user.uid);
+        if (deleted) {
+          if (julesKeyStatus) {
+            julesKeyStatus.textContent = '✗ Not saved';
+            julesKeyStatus.style.color = 'var(--muted)';
+          }
+          resetBtn.textContent = '🗑️ Delete Jules API Key';
+          resetBtn.disabled = false;
+          
+          if (addBtn) addBtn.style.display = 'block';
+          if (dangerZoneSection) dangerZoneSection.style.display = 'none';
+          if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+          
+          alert('Jules API key has been deleted. You can enter a new one next time.');
+        } else {
+          throw new Error('Failed to delete key');
+        }
+      } catch (error) {
+        alert('Failed to reset API key: ' + error.message);
+        resetBtn.textContent = '🗑️ Delete Jules API Key';
+        resetBtn.disabled = false;
+      }
+    };
+  }
+
+  if (loadJulesInfoBtn) {
+    loadJulesInfoBtn.onclick = async () => {
+      await loadAndDisplayJulesProfile(user.uid);
+      attachViewAllSessionsHandler();
+      attachViewQueueHandler();
+    };
+  }
+
+  attachViewAllSessionsHandler();
+  attachViewQueueHandler();
+}

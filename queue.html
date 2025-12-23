@@ -135,7 +135,8 @@
 
   <script type="module">
     import { initAuthStateListener, updateAuthUI } from './src/modules/auth.js';
-    import { initBranchSelector } from './src/modules/branch-selector.js';
+    import { initBranchSelector, loadBranches } from './src/modules/branch-selector.js';
+    import { listJulesQueue, renderQueueListDirectly, attachQueueHandlers } from './src/modules/jules.js';
     import statusBar from './src/modules/status-bar.js';
     import { OWNER, REPO, BRANCH } from './src/utils/constants.js';
 
@@ -202,6 +203,7 @@
 
       fetchVersion();
       initBranchSelector(OWNER, REPO, BRANCH);
+      loadBranches();
       statusBar.init();
 
       waitForFirebase(() => {
