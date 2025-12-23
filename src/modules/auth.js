@@ -37,8 +37,8 @@ export async function signOutUser() {
 
 export function updateAuthUI(user) {
   const authStatus = document.getElementById('authStatus');
-  const authBtn = document.getElementById('authBtn');
-  const signOutBtn = document.getElementById('signOutBtn');
+  const navAuthBtn = document.getElementById('navAuthBtn');
+  const navAuthLabel = document.getElementById('navAuthLabel');
   const userDisplay = document.getElementById('userDisplay');
   const userName = document.getElementById('userName');
 
@@ -46,23 +46,26 @@ export function updateAuthUI(user) {
 
   if (user) {
     // User is signed in
-    authBtn.style.display = 'none';
-    signOutBtn.style.display = 'inline-block';
-    userDisplay.style.display = 'inline-flex';
-    userName.textContent = user.displayName || user.email || 'User';
-    
-    userName.onclick = async () => {
-      const { showUserProfileModal } = await import('./jules.js');
-      showUserProfileModal();
-    };
-    
-    signOutBtn.onclick = signOutUser;
+    if (navAuthBtn) {
+      navAuthBtn.style.display = 'flex';
+      if (navAuthLabel) navAuthLabel.textContent = 'Sign Out';
+      navAuthBtn.onclick = signOutUser;
+    }
+    if (userDisplay) userDisplay.style.display = 'inline-flex';
+    if (userName) {
+      userName.textContent = user.displayName || user.email || 'User';
+      userName.onclick = () => {
+        window.location.href = 'profile.html';
+      };
+    }
   } else {
     // User is signed out
-    authBtn.style.display = 'inline-block';
-    signOutBtn.style.display = 'none';
-    userDisplay.style.display = 'none';
-    authBtn.onclick = signInWithGitHub;
+    if (navAuthBtn) {
+      navAuthBtn.style.display = 'flex';
+      if (navAuthLabel) navAuthLabel.textContent = 'Sign In';
+      navAuthBtn.onclick = signInWithGitHub;
+    }
+    if (userDisplay) userDisplay.style.display = 'none';
   }
 }
 
