@@ -862,3 +862,58 @@ footer code {
     max-height: 1000px;
   }
 }
+
+/* ===== Tag Badges ===== */
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.tag-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.5;
+  border-radius: 2em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tag-review {
+  color: #d876e3;
+  background-color: rgba(216, 118, 227, 0.1);
+  border: 1px solid rgba(216, 118, 227, 0.3);
+}
+.tag-review:hover {
+  background-color: rgba(216, 118, 227, 0.2);
+}
+
+.tag-bug {
+  color: #ff8585;
+  background-color: rgba(255, 133, 133, 0.1);
+  border: 1px solid rgba(255, 133, 133, 0.3);
+}
+.tag-bug:hover {
+  background-color: rgba(255, 133, 133, 0.2);
+}
+
+.tag-design {
+  color: #79c0ff;
+  background-color: rgba(121, 192, 255, 0.1);
+  border: 1px solid rgba(121, 192, 255, 0.3);
+}
+.tag-design:hover {
+  background-color: rgba(121, 192, 255, 0.2);
+}
+
+.tag-refactor {
+  color: #a371f7;
+  background-color: rgba(163, 113, 247, 0.1);
+  border: 1px solid rgba(163, 113, 247, 0.3);
+}
+.tag-refactor:hover {
+  background-color: rgba(163, 113, 247, 0.2);
+}

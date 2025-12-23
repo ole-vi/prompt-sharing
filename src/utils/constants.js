@@ -29,6 +29,30 @@ export const EMOJI_PATTERNS = {
   refactor: { emoji: "🧹", keywords: ["refactor", "cleanup", "sweep", "maintenance", "optimize", "improve", "reorganize", "deadcode"] }
 };
 
+// Tag definitions
+export const TAG_DEFINITIONS = {
+  review: {
+    label: "Review",
+    className: "tag-review",
+    keywords: ["review", "\\bpr\\b", "rubric", "audit", "inspect", "check", "analyze", "investigation"]
+  },
+  bug: {
+    label: "Bug",
+    className: "tag-bug",
+    keywords: ["bug", "triage", "fix", "issue", "solve", "repair", "patch", "hotfix"]
+  },
+  design: {
+    label: "Design",
+    className: "tag-design",
+    keywords: ["spec", "design", "plan", "explorer", "guide", "tutorial", "documentation", "readme", "onboard"]
+  },
+  refactor: {
+    label: "Refactor",
+    className: "tag-refactor",
+    keywords: ["refactor", "cleanup", "sweep", "maintenance", "optimize", "improve", "reorganize", "deadcode"]
+  }
+};
+
 // Branch classification
 export const USER_BRANCHES = ["dogi", "jesse", "saksham"];
 export const FEATURE_PATTERNS = ["codex/", "feature/", "fix/", "bugfix/", "hotfix/"];

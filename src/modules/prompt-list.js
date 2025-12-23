@@ -1,7 +1,7 @@
 // ===== Prompt List & Tree Module =====
 
 import { slugify } from '../utils/slug.js';
-import { STORAGE_KEYS, PRETTY_TITLES, EMOJI_PATTERNS } from '../utils/constants.js';
+import { STORAGE_KEYS, PRETTY_TITLES, EMOJI_PATTERNS, TAG_DEFINITIONS } from '../utils/constants.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
 import { clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
 
@@ -40,6 +40,21 @@ export function initPromptList() {
   if (searchEl) {
     searchEl.addEventListener('input', () => renderList(files, currentOwner, currentRepo, currentBranch));
   }
+
+  // Delegated event listener for tag badges
+  listEl.addEventListener('click', (event) => {
+    const badge = event.target.closest('.tag-badge');
+    if (badge && searchEl) {
+      event.preventDefault();
+      event.stopPropagation();
+      const tagKey = badge.dataset.tag;
+      const keyword = TAG_DEFINITIONS[tagKey]?.keywords[0]?.replace(/\\b/g, '') || tagKey;
+      if (keyword) {
+        searchEl.value = keyword;
+        searchEl.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
+  });
 }
 
 export function getFiles() {
@@ -357,6 +372,29 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       t.className = 'item-title';
       t.textContent = prettyTitle(file.name);
       left.appendChild(t);
+
+      const tagContainer = document.createElement('div');
+      tagContainer.className = 'tag-container';
+      const addedTags = new Set();
+
+      for (const [key, { label, className, keywords }] of Object.entries(TAG_DEFINITIONS)) {
+        if (keywords.some(kw => new RegExp(kw, 'i').test(file.name))) {
+          if (addedTags.has(key)) continue;
+
+          const badge = document.createElement('span');
+          badge.className = `tag-badge ${className}`;
+          badge.textContent = label;
+          badge.dataset.tag = key;
+
+          tagContainer.appendChild(badge);
+          addedTags.add(key);
+        }
+      }
+
+      if (tagContainer.children.length > 0) {
+        left.appendChild(tagContainer);
+      }
+
       a.appendChild(left);
       li.appendChild(a);
       container.appendChild(li);
