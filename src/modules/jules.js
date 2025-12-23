@@ -2751,3 +2751,35 @@ export async function loadProfileDirectly(user) {
   attachViewAllSessionsHandler();
   attachViewQueueHandler();
 }
+
+export async function loadJulesAccountInfo(user) {
+  const julesProfileInfoSection = document.getElementById('julesProfileInfoSection');
+  const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
+
+  // Check if user has Jules API key
+  const hasKey = await checkJulesKey(user.uid);
+  
+  if (!hasKey) {
+    if (julesProfileInfoSection) {
+      julesProfileInfoSection.style.display = 'none';
+    }
+    return;
+  }
+
+  if (julesProfileInfoSection) {
+    julesProfileInfoSection.style.display = 'block';
+  }
+
+  await loadAndDisplayJulesProfile(user.uid);
+
+  if (loadJulesInfoBtn) {
+    loadJulesInfoBtn.onclick = async () => {
+      await loadAndDisplayJulesProfile(user.uid);
+      attachViewAllSessionsHandler();
+      attachViewQueueHandler();
+    };
+  }
+
+  attachViewAllSessionsHandler();
+  attachViewQueueHandler();
+}

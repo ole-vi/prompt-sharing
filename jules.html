@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Profile - PromptSync</title>
+  <title>Jules - PromptSync</title>
   <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
   <link rel="stylesheet" href="src/styles.css" />
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
@@ -48,24 +48,21 @@
             <img src="assets/PromptSyncLogo.svg" alt="PromptSync" style="width:36px; height:36px; flex-shrink:0; object-fit:contain;">
             <div>
               <div style="font-size:24px; font-weight:900; letter-spacing:0.5px; line-height:1.2;">PromptSync</div>
-              <div style="color:var(--muted); font-size:12px; margin-top:2px; word-break:break-word;">Share and amplify your team's AI knowledge.</div>
-              <div id="appVersion" style="color:var(--muted); font-size:10px; opacity:0.7; margin-top:2px;"></div>
+              <div style="font-size:10px; color:var(--muted); letter-spacing:0.5px; margin-top:-3px;">
+                <span id="repoPill" style="cursor:pointer;">Loading...</span>
+                <span> · </span>
+                <span id="appVersion" style="cursor:pointer;">Loading...</span>
+              </div>
             </div>
           </a>
         </div>
-
-        <div id="headerControls" style="display:flex; gap:8px; align-items:center;">
-          <div class="pill" id="repoPill" style="white-space:nowrap;">Loading repo...</div>
-          <label style="display:flex; align-items:center; gap:4px; white-space:nowrap;">
-            <span title="Choose a branch">▼</span>
-            <select id="branchSelect" class="btn" style="min-width:140px;">
-              <option>Loading branches…</option>
-            </select>
-          </label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <select id="branchSelect" style="padding:6px 8px; font-size:12px; border:1px solid var(--border); background:var(--card); color:inherit; border-radius:6px; cursor:pointer; min-width:140px;">
+            <option>Loading branches…</option>
+          </select>
         </div>
       </div>
-
-      <div id="authStatus" style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; font-size:13px; flex-shrink:0;">
+      <div id="headerControls" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
         <span id="userDisplay" style="display:none; font-size:11px; color:var(--muted);">          <strong id="userName" style="cursor:pointer; text-decoration:underline;" title="Click to manage Jules API key"></strong>
         </span>
         <a href="https://github.com/ole-vi/prompt-sharing/blob/main/README.md" target="_blank" rel="noopener" class="help-link" title="View documentation" style="padding:6px 10px; font-size:12px;">📖 Help</a>
@@ -83,7 +80,7 @@
         <span class="nav-icon">📋</span>
         <span class="nav-label">Queue</span>
       </a>
-      <a href="jules.html" class="nav-item">
+      <a href="jules.html" class="nav-item active">
         <span class="nav-icon">🤖</span>
         <span class="nav-label">Jules</span>
       </a>
@@ -96,29 +93,43 @@
 
   <div class="wrap" style="grid-template-columns: 1fr;">
     <main class="card" style="padding:32px;">
-      <h2 style="margin:0 0 24px; font-size:24px; font-weight:700;">👤 User Profile</h2>
+      <h2 style="margin:0 0 24px; font-size:24px; font-weight:700;">🤖 Jules Account</h2>
       
-      <!-- User Info Section -->
-      <div style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px;">
-        <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">Signed in as</div>
-        <div id="profileUserName" style="font-weight:600; font-size:16px;">Loading...</div>
+      <!-- Not Signed In Message -->
+      <div id="julesNotSignedIn" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:48px; text-align:center;">
+        <div style="color:var(--muted); font-size:16px;">Please sign in to view Jules account information.</div>
       </div>
-      
-      <!-- Jules API Key Section -->
-      <div id="julesKeyStatusDiv" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px;">
-        <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">Jules API Key</div>
-        <div id="julesKeyStatus" style="font-weight:600; font-size:16px; color:var(--muted);">Loading...</div>
-      </div>
-      
-      <div style="display:flex; gap:8px; flex-direction:column; margin-bottom:16px;">
-        <button id="addJulesKeyBtn" class="btn" style="padding:12px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; text-align:center; display:none;">➕ Add Jules API Key</button>
-      </div>
-      
-      <!-- Danger Zone -->
-      <div id="dangerZoneSection" style="display:none; margin-top:28px; padding:18px; border:1px solid #c0504d; border-radius:8px; background:rgba(192,80,77,0.08);">
-        <div style="font-size:15px; font-weight:600; color:#c0504d; margin-bottom:10px;">⚠️ Danger Zone</div>
-        <div style="font-size:13px; color:var(--muted); margin-bottom:14px;">This action will delete your stored Jules API key. You'll need to enter a new one next time.</div>
-        <button id="resetJulesKeyBtn" class="btn" style="padding:12px; width:100%; border:1px solid #c0504d; background:rgba(192,80,77,0.2); color:#ff9a97; cursor:pointer; border-radius:8px; text-align:center; font-weight:600;">🗑️ Delete Jules API Key</button>
+
+      <!-- Jules Profile Info Section -->
+      <div id="julesProfileInfoSection" style="display:none;">
+        <!-- View Queue Button -->
+        <div style="margin-bottom:20px;">
+          <a href="queue.html" class="btn" style="width:100%; padding:14px; border:2px solid var(--accent); background:rgba(52,152,219,0.1); cursor:pointer; border-radius:8px; font-weight:600; font-size:15px; color:var(--accent); display:flex; align-items:center; justify-content:center; gap:10px; transition: all 0.2s; text-decoration:none;">
+            <span style="font-size:20px;">📋</span>
+            <span>View My Queue</span>
+          </a>
+        </div>
+        
+        <!-- Recent Sessions -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:14px; font-weight:600; color:var(--muted); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+            <span>📖 Recent Sessions</span>
+            <a id="viewAllSessionsLink" href="#" style="font-size:13px; color:var(--accent); text-decoration:none; font-weight:500;">View All →</a>
+          </div>
+          <div id="julesSessionsList" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:14px; max-height:300px; overflow-y:auto;">
+            <div style="color:var(--muted); font-size:14px;">Loading sessions...</div>
+          </div>
+        </div>
+        
+        <!-- Connected Sources -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:14px; font-weight:600; color:var(--muted); margin-bottom:10px;">🔗 Connected Repositories</div>
+          <div id="julesSourcesList" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:14px; max-height:250px; overflow-y:auto;">
+            <div style="color:var(--muted); font-size:14px;">Loading sources...</div>
+          </div>
+        </div>
+        
+        <button id="loadJulesInfoBtn" class="btn" style="padding:12px; width:100%; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; text-align:center; font-size:14px;">🔄 Refresh Jules Info</button>
       </div>
     </main>
   </div>
@@ -126,7 +137,7 @@
   <script type="module">
     import { initAuthStateListener, updateAuthUI } from './src/modules/auth.js';
     import { initBranchSelector, loadBranches } from './src/modules/branch-selector.js';
-    import { loadProfileDirectly } from './src/modules/jules.js';
+    import { loadJulesAccountInfo } from './src/modules/jules.js';
     import { OWNER, REPO, BRANCH } from './src/utils/constants.js';
 
     function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
@@ -152,21 +163,21 @@
       }
     }
 
-    async function loadProfile() {
+    async function loadJulesInfo() {
       const user = window.auth?.currentUser;
       
       if (!user) {
-        const profileUserName = document.getElementById('profileUserName');
-        if (profileUserName) {
-          profileUserName.textContent = 'Not signed in';
-        }
+        document.getElementById('julesProfileInfoSection').style.display = 'none';
+        document.getElementById('julesNotSignedIn').style.display = 'block';
         return;
       }
 
       try {
-        await loadProfileDirectly(user);
+        await loadJulesAccountInfo(user);
+        document.getElementById('julesProfileInfoSection').style.display = 'block';
+        document.getElementById('julesNotSignedIn').style.display = 'none';
       } catch (err) {
-        console.error('Profile loading error:', err);
+        console.error('Jules info loading error:', err);
       }
     }
 
@@ -179,7 +190,6 @@
       fetchVersion();
       initBranchSelector(OWNER, REPO, BRANCH);
       loadBranches();
-      loadBranches();
 
       waitForFirebase(() => {
         initAuthStateListener();
@@ -187,20 +197,10 @@
         window.auth.onAuthStateChanged((user) => {
           if (user) {
             updateAuthUI(user);
-            loadProfile();
+            loadJulesInfo();
           } else {
-            // Hide all profile sections when not signed in
-            const profileUserName = document.getElementById('profileUserName');
-            const julesKeyStatusDiv = document.getElementById('julesKeyStatusDiv');
-            const addJulesKeyBtn = document.getElementById('addJulesKeyBtn');
-            const dangerZoneSection = document.getElementById('dangerZoneSection');
-            
-            if (profileUserName) {
-              profileUserName.innerHTML = '<div style="color:var(--muted); text-align:center; padding:48px;">Please sign in to view your profile.</div>';
-            }
-            if (julesKeyStatusDiv) julesKeyStatusDiv.style.display = 'none';
-            if (addJulesKeyBtn) addJulesKeyBtn.style.display = 'none';
-            if (dangerZoneSection) dangerZoneSection.style.display = 'none';
+            document.getElementById('julesProfileInfoSection').style.display = 'none';
+            document.getElementById('julesNotSignedIn').style.display = 'block';
           }
         });
       });
