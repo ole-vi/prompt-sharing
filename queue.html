@@ -95,30 +95,16 @@
   </nav>
 
   <div class="wrap" style="grid-template-columns: 1fr;">
-    <main class="card" style="display:flex; flex-direction:column; padding:32px; min-height:500px;">
-      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; text-align:center;">
-        <div style="font-size:64px; margin-bottom:24px;">📋</div>
-        <h1 style="margin:0 0 12px; font-size:32px; font-weight:700;">Queue</h1>
-        <p style="margin:0; color:var(--muted); font-size:16px; max-width:500px;">
-          Loading your queue...
-        </p>
-      </div>
-    </main>
-  </div>
-
-  <!-- Jules Queue Modal -->
-  <div id="julesQueueModal" style="display:flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1003; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;">
-    <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; max-width:800px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4); max-height:90vh; overflow-y:auto;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h2 style="margin:0; font-size:18px;">🧾 Jules Queue</h2>
-        <a href="index.html" class="btn" style="padding:8px 16px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; text-decoration:none;">✕ Close</a>
+    <main class="card" style="display:flex; flex-direction:column; padding:24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h1 style="margin:0; font-size:24px; font-weight:700;">🧾 Queue</h1>
       </div>
 
-      <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+      <div style="margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
         <div style="display:flex; align-items:center; gap:8px;">
           <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueSelectAll" type="checkbox" /> Select All</label>
         </div>
-        <div style="display:flex; gap:8px; align-items:center;">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueSuppressPopupsCheckbox" type="checkbox" /> Suppress Popups</label>
           <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueOpenInBackgroundCheckbox" type="checkbox" /> Open in Background</label>
           <script>
@@ -141,10 +127,10 @@
         </div>
       </div>
 
-      <div id="allQueueList" style="display:flex; flex-direction:column; gap:8px;">
-        <div style="color:var(--muted); text-align:center; padding:24px;">Loading queue...</div>
+      <div id="allQueueList" style="display:flex; flex-direction:column; gap:8px; min-height:400px;">
+        <div style="color:var(--muted); text-align:center; padding:48px;">Loading queue...</div>
       </div>
-    </div>
+    </main>
   </div>
 
   <script type="module">
@@ -176,47 +162,35 @@
       }
     }
 
-    async function showQueueModal() {
+    async function loadQueue() {
       const user = window.auth?.currentUser;
       const listDiv = document.getElementById('allQueueList');
+      
+      if (!listDiv) {
+        console.error('Queue list element not found');
+        return;
+      }
+      
       if (!user) {
-        listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">Please sign in to view your queue.</div>';
+        listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:48px;">Please sign in to view your queue.</div>';
         return;
       }
 
       try {
-        listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">Loading queue...</div>';
+        listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:48px;">Loading queue...</div>';
         
-        // Dynamically import and call the existing loadQueuePage function
+        // Import the jules module to access queue functions
         const julesModule = await import('./src/modules/jules.js');
         
         // Get the queue items
         const items = await julesModule.listJulesQueue(user.uid);
         
-        // Use internal rendering (we'll need to expose these functions)
-        if (window.renderQueueList) {
-          window.renderQueueList(items);
-        } else {
-          // Fallback: manually call the module's internal function
-          // We need to expose renderQueueList and attachQueueModalHandlers
-          const queueCache = items;
-          
-          // Render the list
-          if (!items || items.length === 0) {
-            listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No queued items.</div>';
-          } else {
-            // We need to access the internal rendering, so let's trigger the existing loadQueuePage
-            // Set up a temporary function to reload
-            window.queueCache = items;
-            
-            // Just reload the page using the existing mechanism
-            const event = new CustomEvent('loadQueue');
-            window.dispatchEvent(event);
-          }
-        }
+        // Render the queue directly on the page
+        julesModule.renderQueueListDirectly(items);
+        julesModule.attachQueueHandlers();
       } catch (err) {
         console.error('Queue loading error:', err);
-        listDiv.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">Failed to load queue: ${err.message}</div>`;
+        listDiv.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:48px;">Failed to load queue: ${err.message}</div>`;
       }
     }
 
@@ -230,16 +204,13 @@
       initBranchSelector(OWNER, REPO, BRANCH);
       statusBar.init();
 
-      waitForFirebase(async () => {
+      waitForFirebase(() => {
         initAuthStateListener();
         
-        window.auth.onAuthStateChanged(async (user) => {
+        window.auth.onAuthStateChanged((user) => {
           if (user) {
             updateAuthUI(user);
-            // Load the queue modal using existing jules.js functions
-            const julesModule = await import('./src/modules/jules.js');
-            // Trigger the existing showJulesQueueModal which handles everything
-            julesModule.showJulesQueueModal();
+            loadQueue();
           } else {
             const listDiv = document.getElementById('allQueueList');
             if (listDiv) {

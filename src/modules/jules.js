@@ -156,6 +156,15 @@ export function hideJulesQueueModal() {
 
 let queueCache = [];
 
+export function renderQueueListDirectly(items) {
+  queueCache = items;
+  renderQueueList(items);
+}
+
+export function attachQueueHandlers() {
+  attachQueueModalHandlers();
+}
+
 async function loadQueuePage() {
   const user = window.auth?.currentUser;
   const listDiv = document.getElementById('allQueueList');
