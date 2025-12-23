@@ -91,7 +91,7 @@
   </nav>
 
   <div class="wrap" style="grid-template-columns: 1fr;">
-    <main class="card" style="padding:32px; max-width:800px; margin:0 auto;">
+    <main class="card" style="padding:32px;">
       <h2 style="margin:0 0 24px; font-size:24px; font-weight:700;">👤 User Profile</h2>
       
       <!-- User Info Section -->
@@ -219,10 +219,20 @@
             updateAuthUI(user);
             loadProfile();
           } else {
+            // Hide all profile sections when not signed in
             const profileUserName = document.getElementById('profileUserName');
+            const julesKeyStatusDiv = document.getElementById('julesKeyStatusDiv');
+            const addJulesKeyBtn = document.getElementById('addJulesKeyBtn');
+            const julesProfileInfoSection = document.getElementById('julesProfileInfoSection');
+            const dangerZoneSection = document.getElementById('dangerZoneSection');
+            
             if (profileUserName) {
-              profileUserName.textContent = 'Not signed in';
+              profileUserName.innerHTML = '<div style="color:var(--muted); text-align:center; padding:48px;">Please sign in to view your profile.</div>';
             }
+            if (julesKeyStatusDiv) julesKeyStatusDiv.style.display = 'none';
+            if (addJulesKeyBtn) addJulesKeyBtn.style.display = 'none';
+            if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+            if (dangerZoneSection) dangerZoneSection.style.display = 'none';
           }
         });
       });

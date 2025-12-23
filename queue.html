@@ -96,35 +96,43 @@
         <h1 style="margin:0; font-size:24px; font-weight:700;">🧾 Queue</h1>
       </div>
 
-      <div style="margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueSelectAll" type="checkbox" /> Select All</label>
-        </div>
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueSuppressPopupsCheckbox" type="checkbox" /> Suppress Popups</label>
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueOpenInBackgroundCheckbox" type="checkbox" /> Open in Background</label>
-          <script>
-            (function() {
-              const suppressCheckbox = document.getElementById('queueSuppressPopupsCheckbox');
-              const backgroundCheckbox = document.getElementById('queueOpenInBackgroundCheckbox');
-              if (suppressCheckbox && backgroundCheckbox) {
-                suppressCheckbox.addEventListener('change', () => {
-                  if (suppressCheckbox.checked) backgroundCheckbox.checked = false;
-                });
-                backgroundCheckbox.addEventListener('change', () => {
-                  if (backgroundCheckbox.checked) suppressCheckbox.checked = false;
-                });
-              }
-            })();
-          </script>
-          <button id="queuePauseBtn" class="btn" style="padding:8px 12px;">Pause</button>
-          <button id="queueRunBtn" class="btn primary" style="padding:8px 12px;">Run Selected</button>
-          <button id="queueDeleteBtn" class="btn" style="padding:8px 12px; border-color:#c0504d; color:#c0504d;">Delete Selected</button>
-        </div>
+      <!-- Not Signed In Message -->
+      <div id="queueNotSignedIn" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:48px; text-align:center;">
+        <div style="color:var(--muted); font-size:16px;">Please sign in to view your queue.</div>
       </div>
 
-      <div id="allQueueList" style="display:flex; flex-direction:column; gap:8px; min-height:400px;">
-        <div style="color:var(--muted); text-align:center; padding:48px;">Loading queue...</div>
+      <!-- Queue Controls (hidden when not signed in) -->
+      <div id="queueControls">
+        <div style="margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueSelectAll" type="checkbox" /> Select All</label>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueSuppressPopupsCheckbox" type="checkbox" /> Suppress Popups</label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueOpenInBackgroundCheckbox" type="checkbox" /> Open in Background</label>
+            <script>
+              (function() {
+                const suppressCheckbox = document.getElementById('queueSuppressPopupsCheckbox');
+                const backgroundCheckbox = document.getElementById('queueOpenInBackgroundCheckbox');
+                if (suppressCheckbox && backgroundCheckbox) {
+                  suppressCheckbox.addEventListener('change', () => {
+                    if (suppressCheckbox.checked) backgroundCheckbox.checked = false;
+                  });
+                  backgroundCheckbox.addEventListener('change', () => {
+                    if (backgroundCheckbox.checked) suppressCheckbox.checked = false;
+                  });
+                }
+              })();
+            </script>
+            <button id="queuePauseBtn" class="btn" style="padding:8px 12px;">Pause</button>
+            <button id="queueRunBtn" class="btn primary" style="padding:8px 12px;">Run Selected</button>
+            <button id="queueDeleteBtn" class="btn" style="padding:8px 12px; border-color:#c0504d; color:#c0504d;">Delete Selected</button>
+          </div>
+        </div>
+
+        <div id="allQueueList" style="display:flex; flex-direction:column; gap:8px; min-height:400px;">
+          <div style="color:var(--muted); text-align:center; padding:48px;">Loading queue...</div>
+        </div>
       </div>
     </main>
   </div>
@@ -208,12 +216,12 @@
         window.auth.onAuthStateChanged((user) => {
           if (user) {
             updateAuthUI(user);
+            document.getElementById('queueControls').style.display = 'block';
+            document.getElementById('queueNotSignedIn').style.display = 'none';
             loadQueue();
           } else {
-            const listDiv = document.getElementById('allQueueList');
-            if (listDiv) {
-              listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:48px;">Please sign in to view your queue.</div>';
-            }
+            document.getElementById('queueControls').style.display = 'none';
+            document.getElementById('queueNotSignedIn').style.display = 'block';
           }
         });
       });
