@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Web Capture Extension - PromptSync</title>
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+  <link rel="stylesheet" href="src/styles.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
+  <script src="firebase-init.js"></script>
+</head>
+<body>
+
+  <div class="wrap" style="grid-template-columns: 1fr;">
+    <main class="card" style="padding:32px; max-width:900px; margin:0 auto;">
+      <h2 style="margin:0 0 24px; font-size:28px; font-weight:700;">📸 PromptSync Web Capture</h2>
+      
+      <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:32px; margin-bottom:40px; text-align:center;">
+        <h3 style="margin:0 0 12px; font-size:20px; font-weight:600;">Capture Any Webpage as Markdown</h3>
+        <p style="margin:0 0 24px; color:var(--muted); font-size:15px; line-height:1.6;">
+          A browser extension that converts any webpage to clean Markdown and syncs it directly to your GitHub repository.
+        </p>
+        <button id="downloadExtensionBtn" class="btn primary" style="padding:16px 32px; font-size:16px; font-weight:600; cursor:pointer;">
+          ⬇️ Download Extension
+        </button>
+        <p style="margin:8px 0 0; color:var(--muted); font-size:13px;">Compatible with Chrome, Edge, Brave, and other Chromium browsers</p>
+      </div>
+
+      <!-- Features -->
+      <div style="margin-bottom:40px;">
+        <h3 style="margin:0 0 20px; font-size:18px; font-weight:600;">✨ Features</h3>
+        <div style="display:grid; gap:16px;">
+          <div style="display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
+            <div style="font-size:24px; flex-shrink:0;">💾</div>
+            <div>
+              <div style="font-weight:600; margin-bottom:4px;">One-Click Capture</div>
+              <div style="color:var(--muted); font-size:14px;">Click the extension icon to save any webpage instantly</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
+            <div style="font-size:24px; flex-shrink:0;">📝</div>
+            <div>
+              <div style="font-weight:600; margin-bottom:4px;">Markdown Conversion</div>
+              <div style="color:var(--muted); font-size:14px;">Automatically converts HTML to clean, readable Markdown</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
+            <div style="font-size:24px; flex-shrink:0;">☁️</div>
+            <div>
+              <div style="font-weight:600; margin-bottom:4px;">GitHub Sync</div>
+              <div style="color:var(--muted); font-size:14px;">Automatically sync captures to your GitHub repository</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
+            <div style="font-size:24px; flex-shrink:0;">🔐</div>
+            <div>
+              <div style="font-weight:600; margin-bottom:4px;">Secure OAuth</div>
+              <div style="color:var(--muted); font-size:14px;">Connect via GitHub OAuth - no personal access tokens needed</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
+            <div style="font-size:24px; flex-shrink:0;">📊</div>
+            <div>
+              <div style="font-weight:600; margin-bottom:4px;">Smart Extraction</div>
+              <div style="color:var(--muted); font-size:14px;">Removes navigation, ads, and clutter - keeps only the content</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Installation Instructions -->
+      <div style="margin-bottom:40px;">
+        <h3 style="margin:0 0 20px; font-size:18px; font-weight:600;">📦 Installation Instructions</h3>
+        
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:24px;">
+          <h4 style="margin:0 0 16px; font-size:16px; font-weight:600;">Chrome / Edge / Brave</h4>
+          
+          <ol style="margin:0; padding-left:24px; line-height:1.8; color:var(--muted);">
+            <li style="margin-bottom:12px;">
+              <strong style="color:var(--text);">Download the extension</strong><br/>
+              Click the "Download Extension" button above to download the extension files
+            </li>
+            <li style="margin-bottom:12px;">
+              <strong style="color:var(--text);">Extract the files</strong><br/>
+              Unzip the downloaded file to a location on your computer (e.g., Documents/PromptSync-Extension)
+            </li>
+            <li style="margin-bottom:12px;">
+              <strong style="color:var(--text);">Open Extensions Page</strong><br/>
+              Navigate to <code style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; font-family:monospace;">chrome://extensions/</code> (Chrome) or <code style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; font-family:monospace;">edge://extensions/</code> (Edge) or <code style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; font-family:monospace;">brave://extensions/</code> (Brave)
+            </li>
+            <li style="margin-bottom:12px;">
+              <strong style="color:var(--text);">Enable Developer Mode</strong><br/>
+              Toggle the "Developer mode" switch in the top-right corner
+            </li>
+            <li style="margin-bottom:12px;">
+              <strong style="color:var(--text);">Load the Extension</strong><br/>
+              Click "Load unpacked", navigate to the extracted folder, and select it
+            </li>
+            <li style="margin-bottom:0;">
+              <strong style="color:var(--text);">Pin the Extension</strong> (optional)<br/>
+              Click the puzzle piece icon in your browser toolbar, find "PromptSync Web Capture", and click the pin icon
+            </li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- How to Use -->
+      <div style="margin-bottom:40px;">
+        <h3 style="margin:0 0 20px; font-size:18px; font-weight:600;">🚀 How to Use</h3>
+        
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:24px;">
+          <ol style="margin:0; padding-left:24px; line-height:1.8; color:var(--muted);">
+            <li style="margin-bottom:12px;">
+              <strong style="color:var(--text);">Navigate to any webpage</strong> you want to capture
+            </li>
+            <li style="margin-bottom:12px;">
+              <strong style="color:var(--text);">Click the extension icon</strong> in your browser toolbar
+            </li>
+            <li style="margin-bottom:12px;">
+              <strong style="color:var(--text);">Choose your action:</strong>
+              <ul style="margin:8px 0 0; padding-left:24px;">
+                <li>Click "📸 Capture Page" to convert to Markdown and download locally</li>
+                <li>Click "☁️ Sync to GitHub" to save directly to your repository (requires authentication)</li>
+              </ul>
+            </li>
+            <li style="margin-bottom:0;">
+              <strong style="color:var(--text);">View your captures</strong> in the <code style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; font-family:monospace;">webclips/</code> folder of your repository
+            </li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- GitHub Setup -->
+      <div style="margin-bottom:40px;">
+        <h3 style="margin:0 0 20px; font-size:18px; font-weight:600;">🔗 GitHub Setup</h3>
+        
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:24px;">
+          <p style="margin:0 0 16px; color:var(--muted); line-height:1.6;">
+            To sync captures directly to GitHub, you'll need to authenticate the extension with your GitHub account:
+          </p>
+          <ol style="margin:0; padding-left:24px; line-height:1.8; color:var(--muted);">
+            <li style="margin-bottom:12px;">
+              Open the extension popup (click the extension icon)
+            </li>
+            <li style="margin-bottom:12px;">
+              Click "🔐 Connect to GitHub"
+            </li>
+            <li style="margin-bottom:12px;">
+              Authorize the PromptSync app on GitHub
+            </li>
+            <li style="margin-bottom:0;">
+              You're all set! The extension will now sync captures to your repository automatically
+            </li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- Troubleshooting -->
+      <div>
+        <h3 style="margin:0 0 20px; font-size:18px; font-weight:600;">🔧 Troubleshooting</h3>
+        
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:24px;">
+          <div style="margin-bottom:16px;">
+            <strong style="color:var(--text);">Extension not appearing after installation?</strong>
+            <p style="margin:4px 0 0; color:var(--muted); font-size:14px;">
+              Make sure Developer Mode is enabled and you selected the correct folder. The folder should contain the manifest.json file.
+            </p>
+          </div>
+          <div style="margin-bottom:16px;">
+            <strong style="color:var(--text);">GitHub sync not working?</strong>
+            <p style="margin:4px 0 0; color:var(--muted); font-size:14px;">
+              Check that you're authenticated by opening the extension popup and verifying your GitHub username is displayed.
+            </p>
+          </div>
+          <div style="margin-bottom:0;">
+            <strong style="color:var(--text);">Capture quality issues?</strong>
+            <p style="margin:4px 0 0; color:var(--muted); font-size:14px;">
+              Some websites with complex layouts may not convert perfectly. Try refreshing the page before capturing or report issues on GitHub.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script type="module">
+    import { initializePage } from './src/modules/page-init.js';
+    import { initAuthStateListener, updateAuthUI } from './src/modules/auth.js';
+
+    async function initApp() {
+      // Initialize auth state listener
+      initAuthStateListener();
+      
+      // Update auth UI if already signed in
+      const user = window.auth?.currentUser;
+      if (user) {
+        updateAuthUI(user);
+      }
+      
+      // Download extension button
+      const downloadBtn = document.getElementById('downloadExtensionBtn');
+      if (downloadBtn) {
+        downloadBtn.addEventListener('click', async () => {
+          try {
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = '⏳ Preparing download...';
+            
+            // Import JSZip dynamically
+            const JSZip = (await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm')).default;
+            const zip = new JSZip();
+            
+            // Extension files to include
+            const files = [
+              'browser-extension/manifest.json',
+              'browser-extension/background.js',
+              'browser-extension/config.js',
+              'browser-extension/content.js',
+              'browser-extension/github-auth.js',
+              'browser-extension/github-sync.js',
+              'browser-extension/popup.html',
+              'browser-extension/popup.css',
+              'browser-extension/popup.js',
+              'browser-extension/README.md'
+            ];
+            
+            // Fetch and add each file to zip
+            for (const filePath of files) {
+              try {
+                const response = await fetch(filePath);
+                if (response.ok) {
+                  const content = await response.text();
+                  const fileName = filePath.replace('browser-extension/', '');
+                  zip.file(fileName, content);
+                }
+              } catch (error) {
+                console.error(`Failed to fetch ${filePath}:`, error);
+              }
+            }
+            
+            // Generate zip file
+            const blob = await zip.generateAsync({ type: 'blob' });
+            
+            // Create download link
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'promptsync-web-capture-extension.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            downloadBtn.textContent = '✅ Downloaded!';
+            setTimeout(() => {
+              downloadBtn.textContent = '⬇️ Download Extension';
+              downloadBtn.disabled = false;
+            }, 2000);
+          } catch (error) {
+            console.error('Download failed:', error);
+            downloadBtn.textContent = '❌ Download failed';
+            setTimeout(() => {
+              downloadBtn.textContent = '⬇️ Download Extension';
+              downloadBtn.disabled = false;
+            }, 2000);
+          }
+        });
+      }
+    }
+
+    initializePage('webcapture', initApp);
+  </script>
+
+</body>
+</html>
