@@ -2,12 +2,12 @@
 
 import { OWNER, REPO, BRANCH, STORAGE_KEYS } from './utils/constants.js';
 import { parseParams, getHashParam } from './utils/url-params.js';
-import { initAuthStateListener, updateAuthUI } from './modules/auth.js';
 import { initJulesKeyModalListeners, handleTryInJules } from './modules/jules.js';
 import statusBar from './modules/status-bar.js';
 import { initPromptList, loadList, loadExpandedState, renderList, setSelectFileCallback, setRepoContext } from './modules/prompt-list.js';
 import { initPromptRenderer, selectBySlug, selectFile, setHandleTryInJulesCallback } from './modules/prompt-renderer.js';
-import { initBranchSelector, loadBranches, setCurrentBranch, setCurrentRepo } from './modules/branch-selector.js';
+import { setCurrentBranch, setCurrentRepo } from './modules/branch-selector.js';
+import { waitForFirebase } from './shared-init.js';
 
 // App state
 let currentOwner = OWNER;
@@ -28,7 +28,6 @@ export function initApp() {
   // Initialize modules
   initPromptList();
   initPromptRenderer();
-  initBranchSelector(currentOwner, currentRepo, currentBranch);
   initJulesKeyModalListeners();
   
   // Init status bar
@@ -37,55 +36,11 @@ export function initApp() {
   // Set repo context for prompt list
   setRepoContext(currentOwner, currentRepo, currentBranch);
 
-  // Update header
-  const repoPill = document.getElementById('repoPill');
-  if (repoPill) {
-    repoPill.textContent = `${currentOwner}/${currentRepo}`;
-  }
-
-  // Update version display from package.json
-  fetchVersion();
-
   // Load prompts
   loadPrompts();
 
-  // Load branches
-  loadBranches();
-
   // Setup event listeners
   setupEventListeners();
-
-  // Wait for Firebase and init auth
-  waitForFirebase(() => {
-    initAuthStateListener();
-    // Get current user state
-    if (window.auth && window.auth.currentUser) {
-      updateAuthUI(window.auth.currentUser);
-    }
-  });
-}
-
-async function fetchVersion() {
-  try {
-    const response = await fetch('package.json');
-    const packageData = await response.json();
-    const appVersion = document.getElementById('appVersion');
-    if (appVersion && packageData.version) {
-      appVersion.textContent = `v${packageData.version}`;
-    }
-  } catch (error) {
-    console.error('Failed to fetch version:', error);
-  }
-}
-
-function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
-  if (window.firebaseReady) {
-    callback();
-  } else if (attempts < maxAttempts) {
-    setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), 100);
-  } else {
-    console.error('Firebase failed to initialize');
-  }
 }
 
 async function loadPrompts() {

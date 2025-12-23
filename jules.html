@@ -99,33 +99,16 @@
     </div>
   </div>
 
+  <script type="module" src="./src/shared-init.js"></script>
   <script type="module">
-    import { initializePage } from './src/modules/page-init.js';
-    import { initAuthStateListener, updateAuthUI } from './src/modules/auth.js';
-    import { initBranchSelector, loadBranches } from './src/modules/branch-selector.js';
+    import { waitForFirebase } from './src/shared-init.js';
     import { loadJulesAccountInfo, showJulesKeyModal, deleteStoredJulesKey, checkJulesKey } from './src/modules/jules.js';
-    import { OWNER, REPO, BRANCH } from './src/utils/constants.js';
 
-    function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
-      if (window.firebaseReady) {
-        callback();
-      } else if (attempts < maxAttempts) {
-        setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), 100);
+    function waitForComponents() {
+      if (document.querySelector('header') && document.querySelector('#navbar')) {
+        initApp();
       } else {
-        console.error('Firebase failed to initialize');
-      }
-    }
-
-    async function fetchVersion() {
-      try {
-        const response = await fetch('package.json');
-        const packageData = await response.json();
-        const appVersion = document.getElementById('appVersion');
-        if (appVersion && packageData.version) {
-          appVersion.textContent = `v${packageData.version}`;
-        }
-      } catch (error) {
-        console.error('Failed to fetch version:', error);
+        setTimeout(waitForComponents, 50);
       }
     }
 
@@ -182,15 +165,6 @@
     }
 
     function initApp() {
-      const repoPill = document.getElementById('repoPill');
-      if (repoPill) {
-        repoPill.textContent = `${OWNER}/${REPO}`;
-      }
-
-      fetchVersion();
-      initBranchSelector(OWNER, REPO, BRANCH);
-      loadBranches();
-      
       // Set up Jules key event handlers
       const addJulesKeyBtnProminent = document.getElementById('addJulesKeyBtnProminent');
       const resetJulesKeyBtn = document.getElementById('resetJulesKeyBtn');
@@ -263,11 +237,8 @@
       }
 
       waitForFirebase(() => {
-        initAuthStateListener();
-        
         window.auth.onAuthStateChanged((user) => {
           if (user) {
-            updateAuthUI(user);
             loadJulesInfo();
           } else {
             document.getElementById('julesProfileInfoSection').style.display = 'none';
@@ -277,7 +248,11 @@
       });
     }
 
-    initializePage('jules', initApp);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', waitForComponents);
+    } else {
+      waitForComponents();
+    }
   </script>
 </body>
 </html>

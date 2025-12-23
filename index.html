@@ -186,73 +186,7 @@
     })();
   </script>
 
-  <!-- User Profile Modal -->
-  <div id="userProfileModal" style="display:none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;">
-    <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; max-width:600px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4); max-height:90vh; overflow-y:auto;">
-      <h2 style="margin:0 0 16px; font-size:18px;">User Profile</h2>
-      
-      <!-- User Info Section -->
-      <div style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:16px;">
-        <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Signed in as</div>
-        <div id="profileUserName" style="font-weight:600; font-size:14px;"></div>
-      </div>
-      
-      <!-- Jules API Key Section -->
-      <div id="julesKeyStatusDiv" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:16px;">
-        <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Jules API Key</div>
-        <div id="julesKeyStatus" style="font-weight:600; font-size:14px; color:var(--muted);">Loading...</div>
-      </div>
-      
-      <div style="display:flex; gap:8px; flex-direction:column; margin-bottom:16px;">
-        <button id="addJulesKeyBtn" class="btn" style="padding:10px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; text-align:center; display:none;">➕ Add Jules API Key</button>
-      </div>
-      
-      <!-- Jules Profile Info Section -->
-      <div id="julesProfileInfoSection" style="display:none; margin-bottom:16px;">
-        <h3 style="margin:0 0 12px; font-size:16px; padding-bottom:8px; border-bottom:1px solid var(--border);">Jules Account Info</h3>
-        
-        <!-- View Queue Button -->
-        <div style="margin-bottom:16px;">
-          <button id="viewQueueLink" class="btn" style="width:100%; padding:12px; border:2px solid var(--accent); background:rgba(52,152,219,0.1); cursor:pointer; border-radius:8px; font-weight:600; font-size:14px; color:var(--accent); display:flex; align-items:center; justify-content:center; gap:8px; transition: all 0.2s;">
-            <span style="font-size:18px;">📋</span>
-            <span>View My Queue</span>
-          </button>
-        </div>
-        
-        <!-- Recent Sessions -->
-        <div style="margin-bottom:16px;">
-          <div style="font-size:13px; font-weight:600; color:var(--muted); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-            <span>📖 Recent Sessions</span>
-            <a id="viewAllSessionsLink" href="#" style="font-size:12px; color:var(--accent); text-decoration:none; font-weight:500;">View All →</a>
-          </div>
-          <div id="julesSessionsList" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:12px; max-height:250px; overflow-y:auto;">
-            <div style="color:var(--muted); font-size:13px;">Loading sessions...</div>
-          </div>
-        </div>
-        
-        <!-- Connected Sources -->
-        <div style="margin-bottom:16px;">
-          <div style="font-size:13px; font-weight:600; color:var(--muted); margin-bottom:8px;">🔗 Connected Repositories</div>
-          <div id="julesSourcesList" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:12px; max-height:200px; overflow-y:auto;">
-            <div style="color:var(--muted); font-size:13px;">Loading sources...</div>
-          </div>
-        </div>
-        
-        <button id="loadJulesInfoBtn" class="btn" style="padding:10px; width:100%; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; text-align:center;">🔄 Refresh Jules Info</button>
-      </div>
-      
-      <!-- Danger Zone -->
-      <div id="dangerZoneSection" style="display:none; margin-top:24px; padding:16px; border:1px solid #c0504d; border-radius:8px; background:rgba(192,80,77,0.08);">
-        <div style="font-size:14px; font-weight:600; color:#c0504d; margin-bottom:8px;">⚠️ Danger Zone</div>
-        <div style="font-size:12px; color:var(--muted); margin-bottom:12px;">This action will delete your stored Jules API key. You'll need to enter a new one next time.</div>
-        <button id="resetJulesKeyBtn" class="btn" style="padding:10px; width:100%; border:1px solid #c0504d; background:rgba(192,80,77,0.2); color:#ff9a97; cursor:pointer; border-radius:8px; text-align:center; font-weight:600;">🗑️ Delete Jules API Key</button>
-      </div>
-      
-      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
-        <button id="closeProfileBtn" class="btn" style="padding:8px 12px;">Close</button>
-      </div>
-    </div>
-  </div>
+
 
   <script>
     // Mutual exclusivity for Free Input checkboxes
@@ -353,68 +287,9 @@
     </div>
   </div>
 
-  <!-- Jules Sessions History Modal -->
-  <div id="julesSessionsHistoryModal" style="display:none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;">
-    <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; max-width:800px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4); max-height:90vh; overflow-y:auto;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h2 style="margin:0; font-size:18px;">Jules Sessions History</h2>
-        <button id="closeSessionsHistoryBtn" class="btn" style="padding:8px 16px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px;">✕ Close</button>
-      </div>
-      
-      <div style="margin-bottom:16px;">
-        <input type="text" id="sessionSearchInput" placeholder="Search sessions..." style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.05); color:var(--text); font-size:14px;" />
-      </div>
-      
-      <div id="allSessionsList" style="display:flex; flex-direction:column; gap:8px;">
-        <div style="color:var(--muted); text-align:center; padding:24px;">Loading all sessions...</div>
-      </div>
-      
-      <div id="sessionsLoadMore" style="display:none; text-align:center; margin-top:16px;">
-        <button id="loadMoreSessionsBtn" class="btn" style="padding:10px 20px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px;">Load More</button>
-      </div>
-    </div>
-  </div>
 
-  <!-- Jules Queue Modal -->
-  <div id="julesQueueModal" style="display:none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1003; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;">
-    <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; max-width:800px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4); max-height:90vh; overflow-y:auto;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h2 style="margin:0; font-size:18px;">🧾 Jules Queue</h2>
-        <button id="closeQueueBtn" class="btn" style="padding:8px 16px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px;">✕ Close</button>
-      </div>
 
-      <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueSelectAll" type="checkbox" /> Select All</label>
-        </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueSuppressPopupsCheckbox" type="checkbox" /> Suppress Popups</label>
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueOpenInBackgroundCheckbox" type="checkbox" /> Open in Background</label>
-          <script>
-            (function() {
-              const suppressCheckbox = document.getElementById('queueSuppressPopupsCheckbox');
-              const backgroundCheckbox = document.getElementById('queueOpenInBackgroundCheckbox');
-              if (suppressCheckbox && backgroundCheckbox) {
-                suppressCheckbox.addEventListener('change', () => {
-                  if (suppressCheckbox.checked) backgroundCheckbox.checked = false;
-                });
-                backgroundCheckbox.addEventListener('change', () => {
-                  if (backgroundCheckbox.checked) suppressCheckbox.checked = false;
-                });
-              }
-            })();
-          </script>
-          <button id="queuePauseBtn" class="btn" style="padding:8px 12px;">Pause</button>
-          <button id="queueRunBtn" class="btn primary" style="padding:8px 12px;">Run Selected</button>
-          <button id="queueDeleteBtn" class="btn" style="padding:8px 12px; border-color:#c0504d; color:#c0504d;">Delete Selected</button>
-        </div>
-      </div>
 
-      <div id="allQueueList" style="display:flex; flex-direction:column; gap:8px;">
-        <div style="color:var(--muted); text-align:center; padding:24px;">Loading queue...</div>
-      </div>
-    </div>
-  </div>
 
   <script type="module" src="./src/shared-init.js"></script>
   <script type="module">

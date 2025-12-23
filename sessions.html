@@ -55,6 +55,7 @@
 
   <script type="module" src="./src/shared-init.js"></script>
   <script type="module">
+    import { waitForFirebase } from './src/shared-init.js';
     import { listJulesSessions } from './src/modules/jules-api.js';
     import { getDecryptedJulesKey } from './src/modules/jules-api.js';
 
@@ -66,16 +67,6 @@
         initApp();
       } else {
         setTimeout(waitForComponents, 50);
-      }
-    }
-
-    function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
-      if (window.firebaseReady) {
-        callback();
-      } else if (attempts < maxAttempts) {
-        setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), 100);
-      } else {
-        console.error('Firebase failed to initialize');
       }
     }
 

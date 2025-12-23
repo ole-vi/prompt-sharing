@@ -92,4 +92,4 @@ if (document.readyState === 'loading') {
 }
 
 // Export for manual initialization if needed
-export { initializeSharedComponents };
+export { initializeSharedComponents, waitForFirebase };
