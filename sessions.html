@@ -179,19 +179,16 @@
         const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
         
         return `
-          <div style="padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px;">
-              <div style="flex:1;">
-                <div style="font-size:13px; color:var(--muted); margin-bottom:4px;">${createdAt}</div>
-                <div style="font-size:14px; color:var(--text); margin-bottom:8px; white-space:pre-wrap;">${displayPrompt}</div>
-                <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-                  <span style="font-size:12px; padding:4px 8px; background:rgba(77,217,255,0.1); border-radius:4px; color:var(--accent);">${stateEmoji} ${stateLabel}</span>
-                  ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" style="font-size:12px; color:var(--accent); text-decoration:none;">🔗 View PR</a>` : ''}
-                </div>
-              </div>
-              <a href="${sessionUrl}" target="_blank" rel="noopener" class="btn primary" style="padding:10px 16px; white-space:nowrap; text-decoration:none; font-size:13px; flex-shrink:0;">
-                View Session
-              </a>
+          <div style="padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all 0.2s;"
+               onmouseover="this.style.background='rgba(77,217,255,0.05)'; this.style.borderColor='var(--accent)'"
+               onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='var(--border)'"
+               onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
+            <div style="font-size:13px; color:var(--muted); margin-bottom:4px;">${createdAt}</div>
+            <div style="font-size:14px; color:var(--text); margin-bottom:8px; white-space:pre-wrap;">${displayPrompt}</div>
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;" onclick="event.stopPropagation();">
+              <span style="font-size:12px; padding:4px 8px; background:rgba(77,217,255,0.1); border-radius:4px; color:var(--accent);">${stateEmoji} ${stateLabel}</span>
+              ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" style="font-size:12px; color:var(--accent); text-decoration:none;">🔗 View PR</a>` : ''}
+              <span style="font-size:11px; color:var(--muted); margin-left:auto;">💡 Click to view session</span>
             </div>
           </div>
         `;

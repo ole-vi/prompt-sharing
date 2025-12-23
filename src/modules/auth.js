@@ -54,9 +54,6 @@ export function updateAuthUI(user) {
     if (userDisplay) userDisplay.style.display = 'inline-flex';
     if (userName) {
       userName.textContent = user.displayName || user.email || 'User';
-      userName.onclick = () => {
-        window.location.href = 'profile.html';
-      };
     }
   } else {
     // User is signed out

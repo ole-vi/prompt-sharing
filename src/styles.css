@@ -55,10 +55,6 @@ header {
   filter: brightness(1.2);
 }
 
-#userName:hover {
-  filter: brightness(1.2);
-}
-
 /* ===== Navigation Bar ===== */
 #navbar {
   position: sticky;
