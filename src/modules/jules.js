@@ -8,6 +8,7 @@ import {
 import { loadJulesProfileInfo, listJulesSessions } from './jules-api.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
+import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 
 let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
 let lastSelectedBranch = 'master';
@@ -90,6 +91,9 @@ export async function addToJulesQueue(uid, queueItem) {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       status: 'pending'
     });
+    // Clear cache so next load fetches fresh data
+    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
+    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return docRef.id;
   } catch (err) {
     console.error('Failed to add to queue', err);
@@ -102,6 +106,9 @@ export async function updateJulesQueueItem(uid, docId, updates) {
   try {
     const docRef = window.db.collection('julesQueues').doc(uid).collection('items').doc(docId);
     await docRef.update(updates);
+    // Clear cache so next load fetches fresh data
+    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
+    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return true;
   } catch (err) {
     console.error('Failed to update queue item', err);
@@ -113,6 +120,9 @@ export async function deleteFromJulesQueue(uid, docId) {
   if (!window.db) throw new Error('Firestore not initialized');
   try {
     await window.db.collection('julesQueues').doc(uid).collection('items').doc(docId).delete();
+    // Clear cache so next load fetches fresh data
+    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
+    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return true;
   } catch (err) {
     console.error('Failed to delete queue item', err);
@@ -174,8 +184,15 @@ async function loadQueuePage() {
   }
 
   try {
-    listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">Loading queue...</div>';
-    const items = await listJulesQueue(user.uid);
+    // Check cache first
+    let items = getCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
+    
+    if (!items) {
+      listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">Loading queue...</div>';
+      items = await listJulesQueue(user.uid);
+      setCache(CACHE_KEYS.QUEUE_ITEMS, items, user.uid);
+    }
+    
     queueCache = items;
     renderQueueList(items);
     attachQueueModalHandlers();
@@ -1295,10 +1312,17 @@ async function loadAndDisplayJulesProfile(uid) {
   try {
     loadBtn.disabled = true;
     loadBtn.textContent = '⏳ Loading...';
-    sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sources...</div>';
-    sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
-
-    const profileData = await loadJulesProfileInfo(uid);
+    
+    // Check cache first
+    let profileData = getCache(CACHE_KEYS.JULES_ACCOUNT, uid);
+    
+    if (!profileData) {
+      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sources...</div>';
+      sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
+      
+      profileData = await loadJulesProfileInfo(uid);
+      setCache(CACHE_KEYS.JULES_ACCOUNT, profileData, uid);
+    }
 
     if (profileData.sources && profileData.sources.length > 0) {
       sourcesListDiv.innerHTML = profileData.sources.map((source, index) => {
