@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jules Sessions - PromptSync</title>
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+  <link rel="stylesheet" href="src/styles.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
+  <script src="firebase-init.js"></script>
+</head>
+<body>
+
+  <div class="wrap" style="grid-template-columns: 1fr;">
+    <main class="card" style="padding:32px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <h2 style="margin:0; font-size:24px; font-weight:700;">📖 All Jules Sessions</h2>
+        <a href="jules.html" class="btn primary" style="text-decoration:none; padding:8px 16px; font-size:13px; white-space:nowrap;">← Back to Jules</a>
+      </div>
+
+      <!-- Search -->
+      <div style="margin-bottom:16px;">
+        <input 
+          type="text" 
+          id="sessionSearchInput" 
+          placeholder="Search sessions..." 
+          style="width:100%; padding:10px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;"
+        />
+      </div>
+      
+      <!-- Loading Message -->
+      <div id="sessionsLoading" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:48px; text-align:center;">
+        <div style="color:var(--muted); font-size:16px;">Loading sessions...</div>
+      </div>
+      
+      <!-- Not Signed In Message -->
+      <div id="sessionsNotSignedIn" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:48px; text-align:center;">
+        <div style="color:var(--muted); font-size:16px;">Please sign in to view your sessions.</div>
+      </div>
+
+      <!-- Sessions List -->
+      <div id="allSessionsList" style="display:flex; flex-direction:column; gap:12px;">
+        <div style="color:var(--muted); text-align:center; padding:24px;">Loading sessions...</div>
+      </div>
+
+      <!-- Load More -->
+      <div id="sessionsLoadMore" style="display:none; margin-top:16px; text-align:center;">
+        <button id="loadMoreSessionsBtn" class="btn" style="padding:10px 24px;">Load More</button>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initializePage } from './src/modules/page-init.js';
+    import { initAuthStateListener, updateAuthUI } from './src/modules/auth.js';
+    import { initBranchSelector, loadBranches } from './src/modules/branch-selector.js';
+    import { listJulesSessions } from './src/modules/jules-api.js';
+    import { getDecryptedJulesKey } from './src/modules/jules-api.js';
+    import { OWNER, REPO, BRANCH } from './src/utils/constants.js';
+    import statusBar from './src/modules/status-bar.js';
+
+    let allSessionsCache = [];
+    let sessionNextPageToken = null;
+
+    function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
+      if (window.firebaseReady) {
+        callback();
+      } else if (attempts < maxAttempts) {
+        setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), 100);
+      } else {
+        console.error('Firebase failed to initialize');
+      }
+    }
+
+    async function fetchVersion() {
+      try {
+        const response = await fetch('package.json');
+        const packageData = await response.json();
+        const appVersion = document.getElementById('appVersion');
+        if (appVersion && packageData.version) {
+          appVersion.textContent = `v${packageData.version}`;
+        }
+      } catch (error) {
+        console.error('Failed to fetch version:', error);
+      }
+    }
+
+    async function loadSessionsPage() {
+      const user = window.auth?.currentUser;
+      if (!user) return;
+      
+      const allSessionsList = document.getElementById('allSessionsList');
+      const loadMoreSection = document.getElementById('sessionsLoadMore');
+      const loadMoreBtn = document.getElementById('loadMoreSessionsBtn');
+      
+      try {
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = 'Loading...';
+        
+        const apiKey = await getDecryptedJulesKey(user.uid);
+        if (!apiKey) {
+          throw new Error('Jules API key not found');
+        }
+        
+        const result = await listJulesSessions(apiKey, 50, sessionNextPageToken);
+        
+        if (result.sessions && result.sessions.length > 0) {
+          allSessionsCache = [...allSessionsCache, ...result.sessions];
+          sessionNextPageToken = result.nextPageToken || null;
+          
+          renderAllSessions(allSessionsCache);
+          
+          if (sessionNextPageToken) {
+            loadMoreSection.style.display = 'block';
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.textContent = 'Load More';
+          } else {
+            loadMoreSection.style.display = 'none';
+          }
+        } else if (allSessionsCache.length === 0) {
+          allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions found</div>';
+        }
+      } catch (error) {
+        if (allSessionsCache.length === 0) {
+          allSessionsList.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">Failed to load sessions: ${error.message}</div>`;
+        }
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = 'Load More';
+      }
+    }
+
+    function renderAllSessions(sessions) {
+      const allSessionsList = document.getElementById('allSessionsList');
+      const searchInput = document.getElementById('sessionSearchInput');
+      const searchTerm = searchInput.value.toLowerCase();
+      
+      const filteredSessions = searchTerm 
+        ? sessions.filter(s => {
+            const promptText = s.prompt || s.displayName || '';
+            const sessionId = s.name?.split('/').pop() || '';
+            return promptText.toLowerCase().includes(searchTerm) || sessionId.toLowerCase().includes(searchTerm);
+          })
+        : sessions;
+      
+      if (filteredSessions.length === 0 && searchTerm) {
+        allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions match your search</div>';
+        return;
+      }
+      
+      allSessionsList.innerHTML = filteredSessions.map(session => {
+        const state = session.state || 'UNKNOWN';
+        const stateEmoji = {
+          'COMPLETED': '✅',
+          'FAILED': '❌',
+          'IN_PROGRESS': '⏳',
+          'PLANNING': '⏳',
+          'QUEUED': '⏸️',
+          'AWAITING_USER_FEEDBACK': '💬'
+        }[state] || '❓';
+        
+        const stateLabel = {
+          'COMPLETED': 'COMPLETED',
+          'FAILED': 'FAILED',
+          'IN_PROGRESS': 'IN PROGRESS',
+          'PLANNING': 'IN PROGRESS',
+          'QUEUED': 'QUEUED',
+          'AWAITING_USER_FEEDBACK': 'AWAITING USER FEEDBACK'
+        }[state] || state.replace(/_/g, ' ');
+        
+        const promptPreview = (session.prompt || 'No prompt text').substring(0, 150);
+        const displayPrompt = promptPreview.length < (session.prompt || '').length ? promptPreview + '...' : promptPreview;
+        const createdAt = session.createTime ? new Date(session.createTime).toLocaleDateString() : 'Unknown';
+        const prUrl = session.outputs?.[0]?.pullRequest?.url;
+        
+        const sessionId = session.name?.split('sessions/')[1] || session.id?.split('sessions/')[1] || session.id;
+        const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
+        
+        return `
+          <div style="padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px;">
+              <div style="flex:1;">
+                <div style="font-size:13px; color:var(--muted); margin-bottom:4px;">${createdAt}</div>
+                <div style="font-size:14px; color:var(--text); margin-bottom:8px; white-space:pre-wrap;">${displayPrompt}</div>
+                <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                  <span style="font-size:12px; padding:4px 8px; background:rgba(77,217,255,0.1); border-radius:4px; color:var(--accent);">${stateEmoji} ${stateLabel}</span>
+                  ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" style="font-size:12px; color:var(--accent); text-decoration:none;">🔗 View PR</a>` : ''}
+                </div>
+              </div>
+              <a href="${sessionUrl}" target="_blank" rel="noopener" class="btn primary" style="padding:10px 16px; white-space:nowrap; text-decoration:none; font-size:13px; flex-shrink:0;">
+                🤖 Open in Jules
+              </a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function loadSessions() {
+      const user = window.auth?.currentUser;
+      
+      const loadingDiv = document.getElementById('sessionsLoading');
+      const notSignedInDiv = document.getElementById('sessionsNotSignedIn');
+      const sessionsList = document.getElementById('allSessionsList');
+      
+      if (!user) {
+        loadingDiv.style.display = 'none';
+        sessionsList.style.display = 'none';
+        notSignedInDiv.style.display = 'block';
+        return;
+      }
+
+      try {
+        loadingDiv.style.display = 'block';
+        notSignedInDiv.style.display = 'none';
+        sessionsList.style.display = 'flex';
+        
+        await loadSessionsPage();
+        
+        loadingDiv.style.display = 'none';
+      } catch (err) {
+        console.error('Sessions loading error:', err);
+        loadingDiv.style.display = 'none';
+      }
+    }
+
+    function initApp() {
+      const repoPill = document.getElementById('repoPill');
+      if (repoPill) {
+        repoPill.textContent = `${OWNER}/${REPO}`;
+      }
+
+      fetchVersion();
+      initBranchSelector(OWNER, REPO, BRANCH);
+      loadBranches();
+      statusBar.init();
+
+      // Search handler
+      const searchInput = document.getElementById('sessionSearchInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', () => {
+          renderAllSessions(allSessionsCache);
+        });
+      }
+
+      // Load more handler
+      const loadMoreBtn = document.getElementById('loadMoreSessionsBtn');
+      if (loadMoreBtn) {
+        loadMoreBtn.onclick = loadSessionsPage;
+      }
+
+      waitForFirebase(() => {
+        initAuthStateListener();
+        
+        window.auth.onAuthStateChanged((user) => {
+          if (user) {
+            updateAuthUI(user);
+            loadSessions();
+          } else {
+            document.getElementById('sessionsLoading').style.display = 'none';
+            document.getElementById('allSessionsList').style.display = 'none';
+            document.getElementById('sessionsNotSignedIn').style.display = 'block';
+          }
+        });
+      });
+    }
+
+    initializePage('jules', initApp);
+  </script>
+
+  <!-- Status Bar -->
+  <div id="statusBar" style="display:none;" aria-live="polite">
+    <div class="status-inner">
+      <div class="status-msg" style="flex:1;">Ready</div>
+      <div class="status-progress" style="display:none; margin-left:12px; color:var(--muted); font-size:13px;"></div>
+      <button class="status-action btn" style="display:none; margin-left:12px; padding:6px 10px;">Action</button>
+    </div>
+  </div>
+</body>
+</html>
