@@ -7,7 +7,7 @@ import statusBar from './modules/status-bar.js';
 import { initPromptList, loadList, loadExpandedState, renderList, setSelectFileCallback, setRepoContext } from './modules/prompt-list.js';
 import { initPromptRenderer, selectBySlug, selectFile, setHandleTryInJulesCallback } from './modules/prompt-renderer.js';
 import { setCurrentBranch, setCurrentRepo } from './modules/branch-selector.js';
-import { waitForFirebase } from './shared-init.js';
+import './shared-init.js';
 
 // App state
 let currentOwner = OWNER;
