@@ -13,65 +13,6 @@
   <script src="firebase-init.js"></script>
 </head>
 <body>
-  <header>
-    <style>
-      @media (max-width: 900px) {
-        #headerContainer {
-          flex-direction: column !important;
-          gap: 8px !important;
-          align-items: center !important;
-        }
-        #headerContainer > div:first-child {
-          width: 100%;
-          flex-direction: column !important;
-          align-items: center !important;
-          gap: 8px !important;
-        }
-        #headerBranding a {
-          flex-direction: column;
-          text-align: center;
-        }
-        #headerControls {
-          width: 100%;
-          justify-content: center !important;
-        }
-        #authStatus {
-          width: 100%;
-          align-items: center !important;
-        }
-      }
-    </style>
-    <div id="headerContainer" style="display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 16px; width:100%;">
-      <div style="display:flex; align-items:center; gap:16px;">
-        <div id="headerBranding" style="display:flex; align-items:center; gap:12px;">
-          <a id="logoLink" href="/" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:12px;">
-            <img src="assets/PromptSyncLogo.svg" alt="PromptSync" style="width:36px; height:36px; flex-shrink:0; object-fit:contain;">
-            <div>
-              <div style="font-size:24px; font-weight:900; letter-spacing:0.5px; line-height:1.2;">PromptSync</div>
-              <div style="color:var(--muted); font-size:12px; margin-top:2px; word-break:break-word;">Share and amplify your team's AI knowledge.</div>
-              <div id="appVersion" style="color:var(--muted); font-size:10px; opacity:0.7; margin-top:2px;"></div>
-            </div>
-          </a>
-        </div>
-
-        <div id="headerControls" style="display:flex; gap:8px; align-items:center;">
-          <div class="pill" id="repoPill" style="white-space:nowrap;">Loading repo...</div>
-          <label style="display:flex; align-items:center; gap:4px; white-space:nowrap;">
-            <span title="Choose a branch">▼</span>
-            <select id="branchSelect" class="btn" style="min-width:140px;">
-              <option>Loading branches…</option>
-            </select>
-          </label>
-        </div>
-      </div>
-
-      <div id="authStatus" style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; font-size:13px; flex-shrink:0;">
-        <span id="userDisplay" style="display:none; font-size:11px; color:var(--muted);">          <strong id="userName" style="cursor:pointer; text-decoration:underline;" title="Click to manage Jules API key"></strong>
-        </span>
-        <a href="https://github.com/ole-vi/prompt-sharing/blob/main/README.md" target="_blank" rel="noopener" class="help-link" title="View documentation" style="padding:6px 10px; font-size:12px;">📖 Help</a>
-      </div>
-    </div>
-  </header>
 
   <div class="wrap" style="grid-template-columns: 1fr;">
     <main class="card" style="display:flex; flex-direction:column; padding:24px;">
@@ -121,6 +62,7 @@
   </div>
 
   <script type="module">
+    import { loadHeader } from './src/modules/header.js';
     import { loadNavbar } from './src/modules/navbar.js';
     import { initAuthStateListener, updateAuthUI } from './src/modules/auth.js';
     import { initBranchSelector, loadBranches } from './src/modules/branch-selector.js';
@@ -213,11 +155,16 @@
 
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', async () => {
+        await loadHeader();
         await loadNavbar('queue');
         initApp();
       });
     } else {
-      loadNavbar('queue').then(() => initApp());
+      (async () => {
+        await loadHeader();
+        await loadNavbar('queue');
+        initApp();
+      })();
     }
   </script>
 
