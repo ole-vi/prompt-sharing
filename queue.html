@@ -12,7 +12,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
   <script src="firebase-init.js"></script>
 </head>
-<body>
+<body data-page="queue">
 
   <div class="wrap" style="grid-template-columns: 1fr;">
     <main class="card" style="display:flex; flex-direction:column; padding:24px;">
@@ -61,35 +61,43 @@
     </main>
   </div>
 
+  <script type="module" src="./src/shared-init.js"></script>
   <script type="module">
-    import { initializePage } from './src/modules/page-init.js';
-    import { initAuthStateListener, updateAuthUI } from './src/modules/auth.js';
-    import { initBranchSelector, loadBranches } from './src/modules/branch-selector.js';
     import { listJulesQueue, renderQueueListDirectly, attachQueueHandlers } from './src/modules/jules.js';
-    import statusBar from './src/modules/status-bar.js';
-    import { OWNER, REPO, BRANCH } from './src/utils/constants.js';
 
-    function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
-      if (window.firebaseReady) {
-        callback();
-      } else if (attempts < maxAttempts) {
-        setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), 100);
+    function waitForComponents() {
+      if (document.querySelector('header') && document.querySelector('#navbar')) {
+        initApp();
       } else {
-        console.error('Firebase failed to initialize');
+        setTimeout(waitForComponents, 50);
       }
     }
 
-    async function fetchVersion() {
-      try {
-        const response = await fetch('package.json');
-        const packageData = await response.json();
-        const appVersion = document.getElementById('appVersion');
-        if (appVersion && packageData.version) {
-          appVersion.textContent = `v${packageData.version}`;
-        }
-      } catch (error) {
-        console.error('Failed to fetch version:', error);
+    function initApp() {
+      // Initialize queue functionality
+      attachQueueHandlers();
+      
+      const user = window.auth?.currentUser;
+      if (user) {
+        document.getElementById('queueControls').style.display = 'block';
+        document.getElementById('queueNotSignedIn').style.display = 'none';
+        loadQueue();
+      } else {
+        document.getElementById('queueControls').style.display = 'none';
+        document.getElementById('queueNotSignedIn').style.display = 'block';
       }
+      
+      // Listen for auth state changes
+      window.auth.onAuthStateChanged((user) => {
+        if (user) {
+          document.getElementById('queueControls').style.display = 'block';
+          document.getElementById('queueNotSignedIn').style.display = 'none';
+          loadQueue();
+        } else {
+          document.getElementById('queueControls').style.display = 'none';
+          document.getElementById('queueNotSignedIn').style.display = 'block';
+        }
+      });
     }
 
     async function loadQueue() {
@@ -124,35 +132,11 @@
       }
     }
 
-    function initApp() {
-      const repoPill = document.getElementById('repoPill');
-      if (repoPill) {
-        repoPill.textContent = `${OWNER}/${REPO}`;
-      }
-
-      fetchVersion();
-      initBranchSelector(OWNER, REPO, BRANCH);
-      loadBranches();
-      statusBar.init();
-
-      waitForFirebase(() => {
-        initAuthStateListener();
-        
-        window.auth.onAuthStateChanged((user) => {
-          if (user) {
-            updateAuthUI(user);
-            document.getElementById('queueControls').style.display = 'block';
-            document.getElementById('queueNotSignedIn').style.display = 'none';
-            loadQueue();
-          } else {
-            document.getElementById('queueControls').style.display = 'none';
-            document.getElementById('queueNotSignedIn').style.display = 'block';
-          }
-        });
-      });
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', waitForComponents);
+    } else {
+      waitForComponents();
     }
-
-    initializePage('queue', initApp);
   </script>
 
   <!-- Status Bar -->
