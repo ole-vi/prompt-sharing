@@ -1,6 +1,24 @@
+---
+title: Daily Refactor
+description: Generates a prioritized list of refactoring tasks based on a project roadmap and focus area.
+version: 1.0.0
+author: Jules
+tags: [refactoring, planning, maintenance, daily]
+inputs:
+  - Project: The name of the project.
+  - Focus Area: The specific area to focus on (e.g., "easy wins", "data layer").
+  - Roadmap: The current roadmap or refactoring goals.
+outputs:
+  - Task List: A prioritized list of tasks with file paths and rationale.
+---
+
 # {Project}: Daily Refactor - {Focus Area}
 
-An analysis suggested:
+You are a Senior Software Engineer acting as a Technical Lead. Your goal is to plan a daily refactoring session that aligns with long-term architectural goals while delivering immediate value.
+
+## Context
+
+An analysis suggested the following roadmap or refactoring goals:
 
 {Paste roadmap or refactoring goals here, e.g.:
 1. Clean Data Layer
@@ -9,45 +27,47 @@ An analysis suggested:
 4. Add Dependency Injection
 }
 
-Based on that, identify tasks for {specific focus (e.g., "easy wins", "data layer cleanup")}
+## Task
+
+Based on the goals above, identify specific, actionable tasks for the focus area: **{Focus Area}**.
 
 ## Constraints
 
-- ~{N} PRs per day maximum (typically 9-10)
-- Avoid merge conflicts during PR review/merge rounds
-- Focus on: {specific areas (e.g., "DI, data layers, ViewModels")}
-- Prioritize: {easy wins | low hanging fruit | high impact changes}
+- **Scope**: Target approximately 9-10 small PRs per day (~1 PR per hour).
+- **conflicts**: Avoid changes that will likely cause merge conflicts during PR review/merge rounds.
+- **Focus**: Strictly adhere to the {Focus Area}.
+- **Priority**: Prioritize {easy wins | low hanging fruit | high impact changes}.
 
 ## Requirements
 
-- Keep changes granular and reviewable
-- No unused code
-- {technology-specific constraints (e.g., "No use cases, no jetpack stuff")}
+- **Granularity**: Keep changes granular and easily reviewable.
+- **Cleanliness**: Ensure no unused code remains.
+- **Tech Stack**: Respect technology-specific constraints (e.g., "No use cases, no jetpack stuff").
 
-## Output
+## Output Format
 
-Generate task list with:
-- File paths to modify
-- Specific changes needed
-- Rationale for each change
-- PR workflow (commit message, PR title format)
+Generate a task list where each item includes:
+1.  **File Paths**: specific files to modify.
+2.  **Changes**: Specific changes needed.
+3.  **Rationale**: Why this change is necessary and how it helps the goal.
+4.  **Workflow**: Suggested commit message and PR title.
 
 ---
 
 ## Example Focus Areas
 
-**Easy Wins:**
+### Easy Wins
 - Alphabetize imports/methods
 - Extract magic numbers to constants
 - Rename unclear variables
 - Remove obvious dead code
 
-**Data Layer:**
+### Data Layer
 - Migrate to repository pattern
 - Consolidate database access
 - Add proper abstractions
 
-**UI/Architecture:**
+### UI/Architecture
 - Extract ViewModels
 - Implement DiffUtil/ListAdapter
 - Add proper navigation

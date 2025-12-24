@@ -1,4 +1,18 @@
-# PromptSync
+# PromptSync & Prompt-Sharing
+
+> **This repository serves two purposes:**
+> 1.  **A Canonical Prompt Library:** The authoritative source for reusable, provider-neutral prompts.
+> 2.  **PromptSync App:** A web interface for browsing and using these prompts.
+
+## 1. The Prompt Library ("PromptOps")
+
+This repository is the canonical, version-controlled source of truth for reusable, provider-neutral prompts intended for agentic software development. We treat prompts as code.
+
+*   **Standards:** All prompts follow a strict structure defined in our [Style Guide](prompts/system/style-guide.md).
+*   **Contribution:** Want to add or improve a prompt? See [CONTRIBUTING.md](CONTRIBUTING.md).
+*   **Location:** Prompts are stored in the `prompts/` directory.
+
+## 2. The PromptSync App
 
 Share and amplify your team's AI knowledge.
 Hosted for free with GitHub Pages, backed by simple `.md` files.
