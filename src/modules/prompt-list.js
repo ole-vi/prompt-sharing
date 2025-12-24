@@ -37,8 +37,25 @@ export function setRepoContext(owner, repo, branch) {
 export function initPromptList() {
   listEl = document.getElementById('list');
   searchEl = document.getElementById('search');
+  const searchClearBtn = document.getElementById('searchClear');
+  
   if (searchEl) {
-    searchEl.addEventListener('input', () => renderList(files, currentOwner, currentRepo, currentBranch));
+    searchEl.addEventListener('input', () => {
+      renderList(files, currentOwner, currentRepo, currentBranch);
+      // Show/hide clear button based on input value
+      if (searchClearBtn) {
+        searchClearBtn.style.display = searchEl.value ? 'block' : 'none';
+      }
+    });
+  }
+  
+  if (searchClearBtn && searchEl) {
+    searchClearBtn.addEventListener('click', () => {
+      searchEl.value = '';
+      searchClearBtn.style.display = 'none';
+      searchEl.focus();
+      renderList(files, currentOwner, currentRepo, currentBranch);
+    });
   }
 
   // Delegated event listener for tag badges

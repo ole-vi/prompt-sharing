@@ -129,9 +129,14 @@ header {
   }
 }
 
+.search-wrapper {
+  position: relative;
+  width: 100%;
+}
+
 #search {
   width: 100%;
-  padding: 10px 12px;
+  padding: 10px 36px 10px 12px;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: linear-gradient(135deg, rgba(20,24,41,0.5), rgba(20,24,41,0.3));
@@ -149,6 +154,27 @@ header {
 
 #search::placeholder {
   color: var(--muted);
+}
+
+.search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.search-clear:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 #list {
@@ -276,8 +302,8 @@ header {
 .item-title:hover {
   text-decoration: underline;
   text-decoration-color: var(--accent);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 .item-meta {
