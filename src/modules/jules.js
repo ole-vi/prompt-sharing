@@ -17,15 +17,22 @@ function openUrlInBackground(url) {
   a.href = url;
   a.target = '_blank';
   a.rel = 'noopener noreferrer';
-  a.style.display = 'none';
+
+  // Use visibility hidden instead of display none to ensure events work
+  a.style.position = 'absolute';
+  a.style.left = '-9999px';
+  a.style.top = '0';
   document.body.appendChild(a);
   
+  // Detect Mac to use Meta key (Cmd), others use Ctrl
+  const isMac = /Mac/.test(navigator.userAgent);
+
   const evt = new MouseEvent('click', {
     view: window,
     bubbles: true,
     cancelable: true,
-    ctrlKey: true,
-    metaKey: true
+    ctrlKey: !isMac,
+    metaKey: isMac
   });
   
   a.dispatchEvent(evt);
