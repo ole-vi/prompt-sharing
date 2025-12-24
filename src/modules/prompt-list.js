@@ -1,7 +1,7 @@
 // ===== Prompt List & Tree Module =====
 
 import { slugify } from '../utils/slug.js';
-import { STORAGE_KEYS, PRETTY_TITLES, TAG_DEFINITIONS } from '../utils/constants.js';
+import { STORAGE_KEYS, TAG_DEFINITIONS } from '../utils/constants.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
 import { clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
 
@@ -436,7 +436,7 @@ export function renderList(items, owner, repo, branch) {
         if (name.includes(q) || path.includes(q)) return true;
         
         // Check if any tag matches
-        for (const [key, { label, keywords }] of Object.entries(TAG_DEFINITIONS)) {
+        for (const { label, keywords } of Object.values(TAG_DEFINITIONS)) {
           // Match tag label (e.g., "review", "bug")
           if (label.toLowerCase().includes(q)) {
             // Check if this file actually has this tag
