@@ -1,7 +1,7 @@
 // ===== Prompt List & Tree Module =====
 
 import { slugify } from '../utils/slug.js';
-import { STORAGE_KEYS, PRETTY_TITLES, TAG_DEFINITIONS } from '../utils/constants.js';
+import { STORAGE_KEYS, TAG_DEFINITIONS } from '../utils/constants.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
 import { clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
 
@@ -37,9 +37,41 @@ export function setRepoContext(owner, repo, branch) {
 export function initPromptList() {
   listEl = document.getElementById('list');
   searchEl = document.getElementById('search');
+  const searchClearBtn = document.getElementById('searchClear');
+  
   if (searchEl) {
-    searchEl.addEventListener('input', () => renderList(files, currentOwner, currentRepo, currentBranch));
+    searchEl.addEventListener('input', () => {
+      renderList(files, currentOwner, currentRepo, currentBranch);
+      // Show/hide clear button based on input value
+      if (searchClearBtn) {
+        searchClearBtn.style.display = searchEl.value ? 'block' : 'none';
+      }
+    });
   }
+  
+  if (searchClearBtn && searchEl) {
+    searchClearBtn.addEventListener('click', () => {
+      searchEl.value = '';
+      searchClearBtn.style.display = 'none';
+      searchEl.focus();
+      renderList(files, currentOwner, currentRepo, currentBranch);
+    });
+  }
+
+  // Delegated event listener for tag badges
+  listEl.addEventListener('click', (event) => {
+    const badge = event.target.closest('.tag-badge');
+    if (badge && searchEl) {
+      event.preventDefault();
+      event.stopPropagation();
+      const tagKey = badge.dataset.tag;
+      const label = TAG_DEFINITIONS[tagKey]?.label || tagKey;
+      if (label) {
+        searchEl.value = label;
+        searchEl.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
+  });
 }
 
 export function getFiles() {
@@ -67,17 +99,8 @@ export function ensureAncestorsExpanded(path) {
   return changed;
 }
 
-function getTagsForFile(name) {
-  const base = name.replace(/\.md$/i, "");
-  const tags = [];
-  if (!PRETTY_TITLES) return tags;
-
-  for (const { keywords, className, label } of Object.values(TAG_DEFINITIONS)) {
-    if (keywords.some(kw => new RegExp(kw, 'i').test(base))) {
-      tags.push({ className, label });
-    }
-  }
-  return tags;
+function getCleanTitle(name) {
+  return name.replace(/\.md$/i, "");
 }
 
 function getExpandedStateKey(owner, repo, branch) {
@@ -354,28 +377,33 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       left.style.display = 'flex';
       left.style.flexDirection = 'column';
       left.style.gap = '2px';
+      const t = document.createElement('div');
+      t.className = 'item-title';
+      t.textContent = getCleanTitle(file.name);
+      left.appendChild(t);
 
-      const titleContainer = document.createElement('div');
-      titleContainer.className = 'item-title';
+      const tagContainer = document.createElement('div');
+      tagContainer.className = 'tag-container';
+      const addedTags = new Set();
 
-      const titleSpan = document.createElement('span');
-      titleSpan.textContent = file.name.replace(/\.md$/i, "");
-      titleContainer.appendChild(titleSpan);
+      for (const [key, { label, className, keywords }] of Object.entries(TAG_DEFINITIONS)) {
+        if (keywords.some(kw => new RegExp(kw, 'i').test(file.name))) {
+          if (addedTags.has(key)) continue;
 
-      const tags = getTagsForFile(file.name);
-      if (tags.length > 0) {
-        const tagsContainer = document.createElement('div');
-        tagsContainer.className = 'tags-container';
-        for (const tag of tags) {
-          const tagEl = document.createElement('span');
-          tagEl.className = `tag ${tag.className}`;
-          tagEl.textContent = tag.label;
-          tagsContainer.appendChild(tagEl);
+          const badge = document.createElement('span');
+          badge.className = `tag-badge ${className}`;
+          badge.textContent = label;
+          badge.dataset.tag = key;
+
+          tagContainer.appendChild(badge);
+          addedTags.add(key);
         }
-        titleContainer.appendChild(tagsContainer);
       }
 
-      left.appendChild(titleContainer);
+      if (tagContainer.children.length > 0) {
+        left.appendChild(tagContainer);
+      }
+
       a.appendChild(left);
       li.appendChild(a);
       container.appendChild(li);
@@ -403,7 +431,26 @@ export function renderList(items, owner, repo, branch) {
     : items.filter(f => {
         const name = f.name?.toLowerCase?.() || '';
         const path = f.path?.toLowerCase?.() || '';
-        return name.includes(q) || path.includes(q);
+        
+        // Check if name or path matches
+        if (name.includes(q) || path.includes(q)) return true;
+        
+        // Check if any tag matches
+        for (const { label, keywords } of Object.values(TAG_DEFINITIONS)) {
+          // Match tag label (e.g., "review", "bug")
+          if (label.toLowerCase().includes(q)) {
+            // Check if this file actually has this tag
+            if (keywords.some(kw => new RegExp(kw, 'i').test(name))) {
+              return true;
+            }
+          }
+          // Match tag keywords directly in search (e.g., searching "fix" should find "bug" tagged items)
+          if (keywords.some(kw => new RegExp(kw, 'i').test(name)) && keywords.some(kw => kw.toLowerCase().includes(q))) {
+            return true;
+          }
+        }
+        
+        return false;
       });
 
   if (!filtered.length) {

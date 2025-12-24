@@ -80,7 +80,10 @@
 
   <div class="wrap">
     <aside id="sidebar" class="card">
-      <input id="search" placeholder="Search prompts..." />
+      <div class="search-wrapper">
+        <input id="search" placeholder="Search prompts..." />
+        <button id="searchClear" class="search-clear" style="display: none;" title="Clear search">✕</button>
+      </div>
       <button class="btn" id="freeInputBtn" title="Send a custom prompt to Jules">✏️ Free Input</button>
       <div id="list"></div>
     </aside>

@@ -14,34 +14,34 @@ export const CODEX_URL_REGEX = /^https:\/\/chatgpt\.com\/s\/[a-f0-9_]+$/i;
 export const JULES_API_BASE = "https://jules.googleapis.com/v1alpha";
 
 export const DEFAULT_FAVORITE_REPOS = [
-  { id: "sources/github/open-learning-exchange/planet", name: "open-learning-exchange/planet", emoji: "🌍", branch: "master" },
-  { id: "sources/github/open-learning-exchange/myplanet", name: "open-learning-exchange/myplanet", emoji: "🚀", branch: "master" },
-  { id: "sources/github/ole-vi/prompt-sharing", name: "ole-vi/prompt-sharing", emoji: "📝", branch: "main" }
+  { id: "sources/github/open-learning-exchange/planet", name: "open-learning-exchange/planet", branch: "master" },
+  { id: "sources/github/open-learning-exchange/myplanet", name: "open-learning-exchange/myplanet", branch: "master" },
+  { id: "sources/github/ole-vi/prompt-sharing", name: "ole-vi/prompt-sharing", branch: "main" }
 ];
 
 export const STORAGE_KEY_FAVORITE_REPOS = "jules_favorite_repos";
 
-// Tag classification keywords
+// Tag definitions
 export const TAG_DEFINITIONS = {
   review: {
-    keywords: ["review", "\\bpr\\b", "rubric", "audit", "inspect", "check", "analyze", "investigation", "deadcode"],
+    label: "Review",
     className: "tag-review",
-    label: "review"
+    keywords: ["review", "\\bpr\\b", "rubric", "audit", "inspect", "check", "analyze", "investigation"]
   },
   bug: {
-    keywords: ["bug", "triage", "fix", "issue", "solve", "repair", "patch", "hotfix"],
+    label: "Bug",
     className: "tag-bug",
-    label: "bug"
+    keywords: ["bug", "triage", "fix", "issue", "solve", "repair", "patch", "hotfix"]
   },
   design: {
-    keywords: ["spec", "design", "plan", "explorer", "guide", "tutorial", "documentation", "readme", "onboard"],
+    label: "Design",
     className: "tag-design",
-    label: "design"
+    keywords: ["spec", "design", "plan", "explorer", "guide", "tutorial", "documentation", "readme", "onboard"]
   },
   refactor: {
-    keywords: ["refactor", "cleanup", "sweep", "maintenance", "optimize", "improve", "reorganize", "deadcode"],
+    label: "Refactor",
     className: "tag-refactor",
-    label: "refactor"
+    keywords: ["refactor", "cleanup", "sweep", "maintenance", "optimize", "improve", "reorganize", "deadcode"]
   }
 };
 
