@@ -72,7 +72,7 @@ function getTagsForFile(name) {
   const tags = [];
   if (!PRETTY_TITLES) return tags;
 
-  for (const [key, { keywords, className, label }] of Object.entries(TAG_DEFINITIONS)) {
+  for (const { keywords, className, label } of Object.values(TAG_DEFINITIONS)) {
     if (keywords.some(kw => new RegExp(kw, 'i').test(base))) {
       tags.push({ className, label });
     }
