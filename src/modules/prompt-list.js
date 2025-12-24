@@ -1,7 +1,7 @@
 // ===== Prompt List & Tree Module =====
 
 import { slugify } from '../utils/slug.js';
-import { STORAGE_KEYS, PRETTY_TITLES, EMOJI_PATTERNS, TAG_DEFINITIONS } from '../utils/constants.js';
+import { STORAGE_KEYS, PRETTY_TITLES, TAG_DEFINITIONS } from '../utils/constants.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
 import { clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
 
@@ -48,9 +48,9 @@ export function initPromptList() {
       event.preventDefault();
       event.stopPropagation();
       const tagKey = badge.dataset.tag;
-      const keyword = TAG_DEFINITIONS[tagKey]?.keywords[0]?.replace(/\\b/g, '') || tagKey;
-      if (keyword) {
-        searchEl.value = keyword;
+      const label = TAG_DEFINITIONS[tagKey]?.label || tagKey;
+      if (label) {
+        searchEl.value = label;
         searchEl.dispatchEvent(new Event('input', { bubbles: true }));
       }
     }
@@ -82,16 +82,8 @@ export function ensureAncestorsExpanded(path) {
   return changed;
 }
 
-function prettyTitle(name) {
-  const base = name.replace(/\.md$/i, "");
-  if (!PRETTY_TITLES) return base;
-  
-  for (const [key, { emoji, keywords }] of Object.entries(EMOJI_PATTERNS)) {
-    if (keywords.some(kw => new RegExp(kw, 'i').test(base))) {
-      return emoji + " " + base;
-    }
-  }
-  return base;
+function getCleanTitle(name) {
+  return name.replace(/\.md$/i, "");
 }
 
 function getExpandedStateKey(owner, repo, branch) {
@@ -370,7 +362,7 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       left.style.gap = '2px';
       const t = document.createElement('div');
       t.className = 'item-title';
-      t.textContent = prettyTitle(file.name);
+      t.textContent = getCleanTitle(file.name);
       left.appendChild(t);
 
       const tagContainer = document.createElement('div');
@@ -422,7 +414,26 @@ export function renderList(items, owner, repo, branch) {
     : items.filter(f => {
         const name = f.name?.toLowerCase?.() || '';
         const path = f.path?.toLowerCase?.() || '';
-        return name.includes(q) || path.includes(q);
+        
+        // Check if name or path matches
+        if (name.includes(q) || path.includes(q)) return true;
+        
+        // Check if any tag matches
+        for (const [key, { label, keywords }] of Object.entries(TAG_DEFINITIONS)) {
+          // Match tag label (e.g., "review", "bug")
+          if (label.toLowerCase().includes(q)) {
+            // Check if this file actually has this tag
+            if (keywords.some(kw => new RegExp(kw, 'i').test(name))) {
+              return true;
+            }
+          }
+          // Match tag keywords directly in search (e.g., searching "fix" should find "bug" tagged items)
+          if (keywords.some(kw => new RegExp(kw, 'i').test(name)) && keywords.some(kw => kw.toLowerCase().includes(q))) {
+            return true;
+          }
+        }
+        
+        return false;
       });
 
   if (!filtered.length) {
