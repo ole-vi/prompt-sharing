@@ -1,5 +1,6 @@
 import { USER_BRANCHES, FEATURE_PATTERNS, STORAGE_KEYS } from '../utils/constants.js';
 import { getBranches } from './github-api.js';
+import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 
 let branchSelect = null;
 let currentBranch = null;
@@ -106,7 +107,15 @@ export async function loadBranches() {
   branchSelect.innerHTML = `<option>Loading branches…</option>`;
 
   try {
-    const branches = await getBranches(currentOwner, currentRepo);
+    // Check cache first
+    const cacheKey = `${currentOwner}/${currentRepo}`;
+    let branches = getCache(CACHE_KEYS.BRANCHES, cacheKey);
+    
+    if (!branches) {
+      // Load from API and cache
+      branches = await getBranches(currentOwner, currentRepo);
+      setCache(CACHE_KEYS.BRANCHES, branches, cacheKey);
+    }
 
     const mainBranches = [];
     const userBranchesArr = [];

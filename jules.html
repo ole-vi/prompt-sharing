@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jules - PromptSync</title>
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+  <link rel="stylesheet" href="src/styles.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
+  <script src="firebase-init.js"></script>
+</head>
+<body data-page="jules">
+
+  <div class="wrap" style="grid-template-columns: 1fr;">
+    <main class="card" style="padding:32px;">
+      <h2 style="margin:0 0 24px; font-size:24px; font-weight:700;">🤖 Jules Account</h2>
+      
+      <!-- Loading Message -->
+      <div id="julesLoading" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:48px; text-align:center;">
+        <div style="color:var(--muted); font-size:16px;">Loading Jules account information...</div>
+      </div>
+      
+      <!-- Not Signed In Message -->
+      <div id="julesNotSignedIn" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:48px; text-align:center;">
+        <div style="color:var(--muted); font-size:16px;">Please sign in to view Jules account information.</div>
+      </div>
+
+      <!-- Jules Profile Info Section -->
+      <div id="julesProfileInfoSection" style="display:none;">
+        <!-- Jules API Key Section -->
+        <div id="julesKeyStatusDiv" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:20px;">
+          <div style="font-size:13px; color:var(--muted); margin-bottom:6px;">Jules API Key</div>
+          <div id="julesKeyStatus" style="font-weight:600; font-size:15px; color:var(--muted);">Loading...</div>
+        </div>
+        
+        <!-- No Jules Key Message -->
+        <div id="noJulesKeySection" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:12px; padding:32px; margin-bottom:20px; text-align:center;">
+          <div style="font-size:48px; margin-bottom:16px;">🔑</div>
+          <h3 style="margin:0 0 12px; font-size:18px; font-weight:600;">Jules API Key Required</h3>
+          <p style="margin:0 0 24px; color:var(--muted); font-size:14px; line-height:1.6; max-width:500px; margin-left:auto; margin-right:auto;">
+            To use Jules AI coding agent, you need to add your Jules API key. Get your API key from the 
+            <a href="https://jules.google.com/settings/api" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:underline;">Jules API settings</a> 
+            and add it below to get started.
+          </p>
+          <button id="addJulesKeyBtnProminent" class="btn primary" style="padding:12px 24px; font-size:15px; font-weight:600; cursor:pointer;">
+            ➕ Add Jules API Key
+          </button>
+        </div>
+        
+        <!-- Jules Content (only visible when key exists) -->
+        <div id="julesContentSection" style="display:none;">
+        
+        <!-- Recent Sessions -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:14px; font-weight:600; color:var(--muted); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+            <span>📖 Recent Sessions</span>
+            <a href="sessions.html" class="btn primary" style="text-decoration:none; padding:8px 16px; font-size:13px; white-space:nowrap;">View All Sessions</a>
+          </div>
+          <div id="julesSessionsList" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:14px; max-height:300px; overflow-y:auto;">
+            <div style="color:var(--muted); font-size:14px;">Loading sessions...</div>
+          </div>
+        </div>
+        <!-- Connected Sources -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:14px; font-weight:600; color:var(--muted); margin-bottom:10px;">🔗 Connected Repositories</div>
+          <div id="julesSourcesList" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:14px; max-height:250px; overflow-y:auto;">
+            <div style="color:var(--muted); font-size:14px;">Loading sources...</div>
+          </div>
+        </div>
+        
+        <button id="loadJulesInfoBtn" class="btn" style="padding:12px; width:100%; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; text-align:center; font-size:14px; margin-bottom:20px;">🔄 Refresh Jules Info</button>
+        </div>
+        <!-- End Jules Content Section -->
+        
+        <!-- Danger Zone -->
+        <div id="dangerZoneSection" style="display:none; margin-top:24px; padding:16px; border:1px solid #c0504d; border-radius:8px; background:rgba(192,80,77,0.08);">
+          <div style="font-size:14px; font-weight:600; color:#c0504d; margin-bottom:8px;">⚠️ Danger Zone</div>
+          <div style="font-size:13px; color:var(--muted); margin-bottom:12px;">This action will delete your stored Jules API key. You'll need to enter a new one next time.</div>
+          <button id="resetJulesKeyBtn" class="btn" style="padding:10px; width:100%; border:1px solid #c0504d; background:rgba(192,80,77,0.2); color:#ff9a97; cursor:pointer; border-radius:8px; text-align:center; font-weight:600;">🗑️ Delete Jules API Key</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Jules API Key Modal -->
+  <div id="julesKeyModal" style="display:none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; flex-direction:column; align-items:center; justify-content:center;">
+    <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; max-width:400px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+      <h2 style="margin:0 0 12px; font-size:18px;">Save Jules API Key</h2>
+      <p style="margin:0 0 16px; color:var(--muted); font-size:13px;">Enter your Jules API key. This will be encrypted and stored securely.</p>
+      <input id="julesKeyInput" type="password" placeholder="Paste your Jules API key..." style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; background:#12162a; color:var(--text); outline:none; margin-bottom:16px; box-sizing:border-box;" />
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button id="julesCancelBtn" class="btn" style="padding:8px 12px;">Cancel</button>
+        <button id="julesSaveBtn" class="btn" style="padding:8px 12px; border-color:var(--accent); color:var(--accent);">Save & Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/shared-init.js"></script>
+  <script type="module">
+    import { waitForFirebase } from './src/shared-init.js';
+    import { loadJulesAccountInfo, showJulesKeyModal, deleteStoredJulesKey, checkJulesKey } from './src/modules/jules.js';
+
+    function waitForComponents() {
+      if (document.querySelector('header') && document.querySelector('#navbar')) {
+        initApp();
+      } else {
+        setTimeout(waitForComponents, 50);
+      }
+    }
+
+    async function loadJulesInfo() {
+      const user = window.auth?.currentUser;
+      
+      const loadingDiv = document.getElementById('julesLoading');
+      const notSignedInDiv = document.getElementById('julesNotSignedIn');
+      const profileSection = document.getElementById('julesProfileInfoSection');
+      const noJulesKeySection = document.getElementById('noJulesKeySection');
+      const julesContentSection = document.getElementById('julesContentSection');
+      const julesKeyStatus = document.getElementById('julesKeyStatus');
+      const dangerZoneSection = document.getElementById('dangerZoneSection');
+      
+      if (!user) {
+        loadingDiv.style.display = 'none';
+        profileSection.style.display = 'none';
+        notSignedInDiv.style.display = 'block';
+        return;
+      }
+
+      try {
+        loadingDiv.style.display = 'block';
+        notSignedInDiv.style.display = 'none';
+        profileSection.style.display = 'none';
+        
+        // Check if user has Jules key
+        const hasKey = await checkJulesKey(user.uid);
+        
+        if (julesKeyStatus) {
+          julesKeyStatus.textContent = hasKey ? '✓ Saved' : '✗ Not saved';
+          julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+        }
+        
+        loadingDiv.style.display = 'none';
+        profileSection.style.display = 'block';
+        
+        if (hasKey) {
+          if (noJulesKeySection) noJulesKeySection.style.display = 'none';
+          if (julesContentSection) julesContentSection.style.display = 'block';
+          if (dangerZoneSection) dangerZoneSection.style.display = 'block';
+          
+          // Load Jules account information
+          await loadJulesAccountInfo(user);
+        } else {
+          if (noJulesKeySection) noJulesKeySection.style.display = 'block';
+          if (julesContentSection) julesContentSection.style.display = 'none';
+          if (dangerZoneSection) dangerZoneSection.style.display = 'none';
+        }
+      } catch (err) {
+        console.error('Jules info loading error:', err);
+        loadingDiv.style.display = 'none';
+      }
+    }
+
+    function initApp() {
+      // Set up Jules key event handlers
+      const addJulesKeyBtnProminent = document.getElementById('addJulesKeyBtnProminent');
+      const resetJulesKeyBtn = document.getElementById('resetJulesKeyBtn');
+      
+      const addKeyHandler = () => {
+        showJulesKeyModal(() => {
+          // Reload Jules info after saving key
+          const user = window.auth?.currentUser;
+          if (user) {
+            loadJulesInfo();
+          }
+        });
+      };
+      
+      if (addJulesKeyBtnProminent) {
+        addJulesKeyBtnProminent.onclick = addKeyHandler;
+      }
+      
+      if (resetJulesKeyBtn) {
+        resetJulesKeyBtn.onclick = async () => {
+          if (!confirm('This will delete your stored Jules API key. You\'ll need to enter a new one next time.')) {
+            return;
+          }
+          try {
+            const user = window.auth?.currentUser;
+            if (!user) return;
+            
+            resetJulesKeyBtn.disabled = true;
+            resetJulesKeyBtn.textContent = 'Deleting...';
+            
+            const deleted = await deleteStoredJulesKey(user.uid);
+            if (deleted) {
+              const julesKeyStatus = document.getElementById('julesKeyStatus');
+              if (julesKeyStatus) {
+                julesKeyStatus.textContent = '✗ Not saved';
+                julesKeyStatus.style.color = 'var(--muted)';
+              }
+              
+              resetJulesKeyBtn.textContent = '🗑️ Delete Jules API Key';
+              resetJulesKeyBtn.disabled = false;
+              
+              const noJulesKeySection = document.getElementById('noJulesKeySection');
+              const julesContentSection = document.getElementById('julesContentSection');
+              if (noJulesKeySection) noJulesKeySection.style.display = 'block';
+              if (julesContentSection) julesContentSection.style.display = 'none';
+              document.getElementById('dangerZoneSection').style.display = 'none';
+              document.getElementById('julesProfileInfoSection').style.display = 'block';
+              
+              alert('Jules API key has been deleted. You can enter a new one next time.');
+            } else {
+              throw new Error('Failed to delete key');
+            }
+          } catch (error) {
+            alert('Failed to delete API key: ' + error.message);
+            resetJulesKeyBtn.textContent = '🗑️ Delete Jules API Key';
+            resetJulesKeyBtn.disabled = false;
+          }
+        };
+      }
+      
+      // Set up load Jules info button
+      const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
+      if (loadJulesInfoBtn) {
+        loadJulesInfoBtn.onclick = () => {
+          const user = window.auth?.currentUser;
+          if (user) {
+            loadJulesInfo();
+          }
+        };
+      }
+
+      waitForFirebase(() => {
+        window.auth.onAuthStateChanged((user) => {
+          if (user) {
+            loadJulesInfo();
+          } else {
+            document.getElementById('julesProfileInfoSection').style.display = 'none';
+            document.getElementById('julesNotSignedIn').style.display = 'block';
+          }
+        });
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', waitForComponents);
+    } else {
+      waitForComponents();
+    }
+  </script>
+</body>
+</html>

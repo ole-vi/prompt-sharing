@@ -11,7 +11,13 @@ Hosted for free with GitHub Pages, backed by simple `.md` files.
 
 PromptSync is a zero-build web application for managing and sharing AI prompts as markdown files. It provides a browsable library interface with deep linking, GitHub integration, and direct integration with Google's Jules AI assistant. Teams can organize prompts in folders, switch between branches, and send prompts directly to Jules with full context awareness.
 
-Also includes a browser extension that lets you capture any webpage as Markdown and download it or send it directly to PromptSync! See [browser-extension/README.md](browser-extension/README.md) for details.
+### Key Features
+
+*   **Prompt Library**: Browse and share prompts organized in a GitHub repository.
+*   **Jules Integration**: Send prompts directly to Google's Jules AI coding agent.
+*   **Task Queue**: Queue up multiple subtasks for Jules to execute sequentially.
+*   **Session Management**: View and manage your active and past Jules sessions.
+*   **Web Capture**: A browser extension that lets you capture any webpage as Markdown and sync it directly to your GitHub repository. See [browser-extension/README.md](browser-extension/README.md) for details.
 
 ## Local development
 
@@ -42,13 +48,19 @@ This is a zero-build, modular single-page application using plain JavaScript ES6
 
 ```
 prompt-sharing/
-├── index.html              # Main HTML entry point
+├── index.html              # Main HTML entry point (Home/Prompt List)
+├── profile.html            # User profile & settings
+├── jules.html              # Jules account management & sessions
+├── queue.html              # Jules task queue management
+├── sessions.html           # Full list of Jules sessions
+├── webcapture.html         # Web Capture extension download & info
 ├── firebase-init.js        # Firebase SDK initialization
 ├── firebase.json           # Firebase hosting config
 ├── firestore.rules         # Firestore security rules
 ├── oauth-callback.html     # GitHub OAuth callback for extension
 ├── src/
 │   ├── app.js             # Main application initialization
+│   ├── shared-init.js     # Shared initialization for all pages
 │   ├── styles.css         # All application styles
 │   ├── modules/           # Feature modules (ES6)
 │   │   ├── auth.js        # GitHub OAuth & auth state management
@@ -59,12 +71,15 @@ prompt-sharing/
 │   │   ├── prompt-renderer.js # Markdown rendering & display
 │   │   ├── branch-selector.js # Branch listing & switching
 │   │   ├── subtask-manager.js # Prompt splitting & parsing
+│   │   ├── header.js      # Shared header component
+│   │   ├── navbar.js      # Shared navigation component
 │   │   └── status-bar.js  # Status notifications
 │   └── utils/             # Shared utilities
 │       ├── constants.js   # Config, regex patterns, storage keys
 │       ├── slug.js        # URL-safe slug generation
 │       ├── url-params.js  # URL parameter parsing
 │       ├── dom-helpers.js # DOM manipulation helpers
+│       ├── session-cache.js # Session data caching
 │       └── title.js       # Title extraction from prompts
 ├── prompts/               # Markdown prompt files
 │   ├── planet/           # Planet repo onboarding

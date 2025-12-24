@@ -8,6 +8,7 @@ import {
 import { loadJulesProfileInfo, listJulesSessions } from './jules-api.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
+import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 
 let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
 let lastSelectedBranch = 'master';
@@ -90,6 +91,9 @@ export async function addToJulesQueue(uid, queueItem) {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       status: 'pending'
     });
+    // Clear cache so next load fetches fresh data
+    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
+    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return docRef.id;
   } catch (err) {
     console.error('Failed to add to queue', err);
@@ -102,6 +106,9 @@ export async function updateJulesQueueItem(uid, docId, updates) {
   try {
     const docRef = window.db.collection('julesQueues').doc(uid).collection('items').doc(docId);
     await docRef.update(updates);
+    // Clear cache so next load fetches fresh data
+    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
+    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return true;
   } catch (err) {
     console.error('Failed to update queue item', err);
@@ -113,6 +120,9 @@ export async function deleteFromJulesQueue(uid, docId) {
   if (!window.db) throw new Error('Firestore not initialized');
   try {
     await window.db.collection('julesQueues').doc(uid).collection('items').doc(docId).delete();
+    // Clear cache so next load fetches fresh data
+    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
+    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return true;
   } catch (err) {
     console.error('Failed to delete queue item', err);
@@ -156,6 +166,15 @@ export function hideJulesQueueModal() {
 
 let queueCache = [];
 
+export function renderQueueListDirectly(items) {
+  queueCache = items;
+  renderQueueList(items);
+}
+
+export function attachQueueHandlers() {
+  attachQueueModalHandlers();
+}
+
 async function loadQueuePage() {
   const user = window.auth?.currentUser;
   const listDiv = document.getElementById('allQueueList');
@@ -165,8 +184,15 @@ async function loadQueuePage() {
   }
 
   try {
-    listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">Loading queue...</div>';
-    const items = await listJulesQueue(user.uid);
+    // Check cache first
+    let items = getCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
+    
+    if (!items) {
+      listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">Loading queue...</div>';
+      items = await listJulesQueue(user.uid);
+      setCache(CACHE_KEYS.QUEUE_ITEMS, items, user.uid);
+    }
+    
     queueCache = items;
     renderQueueList(items);
     attachQueueModalHandlers();
@@ -1063,17 +1089,17 @@ export function initJulesKeyModalListeners() {
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      if (keyModal.style.display === 'flex') {
+      if (keyModal && keyModal.style.display === 'flex') {
         hideJulesKeyModal();
       }
-      if (envModal.style.display === 'flex') {
+      if (envModal && envModal.style.display === 'flex') {
         hideJulesEnvModal();
       }
       const freeInputSection = document.getElementById('freeInputSection');
       if (freeInputSection && freeInputSection.style.display === 'flex') {
         hideFreeInputForm();
       }
-      if (profileModal.style.display === 'flex') {
+      if (profileModal && profileModal.style.display === 'flex') {
         hideUserProfileModal();
       }
       if (sessionsHistoryModal && sessionsHistoryModal.style.display === 'flex') {
@@ -1082,23 +1108,29 @@ export function initJulesKeyModalListeners() {
     }
   });
 
-  keyModal.addEventListener('click', (e) => {
-    if (e.target === keyModal) {
-      hideJulesKeyModal();
-    }
-  });
+  if (keyModal) {
+    keyModal.addEventListener('click', (e) => {
+      if (e.target === keyModal) {
+        hideJulesKeyModal();
+      }
+    });
+  }
 
-  envModal.addEventListener('click', (e) => {
-    if (e.target === envModal) {
-      hideJulesEnvModal();
-    }
-  });
+  if (envModal) {
+    envModal.addEventListener('click', (e) => {
+      if (e.target === envModal) {
+        hideJulesEnvModal();
+      }
+    });
+  }
 
-  profileModal.addEventListener('click', (e) => {
-    if (e.target === profileModal) {
-      hideUserProfileModal();
-    }
-  });
+  if (profileModal) {
+    profileModal.addEventListener('click', (e) => {
+      if (e.target === profileModal) {
+        hideUserProfileModal();
+      }
+    });
+  }
   
   if (sessionsHistoryModal) {
     sessionsHistoryModal.addEventListener('click', (e) => {
@@ -1116,11 +1148,13 @@ export function initJulesKeyModalListeners() {
     });
   }
 
-  keyInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      document.getElementById('julesSaveBtn').click();
-    }
-  });
+  if (keyInput) {
+    keyInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('julesSaveBtn').click();
+      }
+    });
+  }
 }
 
 export function showUserProfileModal() {
@@ -1143,70 +1177,84 @@ export function showUserProfileModal() {
   const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
   const julesProfileInfoSection = document.getElementById('julesProfileInfoSection');
 
-  profileUserName.textContent = user.displayName || user.email || 'Unknown User';
+  if (profileUserName) {
+    profileUserName.textContent = user.displayName || user.email || 'Unknown User';
+  }
 
   checkJulesKey(user.uid).then(async (hasKey) => {
-    julesKeyStatus.textContent = hasKey ? '✓ Saved' : '✗ Not saved';
-    julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+    if (julesKeyStatus) {
+      julesKeyStatus.textContent = hasKey ? '✓ Saved' : '✗ Not saved';
+      julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+    }
     
     if (hasKey) {
-      addBtn.style.display = 'none';
-      dangerZoneSection.style.display = 'block';
-      julesProfileInfoSection.style.display = 'block';
+      if (addBtn) addBtn.style.display = 'none';
+      if (dangerZoneSection) dangerZoneSection.style.display = 'block';
+      if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'block';
       
       await loadAndDisplayJulesProfile(user.uid);
     } else {
-      addBtn.style.display = 'block';
-      dangerZoneSection.style.display = 'none';
-      julesProfileInfoSection.style.display = 'none';
+      if (addBtn) addBtn.style.display = 'block';
+      if (dangerZoneSection) dangerZoneSection.style.display = 'none';
+      if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
     }
   });
 
-  addBtn.onclick = () => {
-    hideUserProfileModal();
-    showJulesKeyModal(() => {
-      setTimeout(() => showUserProfileModal(), 500);
-    });
-  };
+  if (addBtn) {
+    addBtn.onclick = () => {
+      hideUserProfileModal();
+      showJulesKeyModal(() => {
+        setTimeout(() => showUserProfileModal(), 500);
+      });
+    };
+  }
 
-  resetBtn.onclick = async () => {
-    if (!confirm('This will delete your stored Jules API key. You\'ll need to enter a new one next time.')) {
-      return;
-    }
-    try {
-      resetBtn.disabled = true;
-      resetBtn.textContent = 'Deleting...';
-      const deleted = await deleteStoredJulesKey(user.uid);
-      if (deleted) {
-        julesKeyStatus.textContent = '✗ Not saved';
-        julesKeyStatus.style.color = 'var(--muted)';
-        resetBtn.textContent = '🗑️ Delete Jules API Key';
-        resetBtn.disabled = false;
-        
-        addBtn.style.display = 'block';
-        dangerZoneSection.style.display = 'none';
-        julesProfileInfoSection.style.display = 'none';
-        
-        alert('Jules API key has been deleted. You can enter a new one next time.');
-      } else {
-        throw new Error('Failed to delete key');
+  if (resetBtn) {
+    resetBtn.onclick = async () => {
+      if (!confirm('This will delete your stored Jules API key. You\'ll need to enter a new one next time.')) {
+        return;
       }
-    } catch (error) {
-      alert('Failed to reset API key: ' + error.message);
-      resetBtn.textContent = '🔄 Reset Jules API Key';
-      resetBtn.disabled = false;
-    }
-  };
+      try {
+        resetBtn.disabled = true;
+        resetBtn.textContent = 'Deleting...';
+        const deleted = await deleteStoredJulesKey(user.uid);
+        if (deleted) {
+          if (julesKeyStatus) {
+            julesKeyStatus.textContent = '✗ Not saved';
+            julesKeyStatus.style.color = 'var(--muted)';
+          }
+          resetBtn.textContent = '🗑️ Delete Jules API Key';
+          resetBtn.disabled = false;
+          
+          if (addBtn) addBtn.style.display = 'block';
+          if (dangerZoneSection) dangerZoneSection.style.display = 'none';
+          if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+          
+          alert('Jules API key has been deleted. You can enter a new one next time.');
+        } else {
+          throw new Error('Failed to delete key');
+        }
+      } catch (error) {
+        alert('Failed to reset API key: ' + error.message);
+        resetBtn.textContent = '🔄 Reset Jules API Key';
+        resetBtn.disabled = false;
+      }
+    };
+  }
 
-  loadJulesInfoBtn.onclick = async () => {
-    await loadAndDisplayJulesProfile(user.uid);
-    attachViewAllSessionsHandler();
-    attachViewQueueHandler();
-  };
+  if (loadJulesInfoBtn) {
+    loadJulesInfoBtn.onclick = async () => {
+      await loadAndDisplayJulesProfile(user.uid);
+      attachViewAllSessionsHandler();
+      attachViewQueueHandler();
+    };
+  }
 
-  closeBtn.onclick = () => {
-    hideUserProfileModal();
-  };
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      hideUserProfileModal();
+    };
+  }
   
   attachViewAllSessionsHandler();
   attachViewQueueHandler();
@@ -1264,10 +1312,17 @@ async function loadAndDisplayJulesProfile(uid) {
   try {
     loadBtn.disabled = true;
     loadBtn.textContent = '⏳ Loading...';
-    sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sources...</div>';
-    sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
-
-    const profileData = await loadJulesProfileInfo(uid);
+    
+    // Check cache first
+    let profileData = getCache(CACHE_KEYS.JULES_ACCOUNT, uid);
+    
+    if (!profileData) {
+      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sources...</div>';
+      sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
+      
+      profileData = await loadJulesProfileInfo(uid);
+      setCache(CACHE_KEYS.JULES_ACCOUNT, profileData, uid);
+    }
 
     if (profileData.sources && profileData.sources.length > 0) {
       sourcesListDiv.innerHTML = profileData.sources.map((source, index) => {
@@ -1362,10 +1417,10 @@ async function loadAndDisplayJulesProfile(uid) {
             <div style="color:var(--muted); font-size:11px;">${createdAt}</div>
           </div>
           <div style="color:var(--text); margin-bottom:6px; line-height:1.4;">${displayPrompt}</div>
-          ${prLink ? `<div style="display:flex; gap:8px; align-items:center;" onclick="event.stopPropagation();">
-            ${prLink}
-            <span style="color:var(--muted); font-size:11px;">Click card to view session →</span>
-          </div>` : '<div style="color:var(--muted); font-size:11px;">Click to view session details →</div>'}
+          <div style="display:flex; justify-content:space-between; align-items:center;" onclick="event.stopPropagation();">
+            ${prLink ? `<div>${prLink}</div>` : '<div></div>'}
+            <span style="color:var(--muted); font-size:11px;">💡 Click to view session</span>
+          </div>
         </div>`;
       }).join('');
     } else {
@@ -2635,3 +2690,120 @@ async function submitSubtasks(subtasks) {
   alert(summary);
 }
 
+export async function loadProfileDirectly(user) {
+  const profileUserName = document.getElementById('profileUserName');
+  const julesKeyStatus = document.getElementById('julesKeyStatus');
+  const addBtn = document.getElementById('addJulesKeyBtn');
+  const resetBtn = document.getElementById('resetJulesKeyBtn');
+  const dangerZoneSection = document.getElementById('dangerZoneSection');
+  const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
+  const julesProfileInfoSection = document.getElementById('julesProfileInfoSection');
+
+  if (profileUserName) {
+    profileUserName.textContent = user.displayName || user.email || 'Unknown User';
+  }
+
+  const hasKey = await checkJulesKey(user.uid);
+  
+  if (julesKeyStatus) {
+    julesKeyStatus.textContent = hasKey ? '✓ Saved' : '✗ Not saved';
+    julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+  }
+  
+  if (hasKey) {
+    if (addBtn) addBtn.style.display = 'none';
+    if (dangerZoneSection) dangerZoneSection.style.display = 'block';
+    if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'block';
+    
+    await loadAndDisplayJulesProfile(user.uid);
+  } else {
+    if (addBtn) addBtn.style.display = 'block';
+    if (dangerZoneSection) dangerZoneSection.style.display = 'none';
+    if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+  }
+
+  // Attach event handlers
+  if (addBtn) {
+    addBtn.onclick = () => {
+      showJulesKeyModal(() => {
+        setTimeout(() => loadProfileDirectly(user), 500);
+      });
+    };
+  }
+
+  if (resetBtn) {
+    resetBtn.onclick = async () => {
+      if (!confirm('This will delete your stored Jules API key. You\'ll need to enter a new one next time.')) {
+        return;
+      }
+      try {
+        resetBtn.disabled = true;
+        resetBtn.textContent = 'Deleting...';
+        const deleted = await deleteStoredJulesKey(user.uid);
+        if (deleted) {
+          if (julesKeyStatus) {
+            julesKeyStatus.textContent = '✗ Not saved';
+            julesKeyStatus.style.color = 'var(--muted)';
+          }
+          resetBtn.textContent = '🗑️ Delete Jules API Key';
+          resetBtn.disabled = false;
+          
+          if (addBtn) addBtn.style.display = 'block';
+          if (dangerZoneSection) dangerZoneSection.style.display = 'none';
+          if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+          
+          alert('Jules API key has been deleted. You can enter a new one next time.');
+        } else {
+          throw new Error('Failed to delete key');
+        }
+      } catch (error) {
+        alert('Failed to reset API key: ' + error.message);
+        resetBtn.textContent = '🗑️ Delete Jules API Key';
+        resetBtn.disabled = false;
+      }
+    };
+  }
+
+  if (loadJulesInfoBtn) {
+    loadJulesInfoBtn.onclick = async () => {
+      await loadAndDisplayJulesProfile(user.uid);
+      attachViewAllSessionsHandler();
+      attachViewQueueHandler();
+    };
+  }
+
+  attachViewAllSessionsHandler();
+  attachViewQueueHandler();
+}
+
+export async function loadJulesAccountInfo(user) {
+  const julesProfileInfoSection = document.getElementById('julesProfileInfoSection');
+  const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
+
+  // Check if user has Jules API key
+  const hasKey = await checkJulesKey(user.uid);
+  
+  if (!hasKey) {
+    if (julesProfileInfoSection) {
+      julesProfileInfoSection.style.display = 'none';
+    }
+    return;
+  }
+
+  if (julesProfileInfoSection) {
+    julesProfileInfoSection.style.display = 'block';
+  }
+
+  await loadAndDisplayJulesProfile(user.uid);
+
+  if (loadJulesInfoBtn) {
+    loadJulesInfoBtn.onclick = async () => {
+      await loadAndDisplayJulesProfile(user.uid);
+      attachViewAllSessionsHandler();
+      attachViewQueueHandler();
+    };
+  }
+
+  attachViewAllSessionsHandler();
+  attachViewQueueHandler();
+}
