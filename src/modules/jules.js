@@ -15,28 +15,37 @@ let lastSelectedBranch = 'master';
 function openUrlInBackground(url) {
   const a = document.createElement('a');
   a.href = url;
-  a.target = '_blank';
+  // Removed target="_blank" to rely on modifier keys for new tab behavior
+  // This helps avoid browser "new foreground tab" defaults for target="_blank"
   a.rel = 'noopener noreferrer';
 
   // Use visibility hidden instead of display none to ensure events work
   a.style.position = 'absolute';
   a.style.left = '-9999px';
   a.style.top = '0';
+  a.innerText = 'Open';
   document.body.appendChild(a);
   
   // Detect Mac to use Meta key (Cmd), others use Ctrl
-  const isMac = /Mac/.test(navigator.userAgent);
+  const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.userAgent);
 
   const evt = new MouseEvent('click', {
     view: window,
     bubbles: true,
     cancelable: true,
     ctrlKey: !isMac,
-    metaKey: isMac
+    metaKey: isMac,
+    shiftKey: false,
+    altKey: false,
+    button: 0,
+    buttons: 0
   });
   
   a.dispatchEvent(evt);
   
+  // Attempt to regain focus to keep the new tab in background
+  try { window.focus(); } catch (e) {}
+
   setTimeout(() => {
     document.body.removeChild(a);
   }, 100);
