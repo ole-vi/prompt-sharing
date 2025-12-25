@@ -1,5 +1,49 @@
 <header>
   <style>
+    .user-menu { position: relative; }
+    .user-menu-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(20,24,41,0.6), rgba(20,24,41,0.3));
+      color: var(--text);
+      cursor: pointer;
+    }
+    .user-menu-button:hover { filter: brightness(1.05); }
+    .user-menu-caret { opacity: 0.7; }
+    .user-dropdown {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      min-width: 180px;
+      background: linear-gradient(135deg, rgba(20,24,41,1), rgba(20,24,41,1));
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+      padding: 6px;
+      display: none;
+      z-index: 10;
+      backdrop-filter: none;
+    }
+    .user-dropdown a,
+    .user-dropdown button {
+      width: 100%;
+      text-align: left;
+      padding: 10px 10px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font: inherit;
+      cursor: pointer;
+    }
+    .user-dropdown a:hover,
+    .user-dropdown button:hover { background: rgba(255,255,255,0.06); }
+    .user-dropdown-sep { height: 1px; background: var(--border); margin: 6px 0; }
     @media (max-width: 900px) {
       #headerContainer {
         flex-direction: column !important;
@@ -50,11 +94,20 @@
       </div>
     </div>
 
-    <div id="authStatus" style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; font-size:13px; flex-shrink:0;">
-      <span id="userDisplay" style="display:none; font-size:11px; color:var(--muted); align-items:center; gap:6px;">
-        <img id="userAvatar" src="" alt="" style="width:18px; height:18px; border-radius:50%; display:none;">
-        <strong id="userName"></strong>
-      </span>
+    <div id="authStatus" style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; font-size:13px; flex-shrink:0;">
+      <div id="userMenu" class="user-menu">
+        <button id="userMenuButton" class="user-menu-button" aria-haspopup="true" aria-expanded="false">
+          <span id="userDisplay" style="display:inline-flex; align-items:center; gap:6px;">
+            <img id="userAvatar" src="" alt="" style="width:18px; height:18px; border-radius:50%; display:none;">
+            <strong id="userName">Guest</strong>
+          </span>
+          <span class="user-menu-caret">▾</span>
+        </button>
+        <div id="userMenuDropdown" class="user-dropdown" role="menu" aria-labelledby="userMenuButton">
+          <button id="headerSignIn" class="dropdown-item" role="menuitem">Sign In with GitHub</button>
+          <button id="headerSignOut" class="dropdown-item" role="menuitem" style="display:none;">Sign Out</button>
+        </div>
+      </div>
       <a href="https://github.com/ole-vi/prompt-sharing/blob/main/README.md" target="_blank" rel="noopener" class="help-link" title="View documentation" style="padding:6px 10px; font-size:12px;">📖 Help</a>
     </div>
   </div>

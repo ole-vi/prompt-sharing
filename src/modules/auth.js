@@ -37,38 +37,52 @@ export async function signOutUser() {
 
 export function updateAuthUI(user) {
   const authStatus = document.getElementById('authStatus');
-  const navAuthBtn = document.getElementById('navAuthBtn');
-  const navAuthLabel = document.getElementById('navAuthLabel');
   const userDisplay = document.getElementById('userDisplay');
   const userName = document.getElementById('userName');
+  const userAvatar = document.getElementById('userAvatar');
+  const signInItem = document.getElementById('headerSignIn');
+  const signOutItem = document.getElementById('headerSignOut');
 
   setCurrentUser(user);
 
   if (user) {
     // User is signed in
-    if (navAuthBtn) {
-      navAuthBtn.style.display = 'flex';
-      if (navAuthLabel) navAuthLabel.textContent = 'Sign Out';
-      navAuthBtn.onclick = signOutUser;
-    }
     if (userDisplay) userDisplay.style.display = 'inline-flex';
     if (userName) {
       userName.textContent = user.displayName || user.email || 'User';
     }
-    const userAvatar = document.getElementById('userAvatar');
-    if (userAvatar && user.photoURL) {
-      userAvatar.src = user.photoURL;
-      userAvatar.alt = user.displayName || 'User avatar';
-      userAvatar.style.display = 'block';
+    if (userAvatar) {
+      if (user.photoURL) {
+        userAvatar.src = user.photoURL;
+        userAvatar.alt = user.displayName || 'User avatar';
+        userAvatar.style.display = 'block';
+      } else {
+        userAvatar.style.display = 'none';
+      }
+    }
+    if (signInItem) {
+      signInItem.style.display = 'none';
+      signInItem.onclick = null;
+    }
+    if (signOutItem) {
+      signOutItem.style.display = '';
+      signOutItem.onclick = signOutUser;
     }
   } else {
     // User is signed out
-    if (navAuthBtn) {
-      navAuthBtn.style.display = 'flex';
-      if (navAuthLabel) navAuthLabel.textContent = 'Sign In';
-      navAuthBtn.onclick = signInWithGitHub;
+    if (userDisplay) {
+      userDisplay.style.display = 'inline-flex';
+      if (userName) userName.textContent = 'Guest';
     }
-    if (userDisplay) userDisplay.style.display = 'none';
+    if (userAvatar) userAvatar.style.display = 'none';
+    if (signInItem) {
+      signInItem.style.display = '';
+      signInItem.onclick = signInWithGitHub;
+    }
+    if (signOutItem) {
+      signOutItem.style.display = 'none';
+      signOutItem.onclick = null;
+    }
   }
 }
 
