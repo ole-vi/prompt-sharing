@@ -204,6 +204,11 @@ button.nav-item:hover {
   grid-template-columns: 220px 1fr;
   gap: 16px;
   padding: 12px 12px 40px;
+  transition: grid-template-columns 0.3s ease;
+}
+
+.wrap:has(#sidebar.collapsed) {
+  grid-template-columns: 48px 1fr;
 }
 
 @media (max-width: 900px) {
@@ -239,6 +244,11 @@ button.nav-item:hover {
   #sidebar {
     position: static;
   }
+  
+  /* Hide toggle button on mobile */
+  .sidebar-header {
+    display: none;
+  }
 }
 
 /* ===== Cards ===== */
@@ -258,6 +268,73 @@ button.nav-item:hover {
   height: fit-content;
   position: sticky;
   top: 76px;
+  transition: width 0.3s ease, padding 0.3s ease;
+  overflow: hidden;
+}
+
+#sidebar.collapsed {
+  width: 48px;
+  min-width: 48px;
+  padding: 10px 4px;
+}
+
+#sidebar.collapsed > *:not(.sidebar-header) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.sidebar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.3s ease;
+}
+
+#sidebar.collapsed .sidebar-title {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar-toggle {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, rgba(77,217,255,0.15), rgba(77,217,255,0.05));
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.sidebar-toggle:hover {
+  background: linear-gradient(135deg, rgba(77,217,255,0.25), rgba(77,217,255,0.1));
+  transform: scale(1.05);
+  box-shadow: 0 0 12px rgba(77, 217, 255, 0.3);
+}
+
+#sidebar.collapsed .toggle-icon {
+  transform: rotate(180deg);
+}
+
+.toggle-icon {
+  transition: transform 0.3s ease;
+  display: inline-block;
 }
 
 @media (max-width: 600px) {
