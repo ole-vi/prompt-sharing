@@ -138,11 +138,7 @@ When you make changes to the extension code:
 - Contact the repository owner to grant you access
 
 ### Extension disappeared (Firefox only)
- and GitHub sync
-├── config.js              # OAuth and GitHub configuration
-├── github-auth.js         # GitHub OAuth authentication
-├── github-sync.js         # GitHub API sync logic
-├── background.js          # Service worker for OAuth callbacks
+
 - Temporary extensions are removed when Firefox closes
 - Reload it from `about:debugging` each time, or use Chrome for permanent local installation
 
@@ -184,7 +180,8 @@ function generateFilename(title, domain) {
 ## Limitations
 
 - Cannot capture pages behind authentication that require cookies (but CAN capture pages you're viewing while logged in)
-- CConfiguration
+
+## Configuration
 
 The extension is pre-configured to sync with the `prompt-sharing` repository. If you want to fork this and use your own repository:
 
@@ -209,10 +206,6 @@ The extension is pre-configured to sync with the `prompt-sharing` repository. If
 - Add image downloading and embedding
 - Add conflict resolution for duplicate filenames
 - Add sync history and status indicators
-- Add support for selecting specific page regions
-- Add templates for different types of pages (ChatGPT, documentation, articles)
-- Add bulk capture for multiple tabs
-- Add image downloading and embedding
 
 ---
 
