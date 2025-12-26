@@ -26,7 +26,10 @@ async function fetchVersion() {
   if (!appVersion) return;
   
   try {
-    const response = await fetch('https://api.github.com/repos/ole-vi/prompt-sharing/commits/main');
+    const response = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits/${BRANCH}`);
+    if (!response.ok) {
+      throw new Error(`GitHub API returned ${response.status}`);
+    }
     const data = await response.json();
     const sha = data.sha.substring(0, 7);
     const date = new Date(data.commit.committer.date).toLocaleDateString('en-CA'); // YYYY-MM-DD
