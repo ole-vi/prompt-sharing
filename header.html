@@ -40,9 +40,19 @@
       color: var(--text);
       font: inherit;
       cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 13px;
     }
     .user-dropdown a:hover,
-    .user-dropdown button:hover { background: rgba(255,255,255,0.06); }
+    .user-dropdown button:hover { 
+      background: rgba(77, 217, 255, 0.08);
+      color: var(--accent);
+    }
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     .user-dropdown-sep { height: 1px; background: var(--border); margin: 6px 0; }
     @media (max-width: 900px) {
       #headerContainer {
@@ -104,8 +114,8 @@
           <span class="user-menu-caret">▾</span>
         </button>
         <div id="userMenuDropdown" class="user-dropdown" role="menu" aria-labelledby="userMenuButton">
-          <button id="headerSignIn" class="dropdown-item" role="menuitem">Sign In with GitHub</button>
-          <button id="headerSignOut" class="dropdown-item" role="menuitem" style="display:none;">Sign Out</button>
+          <button id="headerSignIn" class="dropdown-item" role="menuitem" style="justify-content: center;">🔑 Sign In with GitHub</button>
+          <button id="headerSignOut" class="dropdown-item" role="menuitem" style="display:none; justify-content: center;">🚪 Sign Out</button>
         </div>
       </div>
       <a href="https://github.com/ole-vi/prompt-sharing/blob/main/README.md" target="_blank" rel="noopener" class="help-link" title="View documentation" style="padding:6px 10px; font-size:12px;">📖 Help</a>
