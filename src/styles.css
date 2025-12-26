@@ -213,7 +213,11 @@ button.nav-item:hover {
 
 @media (max-width: 900px) {
   .wrap {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+  }
+  
+  .wrap:has(#sidebar.collapsed) {
+    grid-template-columns: 1fr !important;
   }
 }
 
@@ -243,11 +247,32 @@ button.nav-item:hover {
 
   #sidebar {
     position: static;
+    transition: height 0.3s ease, padding 0.3s ease;
+    width: 100%;
   }
   
-  /* Hide toggle button on mobile */
-  .sidebar-header {
+  /* On mobile, collapsed sidebar becomes a thin horizontal bar */
+  #sidebar.collapsed {
+    width: 100% !important;
+    min-width: 100% !important;
+    height: auto;
+    padding: 10px;
+    overflow: visible;
+  }
+  
+  #sidebar.collapsed > *:not(.sidebar-header) {
     display: none;
+  }
+  
+  /* On mobile, keep Library text visible when collapsed */
+  #sidebar.collapsed .sidebar-title {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  
+  /* Show toggle button on mobile */
+  .sidebar-header {
+    display: flex !important;
   }
 }
 
