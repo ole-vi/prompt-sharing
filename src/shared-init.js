@@ -22,15 +22,18 @@ function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
 }
 
 async function fetchVersion() {
+  const appVersion = document.getElementById('appVersion');
+  if (!appVersion) return;
+  
   try {
-    const response = await fetch('package.json');
-    const packageData = await response.json();
-    const appVersion = document.getElementById('appVersion');
-    if (appVersion && packageData.version) {
-      appVersion.textContent = `v${packageData.version}`;
-    }
+    const response = await fetch('https://api.github.com/repos/ole-vi/prompt-sharing/commits/main');
+    const data = await response.json();
+    const sha = data.sha.substring(0, 7);
+    const date = new Date(data.commit.committer.date).toLocaleDateString('en-CA'); // YYYY-MM-DD
+    appVersion.textContent = `v${date} (${sha})`;
   } catch (error) {
     console.error('Failed to fetch version:', error);
+    appVersion.textContent = 'version unavailable';
   }
 }
 
