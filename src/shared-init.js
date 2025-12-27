@@ -17,12 +17,11 @@ function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
     setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), 100);
   } else {
     console.error('Firebase failed to initialize after', maxAttempts, 'attempts');
-    callback(); // Continue anyway
+    callback();
   }
 }
 
 function showUpdateBanner(latestDate, latestSha) {
-  // Check if banner already exists
   if (document.getElementById('updateBanner')) return;
   
   const banner = document.createElement('div');
@@ -92,19 +91,16 @@ function showUpdateBanner(latestDate, latestSha) {
   
   document.body.insertBefore(banner, document.body.firstChild);
   
-  // Add padding to body to account for fixed banner
   document.body.style.paddingTop = '48px';
 }
 
 async function fetchVersion() {
   const appVersion = document.getElementById('appVersion');
   if (!appVersion) {
-    console.warn('appVersion element not found');
     return;
   }
   
   try {
-    console.log('Fetching version from GitHub API...');
     // Fetch the latest commit on the branch
     const latestResponse = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits/${BRANCH}`);
     if (!latestResponse.ok) {
@@ -115,9 +111,6 @@ async function fetchVersion() {
     const latestDate = new Date(latestData.commit.committer.date);
     const latestDateStr = latestDate.toLocaleDateString('en-CA'); // YYYY-MM-DD
     
-    console.log('Latest version:', latestDateStr, latestSha);
-    
-    // Get the current deployed version from meta tag or use latest as fallback
     const currentVersionMeta = document.querySelector('meta[name="app-version"]');
     let currentDate = latestDate;
     let currentSha = latestSha;
@@ -129,13 +122,10 @@ async function fetchVersion() {
         currentSha = metaSha;
         currentDate = new Date(metaDate);
         currentDateStr = new Date(metaDate).toLocaleDateString('en-CA');
-        console.log('Current deployed version:', metaDate, metaSha);
       }
     } else {
-      console.log('No meta tag found, assuming latest version is deployed');
     }
 
-    // If out of date, show deployed version; else, show latest
     if (currentDate < latestDate) {
       appVersion.textContent = `v${currentDateStr} (${currentSha})`;
       appVersion.style.background = '';
@@ -151,22 +141,16 @@ async function fetchVersion() {
       appVersion.style.padding = '';
     }
     
-    // Check if this version was already dismissed
     const dismissed = localStorage.getItem(`dismissed-version-${latestSha}`);
     if (dismissed) {
-      console.log('Update banner dismissed for this version');
       return;
     }
-    // Show update banner if out of date
     if (currentDate < latestDate) {
-      console.log('Current version is stale, showing update banner');
       showUpdateBanner(latestDateStr, latestSha);
     } else {
-      console.log('Current version is up to date');
     }
     
   } catch (error) {
-    console.error('Failed to fetch version:', error);
     if (appVersion) {
       appVersion.textContent = 'version unavailable';
     }
@@ -181,32 +165,25 @@ async function initializeSharedComponents(activePage) {
   isInitialized = true;
 
   try {
-    // Load header first, then navbar (sequential to avoid race condition)
     await loadHeader();
     await loadNavbar(activePage);
 
     waitForFirebase(() => {
-      // Initialize auth state listener
       initAuthStateListener();
 
-      // Initialize branch selector
       initBranchSelector(OWNER, REPO, BRANCH);
 
-      // Load branches
       loadBranches().catch(error => {
         console.error('Failed to load branches:', error);
       });
 
-      // Update repo pill
       const repoPill = document.getElementById('repoPill');
       if (repoPill) {
         repoPill.innerHTML = `<strong>${OWNER}/${REPO}</strong>`;
       }
 
-      // Fetch version
       fetchVersion();
 
-      // Initialize status bar if it exists
       const statusBarElement = document.getElementById('statusBar');
       if (statusBarElement) {
         statusBar.init();
@@ -214,12 +191,10 @@ async function initializeSharedComponents(activePage) {
     });
 
   } catch (error) {
-    console.error('Failed to initialize shared components:', error);
     isInitialized = false; // Reset so it can be tried again
   }
 }
 
-// Auto-initialize when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     const activePage = document.body.getAttribute('data-page') || 'home';
@@ -230,5 +205,4 @@ if (document.readyState === 'loading') {
   initializeSharedComponents(activePage);
 }
 
-// Export for manual initialization if needed
 export { initializeSharedComponents, waitForFirebase };
