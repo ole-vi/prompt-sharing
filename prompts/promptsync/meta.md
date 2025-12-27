@@ -105,6 +105,23 @@ Execution without planning is incorrect behavior.
 
 ---
 
+## Execution Handoff (Clickable Task Bias)
+
+After producing the improvement plan:
+
+- Do not automatically implement any plan item
+- Treat the plan as a menu of executable tasks
+- Assume each plan item may be executed independently
+- Wait for explicit selection of a plan item before acting
+
+When an item is selected, execute only that item.
+
+
+Avoid vague or purely conceptual items.
+If an item cannot be executed directly, break it down until it can be.
+
+---
+
 ## Default Behavior When No Task Is Given
 
 If no explicit task is provided, proceed as follows:
