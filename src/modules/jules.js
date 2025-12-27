@@ -9,6 +9,9 @@ import { loadJulesProfileInfo, listJulesSessions } from './jules-api.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
+import { addToJulesQueue, updateJulesQueueItem, deleteFromJulesQueue, listJulesQueue } from './jules-queue-service.js';
+
+export { addToJulesQueue, updateJulesQueueItem, deleteFromJulesQueue, listJulesQueue };
 
 let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
 let lastSelectedBranch = 'master';
@@ -81,65 +84,6 @@ export async function encryptAndStoreKey(plaintext, uid) {
   }
 }
 
-export async function addToJulesQueue(uid, queueItem) {
-  if (!window.db) throw new Error('Firestore not initialized');
-  try {
-    const collectionRef = window.db.collection('julesQueues').doc(uid).collection('items');
-    const docRef = await collectionRef.add({
-      ...queueItem,
-      autoOpen: queueItem.autoOpen !== false,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      status: 'pending'
-    });
-    // Clear cache so next load fetches fresh data
-    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
-    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
-    return docRef.id;
-  } catch (err) {
-    console.error('Failed to add to queue', err);
-    throw err;
-  }
-}
-
-export async function updateJulesQueueItem(uid, docId, updates) {
-  if (!window.db) throw new Error('Firestore not initialized');
-  try {
-    const docRef = window.db.collection('julesQueues').doc(uid).collection('items').doc(docId);
-    await docRef.update(updates);
-    // Clear cache so next load fetches fresh data
-    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
-    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
-    return true;
-  } catch (err) {
-    console.error('Failed to update queue item', err);
-    throw err;
-  }
-}
-
-export async function deleteFromJulesQueue(uid, docId) {
-  if (!window.db) throw new Error('Firestore not initialized');
-  try {
-    await window.db.collection('julesQueues').doc(uid).collection('items').doc(docId).delete();
-    // Clear cache so next load fetches fresh data
-    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
-    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
-    return true;
-  } catch (err) {
-    console.error('Failed to delete queue item', err);
-    throw err;
-  }
-}
-
-export async function listJulesQueue(uid) {
-  if (!window.db) throw new Error('Firestore not initialized');
-  try {
-    const snapshot = await window.db.collection('julesQueues').doc(uid).collection('items').orderBy('createdAt', 'desc').get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch (err) {
-    console.error('Failed to list queue', err);
-    throw err;
-  }
-}
 
 export function showJulesQueueModal() {
   const modal = document.getElementById('julesQueueModal');
