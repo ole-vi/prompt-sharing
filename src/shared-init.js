@@ -117,26 +117,38 @@ async function fetchVersion() {
     
     console.log('Latest version:', latestDateStr, latestSha);
     
-    // Display the latest version in the footer (default style)
-    appVersion.textContent = `v${latestDateStr} (${latestSha})`;
-    appVersion.style.background = '';
-    appVersion.style.color = '';
-    appVersion.style.borderRadius = '';
-    appVersion.style.padding = '';
-    
     // Get the current deployed version from meta tag or use latest as fallback
     const currentVersionMeta = document.querySelector('meta[name="app-version"]');
     let currentDate = latestDate;
-    
+    let currentSha = latestSha;
+    let currentDateStr = latestDateStr;
     if (currentVersionMeta) {
       const versionContent = currentVersionMeta.content; // Format: "sha|date"
       const [metaSha, metaDate] = versionContent.split('|');
       if (metaSha && metaDate) {
+        currentSha = metaSha;
         currentDate = new Date(metaDate);
+        currentDateStr = new Date(metaDate).toLocaleDateString('en-CA');
         console.log('Current deployed version:', metaDate, metaSha);
       }
     } else {
       console.log('No meta tag found, assuming latest version is deployed');
+    }
+
+    // If out of date, show deployed version; else, show latest
+    if (currentDate < latestDate) {
+      appVersion.textContent = `v${currentDateStr} (${currentSha})`;
+      appVersion.style.background = '';
+      appVersion.style.borderRadius = '';
+      appVersion.style.padding = '';
+      appVersion.style.fontWeight = 'bold';
+      appVersion.style.color = '#ffe066'; // yellow text
+    } else {
+      appVersion.textContent = `v${latestDateStr} (${latestSha})`;
+      appVersion.style.background = '';
+      appVersion.style.color = '';
+      appVersion.style.borderRadius = '';
+      appVersion.style.padding = '';
     }
     
     // Check if this version was already dismissed
@@ -145,17 +157,10 @@ async function fetchVersion() {
       console.log('Update banner dismissed for this version');
       return;
     }
-    
-    // Compare dates: if current is older than latest, show update banner and highlight version
+    // Show update banner if out of date
     if (currentDate < latestDate) {
       console.log('Current version is stale, showing update banner');
       showUpdateBanner(latestDateStr, latestSha);
-      // Highlight the version text in yellow for out-of-date (text only)
-      appVersion.style.background = '';
-      appVersion.style.borderRadius = '';
-      appVersion.style.padding = '';
-      appVersion.style.fontWeight = 'bold';
-      appVersion.style.color = '#ffe066'; // yellow text
     } else {
       console.log('Current version is up to date');
     }
