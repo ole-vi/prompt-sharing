@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const fetch = require("node-fetch");
+const julesProvider = require("./services/jules-provider");
 
 admin.initializeApp();
 
@@ -84,30 +84,17 @@ exports.runJules = functions.https.onCall(async (data, context) => {
       }
     };
 
-    let r, json;
     try {
-      r = await fetch("https://jules.googleapis.com/v1alpha/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Goog-Api-Key": julesKey },
-        body: JSON.stringify(julesBody)
-      });
-      json = await r.json();
+      const result = await julesProvider.createSession(julesKey, julesBody);
+      return result;
     } catch (e) {
-      console.error("Network error calling Jules:", e.message);
-      throw new functions.https.HttpsError("unavailable", "Failed to reach Jules API");
+      console.error("Jules Provider error:", e.message);
+      // Map provider errors to HttpsError if possible, or generic
+      if (e.message.includes("Jules API error")) {
+         throw new functions.https.HttpsError("permission-denied", e.message);
+      }
+      throw new functions.https.HttpsError("unavailable", "Failed to reach Jules API: " + e.message);
     }
-
-    if (!r.ok) {
-      console.error("Jules API error:", r.status, json);
-      throw new functions.https.HttpsError("permission-denied", `Jules API error: ${r.status}`);
-    }
-
-    if (!json || !json.url) {
-      console.error("Jules response missing url:", json);
-      throw new functions.https.HttpsError("internal", "Jules did not return a session URL");
-    }
-
-    return { sessionUrl: json.url };
 
   } catch (error) {
     if (error.code && error.code.startsWith("functions/")) {
@@ -191,33 +178,13 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
       }
     };
 
-    let r, json;
     try {
-      r = await fetch("https://jules.googleapis.com/v1alpha/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Goog-Api-Key": julesKey },
-        body: JSON.stringify(julesBody)
-      });
-      json = await r.json();
+      const result = await julesProvider.createSession(julesKey, julesBody);
+      res.json(result);
     } catch (e) {
-      console.error('Network error calling Jules:', e.message);
-      res.status(503).json({ error: 'Failed to reach Jules API' });
-      return;
+      console.error('Jules Provider error:', e.message);
+      res.status(502).json({ error: e.message });
     }
-
-    if (!r.ok) {
-      console.error('Jules API error:', r.status, json);
-      res.status(502).json({ error: `Jules API error: ${r.status}` });
-      return;
-    }
-
-    if (!json || !json.url) {
-      console.error('Jules response missing url:', json);
-      res.status(500).json({ error: 'Jules did not return a session URL' });
-      return;
-    }
-
-    res.json({ sessionUrl: json.url });
 
   } catch (error) {
     console.error('Error in runJulesHttp:', error.message);
@@ -242,14 +209,11 @@ exports.validateJulesKey = functions.https.onCall(async (data, context) => {
     const encryptedBase64 = snap.data().key;
     const julesKey = await decryptJulesKeyBase64(encryptedBase64, uid);
 
-    const r = await fetch("https://jules.googleapis.com/v1alpha/sessions", {
-      method: "GET",
-      headers: { "X-Goog-Api-Key": julesKey }
-    });
+    const result = await julesProvider.validateKey(julesKey);
 
     return {
-      valid: r.ok,
-      message: r.ok ? "API key is valid" : `Invalid key (HTTP ${r.status})`
+      valid: result.ok,
+      message: result.ok ? "API key is valid" : `Invalid key (HTTP ${result.status})`
     };
 
   } catch (error) {
