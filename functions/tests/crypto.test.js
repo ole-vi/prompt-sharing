@@ -1,5 +1,5 @@
 // functions/tests/crypto.test.js
-const { test, describe, it, before } = require('node:test');
+const { test, describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const { subtle } = require('crypto').webcrypto;
 const { decryptJulesKeyBase64 } = require('../utils/crypto');
