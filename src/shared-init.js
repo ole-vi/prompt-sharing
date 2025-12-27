@@ -33,14 +33,15 @@ function showUpdateBanner(latestDate, latestSha) {
     left: 0;
     right: 0;
     z-index: 1000;
-    background-color: #0969DA;
-    color: white;
+    background: linear-gradient(90deg, #a259f7 0%, #7c3aed 100%);
+    color: var(--text);
     padding: 12px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     font-size: 14px;
+    border-bottom: 1px solid var(--border);
   `;
   
   const message = document.createElement('span');
@@ -151,11 +152,12 @@ async function fetchVersion() {
     if (currentDate < latestDate) {
       console.log('Current version is stale, showing update banner');
       showUpdateBanner(latestDateStr, latestSha);
-      // Highlight the version text in orange
-      appVersion.style.background = '#FFD580'; // light orange
-      appVersion.style.color = '#8A4B00'; // dark orange text
-      appVersion.style.borderRadius = '4px';
-      appVersion.style.padding = '2px 6px';
+      // Highlight the version text in yellow for out-of-date (text only)
+      appVersion.style.background = '';
+      appVersion.style.borderRadius = '';
+      appVersion.style.padding = '';
+      appVersion.style.fontWeight = 'bold';
+      appVersion.style.color = '#ffe066'; // yellow text
     } else {
       console.log('Current version is up to date');
     }
