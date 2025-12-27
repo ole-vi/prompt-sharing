@@ -126,14 +126,12 @@ async function fetchVersion() {
     
     // Get the current deployed version from meta tag or use latest as fallback
     const currentVersionMeta = document.querySelector('meta[name="app-version"]');
-    let currentSha = latestSha;
     let currentDate = latestDate;
     
     if (currentVersionMeta) {
       const versionContent = currentVersionMeta.content; // Format: "sha|date"
       const [metaSha, metaDate] = versionContent.split('|');
       if (metaSha && metaDate) {
-        currentSha = metaSha;
         currentDate = new Date(metaDate);
         console.log('Current deployed version:', metaDate, metaSha);
       }
