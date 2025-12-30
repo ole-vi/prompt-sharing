@@ -2,7 +2,6 @@
 // This script automatically loads header and navbar on all pages
 
 import { loadHeader } from './modules/header.js';
-import { loadNavbar } from './modules/navbar.js';
 import { initAuthStateListener } from './modules/auth.js';
 import { initBranchSelector, loadBranches } from './modules/branch-selector.js';
 import { OWNER, REPO, BRANCH } from './utils/constants.js';
@@ -42,9 +41,16 @@ async function initializeSharedComponents(activePage) {
   isInitialized = true;
 
   try {
-    // Load header first, then navbar (sequential to avoid race condition)
+    // Load header with integrated navigation
     await loadHeader();
-    await loadNavbar(activePage);
+    
+    // Set active nav item
+    if (activePage) {
+      const navItem = document.querySelector(`.nav-item[data-page="${activePage}"]`);
+      if (navItem) {
+        navItem.classList.add('active');
+      }
+    }
 
     waitForFirebase(() => {
       // Initialize auth state listener

@@ -306,7 +306,7 @@
     
     // Wait for shared components to load, then initialize app
     function waitForComponents() {
-      if (document.querySelector('header') && document.querySelector('#navbar')) {
+      if (document.querySelector('header')) {
         initApp();
       } else {
         setTimeout(waitForComponents, 50);

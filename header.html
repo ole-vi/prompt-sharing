@@ -57,69 +57,86 @@
     @media (max-width: 900px) {
       #headerContainer {
         flex-direction: column !important;
-        gap: 8px !important;
-        align-items: center !important;
-      }
-      #headerContainer > div:first-child {
-        width: 100%;
-        flex-direction: column !important;
-        align-items: center !important;
-        gap: 8px !important;
+        gap: 12px !important;
+        align-items: stretch !important;
+        padding: 12px 16px !important;
       }
       #headerBranding a {
-        flex-direction: column;
-        text-align: center;
+        justify-content: center;
+      }
+      #headerNav {
+        justify-content: center !important;
+        flex-wrap: wrap;
+        gap: 4px !important;
+      }
+      .nav-item {
+        padding: 8px 12px !important;
+        font-size: 12px !important;
       }
       #headerControls {
-        width: 100%;
-        justify-content: center !important;
         flex-direction: column !important;
-      }
-      #authStatus {
-        width: 100%;
-        align-items: center !important;
+        gap: 6px !important;
       }
     }
   </style>
-  <div id="headerContainer" style="display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 16px; width:100%;">
-    <div style="display:flex; align-items:center; gap:16px;">
-      <div id="headerBranding" style="display:flex; align-items:flex-start; gap:12px;">
-        <a id="logoLink" href="/" style="text-decoration:none; color:inherit; display:flex; align-items:flex-start; gap:12px;">
-          <img src="assets/PromptSyncLogo.svg" alt="PromptSync" style="width:36px; height:36px; flex-shrink:0; object-fit:contain;">
+  <div id="headerContainer" style="display:flex; justify-content:space-between; align-items:center; gap:20px; padding:12px 20px; width:100%;">
+    <!-- Left: Logo & Tagline -->
+    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
+      <div id="headerBranding">
+        <a id="logoLink" href="/" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:10px;">
+          <img src="assets/PromptSyncLogo.svg" alt="PromptSync" style="width:32px; height:32px; flex-shrink:0; object-fit:contain;">
           <div>
-            <div style="font-size:24px; font-weight:900; letter-spacing:0.5px; line-height:1.2;">PromptSync</div>
-            <div style="color:var(--muted); font-size:12px; margin-top:2px; word-break:break-word;">Share and amplify your team's AI knowledge.</div>
-            <div id="appVersion" style="color:var(--muted); font-size:10px; opacity:0.7; margin-top:2px;"></div>
+            <div style="font-size:20px; font-weight:900; letter-spacing:0.5px; line-height:1.2;">PromptSync</div>
+            <div style="color:var(--muted); font-size:11px; margin-top:1px;">Share and amplify your team's AI knowledge.</div>
           </div>
         </a>
       </div>
-
-      <div id="headerControls" style="display:flex; gap:8px; align-items:center;">
-        <div class="pill" id="repoPill" style="white-space:nowrap;">Loading repo...</div>
-        <label style="display:flex; align-items:center; gap:4px; white-space:nowrap;">
-          <span title="Choose a branch">▼</span>
-          <select id="branchSelect" class="btn" style="min-width:140px;">
-            <option>Loading branches…</option>
-          </select>
-        </label>
-      </div>
     </div>
 
-    <div id="authStatus" style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; font-size:13px; flex-shrink:0;">
-      <div id="userMenu" class="user-menu">
-        <button id="userMenuButton" class="user-menu-button" aria-haspopup="true" aria-expanded="false">
-          <span id="userDisplay" style="display:inline-flex; align-items:center; gap:6px;">
-            <img id="userAvatar" src="" alt="" style="width:18px; height:18px; border-radius:50%; display:none;">
-            <strong id="userName">Guest</strong>
-          </span>
-          <span class="user-menu-caret">▾</span>
-        </button>
-        <div id="userMenuDropdown" class="user-dropdown" role="menu" aria-labelledby="userMenuButton">
-          <button id="headerSignIn" class="dropdown-item" role="menuitem" style="justify-content: center;">🔑 Sign In with GitHub</button>
-          <button id="headerSignOut" class="dropdown-item" role="menuitem" style="display:none; justify-content: center;">🚪 Sign Out</button>
-        </div>
+    <!-- Center: Navigation -->
+    <nav id="headerNav" style="display:flex; gap:0; align-items:center; flex-grow:1; justify-content:center;">
+      <a href="index.html" class="nav-item" data-page="home">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </a>
+      <a href="queue.html" class="nav-item" data-page="queue">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Queue</span>
+      </a>
+      <a href="jules.html" class="nav-item" data-page="jules">
+        <span class="nav-icon">🤖</span>
+        <span class="nav-label">Jules</span>
+      </a>
+      <a href="webcapture.html" class="nav-item" data-page="webcapture">
+        <span class="nav-icon">📸</span>
+        <span class="nav-label">Web Capture</span>
+      </a>
+    </nav>
+
+    <!-- Right: Controls & Auth -->
+    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
+      <div id="headerControls" style="display:flex; gap:6px; align-items:center;">
+        <select id="branchSelect" style="max-width:120px;">
+          <option>Loading…</option>
+        </select>
       </div>
-      <a href="https://github.com/ole-vi/prompt-sharing/blob/main/README.md" target="_blank" rel="noopener" class="help-link" title="View documentation" style="padding:6px 10px; font-size:12px;">📖 Help</a>
+
+      <div id="authStatus" style="display:flex; align-items:center; gap:6px; font-size:13px;">
+        <div id="userMenu" class="user-menu">
+          <button id="userMenuButton" class="user-menu-button" aria-haspopup="true" aria-expanded="false">
+            <span id="userDisplay" style="display:inline-flex; align-items:center; gap:6px;">
+              <img id="userAvatar" src="" alt="" style="width:18px; height:18px; border-radius:50%; display:none;">
+              <strong id="userName">Guest</strong>
+            </span>
+            <span class="user-menu-caret">▾</span>
+          </button>
+          <div id="userMenuDropdown" class="user-dropdown" role="menu" aria-labelledby="userMenuButton">
+            <button id="headerSignIn" class="dropdown-item" role="menuitem" style="justify-content: center;">🔑 Sign In with GitHub</button>
+            <button id="headerSignOut" class="dropdown-item" role="menuitem" style="display:none; justify-content: center;">🚪 Sign Out</button>
+          </div>
+        </div>
+        <a href="https://github.com/ole-vi/prompt-sharing/blob/main/README.md" target="_blank" rel="noopener" class="help-link" title="View documentation" style="padding:6px 10px; font-size:12px;">📖 Help</a>
+      </div>
     </div>
   </div>
 </header>
