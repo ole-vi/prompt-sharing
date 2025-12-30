@@ -224,7 +224,8 @@ button.nav-item:hover {
 
   #branchSelect {
     font-size: 11px;
-    min-width: 120px;
+    min-width: 40px;
+    max-width: 80px;
   }
 
   #sidebar {
