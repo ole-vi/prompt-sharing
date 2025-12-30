@@ -3,7 +3,7 @@
 let currentUser = null;
 
 export function getCurrentUser() {
-  return currentUser;
+  return window.auth?.currentUser || currentUser;
 }
 
 export function setCurrentUser(user) {
@@ -44,6 +44,8 @@ export function updateAuthUI(user) {
   const signOutItem = document.getElementById('headerSignOut');
 
   setCurrentUser(user);
+  if (window.populateFreeInputRepoSelection) window.populateFreeInputRepoSelection();
+  if (window.populateFreeInputBranchSelection) window.populateFreeInputBranchSelection();
 
   if (user) {
     // User is signed in

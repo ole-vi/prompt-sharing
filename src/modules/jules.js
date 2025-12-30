@@ -1964,6 +1964,8 @@ async function populateFreeInputRepoSelection() {
     return;
   }
 
+  dropdownBtn.disabled = false;
+
   const { DEFAULT_FAVORITE_REPOS, STORAGE_KEY_FAVORITE_REPOS } = await import('../utils/constants.js');
   
   const storedFavorites = localStorage.getItem(STORAGE_KEY_FAVORITE_REPOS);
@@ -2123,12 +2125,22 @@ async function populateFreeInputRepoSelection() {
   document.removeEventListener('click', closeDropdown);
   document.addEventListener('click', closeDropdown);
 }
+window.populateFreeInputRepoSelection = populateFreeInputRepoSelection;
 
 async function populateFreeInputBranchSelection() {
   const dropdownBtn = document.getElementById('freeInputBranchDropdownBtn');
   const dropdownText = document.getElementById('freeInputBranchDropdownText');
   const dropdownMenu = document.getElementById('freeInputBranchDropdownMenu');
   
+  const user = getCurrentUser();
+  if (!user) {
+    dropdownText.textContent = 'Please sign in first';
+    dropdownBtn.disabled = true;
+    return;
+  }
+
+  dropdownBtn.disabled = false;
+
   if (!lastSelectedBranch) {
     lastSelectedBranch = 'master';
   }
@@ -2229,6 +2241,7 @@ async function populateFreeInputBranchSelection() {
   document.removeEventListener('click', closeBranchDropdown);
   document.addEventListener('click', closeBranchDropdown);
 }
+window.populateFreeInputBranchSelection = populateFreeInputBranchSelection;
 
 let currentFullPrompt = '';
 let currentSubtasks = [];

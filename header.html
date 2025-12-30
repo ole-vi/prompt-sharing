@@ -96,11 +96,11 @@
 
       <div id="headerControls" style="display:flex; gap:8px; align-items:center;">
         <div class="pill" id="repoPill" style="white-space:nowrap;">Loading repo...</div>
-        <label style="display:flex; align-items:center; gap:4px; white-space:nowrap;">
-          <span title="Choose a branch">▼</span>
-          <select id="branchSelect" class="btn" style="min-width:140px;">
+        <label style="display:flex; align-items:center; gap:4px; white-space:nowrap; position:relative;">
+          <select id="branchSelect" class="btn" style="min-width:140px; padding-right:28px;">
             <option>Loading branches…</option>
           </select>
+          <span title="Choose a branch" style="position:absolute; right:8px; pointer-events:none;">▼</span>
         </label>
       </div>
     </div>
