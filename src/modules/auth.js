@@ -48,10 +48,8 @@ export function updateAuthUI(user) {
   setCurrentUser(user);
 
   if (user) {
-    // User is signed in
     const displayName = user.displayName || user.email || 'User';
     
-    // Update button avatar
     if (userAvatar && user.photoURL) {
       userAvatar.onload = () => {
         userAvatar.style.display = 'block';
@@ -61,10 +59,9 @@ export function updateAuthUI(user) {
       userAvatar.alt = displayName;
     } else {
       userAvatar.style.display = 'none';
-      userDisplay.style.display = 'flex'; // Show emoji if no photo
+      userDisplay.style.display = 'flex';
     }
     
-    // Update dropdown header
     if (dropdownUserName) {
       dropdownUserName.textContent = displayName;
       dropdownUserName.nextElementSibling.textContent = user.email || 'Signed in';
@@ -84,11 +81,9 @@ export function updateAuthUI(user) {
       signOutItem.onclick = signOutUser;
     }
   } else {
-    // User is signed out
     if (userAvatar) userAvatar.style.display = 'none';
-    if (userDisplay) userDisplay.style.display = 'flex'; // Show emoji
+    if (userDisplay) userDisplay.style.display = 'flex';
     
-    // Update dropdown header
     if (dropdownUserName) {
       dropdownUserName.textContent = 'Guest';
       dropdownUserName.nextElementSibling.textContent = 'Not signed in';
