@@ -1,4 +1,4 @@
-Create 10 granular tasks focused on:
+Create 15 granular tasks focused on:
 
 - Renaming files/classes for consistency (like AdapterX → XAdapter)
 - Moving files to better organized packages
@@ -28,7 +28,7 @@ also we wanna mostly avoid merge conflicts during this PR review merge round
 anyhow
 keep it as granular as possible
 do not work on coding
-focus on this report of 10 tasks
+focus on this report of 15 tasks
 whichs output you format the following way
 
 
@@ -64,7 +64,7 @@ step_line := int "." space step_text
 
 ps there is no code output
 we want an easy copyable plan
-composed of at least 10 tasks
+composed of at least 15 tasks
 in above grammar
 output into a temporary markdown file
 and/or in an easy copyable way
