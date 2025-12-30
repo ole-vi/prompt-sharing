@@ -597,11 +597,15 @@ export async function callRunJulesFunction(promptText, sourceId, branch = 'maste
     throw new Error('No repository selected');
   }
 
+
   try {
     const julesBtn = document.getElementById('julesBtn');
-    const originalText = julesBtn.textContent;
-    julesBtn.textContent = 'Running...';
-    julesBtn.disabled = true;
+    let originalText = null;
+    if (julesBtn) {
+      originalText = julesBtn.textContent;
+      julesBtn.textContent = 'Running...';
+      julesBtn.disabled = true;
+    }
 
     const token = await user.getIdToken(true);
     const functionUrl = 'https://runjuleshttp-n7gaasoeoq-uc.a.run.app';
@@ -622,8 +626,11 @@ export async function callRunJulesFunction(promptText, sourceId, branch = 'maste
       throw new Error(result.error || `HTTP ${response.status}`);
     }
 
-    julesBtn.textContent = originalText;
-    julesBtn.disabled = false;
+
+    if (julesBtn) {
+      julesBtn.textContent = originalText;
+      julesBtn.disabled = false;
+    }
 
     return result.sessionUrl || null;
   } catch (error) {
