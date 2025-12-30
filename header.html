@@ -4,17 +4,29 @@
     .user-menu-button {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
       font-size: 12px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
       background: linear-gradient(135deg, rgba(20,24,41,0.6), rgba(20,24,41,0.3));
       color: var(--text);
       cursor: pointer;
+      transition: all 0.2s;
+      overflow: hidden;
     }
-    .user-menu-button:hover { filter: brightness(1.05); }
-    .user-menu-caret { opacity: 0.7; }
+    .user-menu-button:hover { 
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(77, 217, 255, 0.3);
+    }
+    .user-menu-button img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #userName, .user-menu-caret { display: none; }
     .user-dropdown {
       position: absolute;
       right: 0;
@@ -258,22 +270,32 @@
 
     <!-- Right: Controls & Auth -->
     <div style="display:flex; align-items:center; gap:12px; flex-shrink:0; flex:1; min-width:0; justify-content:flex-end;">
-      <div id="headerControls" style="display:flex; gap:6px; align-items:center;">
-        <select id="branchSelect" style="max-width:120px;">
+      <div id="headerControls" style="display:flex; gap:6px; align-items:center; flex-shrink:1; min-width:40px;">
+        <select id="branchSelect">
           <option>Loading…</option>
         </select>
       </div>
 
-      <div id="authStatus" style="display:flex; align-items:center; gap:6px; font-size:13px;">
+      <div id="authStatus" style="display:flex; align-items:center; gap:6px; font-size:13px; flex-shrink:0;">
         <div id="userMenu" class="user-menu">
-          <button id="userMenuButton" class="user-menu-button" aria-haspopup="true" aria-expanded="false">
-            <span id="userDisplay" style="display:inline-flex; align-items:center; gap:6px;">
-              <img id="userAvatar" src="" alt="" style="width:18px; height:18px; border-radius:50%; display:none;">
-              <strong id="userName">Guest</strong>
+          <button id="userMenuButton" class="user-menu-button" aria-haspopup="true" aria-expanded="false" title="Account menu">
+            <img id="userAvatar" src="" alt="" style="display:none;">
+            <span id="userDisplay" style="display:flex; align-items:center; justify-content:center; width:100%; height:100%; font-size:16px;">
+              👤
             </span>
+            <strong id="userName" style="display:none;">Guest</strong>
             <span class="user-menu-caret">▾</span>
           </button>
           <div id="userMenuDropdown" class="user-dropdown" role="menu" aria-labelledby="userMenuButton">
+            <div style="padding: 12px 10px 8px; border-bottom: 1px solid var(--border); margin-bottom: 6px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <img id="dropdownAvatar" src="" alt="" style="width:32px; height:32px; border-radius:50%; display:none;">
+                <div style="flex: 1; min-width: 0;">
+                  <div id="dropdownUserName" style="font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Guest</div>
+                  <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">Not signed in</div>
+                </div>
+              </div>
+            </div>
             <button id="headerSignIn" class="dropdown-item" role="menuitem" style="justify-content: center;">🔑 Sign In with GitHub</button>
             <button id="headerSignOut" class="dropdown-item" role="menuitem" style="display:none; justify-content: center;">🚪 Sign Out</button>
           </div>

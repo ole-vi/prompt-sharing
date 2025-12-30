@@ -40,6 +40,8 @@ export function updateAuthUI(user) {
   const userDisplay = document.getElementById('userDisplay');
   const userName = document.getElementById('userName');
   const userAvatar = document.getElementById('userAvatar');
+  const dropdownUserName = document.getElementById('dropdownUserName');
+  const dropdownAvatar = document.getElementById('dropdownAvatar');
   const signInItem = document.getElementById('headerSignIn');
   const signOutItem = document.getElementById('headerSignOut');
 
@@ -47,19 +49,30 @@ export function updateAuthUI(user) {
 
   if (user) {
     // User is signed in
-    if (userDisplay) userDisplay.style.display = 'inline-flex';
-    if (userName) {
-      userName.textContent = user.displayName || user.email || 'User';
+    const displayName = user.displayName || user.email || 'User';
+    
+    // Update button avatar
+    if (userAvatar && user.photoURL) {
+      userAvatar.src = user.photoURL;
+      userAvatar.alt = displayName;
+      userAvatar.style.display = 'block';
+      userDisplay.style.display = 'none'; // Hide emoji when we have photo
+    } else {
+      userAvatar.style.display = 'none';
+      userDisplay.style.display = 'flex'; // Show emoji if no photo
     }
-    if (userAvatar) {
-      if (user.photoURL) {
-        userAvatar.src = user.photoURL;
-        userAvatar.alt = user.displayName || 'User avatar';
-        userAvatar.style.display = 'block';
-      } else {
-        userAvatar.style.display = 'none';
-      }
+    
+    // Update dropdown header
+    if (dropdownUserName) {
+      dropdownUserName.textContent = displayName;
+      dropdownUserName.nextElementSibling.textContent = user.email || 'Signed in';
     }
+    if (dropdownAvatar && user.photoURL) {
+      dropdownAvatar.src = user.photoURL;
+      dropdownAvatar.alt = displayName;
+      dropdownAvatar.style.display = 'block';
+    }
+    
     if (signInItem) {
       signInItem.style.display = 'none';
       signInItem.onclick = null;
@@ -70,11 +83,16 @@ export function updateAuthUI(user) {
     }
   } else {
     // User is signed out
-    if (userDisplay) {
-      userDisplay.style.display = 'inline-flex';
-      if (userName) userName.textContent = 'Guest';
-    }
     if (userAvatar) userAvatar.style.display = 'none';
+    if (userDisplay) userDisplay.style.display = 'flex'; // Show emoji
+    
+    // Update dropdown header
+    if (dropdownUserName) {
+      dropdownUserName.textContent = 'Guest';
+      dropdownUserName.nextElementSibling.textContent = 'Not signed in';
+    }
+    if (dropdownAvatar) dropdownAvatar.style.display = 'none';
+    
     if (signInItem) {
       signInItem.style.display = '';
       signInItem.onclick = signInWithGitHub;
