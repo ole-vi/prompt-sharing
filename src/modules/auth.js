@@ -53,10 +53,12 @@ export function updateAuthUI(user) {
     
     // Update button avatar
     if (userAvatar && user.photoURL) {
+      userAvatar.onload = () => {
+        userAvatar.style.display = 'block';
+        userDisplay.style.display = 'none';
+      };
       userAvatar.src = user.photoURL;
       userAvatar.alt = displayName;
-      userAvatar.style.display = 'block';
-      userDisplay.style.display = 'none'; // Hide emoji when we have photo
     } else {
       userAvatar.style.display = 'none';
       userDisplay.style.display = 'flex'; // Show emoji if no photo
