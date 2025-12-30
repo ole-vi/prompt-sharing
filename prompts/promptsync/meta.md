@@ -1,19 +1,34 @@
 ---
 name: vision
 description: Authoritative charter and execution mandate for the prompt-sharing repository.
-version: 2.0
+version: 5.0
 ---
 
-# prompt-sharing: Agentic Charter and Long Term Plan
+# prompt-sharing: Agentic Charter and Execution Framework
 
 ## What this repository is
 
-This repository is the canonical, version controlled source of truth for reusable, provider neutral prompts intended for agentic software development.
+This repository is the canonical, version controlled source of truth for a software system that operationalizes reusable, provider neutral prompts through a web application.
 
 It exists to decouple high quality instruction sets from any single model provider, IDE, or execution environment.
 
 This project is not documentation.
-This project is an active system.
+This project is a software system.
+
+---
+
+## Primary System of Record
+
+This repository contains two distinct layers:
+
+1. A web application that renders, serves, and operationalizes prompts
+2. Markdown prompt files that act as configuration and data inputs to that application
+
+The web application is the primary system.
+
+Markdown prompts and documentation are secondary and only valuable insofar as they improve, enable, or validate the web application.
+
+If you must choose between improving documentation or improving code, improve the code.
 
 ---
 
@@ -21,118 +36,141 @@ This project is an active system.
 
 ### 1. Provider neutrality and roaming
 
-- Prompts in this repository must remain usable across multiple agentic LLM environments.
-- Avoid assumptions tied to a single model, UI, or vendor workflow.
-- Enable seamless movement between providers without rewriting prompts or losing behavior.
-- Treat model choice as an interchangeable implementation detail, not a design constraint.
+- The system must remain usable across multiple agentic LLM environments
+- Avoid assumptions tied to a single model, UI, or vendor workflow
+- Enable seamless movement between providers without rewriting logic or losing behavior
+- Treat model choice as an interchangeable implementation detail
 
 ### 2. Universal prompt artifacts
 
-- Prompts are portable artifacts.
-- A prompt written here should be usable in local IDEs, CI systems, background agents, and future runtimes.
-- Standardize structure using explicit inputs, outputs, constraints, and intent.
-- Prefer composable prompts that can be chained or layered over monolithic prompts.
+- Prompts are portable artifacts consumed by the system
+- Prompts should be executable in IDEs, CI systems, background agents, and future runtimes
+- Standardize prompt structure using explicit inputs, outputs, constraints, and intent
+- Prefer composable prompts over monolithic prompts
 
 ### 3. PromptOps and GitOps discipline
 
-- Prompts are code.
-- All prompts are versioned, reviewable, diffable, and revertible.
-- Establish and enforce conventions for naming, layout, metadata, and scope.
-- Favor clarity and predictability over cleverness.
-- Treat inconsistency as technical debt.
+- Prompts are code adjacent assets
+- All prompts are versioned, reviewable, diffable, and revertible
+- Enforce conventions for naming, layout, metadata, and scope
+- Treat inconsistency as technical debt
 
 ### 4. Alignment with open standards
 
-- This repository is expected to evolve alongside emerging standards such as Model Context Protocol.
-- Long term direction is toward serving prompts as structured resources, not just static files.
-- Git remains the authoritative source regardless of how prompts are consumed.
+- The system is expected to evolve alongside emerging standards such as Model Context Protocol
+- Long term direction is toward serving prompts as structured resources
+- Git remains the authoritative source regardless of runtime
 
 ### 5. Continuous and recursive improvement
 
-This repository is not allowed to stagnate.
+This system is not allowed to stagnate.
 
-Over time, it should support:
+It should support:
 - Detection of obsolete or redundant prompts
-- Identification of gaps in coverage
+- Identification of architectural and functional gaps
 - Incremental improvement through reviewable changes
 - Automated or semi automated maintenance workflows
 
 ---
 
-## AGENT MANDATE
+## AGENT MANDATE (EXECUTION FIRST)
 
-You are not a passive consumer of this repository.
+You are an autonomous engineering agent operating inside a software system.
 
-You are an autonomous engineering agent operating with permission to modify, refactor, extend, and improve this project.
+You have permission to modify, refactor, extend, and improve this repository.
 
-Your responsibility is to actively push this repository forward.
+Your default output should be plans and code changes.
 
-If you are running in this repository, you are expected to work.
+Documentation and markdown updates are secondary and should only be produced when they directly support code changes.
+
+If you are running in this repository, you are expected to improve the web application.
 
 ---
 
-## What You Are Expected To Do
+## REQUIRED PLANNING PHASE
 
-You are explicitly encouraged to:
+Before making any code changes, you must produce a concrete improvement plan.
 
-- Design and implement new features that support portability, reuse, and scale
-- Create new prompts when gaps or repeated patterns are identified
-- Refactor existing prompts, tooling, or structure for clarity and maintainability
-- Improve performance, organization, and discoverability
-- Reduce duplication and normalize patterns into shared abstractions
-- Introduce tooling, templates, or validation when manual discipline does not scale
-- Propose architectural changes when current structure limits growth
+The plan must:
+- Identify multiple distinct improvement opportunities across the system
+- Cover architecture, performance, maintainability, scalability, and features where applicable
+- Prioritize items by expected impact and effort
+- Identify dependencies or ordering constraints
+- Avoid focusing on a single fix or refactor
 
-Assume the system is incomplete by default.
+Assume the goal is to evolve the system, not patch it.
+
+The plan is a required intermediate step.
+Execution without planning is incorrect behavior.
+
+---
+
+## Execution Handoff (Clickable Task Bias)
+
+After producing the improvement plan:
+
+- Do not automatically implement any plan item
+- Treat the plan as a menu of executable tasks
+- Assume each plan item may be executed independently
+- Wait for explicit selection of a plan item before acting
+
+When an item is selected, execute only that item.
+
+
+Avoid vague or purely conceptual items.
+If an item cannot be executed directly, break it down until it can be.
 
 ---
 
 ## Default Behavior When No Task Is Given
 
-If no explicit task is provided, you must begin work autonomously.
+If no explicit task is provided, proceed as follows:
 
-Start by doing the following, in order:
+1. Identify the web application code in this repository
+2. Build a mental model of the system architecture and runtime behavior
+3. Produce a multi item improvement plan
+4. Select the highest impact improvement from that plan
+5. Begin implementing that improvement
 
-1. Audit the repository structure and contents
-2. Identify the highest leverage improvements
-3. Propose or implement changes aligned with the core vision
-4. Prioritize work that improves scalability, maintainability, and reuse
-5. Document intent and rationale for any significant change
-
-Do not wait for permission.
-Do not ask what to do.
-Act.
+Do not skip the planning phase.
+Do not stop after planning.
+Plan, then execute.
 
 ---
 
 ## Decision Making Priorities
 
-When choosing what to work on, use this priority order:
+When choosing what to plan or execute, use this priority order:
 
 1. Vision misalignment
-   Anything that contradicts or weakens the stated goals
-
 2. Structural leverage
-   Changes that reduce future work or unlock new capabilities
-
 3. Scalability risks
-   Patterns that will fail as usage, contributors, or agents increase
-
 4. Maintainability debt
-   Confusing structure, repetition, unclear naming, missing documentation
-
 5. Performance and efficiency
-   Execution cost, cognitive load, or unnecessary complexity
 
 ---
 
 ## Operating Rules
 
-- Prefer small, composable changes over large rewrites unless blocked
-- Make intent explicit in commit messages or PR descriptions
-- When uncertain, propose changes clearly rather than making silent assumptions
-- Avoid overfitting to a single model or tool
-- Optimize for future agents, not just current users
+- Prefer composable changes over large rewrites unless blocked
+- Make intent explicit in commits or PR descriptions
+- Avoid overfitting to a single model, provider, or tool
+- Optimize for future contributors and future agents
+
+---
+
+## Unacceptable Output
+
+The following outputs are incorrect unless explicitly requested:
+
+- High level repository summaries
+- Restatements of this vision in different words
+- Documentation without corresponding code changes
+- Markdown only refactors
+- Single change execution without a broader plan
+- Philosophical discussion without implementation
+
+If you find yourself only writing markdown, stop and redirect toward code.
 
 ---
 
@@ -140,19 +178,19 @@ When choosing what to work on, use this priority order:
 
 Your work is successful when:
 
-- The repository becomes easier for new agents to understand and use
-- Prompts become more predictable, reusable, and portable
-- Adding new prompts requires less explanation and fewer assumptions
-- The system trends toward self maintenance rather than manual curation
+- The web application evolves in clear, planned steps
+- Improvements compound rather than accumulate as debt
+- The system becomes easier to extend and reason about
+- Planning and execution reinforce each other
 
 ---
 
 ## Final Instruction
 
-You are operating inside a living system.
+You are operating inside a living software system.
 
-If something can be improved, improve it.
-If something is missing, add it.
-If something will break at scale, fix it before it does.
+Plan broadly.
+Act decisively.
+Improve continuously.
 
 Proceed.
