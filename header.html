@@ -54,34 +54,173 @@
       gap: 8px;
     }
     .user-dropdown-sep { height: 1px; background: var(--border); margin: 6px 0; }
+    
+    /* Mobile Navigation */
+    #mobileMenuBtn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 8px;
+      line-height: 1;
+    }
+    
+    #mobileSidebar {
+      position: fixed;
+      top: 0;
+      left: -280px;
+      width: 280px;
+      height: 100vh;
+      background: linear-gradient(180deg, rgba(10,14,26,0.98), rgba(20,24,41,0.98));
+      backdrop-filter: blur(10px);
+      border-right: 1px solid var(--border);
+      z-index: 1000;
+      transition: left 0.3s ease;
+      overflow-y: auto;
+    }
+    
+    #mobileSidebar.open {
+      left: 0;
+    }
+    
+    #mobileOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      display: none;
+    }
+    
+    #mobileOverlay.show {
+      display: block;
+    }
+    
+    .mobile-sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .mobile-sidebar-close {
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+    
+    .mobile-nav-items {
+      padding: 20px 0;
+    }
+    
+    .mobile-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: all 0.2s;
+      font-size: 15px;
+    }
+    
+    .mobile-nav-item:hover {
+      background: rgba(77, 217, 255, 0.08);
+      color: var(--text);
+    }
+    
+    .mobile-nav-item.active {
+      background: rgba(77, 217, 255, 0.12);
+      color: var(--accent);
+      border-left: 3px solid var(--accent);
+      padding-left: 17px;
+    }
+    
+    .mobile-nav-item .nav-icon {
+      font-size: 20px;
+    }
+    
     @media (max-width: 900px) {
+      #mobileMenuBtn {
+        display: block;
+      }
       #headerContainer {
-        flex-direction: column !important;
-        gap: 12px !important;
-        align-items: stretch !important;
         padding: 12px 16px !important;
       }
+      #headerContainer > div:first-child {
+        flex: 0 0 auto !important;
+        min-width: auto !important;
+      }
       #headerBranding a {
-        justify-content: center;
+        gap: 8px !important;
+      }
+      #headerBranding a > div > div:first-child {
+        font-size: 18px !important;
+      }
+      #headerBranding a > div > div:nth-child(2) {
+        display: none !important;
       }
       #headerNav {
-        justify-content: center !important;
-        flex-wrap: wrap;
-        gap: 4px !important;
-      }
-      .nav-item {
-        padding: 8px 12px !important;
-        font-size: 12px !important;
+        display: none !important;
       }
       #headerControls {
-        flex-direction: column !important;
-        gap: 6px !important;
+        gap: 8px !important;
+      }
+      #headerContainer > div:last-child {
+        flex: 0 0 auto !important;
+        min-width: auto !important;
       }
     }
   </style>
+  <!-- Mobile Overlay -->
+  <div id="mobileOverlay"></div>
+  
+  <!-- Mobile Sidebar -->
+  <div id="mobileSidebar">
+    <div class="mobile-sidebar-header">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <img src="assets/PromptSyncLogo.svg" alt="PromptSync" style="width:28px; height:28px;">
+        <div style="font-size:18px; font-weight:900; letter-spacing:0.5px;">PromptSync</div>
+      </div>
+      <button class="mobile-sidebar-close" id="mobileSidebarClose" aria-label="Close menu">✕</button>
+    </div>
+    <div class="mobile-nav-items">
+      <a href="index.html" class="mobile-nav-item" data-page="home" title="View and create prompts">
+        <span class="nav-icon">🏠</span>
+        <span>Home</span>
+      </a>
+      <a href="queue.html" class="mobile-nav-item" data-page="queue" title="View queued tasks">
+        <span class="nav-icon">📋</span>
+        <span>Queue</span>
+      </a>
+      <a href="jules.html" class="mobile-nav-item" data-page="jules" title="Jules configuration and session history">
+        <span class="nav-icon">🤖</span>
+        <span>Jules</span>
+      </a>
+      <a href="webcapture.html" class="mobile-nav-item" data-page="webcapture" title="Capture web content">
+        <span class="nav-icon">📸</span>
+        <span>Web Capture</span>
+      </a>
+      <a href="https://github.com/ole-vi/prompt-sharing/blob/main/README.md" target="_blank" rel="noopener" class="mobile-nav-item" title="View documentation">
+        <span class="nav-icon">📖</span>
+        <span>Help</span>
+      </a>
+    </div>
+  </div>
+  
   <div id="headerContainer" style="display:flex; justify-content:space-between; align-items:center; gap:20px; padding:12px 20px; width:100%;">
     <!-- Left: Logo & Tagline -->
     <div style="display:flex; align-items:center; gap:12px; flex-shrink:0; flex:1; min-width:0;">
+      <button id="mobileMenuBtn" aria-label="Open menu">☰</button>
       <div id="headerBranding">
         <a id="logoLink" href="/" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:10px;">
           <img src="assets/PromptSyncLogo.svg" alt="PromptSync" style="width:32px; height:32px; flex-shrink:0; object-fit:contain;">

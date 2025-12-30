@@ -42,9 +42,47 @@ export async function loadHeader() {
         if (e.key === 'Escape') closeMenu();
       });
     };
+    
+    // Setup mobile sidebar
+    const setupMobileSidebar = () => {
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const mobileSidebar = document.getElementById('mobileSidebar');
+      const mobileSidebarClose = document.getElementById('mobileSidebarClose');
+      const mobileOverlay = document.getElementById('mobileOverlay');
+      
+      if (!mobileMenuBtn || !mobileSidebar || !mobileSidebarClose || !mobileOverlay) return;
+      
+      const openSidebar = () => {
+        mobileSidebar.classList.add('open');
+        mobileOverlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+      };
+      
+      const closeSidebar = () => {
+        mobileSidebar.classList.remove('open');
+        mobileOverlay.classList.remove('show');
+        document.body.style.overflow = '';
+      };
+      
+      mobileMenuBtn.addEventListener('click', openSidebar);
+      mobileSidebarClose.addEventListener('click', closeSidebar);
+      mobileOverlay.addEventListener('click', closeSidebar);
+      
+      // Set active page in mobile nav
+      const currentPage = document.body.getAttribute('data-page');
+      if (currentPage) {
+        const mobileNavItem = document.querySelector(`.mobile-nav-item[data-page="${currentPage}"]`);
+        if (mobileNavItem) {
+          mobileNavItem.classList.add('active');
+        }
+      }
+    };
 
     // Defer to next microtask to ensure DOM is attached
-    queueMicrotask(setupUserMenu);
+    queueMicrotask(() => {
+      setupUserMenu();
+      setupMobileSidebar();
+    });
   } catch (error) {
     console.error('Failed to load header:', error);
   }
