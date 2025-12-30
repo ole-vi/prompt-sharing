@@ -708,10 +708,6 @@ footer code {
   padding: 8px;
 }
 
-#branchSelect option:hover {
-  background: rgba(77, 217, 255, 0.1);
-}
-
 #branchSelect option[value="__toggle_features__"],
 #branchSelect option[value="__toggle_users__"] {
   font-weight: 600;

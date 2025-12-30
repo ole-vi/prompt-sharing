@@ -51,9 +51,15 @@ export function updateAuthUI(user) {
     const displayName = user.displayName || user.email || 'User';
     
     if (userAvatar && user.photoURL) {
+      userDisplay.style.display = 'flex';
+      userAvatar.style.display = 'none';
       userAvatar.onload = () => {
         userAvatar.style.display = 'block';
         userDisplay.style.display = 'none';
+      };
+      userAvatar.onerror = () => {
+        userAvatar.style.display = 'none';
+        userDisplay.style.display = 'flex';
       };
       userAvatar.src = user.photoURL;
       userAvatar.alt = displayName;
@@ -64,7 +70,9 @@ export function updateAuthUI(user) {
     
     if (dropdownUserName) {
       dropdownUserName.textContent = displayName;
-      dropdownUserName.nextElementSibling.textContent = user.email || 'Signed in';
+      if (dropdownUserName.nextElementSibling) {
+        dropdownUserName.nextElementSibling.textContent = user.email || 'Signed in';
+      }
     }
     if (dropdownAvatar && user.photoURL) {
       dropdownAvatar.src = user.photoURL;
@@ -86,7 +94,9 @@ export function updateAuthUI(user) {
     
     if (dropdownUserName) {
       dropdownUserName.textContent = 'Guest';
-      dropdownUserName.nextElementSibling.textContent = 'Not signed in';
+      if (dropdownUserName.nextElementSibling) {
+        dropdownUserName.nextElementSibling.textContent = 'Not signed in';
+      }
     }
     if (dropdownAvatar) dropdownAvatar.style.display = 'none';
     
