@@ -1961,6 +1961,7 @@ async function populateFreeInputRepoSelection() {
   if (!user) {
     dropdownText.textContent = 'Please sign in first';
     dropdownBtn.disabled = true;
+    dropdownBtn.onclick = null;
     return;
   }
 
@@ -2136,6 +2137,7 @@ async function populateFreeInputBranchSelection() {
   if (!user) {
     dropdownText.textContent = 'Please sign in first';
     dropdownBtn.disabled = true;
+    dropdownBtn.onclick = null;
     return;
   }
 
