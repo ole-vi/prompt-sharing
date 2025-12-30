@@ -81,7 +81,7 @@
   </style>
   <div id="headerContainer" style="display:flex; justify-content:space-between; align-items:center; gap:20px; padding:12px 20px; width:100%;">
     <!-- Left: Logo & Tagline -->
-    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
+    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0; flex:1; min-width:0;">
       <div id="headerBranding">
         <a id="logoLink" href="/" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:10px;">
           <img src="assets/PromptSyncLogo.svg" alt="PromptSync" style="width:32px; height:32px; flex-shrink:0; object-fit:contain;">
@@ -94,27 +94,31 @@
     </div>
 
     <!-- Center: Navigation -->
-    <nav id="headerNav" style="display:flex; gap:0; align-items:center; flex-grow:1; justify-content:center;">
-      <a href="index.html" class="nav-item" data-page="home">
+    <nav id="headerNav" style="display:flex; gap:0; align-items:center; justify-content:center; flex-shrink:0;">
+      <a href="index.html" class="nav-item" data-page="home" title="View and create prompts">
         <span class="nav-icon">🏠</span>
         <span class="nav-label">Home</span>
       </a>
-      <a href="queue.html" class="nav-item" data-page="queue">
+      <a href="queue.html" class="nav-item" data-page="queue" title="View queued tasks">
         <span class="nav-icon">📋</span>
         <span class="nav-label">Queue</span>
       </a>
-      <a href="jules.html" class="nav-item" data-page="jules">
+      <a href="jules.html" class="nav-item" data-page="jules" title="Jules configuration and session history">
         <span class="nav-icon">🤖</span>
         <span class="nav-label">Jules</span>
       </a>
-      <a href="webcapture.html" class="nav-item" data-page="webcapture">
+      <a href="webcapture.html" class="nav-item" data-page="webcapture" title="Capture web content">
         <span class="nav-icon">📸</span>
         <span class="nav-label">Web Capture</span>
+      </a>
+      <a href="https://github.com/ole-vi/prompt-sharing/blob/main/README.md" target="_blank" rel="noopener" class="nav-item" title="View documentation">
+        <span class="nav-icon">📖</span>
+        <span class="nav-label">Help</span>
       </a>
     </nav>
 
     <!-- Right: Controls & Auth -->
-    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
+    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0; flex:1; min-width:0; justify-content:flex-end;">
       <div id="headerControls" style="display:flex; gap:6px; align-items:center;">
         <select id="branchSelect" style="max-width:120px;">
           <option>Loading…</option>
@@ -135,7 +139,6 @@
             <button id="headerSignOut" class="dropdown-item" role="menuitem" style="display:none; justify-content: center;">🚪 Sign Out</button>
           </div>
         </div>
-        <a href="https://github.com/ole-vi/prompt-sharing/blob/main/README.md" target="_blank" rel="noopener" class="help-link" title="View documentation" style="padding:6px 10px; font-size:12px;">📖 Help</a>
       </div>
     </div>
   </div>
