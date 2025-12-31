@@ -2239,6 +2239,20 @@ async function populateFreeInputRepoSelection() {
 
   let allReposLoaded = false;
   let allSources = [];
+  let sourcesCache = null; // Cache the sources list to avoid repeated API calls
+
+  const saveFavoritesToFirestore = async (newFavorites) => {
+    try {
+      if (window.db) {
+        await window.db.collection('users').doc(user.uid).set({
+          favoriteRepos: newFavorites
+        }, { merge: true });
+        favorites = newFavorites;
+      }
+    } catch (error) {
+      console.error('Failed to save favorites:', error);
+    }
+  };
 
   const toggleDropdown = async () => {
     if (dropdownMenu.style.display === 'block') {
@@ -2303,9 +2317,60 @@ async function populateFreeInputRepoSelection() {
         item.dataset.sourceId = fav.id;
         item.dataset.branch = fav.branch || 'master';
         
-        nameSpan.onclick = () => {
+        nameSpan.onclick = async () => {
           lastSelectedSourceId = fav.id;
-          lastSelectedBranch = fav.branch || 'master';
+          
+          // If we don't have a branch stored OR if it's 'master' (might be wrong), verify it once
+          if (!fav.branch || fav.branch === 'master') {
+            try {
+              const { listJulesSources } = await import('./jules-api.js');
+              const { getDecryptedJulesKey } = await import('./jules-api.js');
+              const apiKey = await getDecryptedJulesKey(user.uid);
+              
+              if (apiKey) {
+                // Use cached sources if available
+                if (!sourcesCache) {
+                  sourcesCache = await listJulesSources(apiKey);
+                }
+                const matchingSource = sourcesCache.sources?.find(s => (s.name || s.id) === fav.id);
+                
+                console.log('Favorite ID:', fav.id);
+                console.log('Matching source:', matchingSource);
+                console.log('GitHub repo:', matchingSource?.githubRepo);
+                console.log('GitHub context:', matchingSource?.githubRepoContext);
+                
+                const defaultBranchObj = matchingSource?.githubRepo?.defaultBranch ||
+                                         matchingSource?.githubRepoContext?.defaultBranch || 
+                                         matchingSource?.defaultBranch;
+                
+                const defaultBranch = typeof defaultBranchObj === 'string' 
+                  ? defaultBranchObj 
+                  : (defaultBranchObj?.displayName || 'master');
+                
+                console.log('Detected default branch:', defaultBranch);
+                lastSelectedBranch = defaultBranch;
+                
+                // Save this branch to the favorite permanently
+                if (fav.branch !== defaultBranch) {
+                  console.log('Updating favorite from', fav.branch, 'to', defaultBranch);
+                  const updatedFavorites = favorites.map(f => 
+                    f.id === fav.id ? { ...f, branch: defaultBranch } : f
+                  );
+                  await saveFavoritesToFirestore(updatedFavorites);
+                  favorites = updatedFavorites;
+                }
+              } else {
+                lastSelectedBranch = fav.branch || 'master';
+              }
+            } catch (error) {
+              console.error('Failed to fetch default branch:', error);
+              lastSelectedBranch = fav.branch || 'master';
+            }
+          } else {
+            // Use the stored branch - no API call needed
+            lastSelectedBranch = fav.branch;
+          }
+          
           dropdownText.textContent = fav.name;
           dropdownMenu.style.display = 'none';
           populateFreeInputBranchSelection();
@@ -2360,19 +2425,6 @@ async function populateFreeInputRepoSelection() {
         }
         
         showMoreBtn.style.display = 'none';
-        
-        const saveFavoritesToFirestore = async (newFavorites) => {
-          try {
-            if (window.db) {
-              await window.db.collection('users').doc(user.uid).set({
-                favoriteRepos: newFavorites
-              }, { merge: true });
-              favorites = newFavorites;
-            }
-          } catch (error) {
-            console.error('Failed to save favorites:', error);
-          }
-        };
         
         allSources.forEach(source => {
           if (favorites.some(f => f.id === (source.name || source.id))) return;
@@ -2584,7 +2636,12 @@ async function populateFreeInputBranchSelection() {
     return;
   }
   
-  dropdownText.textContent = 'Select a branch...';
+  // Show the selected branch or placeholder
+  if (lastSelectedBranch) {
+    dropdownText.textContent = lastSelectedBranch;
+  } else {
+    dropdownText.textContent = 'Select a branch...';
+  }
   
   const user = getCurrentUser();
   if (!user) {
@@ -2637,17 +2694,22 @@ async function populateFreeInputBranchSelection() {
           const owner = pathParts[pathParts.length - 2];
           const repo = pathParts[pathParts.length - 1];
           
+          console.log('Loading branches for:', owner, '/', repo);
+          
           const { getBranches } = await import('./github-api.js');
           allBranches = await getBranches(owner, repo);
+          
+          console.log('Loaded branches:', allBranches);
 
-          if (allBranches.length === 0) {
-            showMoreBtn.textContent = 'No branches found';
+          if (!allBranches || allBranches.length === 0) {
+            showMoreBtn.textContent = allBranches === null ? 'Rate limited - try later' : 'No branches found';
             showMoreBtn.style.color = 'var(--muted)';
             return;
           }
 
           allBranchesLoaded = true;
         } catch (error) {
+          console.error('Failed to load branches:', error);
           showMoreBtn.textContent = 'Failed to load - click to retry';
           showMoreBtn.style.pointerEvents = 'auto';
           return;
