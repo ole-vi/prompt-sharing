@@ -353,11 +353,15 @@ export class BranchSelector {
     if (!sourceId) {
       this.dropdownText.textContent = 'Select repository first';
       this.dropdownBtn.disabled = true;
+      this.dropdownBtn.style.opacity = '0.5';
+      this.dropdownBtn.style.cursor = 'not-allowed';
       return;
     }
     
     this.dropdownText.textContent = defaultBranch || 'Select a branch...';
     this.dropdownBtn.disabled = false;
+    this.dropdownBtn.style.opacity = '1';
+    this.dropdownBtn.style.cursor = 'pointer';
     
     this.setupDropdownToggle();
   }
