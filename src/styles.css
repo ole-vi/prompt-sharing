@@ -131,8 +131,8 @@ button.nav-item:hover {
 }
 
 .nav-label {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 700;
   letter-spacing: 0.2px;
   display: inline-block;
 }
@@ -159,7 +159,9 @@ button.nav-item:hover {
   }
   
   .nav-label {
-    font-size: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
   }
 }
 
@@ -174,7 +176,9 @@ button.nav-item:hover {
   }
   
   .nav-label {
-    font-size: 9px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
   }
 }
 
