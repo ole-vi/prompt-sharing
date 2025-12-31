@@ -3,6 +3,9 @@
 let currentUser = null;
 
 export function getCurrentUser() {
+  if (window.auth?.currentUser && window.auth.currentUser !== currentUser) {
+    currentUser = window.auth.currentUser;
+  }
   return currentUser;
 }
 
@@ -35,7 +38,7 @@ export async function signOutUser() {
   }
 }
 
-export function updateAuthUI(user) {
+export async function updateAuthUI(user) {
   const authStatus = document.getElementById('authStatus');
   const userDisplay = document.getElementById('userDisplay');
   const userName = document.getElementById('userName');
@@ -44,6 +47,12 @@ export function updateAuthUI(user) {
   const signOutItem = document.getElementById('headerSignOut');
 
   setCurrentUser(user);
+  try {
+    if (window.populateFreeInputRepoSelection) await window.populateFreeInputRepoSelection();
+    if (window.populateFreeInputBranchSelection) await window.populateFreeInputBranchSelection();
+  } catch (error) {
+    console.error('Failed to refresh dropdowns:', error);
+  }
 
   if (user) {
     // User is signed in
