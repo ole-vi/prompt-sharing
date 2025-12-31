@@ -9,6 +9,7 @@ import { loadJulesProfileInfo, listJulesSessions } from './jules-api.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
+import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 
 let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
 let lastSelectedBranch = 'master';
@@ -749,20 +750,11 @@ export async function showJulesEnvModal(promptText) {
 
   const favoriteContainer = document.getElementById('favoriteReposContainer');
   const allReposContainer = document.getElementById('allReposContainer');
-  const dropdownBtn = document.getElementById('julesRepoDropdownBtn');
-  const dropdownText = document.getElementById('julesRepoDropdownText');
-  const dropdownMenu = document.getElementById('julesRepoDropdownMenu');
-  const branchDropdownBtn = document.getElementById('julesBranchDropdownBtn');
-  const branchDropdownText = document.getElementById('julesBranchDropdownText');
-  const branchDropdownMenu = document.getElementById('julesBranchDropdownMenu');
-  const cancelBtn = document.getElementById('julesEnvCancelBtn');
   const submitBtn = document.getElementById('julesEnvSubmitBtn');
   const queueBtn = document.getElementById('julesEnvQueueBtn');
+  const cancelBtn = document.getElementById('julesEnvCancelBtn');
   
-  // Initialize with placeholders
-  dropdownText.textContent = 'Select a repository...';
-  branchDropdownText.textContent = 'Select repository first';
-  branchDropdownBtn.disabled = true;
+  // Initialize buttons
   submitBtn.disabled = true;
   queueBtn.disabled = true;
   
@@ -776,357 +768,34 @@ export async function showJulesEnvModal(promptText) {
     return;
   }
 
-  const { DEFAULT_FAVORITE_REPOS } = await import('../utils/constants.js');
-  
-  // Load favorites from Firestore
-  let favorites = DEFAULT_FAVORITE_REPOS;
-  try {
-    if (window.db) {
-      const doc = await window.db.collection('users').doc(user.uid).get();
-      if (doc.exists && doc.data().favoriteRepos) {
-        favorites = doc.data().favoriteRepos;
-      }
-    }
-  } catch (error) {
-    console.error('Failed to load favorites from Firestore:', error);
-  }
-
-  const renderFavoriteRepos = () => {
-    favoriteContainer.innerHTML = '';
-    
-    if (favorites && favorites.length > 0) {
-      favorites.forEach(fav => {
-        const btn = document.createElement('button');
-        btn.className = 'btn';
-        btn.style.cssText = 'padding:12px; display:flex; align-items:center; gap:8px; text-align:left; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; font-weight:600; transition:all 0.2s; width:100%;';
-        
-        const isSelected = selectedSourceId === fav.id;
-        
-        // Star icon
-        const star = document.createElement('span');
-        star.textContent = '★';
-        star.style.cssText = 'font-size:18px; cursor:pointer; color:var(--accent); flex-shrink:0;';
-        star.onclick = async (e) => {
-          e.stopPropagation();
-          // Remove from favorites
-          const newFavorites = favorites.filter(f => f.id !== fav.id);
-          try {
-            if (window.db) {
-              await window.db.collection('users').doc(user.uid).set({
-                favoriteRepos: newFavorites
-              }, { merge: true });
-              favorites = newFavorites;
-              renderFavoriteRepos();
-            }
-          } catch (error) {
-            console.error('Failed to remove favorite:', error);
-          }
-        };
-        
-        // Repo name
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = fav.name;
-        nameSpan.style.flex = '1';
-        
-        btn.appendChild(star);
-        btn.appendChild(nameSpan);
-        
-        // Apply selected styles if this is the selected repo
-        if (isSelected) {
-          btn.style.borderColor = 'var(--accent)';
-          btn.style.background = 'linear-gradient(135deg, rgba(77,217,255,0.2), rgba(77,217,255,0.08))';
-          btn.style.boxShadow = '0 0 12px rgba(77, 217, 255, 0.2)';
-          btn.style.color = 'var(--accent)';
-        }
-        
-        btn.onclick = (e) => {
-          // Don't trigger if clicking the star
-          if (e.target === star) return;
-          
-          selectedSourceId = fav.id;
-          selectedBranch = fav.branch || 'master';
-          dropdownText.textContent = fav.name;
-          submitBtn.disabled = false;
-          queueBtn.disabled = false;
-          renderFavoriteRepos();
-          populateBranchSelection();
-        };
-        favoriteContainer.appendChild(btn);
-      });
-    } else {
-      favoriteContainer.style.display = 'none';
-    }
-  };
-  
-  renderFavoriteRepos();
-  allReposContainer.style.display = 'block';
-
-  // Branch selection dropdown logic
-  const populateBranchSelection = async () => {
-    if (!selectedSourceId) {
-      branchDropdownBtn.disabled = true;
-      branchDropdownText.textContent = 'Select repository first';
-      return;
-    }
-
-    branchDropdownBtn.disabled = false;
-    branchDropdownText.textContent = selectedBranch || 'Select branch...';
-
-    let allBranchesLoaded = false;
-    let allBranches = [];
-
-    const toggleBranchDropdown = async () => {
-      if (branchDropdownMenu.style.display === 'block') {
-        branchDropdownMenu.style.display = 'none';
-        return;
-      }
-      
-      branchDropdownMenu.innerHTML = '';
-      
-      // Show currently selected branch
-      const currentItem = document.createElement('div');
-      currentItem.className = 'custom-dropdown-item selected';
-      currentItem.textContent = selectedBranch;
-      currentItem.dataset.branch = selectedBranch;
-      
-      currentItem.onclick = () => {
-        branchDropdownMenu.style.display = 'none';
-      };
-      
-      branchDropdownMenu.appendChild(currentItem);
-      
-      // Show more button to load all branches
-      const showMoreBtn = document.createElement('div');
-      showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
-      showMoreBtn.textContent = '▼ Show more...';
-      
-      showMoreBtn.onclick = async () => {
-        if (!allBranchesLoaded) {
-          showMoreBtn.textContent = 'Loading...';
-          showMoreBtn.style.pointerEvents = 'none';
-          
-          try {
-            const pathParts = selectedSourceId.split('/');
-            const owner = pathParts[pathParts.length - 2];
-            const repo = pathParts[pathParts.length - 1];
-            
-            const { getBranches } = await import('./github-api.js');
-            allBranches = await getBranches(owner, repo);
-
-            if (allBranches.length === 0) {
-              showMoreBtn.textContent = 'No branches found';
-              showMoreBtn.style.color = 'var(--muted)';
-              return;
-            }
-
-            allBranchesLoaded = true;
-          } catch (error) {
-            console.error('Failed to load branches:', error);
-            showMoreBtn.textContent = 'Failed to load - click to retry';
-            showMoreBtn.style.pointerEvents = 'auto';
-            return;
-          }
-        }
-        
-        showMoreBtn.style.display = 'none';
-        
-        allBranches.forEach(branch => {
-          if (branch.name === selectedBranch) return;
-          
-          const item = document.createElement('div');
-          item.className = 'custom-dropdown-item';
-          item.textContent = branch.name;
-          item.dataset.branch = branch.name;
-          
-          item.onclick = () => {
-            selectedBranch = branch.name;
-            branchDropdownText.textContent = branch.name;
-            branchDropdownMenu.style.display = 'none';
-          };
-          
-          branchDropdownMenu.appendChild(item);
-        });
-      };
-      
-      branchDropdownMenu.appendChild(showMoreBtn);
-      branchDropdownMenu.style.display = 'block';
-    };
-
-    branchDropdownBtn.onclick = toggleBranchDropdown;
-    
-    const closeBranchDropdown = (e) => {
-      if (!branchDropdownBtn.contains(e.target) && !branchDropdownMenu.contains(e.target)) {
-        branchDropdownMenu.style.display = 'none';
-      }
-    };
-    
-    document.removeEventListener('click', closeBranchDropdown);
-    document.addEventListener('click', closeBranchDropdown);
-  };
-
-  let allReposLoaded = false;
-
-  const loadAllRepos = async () => {
-    if (allReposLoaded) {
-      dropdownMenu.style.display = 'block';
-      return;
-    }
-
-    try {
-      const { listJulesSources } = await import('./jules-api.js');
-      const { getDecryptedJulesKey } = await import('./jules-api.js');
-      
-      const apiKey = await getDecryptedJulesKey(user.uid);
-      if (!apiKey) {
-        dropdownMenu.innerHTML = '<div style="padding:16px; text-align:center; color:var(--muted);">No API key configured</div>';
-        return;
-      }
-
-      const sourcesData = await listJulesSources(apiKey);
-      let sources = sourcesData.sources || [];
-      let nextPageToken = sourcesData.nextPageToken;
-      
-      // Fetch all pages
-      while (nextPageToken) {
-        const nextPage = await listJulesSources(apiKey, nextPageToken);
-        sources = sources.concat(nextPage.sources || []);
-        nextPageToken = nextPage.nextPageToken;
-      }
-      
-      console.log('Jules sources (all pages):', sources.map(s => s.name || s.id));
-      console.log('Total sources:', sources.length);
-
-      if (sources.length === 0) {
-        dropdownMenu.innerHTML = '<div style="padding:16px; text-align:center; color:var(--muted);">No repositories found</div>';
-        return;
-      }
-
-      dropdownMenu.innerHTML = '';
-      
-      // Show helper message if no favorites
-      if (!favorites || favorites.length === 0) {
-        const helperDiv = document.createElement('div');
-        helperDiv.style.cssText = 'padding:12px; color:var(--muted); text-align:center; font-size:12px; border-bottom:1px solid var(--border);';
-        helperDiv.textContent = 'Click ★ next to any repository to add it to favorites';
-        dropdownMenu.appendChild(helperDiv);
-      }
-      
-      const saveFavoritesToFirestore = async (newFavorites) => {
-        try {
-          if (window.db) {
-            await window.db.collection('users').doc(user.uid).set({
-              favoriteRepos: newFavorites
-            }, { merge: true });
-            favorites = newFavorites;
-            // Refresh favorite display
-            renderFavoriteRepos();
-          }
-        } catch (error) {
-          console.error('Failed to save favorites:', error);
-        }
-      };
-      
-      sources.forEach(source => {
-        const item = document.createElement('div');
-        item.className = 'custom-dropdown-item';
-        item.style.cssText = 'display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer;';
-        
-        const fullPath = source.name || source.id;
-        const pathParts = fullPath.split('/');
-        const repoName = pathParts.length >= 4 ? pathParts.slice(-2).join('/') : fullPath;
-        
-        const defaultBranch = source.githubRepoContext?.defaultBranch || 
-                             source.defaultBranch || 
-                             'master';
-        
-        // Star icon
-        const star = document.createElement('span');
-        const isFavorite = favorites.some(f => f.id === (source.name || source.id));
-        star.textContent = isFavorite ? '★' : '☆';
-        star.style.cssText = 'font-size:18px; cursor:pointer; color:' + (isFavorite ? 'var(--accent)' : 'var(--muted)') + '; flex-shrink:0;';
-        star.onclick = async (e) => {
-          e.stopPropagation();
-          const sourceId = source.name || source.id;
-          const isCurrentlyFavorite = favorites.some(f => f.id === sourceId);
-          
-          let newFavorites;
-          if (isCurrentlyFavorite) {
-            // Remove from favorites
-            newFavorites = favorites.filter(f => f.id !== sourceId);
-            star.textContent = '☆';
-            star.style.color = 'var(--muted)';
-          } else {
-            // Add to favorites
-            newFavorites = [...favorites, {
-              id: sourceId,
-              name: repoName,
-              branch: defaultBranch
-            }];
-            star.textContent = '★';
-            star.style.color = 'var(--accent)';
-          }
-          
-          await saveFavoritesToFirestore(newFavorites);
-        };
-        
-        // Repo name
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = repoName;
-        nameSpan.style.flex = '1';
-        
-        item.appendChild(star);
-        item.appendChild(nameSpan);
-        item.dataset.value = source.name || source.id;
-        
-        nameSpan.onclick = () => {
-          dropdownMenu.querySelectorAll('.custom-dropdown-item').forEach(i => i.classList.remove('selected'));
-          item.classList.add('selected');
-          dropdownText.textContent = repoName;
-          dropdownMenu.style.display = 'none';
-          selectedSourceId = item.dataset.value;
-          selectedBranch = defaultBranch;
-          submitBtn.disabled = false;
-          queueBtn.disabled = false;
-          favoriteContainer.querySelectorAll('button').forEach(b => {
-            b.style.background = 'transparent';
-            b.style.color = 'var(--text)';
-            b.style.borderColor = 'var(--border)';
-            b.style.boxShadow = '';
-          });
-          populateBranchSelection();
-        };
-        
-        dropdownMenu.appendChild(item);
-      });
-
-      allReposLoaded = true;
-      dropdownMenu.style.display = 'block';
-    } catch (error) {
-      dropdownMenu.innerHTML = '<div style="padding:16px; text-align:center; color:var(--muted);">Failed to load - click to retry</div>';
-      allReposLoaded = false;
-    }
-  };
-
-  dropdownBtn.onclick = () => {
-    if (dropdownMenu.style.display === 'block') {
-      dropdownMenu.style.display = 'none';
-    } else {
-      // Show loading indicator immediately
-      dropdownMenu.innerHTML = '<div style="padding:16px; text-align:center; color:var(--muted);">Loading...</div>';
-      dropdownMenu.style.display = 'block';
-      
-      // Use setTimeout to ensure the loading message renders before async work
-      setTimeout(() => {
-        loadAllRepos();
-      }, 0);
-    }
-  };
-
-  document.addEventListener('click', (e) => {
-    if (!allReposContainer.contains(e.target)) {
-      dropdownMenu.style.display = 'none';
+  // Initialize RepoSelector
+  const repoSelector = new RepoSelector({
+    favoriteContainer,
+    dropdownBtn: document.getElementById('julesRepoDropdownBtn'),
+    dropdownText: document.getElementById('julesRepoDropdownText'),
+    dropdownMenu: document.getElementById('julesRepoDropdownMenu'),
+    onSelect: (sourceId, branch, repoName) => {
+      selectedSourceId = sourceId;
+      selectedBranch = branch;
+      submitBtn.disabled = false;
+      queueBtn.disabled = false;
+      branchSelector.initialize(sourceId, branch);
     }
   });
+
+  // Initialize BranchSelector
+  const branchSelector = new BranchSelector({
+    dropdownBtn: document.getElementById('julesBranchDropdownBtn'),
+    dropdownText: document.getElementById('julesBranchDropdownText'),
+    dropdownMenu: document.getElementById('julesBranchDropdownMenu'),
+    onSelect: (branch) => {
+      selectedBranch = branch;
+    }
+  });
+
+  // Load favorites and populate dropdown
+  await repoSelector.initialize();
+  branchSelector.initialize(null, null);
 
   submitBtn.onclick = () => {
     if (selectedSourceId && selectedBranch) {
@@ -2200,559 +1869,52 @@ export function hideFreeInputForm() {
 }
 
 async function populateFreeInputRepoSelection() {
-  const dropdownBtn = document.getElementById('freeInputRepoDropdownBtn');
-  const dropdownText = document.getElementById('freeInputRepoDropdownText');
-  const dropdownMenu = document.getElementById('freeInputRepoDropdownMenu');
-  const branchDropdownBtn = document.getElementById('freeInputBranchDropdownBtn');
-  const branchDropdownText = document.getElementById('freeInputBranchDropdownText');
-  const branchDropdownMenu = document.getElementById('freeInputBranchDropdownMenu');
-  
-  // Clear selections and initialize with placeholders
+  // Clear selections
   lastSelectedSourceId = null;
   lastSelectedBranch = null;
-  dropdownText.textContent = 'Select a repository...';
-  branchDropdownText.textContent = 'Select repository first';
-  branchDropdownBtn.disabled = true;
   
   const user = getCurrentUser();
   if (!user) {
+    const dropdownText = document.getElementById('freeInputRepoDropdownText');
+    const dropdownBtn = document.getElementById('freeInputRepoDropdownBtn');
     dropdownText.textContent = 'Please sign in first';
     dropdownBtn.disabled = true;
-    dropdownBtn.onclick = null;
     return;
   }
 
-  dropdownBtn.disabled = false;
-
-  const { DEFAULT_FAVORITE_REPOS } = await import('../utils/constants.js');
-  
-  // Load favorites from Firestore
-  let favorites = DEFAULT_FAVORITE_REPOS;
-  try {
-    if (window.db) {
-      const doc = await window.db.collection('users').doc(user.uid).get();
-      if (doc.exists && doc.data().favoriteRepos) {
-        favorites = doc.data().favoriteRepos;
-      }
+  // Initialize RepoSelector
+  const repoSelector = new RepoSelector({
+    favoriteContainer: null, // Free input doesn't have a favorite container
+    dropdownBtn: document.getElementById('freeInputRepoDropdownBtn'),
+    dropdownText: document.getElementById('freeInputRepoDropdownText'),
+    dropdownMenu: document.getElementById('freeInputRepoDropdownMenu'),
+    onSelect: (sourceId, branch, repoName) => {
+      lastSelectedSourceId = sourceId;
+      lastSelectedBranch = branch;
+      branchSelector.initialize(sourceId, branch);
     }
-  } catch (error) {
-    console.error('Failed to load favorites from Firestore:', error);
-  }
+  });
 
-  let allReposLoaded = false;
-  let allSources = [];
-  let sourcesCache = null; // Cache the sources list to avoid repeated API calls
-
-  const saveFavoritesToFirestore = async (newFavorites) => {
-    try {
-      if (window.db) {
-        await window.db.collection('users').doc(user.uid).set({
-          favoriteRepos: newFavorites
-        }, { merge: true });
-        favorites = newFavorites;
-      }
-    } catch (error) {
-      console.error('Failed to save favorites:', error);
+  // Initialize BranchSelector
+  const branchSelector = new BranchSelector({
+    dropdownBtn: document.getElementById('freeInputBranchDropdownBtn'),
+    dropdownText: document.getElementById('freeInputBranchDropdownText'),
+    dropdownMenu: document.getElementById('freeInputBranchDropdownMenu'),
+    onSelect: (branch) => {
+      lastSelectedBranch = branch;
     }
-  };
+  });
 
-  const toggleDropdown = async () => {
-    if (dropdownMenu.style.display === 'block') {
-      dropdownMenu.style.display = 'none';
-      return;
-    }
-    
-    dropdownMenu.innerHTML = '';
-    
-    // Show loading indicator immediately
-    const loadingIndicator = document.createElement('div');
-    loadingIndicator.style.cssText = 'padding:12px; text-align:center; color:var(--muted); font-size:13px;';
-    loadingIndicator.textContent = 'Loading...';
-    dropdownMenu.appendChild(loadingIndicator);
-    dropdownMenu.style.display = 'block';
-    
-    // Use setTimeout to allow the loading indicator to render
-    await new Promise(resolve => setTimeout(resolve, 0));
-    
-    dropdownMenu.innerHTML = '';
-    
-    if (favorites && favorites.length > 0) {
-      favorites.forEach(fav => {
-        const item = document.createElement('div');
-        item.className = 'custom-dropdown-item';
-        item.style.cssText = 'display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer;';
-        
-        if (fav.id === lastSelectedSourceId) {
-          item.classList.add('selected');
-        }
-        
-        // Star icon
-        const star = document.createElement('span');
-        star.textContent = '★';
-        star.style.cssText = 'font-size:18px; cursor:pointer; color:var(--accent); flex-shrink:0;';
-        star.onclick = async (e) => {
-          e.stopPropagation();
-          // Remove from favorites
-          const newFavorites = favorites.filter(f => f.id !== fav.id);
-          try {
-            if (window.db) {
-              await window.db.collection('users').doc(user.uid).set({
-                favoriteRepos: newFavorites
-              }, { merge: true });
-              favorites = newFavorites;
-              // Re-render the dropdown
-              toggleDropdown();
-              setTimeout(() => toggleDropdown(), 0);
-            }
-          } catch (error) {
-            console.error('Failed to remove favorite:', error);
-          }
-        };
-        
-        // Repo name
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = fav.name;
-        nameSpan.style.flex = '1';
-        
-        item.appendChild(star);
-        item.appendChild(nameSpan);
-        item.dataset.sourceId = fav.id;
-        item.dataset.branch = fav.branch || 'master';
-        
-        nameSpan.onclick = async () => {
-          lastSelectedSourceId = fav.id;
-          
-          // If we don't have a branch stored OR if it's 'master' (might be wrong), verify it once
-          if (!fav.branch || fav.branch === 'master') {
-            try {
-              const { listJulesSources } = await import('./jules-api.js');
-              const { getDecryptedJulesKey } = await import('./jules-api.js');
-              const apiKey = await getDecryptedJulesKey(user.uid);
-              
-              if (apiKey) {
-                // Use cached sources if available
-                if (!sourcesCache) {
-                  sourcesCache = await listJulesSources(apiKey);
-                }
-                const matchingSource = sourcesCache.sources?.find(s => (s.name || s.id) === fav.id);
-                
-                console.log('Favorite ID:', fav.id);
-                console.log('Matching source:', matchingSource);
-                console.log('GitHub repo:', matchingSource?.githubRepo);
-                console.log('GitHub context:', matchingSource?.githubRepoContext);
-                
-                const defaultBranchObj = matchingSource?.githubRepo?.defaultBranch ||
-                                         matchingSource?.githubRepoContext?.defaultBranch || 
-                                         matchingSource?.defaultBranch;
-                
-                const defaultBranch = typeof defaultBranchObj === 'string' 
-                  ? defaultBranchObj 
-                  : (defaultBranchObj?.displayName || 'master');
-                
-                console.log('Detected default branch:', defaultBranch);
-                lastSelectedBranch = defaultBranch;
-                
-                // Save this branch to the favorite permanently
-                if (fav.branch !== defaultBranch) {
-                  console.log('Updating favorite from', fav.branch, 'to', defaultBranch);
-                  const updatedFavorites = favorites.map(f => 
-                    f.id === fav.id ? { ...f, branch: defaultBranch } : f
-                  );
-                  await saveFavoritesToFirestore(updatedFavorites);
-                  favorites = updatedFavorites;
-                }
-              } else {
-                lastSelectedBranch = fav.branch || 'master';
-              }
-            } catch (error) {
-              console.error('Failed to fetch default branch:', error);
-              lastSelectedBranch = fav.branch || 'master';
-            }
-          } else {
-            // Use the stored branch - no API call needed
-            lastSelectedBranch = fav.branch;
-          }
-          
-          dropdownText.textContent = fav.name;
-          dropdownMenu.style.display = 'none';
-          populateFreeInputBranchSelection();
-        };
-        
-        dropdownMenu.appendChild(item);
-      });
-      
-      const showMoreBtn = document.createElement('div');
-      showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
-      showMoreBtn.textContent = '▼ Show more...';
-      
-      showMoreBtn.onclick = async () => {
-        if (!allReposLoaded) {
-          showMoreBtn.textContent = 'Loading...';
-          showMoreBtn.style.pointerEvents = 'none';
-          
-          try {
-            const { listJulesSources } = await import('./jules-api.js');
-            const { getDecryptedJulesKey } = await import('./jules-api.js');
-            
-            const apiKey = await getDecryptedJulesKey(user.uid);
-            if (!apiKey) {
-              showMoreBtn.textContent = 'No API key configured';
-              showMoreBtn.style.color = 'var(--muted)';
-              return;
-            }
-
-            const sourcesData = await listJulesSources(apiKey);
-            allSources = sourcesData.sources || [];
-            let nextPageToken = sourcesData.nextPageToken;
-            
-            // Fetch all pages
-            while (nextPageToken) {
-              const nextPage = await listJulesSources(apiKey, nextPageToken);
-              allSources = allSources.concat(nextPage.sources || []);
-              nextPageToken = nextPage.nextPageToken;
-            }
-
-            if (allSources.length === 0) {
-              showMoreBtn.textContent = 'No additional repositories';
-              showMoreBtn.style.color = 'var(--muted)';
-              return;
-            }
-
-            allReposLoaded = true;
-          } catch (error) {
-            showMoreBtn.textContent = 'Failed to load - click to retry';
-            showMoreBtn.style.pointerEvents = 'auto';
-            return;
-          }
-        }
-        
-        showMoreBtn.style.display = 'none';
-        
-        allSources.forEach(source => {
-          if (favorites.some(f => f.id === (source.name || source.id))) return;
-          
-          const item = document.createElement('div');
-          item.className = 'custom-dropdown-item';
-          item.style.cssText = 'display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer;';
-          
-          // Extract org/repo from sources/github/org/repo
-          const fullPath = source.name || source.id;
-          const pathParts = fullPath.split('/');
-          const repoName = pathParts.length >= 4 ? pathParts.slice(-2).join('/') : fullPath;
-          
-          const defaultBranch = source.githubRepoContext?.defaultBranch || 
-                               source.defaultBranch || 
-                               'master';
-          item.dataset.branch = defaultBranch;
-          
-          if (item.dataset.sourceId === lastSelectedSourceId) {
-            item.classList.add('selected');
-          }
-          
-          // Star icon
-          const star = document.createElement('span');
-          star.textContent = '\u2606';
-          star.style.cssText = 'font-size:18px; cursor:pointer; color:var(--muted); flex-shrink:0;';
-          star.onclick = async (e) => {
-            e.stopPropagation();
-            const sourceId = source.name || source.id;
-            
-            // Add to favorites
-            const newFavorites = [...favorites, {
-              id: sourceId,
-              name: repoName,
-              branch: defaultBranch
-            }];
-            star.textContent = '\u2605';
-            star.style.color = 'var(--accent)';
-            
-            await saveFavoritesToFirestore(newFavorites);
-            item.remove(); // Remove from "Show more" section
-          };
-          
-          // Repo name
-          const nameSpan = document.createElement('span');
-          nameSpan.textContent = repoName;
-          nameSpan.style.flex = '1';
-          
-          item.appendChild(star);
-          item.appendChild(nameSpan);
-          item.dataset.sourceId = source.name || source.id;
-          
-          nameSpan.onclick = () => {
-            lastSelectedSourceId = item.dataset.sourceId;
-            lastSelectedBranch = item.dataset.branch;
-            dropdownText.textContent = repoName;
-            dropdownMenu.style.display = 'none';
-            populateFreeInputBranchSelection();
-          };
-          
-          dropdownMenu.appendChild(item);
-        });
-      };
-      
-      dropdownMenu.appendChild(showMoreBtn);
-    } else {
-      // No favorites yet - load all sources with stars
-      if (!allReposLoaded) {
-        const loadingDiv = document.createElement('div');
-        loadingDiv.style.cssText = 'padding:12px; text-align:center; color:var(--muted);';
-        loadingDiv.textContent = 'Loading repositories...';
-        dropdownMenu.appendChild(loadingDiv);
-        
-        try {
-          const { listJulesSources } = await import('./jules-api.js');
-          const { getDecryptedJulesKey } = await import('./jules-api.js');
-          
-          const apiKey = await getDecryptedJulesKey(user.uid);
-          if (!apiKey) {
-            loadingDiv.textContent = 'No API key configured';
-            return;
-          }
-
-          const sourcesData = await listJulesSources(apiKey);
-          allSources = sourcesData.sources || [];
-          let nextPageToken = sourcesData.nextPageToken;
-          
-          // Fetch all pages
-          while (nextPageToken) {
-            const nextPage = await listJulesSources(apiKey, nextPageToken);
-            allSources = allSources.concat(nextPage.sources || []);
-            nextPageToken = nextPage.nextPageToken;
-          }
-          
-          allReposLoaded = true;
-          loadingDiv.remove();
-          
-          // Show helper message if no favorites
-          if (!favorites || favorites.length === 0) {
-            const helperDiv = document.createElement('div');
-            helperDiv.style.cssText = 'padding:12px; color:var(--muted); text-align:center; font-size:12px; border-bottom:1px solid var(--border);';
-            helperDiv.textContent = 'Click ★ next to any repository to add it to favorites';
-            dropdownMenu.appendChild(helperDiv);
-          }
-        } catch (error) {
-          loadingDiv.textContent = 'Failed to load repositories';
-          return;
-        }
-      }
-      
-      const saveFavoritesToFirestore = async (newFavorites) => {
-        try {
-          if (window.db) {
-            await window.db.collection('users').doc(user.uid).set({
-              favoriteRepos: newFavorites
-            }, { merge: true });
-            favorites = newFavorites;
-          }
-        } catch (error) {
-          console.error('Failed to save favorites:', error);
-        }
-      };
-      
-      allSources.forEach(source => {
-        const item = document.createElement('div');
-        item.className = 'custom-dropdown-item';
-        item.style.cssText = 'display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer;';
-        
-        // Extract org/repo from sources/github/org/repo
-        const fullPath = source.name || source.id;
-        const pathParts = fullPath.split('/');
-        const repoName = pathParts.length >= 4 ? pathParts.slice(-2).join('/') : fullPath;
-        
-        const defaultBranch = source.githubRepoContext?.defaultBranch || 
-                             source.defaultBranch || 
-                             'master';
-        item.dataset.branch = defaultBranch;
-        item.dataset.sourceId = source.name || source.id;
-        
-        if (item.dataset.sourceId === lastSelectedSourceId) {
-          item.classList.add('selected');
-        }
-        
-        // Star icon
-        const star = document.createElement('span');
-        star.textContent = '\u2606';
-        star.style.cssText = 'font-size:18px; cursor:pointer; color:var(--muted); flex-shrink:0;';
-        star.onclick = async (e) => {
-          e.stopPropagation();
-          const sourceId = source.name || source.id;
-          
-          // Add to favorites
-          const newFavorites = [...favorites, {
-            id: sourceId,
-            name: repoName,
-            branch: defaultBranch
-          }];
-          star.textContent = '\u2605';
-          star.style.color = 'var(--accent)';
-          
-          await saveFavoritesToFirestore(newFavorites);
-        };
-        
-        // Repo name
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = repoName;
-        nameSpan.style.flex = '1';
-        
-        item.appendChild(star);
-        item.appendChild(nameSpan);
-        
-        nameSpan.onclick = () => {
-          lastSelectedSourceId = item.dataset.sourceId;
-          lastSelectedBranch = item.dataset.branch;
-          dropdownText.textContent = repoName;
-          dropdownMenu.style.display = 'none';
-          populateFreeInputBranchSelection();
-        };
-        
-        dropdownMenu.appendChild(item);
-      });
-    }
-    
-    dropdownMenu.style.display = 'block';
-  };
-
-  dropdownBtn.onclick = toggleDropdown;
-  
-  const closeDropdown = (e) => {
-    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-      dropdownMenu.style.display = 'none';
-    }
-  };
-  
-  document.removeEventListener('click', closeDropdown);
-  document.addEventListener('click', closeDropdown);
+  // Load favorites and populate dropdown
+  await repoSelector.initialize();
+  branchSelector.initialize(null, null);
 }
 window.populateFreeInputRepoSelection = populateFreeInputRepoSelection;
 
+// Branch selection is now handled by BranchSelector class in populateFreeInputRepoSelection
 async function populateFreeInputBranchSelection() {
-  const dropdownBtn = document.getElementById('freeInputBranchDropdownBtn');
-  const dropdownText = document.getElementById('freeInputBranchDropdownText');
-  const dropdownMenu = document.getElementById('freeInputBranchDropdownMenu');
-  
-  // Initialize with placeholder
-  if (!lastSelectedSourceId) {
-    dropdownText.textContent = 'Select repository first';
-    dropdownBtn.disabled = true;
-    return;
-  }
-  
-  // Show the selected branch or placeholder
-  if (lastSelectedBranch) {
-    dropdownText.textContent = lastSelectedBranch;
-  } else {
-    dropdownText.textContent = 'Select a branch...';
-  }
-  
-  const user = getCurrentUser();
-  if (!user) {
-    dropdownText.textContent = 'Please sign in first';
-    dropdownBtn.disabled = true;
-    dropdownBtn.onclick = null;
-    return;
-  }
-
-  dropdownBtn.disabled = false;
-
-  let allBranchesLoaded = false;
-  let allBranches = [];
-
-  const toggleBranchDropdown = () => {
-    if (dropdownMenu.style.display === 'block') {
-      dropdownMenu.style.display = 'none';
-      return;
-    }
-    
-    if (!lastSelectedSourceId) {
-      alert('Please select a repository first');
-      return;
-    }
-    
-    dropdownMenu.innerHTML = '';
-    
-    const currentItem = document.createElement('div');
-    currentItem.className = 'custom-dropdown-item selected';
-    currentItem.textContent = lastSelectedBranch;
-    currentItem.dataset.branch = lastSelectedBranch;
-    
-    currentItem.onclick = () => {
-      dropdownMenu.style.display = 'none';
-    };
-    
-    dropdownMenu.appendChild(currentItem);
-    
-    const showMoreBtn = document.createElement('div');
-    showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
-    showMoreBtn.textContent = '▼ Show more...';
-    
-    showMoreBtn.onclick = async () => {
-      if (!allBranchesLoaded) {
-        showMoreBtn.textContent = 'Loading...';
-        showMoreBtn.style.pointerEvents = 'none';
-        
-        try {
-          const pathParts = lastSelectedSourceId.split('/');
-          const owner = pathParts[pathParts.length - 2];
-          const repo = pathParts[pathParts.length - 1];
-          
-          console.log('Loading branches for:', owner, '/', repo);
-          
-          const { getBranches } = await import('./github-api.js');
-          allBranches = await getBranches(owner, repo);
-          
-          console.log('Loaded branches:', allBranches);
-
-          if (!allBranches || allBranches.length === 0) {
-            showMoreBtn.textContent = allBranches === null ? 'Rate limited - try later' : 'No branches found';
-            showMoreBtn.style.color = 'var(--muted)';
-            return;
-          }
-
-          allBranchesLoaded = true;
-        } catch (error) {
-          console.error('Failed to load branches:', error);
-          showMoreBtn.textContent = 'Failed to load - click to retry';
-          showMoreBtn.style.pointerEvents = 'auto';
-          return;
-        }
-      }
-      
-      showMoreBtn.style.display = 'none';
-      
-      allBranches.forEach(branch => {
-        if (branch.name === lastSelectedBranch) return;
-        
-        const item = document.createElement('div');
-        item.className = 'custom-dropdown-item';
-        item.textContent = branch.name;
-        item.dataset.branch = branch.name;
-        
-        item.onclick = () => {
-          lastSelectedBranch = branch.name;
-          dropdownText.textContent = branch.name;
-          dropdownMenu.style.display = 'none';
-        };
-        
-        dropdownMenu.appendChild(item);
-      });
-    };
-    
-    dropdownMenu.appendChild(showMoreBtn);
-    
-    dropdownMenu.style.display = 'block';
-  };
-
-  dropdownBtn.onclick = toggleBranchDropdown;
-  
-  const closeBranchDropdown = (e) => {
-    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-      dropdownMenu.style.display = 'none';
-    }
-  };
-  
-  document.removeEventListener('click', closeBranchDropdown);
-  document.addEventListener('click', closeBranchDropdown);
+  // This function is deprecated - BranchSelector is initialized in populateFreeInputRepoSelection
+  // Keeping as stub for backward compatibility
 }
 window.populateFreeInputBranchSelection = populateFreeInputBranchSelection;
 
