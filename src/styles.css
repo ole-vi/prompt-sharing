@@ -222,12 +222,6 @@ button.nav-item:hover {
     font-size: 11px;
   }
 
-  #branchSelect {
-    font-size: 11px;
-    min-width: 40px;
-    max-width: 80px;
-  }
-
   #sidebar {
     position: static;
     transition: height 0.3s ease, padding 0.3s ease;
@@ -675,18 +669,17 @@ footer code {
   background: var(--card);
   color: var(--text);
   border-radius: 8px;
-  padding: 8px 24px 8px 8px;
+  width: clamp(60px, 12vw, 120px);
+  max-width: 120px;
+  padding: 4px 18px 4px 6px;
   font-size: 13px;
   cursor: pointer;
-  max-width: 120px;
-  min-width: 40px;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
   transition: all 0.2s;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Ctext x='0' y='10' font-size='10' fill='%238b94a8'%3E▼%3C/text%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 8px center;
+  background-position: right 6px center;
 }
 
 #branchSelect:hover {
