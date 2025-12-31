@@ -2207,7 +2207,9 @@ async function populateFreeInputRepoSelection() {
   const branchDropdownText = document.getElementById('freeInputBranchDropdownText');
   const branchDropdownMenu = document.getElementById('freeInputBranchDropdownMenu');
   
-  // Initialize with placeholders
+  // Clear selections and initialize with placeholders
+  lastSelectedSourceId = null;
+  lastSelectedBranch = null;
   dropdownText.textContent = 'Select a repository...';
   branchDropdownText.textContent = 'Select repository first';
   branchDropdownBtn.disabled = true;
