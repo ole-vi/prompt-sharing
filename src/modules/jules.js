@@ -597,43 +597,52 @@ export async function callRunJulesFunction(promptText, sourceId, branch = 'maste
     throw new Error('No repository selected');
   }
 
-  try {
-    const julesBtn = document.getElementById('julesBtn');
-    const originalText = julesBtn.textContent;
+  const julesBtn = document.getElementById('julesBtn');
+  const originalText = julesBtn?.textContent;
+  if (julesBtn) {
     julesBtn.textContent = 'Running...';
     julesBtn.disabled = true;
+  }
 
-    const token = await user.getIdToken(true);
-    const functionUrl = 'https://runjuleshttp-n7gaasoeoq-uc.a.run.app';
-
-    const payload = { promptText: promptText || '', sourceId: sourceId, branch: branch, title: title };
+  try {
+    const sessionUrl = await runJulesAPI(promptText, sourceId, branch, title, user);
     
-    const response = await fetch(functionUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.error || `HTTP ${response.status}`);
+    if (julesBtn) {
+      julesBtn.textContent = originalText;
+      julesBtn.disabled = false;
     }
 
-    julesBtn.textContent = originalText;
-    julesBtn.disabled = false;
-
-    return result.sessionUrl || null;
+    return sessionUrl;
   } catch (error) {
-    const julesBtn = document.getElementById('julesBtn');
     if (julesBtn) {
       julesBtn.textContent = '⚡ Try in Jules';
       julesBtn.disabled = false;
     }
     throw error;
   }
+}
+
+async function runJulesAPI(promptText, sourceId, branch, title, user) {
+  const token = await user.getIdToken(true);
+  const functionUrl = 'https://runjuleshttp-n7gaasoeoq-uc.a.run.app';
+
+  const payload = { promptText: promptText || '', sourceId: sourceId, branch: branch, title: title };
+  
+  const response = await fetch(functionUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.error || `HTTP ${response.status}`);
+  }
+
+  return result.sessionUrl || null;
 }
 
 export async function handleTryInJules(promptText) {
@@ -1961,8 +1970,11 @@ async function populateFreeInputRepoSelection() {
   if (!user) {
     dropdownText.textContent = 'Please sign in first';
     dropdownBtn.disabled = true;
+    dropdownBtn.onclick = null;
     return;
   }
+
+  dropdownBtn.disabled = false;
 
   const { DEFAULT_FAVORITE_REPOS, STORAGE_KEY_FAVORITE_REPOS } = await import('../utils/constants.js');
   
@@ -2123,12 +2135,23 @@ async function populateFreeInputRepoSelection() {
   document.removeEventListener('click', closeDropdown);
   document.addEventListener('click', closeDropdown);
 }
+window.populateFreeInputRepoSelection = populateFreeInputRepoSelection;
 
 async function populateFreeInputBranchSelection() {
   const dropdownBtn = document.getElementById('freeInputBranchDropdownBtn');
   const dropdownText = document.getElementById('freeInputBranchDropdownText');
   const dropdownMenu = document.getElementById('freeInputBranchDropdownMenu');
   
+  const user = getCurrentUser();
+  if (!user) {
+    dropdownText.textContent = 'Please sign in first';
+    dropdownBtn.disabled = true;
+    dropdownBtn.onclick = null;
+    return;
+  }
+
+  dropdownBtn.disabled = false;
+
   if (!lastSelectedBranch) {
     lastSelectedBranch = 'master';
   }
@@ -2229,6 +2252,7 @@ async function populateFreeInputBranchSelection() {
   document.removeEventListener('click', closeBranchDropdown);
   document.addEventListener('click', closeBranchDropdown);
 }
+window.populateFreeInputBranchSelection = populateFreeInputBranchSelection;
 
 let currentFullPrompt = '';
 let currentSubtasks = [];
