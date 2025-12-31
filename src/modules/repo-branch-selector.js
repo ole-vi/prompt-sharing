@@ -1,8 +1,5 @@
-// Shared repo and branch selection logic for Jules modals
-
 import { getCurrentUser } from './auth.js';
 
-// Helper to extract default branch from source object
 function extractDefaultBranch(source) {
   const defaultBranchObj = source?.githubRepo?.defaultBranch ||
                            source?.githubRepoContext?.defaultBranch || 
@@ -13,7 +10,6 @@ function extractDefaultBranch(source) {
     : (defaultBranchObj?.displayName || 'master');
 }
 
-// Helper to setup click-outside-to-close behavior
 function setupClickOutsideClose(targetBtn, targetMenu) {
   const closeDropdown = (e) => {
     if (!targetBtn.contains(e.target) && !targetMenu.contains(e.target)) {
@@ -30,8 +26,8 @@ export class RepoSelector {
     this.dropdownText = options.dropdownText;
     this.dropdownMenu = options.dropdownMenu;
     this.favoriteContainer = options.favoriteContainer;
-    this.onSelect = options.onSelect; // Callback when repo is selected
-    this.showFavorites = options.showFavorites !== false; // Default true
+    this.onSelect = options.onSelect;
+    this.showFavorites = options.showFavorites !== false;
     
     this.favorites = [];
     this.allSources = [];
@@ -53,7 +49,6 @@ export class RepoSelector {
 
     const { DEFAULT_FAVORITE_REPOS } = await import('../utils/constants.js');
     
-    // Load favorites from Firestore
     this.favorites = DEFAULT_FAVORITE_REPOS;
     try {
       if (window.db) {
@@ -84,7 +79,6 @@ export class RepoSelector {
   async populateDropdown() {
     this.dropdownMenu.innerHTML = '';
     
-    // Show loading indicator
     const loadingIndicator = document.createElement('div');
     loadingIndicator.style.cssText = 'padding:12px; text-align:center; color:var(--muted); font-size:13px;';
     loadingIndicator.textContent = 'Loading...';
@@ -109,19 +103,16 @@ export class RepoSelector {
   async renderFavorites() {
     for (const fav of this.favorites) {
       const item = this.createRepoItem(fav.name, fav.id, true, async () => {
-        // Set immediately for responsive UI
         this.selectedSourceId = fav.id;
         this.dropdownText.textContent = fav.name;
         this.dropdownMenu.style.display = 'none';
         
-        // Use stored branch immediately
         const currentBranch = fav.branch || 'master';
         
         if (this.onSelect) {
           this.onSelect(fav.id, currentBranch, fav.name);
         }
         
-        // Verify branch in background (non-blocking) if needed
         if (!fav.branch || fav.branch === 'master') {
           this.verifyDefaultBranchInBackground(fav);
         }
@@ -215,7 +206,6 @@ export class RepoSelector {
       item.classList.add('selected');
     }
     
-    // Star icon
     const star = document.createElement('span');
     star.textContent = isFavorite ? '★' : '☆';
     star.style.cssText = `font-size:18px; cursor:pointer; color:${isFavorite ? 'var(--accent)' : 'var(--muted)'}; flex-shrink:0;`;
@@ -232,14 +222,11 @@ export class RepoSelector {
       }
     };
     
-    // Repo name
     const nameSpan = document.createElement('span');
     nameSpan.textContent = name;
     nameSpan.style.flex = '1';
     
-    // Attach click handler to entire item (not just nameSpan)
     item.onclick = (e) => {
-      // Don't trigger if clicking the star
       if (e.target === star) return;
       onClickHandler();
     };
@@ -251,7 +238,6 @@ export class RepoSelector {
   }
 
   async getDefaultBranch(favorite) {
-    // If we don't have a branch stored OR if it's 'master' (might be wrong), verify it once
     if (!favorite.branch || favorite.branch === 'master') {
       try {
         const user = getCurrentUser();
@@ -260,7 +246,6 @@ export class RepoSelector {
         const apiKey = await getDecryptedJulesKey(user.uid);
         
         if (apiKey) {
-          // Use cached sources if available
           if (!this.sourcesCache) {
             this.sourcesCache = await listJulesSources(apiKey);
           }
@@ -268,7 +253,6 @@ export class RepoSelector {
           
           const defaultBranch = extractDefaultBranch(matchingSource);
           
-          // Update favorite if branch changed
           if (favorite.branch !== defaultBranch) {
             const updatedFavorites = this.favorites.map(f => 
               f.id === favorite.id ? { ...f, branch: defaultBranch } : f
@@ -287,7 +271,6 @@ export class RepoSelector {
     return favorite.branch || 'master';
   }
 
-  // Verify default branch in background without blocking UI
   async verifyDefaultBranchInBackground(favorite) {
     try {
       const user = getCurrentUser();
@@ -297,7 +280,6 @@ export class RepoSelector {
       
       if (!apiKey) return;
       
-      // Use cached sources if available
       if (!this.sourcesCache) {
         this.sourcesCache = await listJulesSources(apiKey);
       }
@@ -305,15 +287,12 @@ export class RepoSelector {
       
       const defaultBranch = extractDefaultBranch(matchingSource);
       
-      // Update favorite if branch changed - this will be available next time
       if (favorite.branch !== defaultBranch) {
         const updatedFavorites = this.favorites.map(f => 
           f.id === favorite.id ? { ...f, branch: defaultBranch } : f
         );
         await this.saveFavorites(updatedFavorites);
         this.favorites = updatedFavorites;
-        
-        console.log(`Updated ${favorite.name} default branch to ${defaultBranch}`);
       }
     } catch (error) {
       console.error('Failed to verify default branch in background:', error);
@@ -351,7 +330,7 @@ export class BranchSelector {
     this.dropdownBtn = options.dropdownBtn;
     this.dropdownText = options.dropdownText;
     this.dropdownMenu = options.dropdownMenu;
-    this.onSelect = options.onSelect; // Callback when branch is selected
+    this.onSelect = options.onSelect;
     
     this.selectedBranch = null;
     this.sourceId = null;
@@ -361,7 +340,7 @@ export class BranchSelector {
   initialize(sourceId, defaultBranch) {
     this.sourceId = sourceId;
     this.selectedBranch = defaultBranch;
-    this.allBranchesLoaded = false; // Reset when repo changes
+    this.allBranchesLoaded = false;
     
     if (!sourceId) {
       this.dropdownText.textContent = 'Select repository first';
@@ -395,7 +374,6 @@ export class BranchSelector {
     
     this.dropdownMenu.innerHTML = '';
     
-    // Show current branch
     const currentItem = document.createElement('div');
     currentItem.className = 'custom-dropdown-item selected';
     currentItem.textContent = this.selectedBranch;
@@ -404,7 +382,6 @@ export class BranchSelector {
     };
     this.dropdownMenu.appendChild(currentItem);
     
-    // Show more button to load all branches
     const showMoreBtn = document.createElement('div');
     showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
     showMoreBtn.textContent = '▼ Show more branches...';
@@ -433,7 +410,6 @@ export class BranchSelector {
         this.allBranchesLoaded = true;
         showMoreBtn.style.display = 'none';
         
-        // Add all other branches
         allBranches.forEach(branch => {
           if (branch.name === this.selectedBranch) return;
           
