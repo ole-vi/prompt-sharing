@@ -65,7 +65,8 @@ export class RepoSelector {
   }
 
   setupDropdownToggle() {
-    this.dropdownBtn.onclick = async () => {
+    this.dropdownBtn.onclick = async (e) => {
+      e.stopPropagation();
       if (this.dropdownMenu.style.display === 'block') {
         this.dropdownMenu.style.display = 'none';
         return;
@@ -87,13 +88,13 @@ export class RepoSelector {
     
     await new Promise(resolve => setTimeout(resolve, 0));
     
-    this.dropdownMenu.innerHTML = '';
-    
     if (this.showFavorites && this.favorites && this.favorites.length > 0) {
+      this.dropdownMenu.innerHTML = '';
       await this.renderFavorites();
       this.addShowMoreButton();
     } else {
       await this.loadAllRepos();
+      this.dropdownMenu.innerHTML = '';
       this.renderAllRepos();
     }
     
@@ -175,6 +176,13 @@ export class RepoSelector {
   }
 
   renderAllRepos() {
+    if (!this.favorites || this.favorites.length === 0) {
+      const helperDiv = document.createElement('div');
+      helperDiv.style.cssText = 'padding:12px; color:var(--muted); text-align:center; font-size:12px; border-bottom:1px solid var(--border);';
+      helperDiv.textContent = 'Click ★ next to any repository to add it to favorites';
+      this.dropdownMenu.appendChild(helperDiv);
+    }
+    
     this.allSources.forEach(source => {
       if (this.favorites.some(f => f.id === (source.name || source.id))) return;
       
@@ -355,7 +363,8 @@ export class BranchSelector {
   }
 
   setupDropdownToggle() {
-    this.dropdownBtn.onclick = () => {
+    this.dropdownBtn.onclick = (e) => {
+      e.stopPropagation();
       if (this.dropdownMenu.style.display === 'block') {
         this.dropdownMenu.style.display = 'none';
         return;
