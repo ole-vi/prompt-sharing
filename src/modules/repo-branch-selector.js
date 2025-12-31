@@ -109,13 +109,21 @@ export class RepoSelector {
   async renderFavorites() {
     for (const fav of this.favorites) {
       const item = this.createRepoItem(fav.name, fav.id, true, async () => {
-        const branch = await this.getDefaultBranch(fav);
+        // Set immediately for responsive UI
         this.selectedSourceId = fav.id;
         this.dropdownText.textContent = fav.name;
         this.dropdownMenu.style.display = 'none';
         
+        // Use stored branch immediately
+        const currentBranch = fav.branch || 'master';
+        
         if (this.onSelect) {
-          this.onSelect(fav.id, branch, fav.name);
+          this.onSelect(fav.id, currentBranch, fav.name);
+        }
+        
+        // Verify branch in background (non-blocking) if needed
+        if (!fav.branch || fav.branch === 'master') {
+          this.verifyDefaultBranchInBackground(fav);
         }
       });
       
@@ -228,7 +236,13 @@ export class RepoSelector {
     const nameSpan = document.createElement('span');
     nameSpan.textContent = name;
     nameSpan.style.flex = '1';
-    nameSpan.onclick = onClickHandler;
+    
+    // Attach click handler to entire item (not just nameSpan)
+    item.onclick = (e) => {
+      // Don't trigger if clicking the star
+      if (e.target === star) return;
+      onClickHandler();
+    };
     
     item.appendChild(star);
     item.appendChild(nameSpan);
@@ -271,6 +285,39 @@ export class RepoSelector {
     }
     
     return favorite.branch || 'master';
+  }
+
+  // Verify default branch in background without blocking UI
+  async verifyDefaultBranchInBackground(favorite) {
+    try {
+      const user = getCurrentUser();
+      const { listJulesSources } = await import('./jules-api.js');
+      const { getDecryptedJulesKey } = await import('./jules-api.js');
+      const apiKey = await getDecryptedJulesKey(user.uid);
+      
+      if (!apiKey) return;
+      
+      // Use cached sources if available
+      if (!this.sourcesCache) {
+        this.sourcesCache = await listJulesSources(apiKey);
+      }
+      const matchingSource = this.sourcesCache.sources?.find(s => (s.name || s.id) === favorite.id);
+      
+      const defaultBranch = extractDefaultBranch(matchingSource);
+      
+      // Update favorite if branch changed - this will be available next time
+      if (favorite.branch !== defaultBranch) {
+        const updatedFavorites = this.favorites.map(f => 
+          f.id === favorite.id ? { ...f, branch: defaultBranch } : f
+        );
+        await this.saveFavorites(updatedFavorites);
+        this.favorites = updatedFavorites;
+        
+        console.log(`Updated ${favorite.name} default branch to ${defaultBranch}`);
+      }
+    } catch (error) {
+      console.error('Failed to verify default branch in background:', error);
+    }
   }
 
   async saveFavorites(newFavorites) {
