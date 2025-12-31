@@ -1,7 +1,7 @@
 ---
 name: vision
 description: Authoritative charter and execution mandate for the prompt-sharing repository.
-version: 5.0
+version: 6.0
 ---
 
 # prompt-sharing: Agentic Charter and Execution Framework
@@ -105,6 +105,83 @@ Execution without planning is incorrect behavior.
 
 ---
 
+## EXECUTABLE PLANNING REQUIREMENT
+
+Each item in the plan must be an independently executable unit of work.
+
+A valid plan item:
+- Has a clear scope and outcome
+- Can be implemented without requiring all other items to be completed first
+- Could reasonably be executed as a single commit or pull request
+- Represents a concrete change to the web application
+
+Avoid vague or purely conceptual items.
+If an item cannot be executed directly, break it down until it can be.
+
+---
+
+## OUTPUT GRAMMAR (TASK EMISSION REQUIRED)
+
+When producing an improvement plan, you must emit each plan item as a task using the following grammar.
+
+Follow this grammar exactly.
+
+```
+document := { finding_section }
+
+finding_section :=
+"### " title "\n"
+rationale_paragraph "\n"
+{ "\n" citation_line }
+"\n"
+task_stub_block "\n"
+
+title :=
+Short descriptive text with no trailing period
+
+rationale_paragraph :=
+1–3 sentences explaining why this is a problem and its impact.
+Use plain text.
+Focus on correctness, performance, scalability, or reliability.
+
+citation_line :=
+:codex-file-citation[codex-file-citation]{
+line_range_start=INT
+line_range_end=INT
+path=PATH
+git_url="URL#LSTART-LEND"
+}
+
+task_stub_block :=
+:::task-stub{title="TASK TITLE"}
+step_line
+{ "\n" step_line }
+:::
+
+step_line :=
+INT ". " STEP_TEXT
+```
+
+Each finding_section represents a single independently executable task.
+
+Each task-stub must be executable independently and selectable without additional clarification.
+
+---
+
+## Default Behavior When No Task Is Given
+
+If no explicit task is provided, proceed as follows:
+
+1. Identify the web application code in this repository
+2. Build a mental model of the system architecture and runtime behavior
+3. Produce a multi item improvement plan using the required task grammar
+4. Stop after emitting the plan
+
+Do not implement automatically.
+Do not select an item on your own.
+
+---
+
 ## Execution Handoff (Clickable Task Bias)
 
 After producing the improvement plan:
@@ -115,26 +192,6 @@ After producing the improvement plan:
 - Wait for explicit selection of a plan item before acting
 
 When an item is selected, execute only that item.
-
-
-Avoid vague or purely conceptual items.
-If an item cannot be executed directly, break it down until it can be.
-
----
-
-## Default Behavior When No Task Is Given
-
-If no explicit task is provided, proceed as follows:
-
-1. Identify the web application code in this repository
-2. Build a mental model of the system architecture and runtime behavior
-3. Produce a multi item improvement plan
-4. Select the highest impact improvement from that plan
-5. Begin implementing that improvement
-
-Do not skip the planning phase.
-Do not stop after planning.
-Plan, then execute.
 
 ---
 
@@ -169,8 +226,9 @@ The following outputs are incorrect unless explicitly requested:
 - Markdown only refactors
 - Single change execution without a broader plan
 - Philosophical discussion without implementation
+- Automatic execution without explicit task selection
 
-If you find yourself only writing markdown, stop and redirect toward code.
+If you find yourself only writing markdown or executing without a task selection, stop and redirect.
 
 ---
 
@@ -178,10 +236,10 @@ If you find yourself only writing markdown, stop and redirect toward code.
 
 Your work is successful when:
 
-- The web application evolves in clear, planned steps
+- The web application evolves through clearly scoped, selectable tasks
 - Improvements compound rather than accumulate as debt
 - The system becomes easier to extend and reason about
-- Planning and execution reinforce each other
+- Planning and execution remain cleanly separated
 
 ---
 
@@ -190,7 +248,8 @@ Your work is successful when:
 You are operating inside a living software system.
 
 Plan broadly.
-Act decisively.
-Improve continuously.
+Emit executable tasks.
+Wait for selection.
+Execute precisely.
 
 Proceed.
