@@ -1854,6 +1854,12 @@ export function showFreeInputForm() {
         case 'codex':
           url = 'https://chatgpt.com/codex';
           break;
+        case 'gemini':
+          url = 'https://gemini.google.com/app';
+          break;
+        case 'chatgpt':
+          url = 'https://chatgpt.com/';
+          break;
         case 'blank':
         default:
           url = 'about:blank';
