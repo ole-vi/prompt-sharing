@@ -355,11 +355,13 @@ export class BranchSelector {
     
     this.selectedBranch = null;
     this.sourceId = null;
+    this.allBranchesLoaded = false;
   }
 
   initialize(sourceId, defaultBranch) {
     this.sourceId = sourceId;
     this.selectedBranch = defaultBranch;
+    this.allBranchesLoaded = false; // Reset when repo changes
     
     if (!sourceId) {
       this.dropdownText.textContent = 'Select repository first';
@@ -402,15 +404,58 @@ export class BranchSelector {
     };
     this.dropdownMenu.appendChild(currentItem);
     
-    // Show more button (for future GitHub API integration if needed)
+    // Show more button to load all branches
     const showMoreBtn = document.createElement('div');
     showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
-    showMoreBtn.textContent = '▼ Show more...';
-    showMoreBtn.onclick = () => {
-      showMoreBtn.textContent = 'GitHub API rate limited';
-      showMoreBtn.style.color = 'var(--muted)';
+    showMoreBtn.textContent = '▼ Show more branches...';
+    
+    showMoreBtn.onclick = async () => {
+      if (this.allBranchesLoaded) return;
+      
+      showMoreBtn.textContent = 'Loading...';
       showMoreBtn.style.pointerEvents = 'none';
+      
+      try {
+        const pathParts = this.sourceId.split('/');
+        const owner = pathParts[pathParts.length - 2];
+        const repo = pathParts[pathParts.length - 1];
+        
+        const { getBranches } = await import('./github-api.js');
+        const allBranches = await getBranches(owner, repo);
+
+        if (!allBranches || allBranches.length === 0) {
+          showMoreBtn.textContent = allBranches === null ? 'GitHub API rate limited - try later' : 'No branches found';
+          showMoreBtn.style.color = 'var(--muted)';
+          showMoreBtn.style.pointerEvents = 'auto';
+          return;
+        }
+
+        this.allBranchesLoaded = true;
+        showMoreBtn.style.display = 'none';
+        
+        // Add all other branches
+        allBranches.forEach(branch => {
+          if (branch.name === this.selectedBranch) return;
+          
+          const item = document.createElement('div');
+          item.className = 'custom-dropdown-item';
+          item.textContent = branch.name;
+          
+          item.onclick = () => {
+            this.setSelectedBranch(branch.name);
+            this.dropdownMenu.style.display = 'none';
+          };
+          
+          this.dropdownMenu.appendChild(item);
+        });
+      } catch (error) {
+        console.error('Failed to load branches:', error);
+        showMoreBtn.textContent = 'Failed to load - click to retry';
+        showMoreBtn.style.color = 'var(--muted)';
+        showMoreBtn.style.pointerEvents = 'auto';
+      }
     };
+    
     this.dropdownMenu.appendChild(showMoreBtn);
     
     this.dropdownMenu.style.display = 'block';
