@@ -759,6 +759,13 @@ export async function showJulesEnvModal(promptText) {
   const submitBtn = document.getElementById('julesEnvSubmitBtn');
   const queueBtn = document.getElementById('julesEnvQueueBtn');
   
+  // Initialize with placeholders
+  dropdownText.textContent = 'Select a repository...';
+  branchDropdownText.textContent = 'Select repository first';
+  branchDropdownBtn.disabled = true;
+  submitBtn.disabled = true;
+  queueBtn.disabled = true;
+  
   let selectedSourceId = null;
   let selectedBranch = null;
   
@@ -2196,6 +2203,14 @@ async function populateFreeInputRepoSelection() {
   const dropdownBtn = document.getElementById('freeInputRepoDropdownBtn');
   const dropdownText = document.getElementById('freeInputRepoDropdownText');
   const dropdownMenu = document.getElementById('freeInputRepoDropdownMenu');
+  const branchDropdownBtn = document.getElementById('freeInputBranchDropdownBtn');
+  const branchDropdownText = document.getElementById('freeInputBranchDropdownText');
+  const branchDropdownMenu = document.getElementById('freeInputBranchDropdownMenu');
+  
+  // Initialize with placeholders
+  dropdownText.textContent = 'Select a repository...';
+  branchDropdownText.textContent = 'Select repository first';
+  branchDropdownBtn.disabled = true;
   
   const user = getCurrentUser();
   if (!user) {
@@ -2220,12 +2235,6 @@ async function populateFreeInputRepoSelection() {
     }
   } catch (error) {
     console.error('Failed to load favorites from Firestore:', error);
-  }
-
-  if (lastSelectedSourceId) {
-    const pathParts = lastSelectedSourceId.split('/');
-    const repoName = pathParts.slice(-2).join('/');
-    dropdownText.textContent = repoName;
   }
 
   let allReposLoaded = false;
@@ -2568,6 +2577,15 @@ async function populateFreeInputBranchSelection() {
   const dropdownText = document.getElementById('freeInputBranchDropdownText');
   const dropdownMenu = document.getElementById('freeInputBranchDropdownMenu');
   
+  // Initialize with placeholder
+  if (!lastSelectedSourceId) {
+    dropdownText.textContent = 'Select repository first';
+    dropdownBtn.disabled = true;
+    return;
+  }
+  
+  dropdownText.textContent = 'Select a branch...';
+  
   const user = getCurrentUser();
   if (!user) {
     dropdownText.textContent = 'Please sign in first';
@@ -2577,12 +2595,6 @@ async function populateFreeInputBranchSelection() {
   }
 
   dropdownBtn.disabled = false;
-
-  if (!lastSelectedBranch) {
-    lastSelectedBranch = 'master';
-  }
-  
-  dropdownText.textContent = lastSelectedBranch;
 
   let allBranchesLoaded = false;
   let allBranches = [];
