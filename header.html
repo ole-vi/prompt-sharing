@@ -4,17 +4,29 @@
     .user-menu-button {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
       font-size: 12px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
       background: linear-gradient(135deg, rgba(20,24,41,0.6), rgba(20,24,41,0.3));
       color: var(--text);
       cursor: pointer;
+      transition: all 0.2s;
+      overflow: hidden;
     }
-    .user-menu-button:hover { filter: brightness(1.05); }
-    .user-menu-caret { opacity: 0.7; }
+    .user-menu-button:hover { 
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(77, 217, 255, 0.3);
+    }
+    .user-menu-button img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #userName, .user-menu-caret { display: none; }
     .user-dropdown {
       position: absolute;
       right: 0;
@@ -54,72 +66,247 @@
       gap: 8px;
     }
     .user-dropdown-sep { height: 1px; background: var(--border); margin: 6px 0; }
+    
+    /* Mobile Navigation */
+    #mobileMenuBtn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 8px;
+      line-height: 1;
+    }
+    
+    #mobileSidebar {
+      position: fixed;
+      top: 0;
+      left: -280px;
+      width: 280px;
+      height: 100vh;
+      background: linear-gradient(180deg, rgba(10,14,26,0.98), rgba(20,24,41,0.98));
+      backdrop-filter: blur(10px);
+      border-right: 1px solid var(--border);
+      z-index: 1000;
+      transition: left 0.3s ease;
+      overflow-y: auto;
+    }
+    
+    #mobileSidebar.open {
+      left: 0;
+    }
+    
+    #mobileOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      display: none;
+    }
+    
+    #mobileOverlay.show {
+      display: block;
+    }
+    
+    .mobile-sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .mobile-sidebar-close {
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+    
+    .mobile-nav-items {
+      padding: 20px 0;
+    }
+    
+    .mobile-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: all 0.2s;
+      font-size: 15px;
+    }
+    
+    .mobile-nav-item:hover {
+      background: rgba(77, 217, 255, 0.08);
+      color: var(--text);
+    }
+    
+    .mobile-nav-item.active {
+      background: rgba(77, 217, 255, 0.12);
+      color: var(--accent);
+      border-left: 3px solid var(--accent);
+      padding-left: 17px;
+    }
+    
+    .mobile-nav-item .nav-icon {
+      font-size: 20px;
+    }
+    
     @media (max-width: 900px) {
+      #mobileMenuBtn {
+        display: block;
+      }
       #headerContainer {
-        flex-direction: column !important;
-        gap: 8px !important;
-        align-items: center !important;
+        padding: 12px 16px !important;
       }
       #headerContainer > div:first-child {
-        width: 100%;
-        flex-direction: column !important;
-        align-items: center !important;
-        gap: 8px !important;
+        flex: 0 0 auto !important;
+        min-width: auto !important;
       }
       #headerBranding a {
-        flex-direction: column;
-        text-align: center;
+        gap: 8px !important;
+      }
+      #headerBranding a > div > div:first-child {
+        font-size: 18px !important;
+      }
+      #headerBranding a > div > div:nth-child(2) {
+        display: none !important;
+      }
+      #headerNav {
+        display: none !important;
       }
       #headerControls {
-        width: 100%;
-        justify-content: center !important;
-        flex-direction: column !important;
+        gap: 8px !important;
+        min-width: 40px !important;
+        max-width: 80px !important;
       }
-      #authStatus {
-        width: 100%;
-        align-items: center !important;
+      #branchSelect {
+        max-width: 80px !important;
+      }
+      #headerContainer > div:last-child {
+        flex: 0 0 auto !important;
+        min-width: auto !important;
       }
     }
   </style>
-  <div id="headerContainer" style="display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 16px; width:100%;">
-    <div style="display:flex; align-items:center; gap:16px;">
-      <div id="headerBranding" style="display:flex; align-items:flex-start; gap:12px;">
-        <a id="logoLink" href="/" style="text-decoration:none; color:inherit; display:flex; align-items:flex-start; gap:12px;">
-          <img src="assets/PromptSyncLogo.svg" alt="PromptSync" style="width:36px; height:36px; flex-shrink:0; object-fit:contain;">
+  <!-- Mobile Overlay -->
+  <div id="mobileOverlay"></div>
+  
+  <!-- Mobile Sidebar -->
+  <div id="mobileSidebar">
+    <div class="mobile-sidebar-header">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <img src="assets/PromptSyncLogo.svg" alt="PromptSync" style="width:28px; height:28px;">
+        <div style="font-size:18px; font-weight:900; letter-spacing:0.5px;">PromptSync</div>
+      </div>
+      <button class="mobile-sidebar-close" id="mobileSidebarClose" aria-label="Close menu">✕</button>
+    </div>
+    <div class="mobile-nav-items">
+      <a href="index.html" class="mobile-nav-item" data-page="home" title="View and create prompts">
+        <span class="nav-icon">🏠</span>
+        <span>Home</span>
+      </a>
+      <a href="queue.html" class="mobile-nav-item" data-page="queue" title="View queued tasks">
+        <span class="nav-icon">📋</span>
+        <span>Queue</span>
+      </a>
+      <a href="jules.html" class="mobile-nav-item" data-page="jules" title="Jules configuration and session history">
+        <span class="nav-icon">🤖</span>
+        <span>Jules</span>
+      </a>
+      <a href="webcapture.html" class="mobile-nav-item" data-page="webcapture" title="Capture web content">
+        <span class="nav-icon">📸</span>
+        <span>Web Capture</span>
+      </a>
+      <a href="https://github.com/ole-vi/prompt-sharing/blob/main/README.md" target="_blank" rel="noopener" class="mobile-nav-item" title="View documentation">
+        <span class="nav-icon">📖</span>
+        <span>Help</span>
+      </a>
+    </div>
+  </div>
+  
+  <div id="headerContainer" style="display:flex; justify-content:space-between; align-items:center; gap:20px; padding:12px 20px; width:100%;">
+    <!-- Left: Logo & Tagline -->
+    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0; flex:1; min-width:0;">
+      <button id="mobileMenuBtn" aria-label="Open menu">☰</button>
+      <div id="headerBranding">
+        <a id="logoLink" href="/" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:10px;">
+          <img src="assets/PromptSyncLogo.svg" alt="PromptSync" style="width:32px; height:32px; flex-shrink:0; object-fit:contain;">
           <div>
-            <div style="font-size:24px; font-weight:900; letter-spacing:0.5px; line-height:1.2;">PromptSync</div>
-            <div style="color:var(--muted); font-size:12px; margin-top:2px; word-break:break-word;">Share and amplify your team's AI knowledge.</div>
-            <div id="appVersion" style="color:var(--muted); font-size:10px; opacity:0.7; margin-top:2px;"></div>
+            <div style="font-size:20px; font-weight:900; letter-spacing:0.5px; line-height:1.2;">PromptSync</div>
+            <div style="color:var(--muted); font-size:11px; margin-top:4px;">Share and amplify your team's AI knowledge.</div>
+            <div id="appVersion" style="color:var(--muted); font-size:10px; opacity:0.7; margin-top:4px; font-family:monospace;">Loading...</div>
           </div>
         </a>
       </div>
-
-      <div id="headerControls" style="display:flex; gap:8px; align-items:center;">
-        <div class="pill" id="repoPill" style="white-space:nowrap;">Loading repo...</div>
-        <label style="display:flex; align-items:center; gap:4px; white-space:nowrap; position:relative;">
-          <select id="branchSelect" class="btn" style="min-width:140px; padding-right:28px;">
-            <option>Loading branches…</option>
-          </select>
-          <span title="Choose a branch" style="position:absolute; right:8px; pointer-events:none;">▼</span>
-        </label>
-      </div>
     </div>
 
-    <div id="authStatus" style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; font-size:13px; flex-shrink:0;">
-      <div id="userMenu" class="user-menu">
-        <button id="userMenuButton" class="user-menu-button" aria-haspopup="true" aria-expanded="false">
-          <span id="userDisplay" style="display:inline-flex; align-items:center; gap:6px;">
-            <img id="userAvatar" src="" alt="" style="width:18px; height:18px; border-radius:50%; display:none;">
-            <strong id="userName">Guest</strong>
-          </span>
-          <span class="user-menu-caret">▾</span>
-        </button>
-        <div id="userMenuDropdown" class="user-dropdown" role="menu" aria-labelledby="userMenuButton">
-          <button id="headerSignIn" class="dropdown-item" role="menuitem" style="justify-content: center;">🔑 Sign In with GitHub</button>
-          <button id="headerSignOut" class="dropdown-item" role="menuitem" style="display:none; justify-content: center;">🚪 Sign Out</button>
+    <!-- Center: Navigation -->
+    <nav id="headerNav" style="display:flex; gap:0; align-items:center; justify-content:center; flex-shrink:0;">
+      <a href="index.html" class="nav-item" data-page="home" title="View and create prompts">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </a>
+      <a href="queue.html" class="nav-item" data-page="queue" title="View queued tasks">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Queue</span>
+      </a>
+      <a href="jules.html" class="nav-item" data-page="jules" title="Jules configuration and session history">
+        <span class="nav-icon">🤖</span>
+        <span class="nav-label">Jules</span>
+      </a>
+      <a href="webcapture.html" class="nav-item" data-page="webcapture" title="Capture web content">
+        <span class="nav-icon">📸</span>
+        <span class="nav-label">Web Capture</span>
+      </a>
+      <a href="https://github.com/ole-vi/prompt-sharing/blob/main/README.md" target="_blank" rel="noopener" class="nav-item" title="View documentation">
+        <span class="nav-icon">📖</span>
+        <span class="nav-label">Help</span>
+      </a>
+    </nav>
+
+    <!-- Right: Controls & Auth -->
+    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0; flex:1; min-width:0; justify-content:flex-end;">
+      <div id="headerControls" style="display:flex; gap:6px; align-items:center; flex-shrink:1; min-width:40px;">
+        <select id="branchSelect">
+          <option>Loading…</option>
+        </select>
+      </div>
+
+      <div id="authStatus" style="display:flex; align-items:center; gap:6px; font-size:13px; flex-shrink:0;">
+        <div id="userMenu" class="user-menu">
+          <button id="userMenuButton" class="user-menu-button" aria-haspopup="true" aria-expanded="false" title="Account menu">
+            <img id="userAvatar" src="" alt="" style="display:none;">
+            <span id="userDisplay" style="display:flex; align-items:center; justify-content:center; width:100%; height:100%; font-size:16px;">
+              👤
+            </span>
+            <strong id="userName" style="display:none;">Guest</strong>
+            <span class="user-menu-caret">▾</span>
+          </button>
+          <div id="userMenuDropdown" class="user-dropdown" role="menu" aria-labelledby="userMenuButton">
+            <div style="padding: 12px 10px 8px; border-bottom: 1px solid var(--border); margin-bottom: 6px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <img id="dropdownAvatar" src="" alt="" style="width:32px; height:32px; border-radius:50%; display:none;">
+                <div style="flex: 1; min-width: 0;">
+                  <div id="dropdownUserName" style="font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Guest</div>
+                  <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">Not signed in</div>
+                </div>
+              </div>
+            </div>
+            <button id="headerSignIn" class="dropdown-item" role="menuitem" style="justify-content: center;">🔑 Sign In with GitHub</button>
+            <button id="headerSignOut" class="dropdown-item" role="menuitem" style="display:none; justify-content: center;">🚪 Sign Out</button>
+          </div>
         </div>
       </div>
-      <a href="https://github.com/ole-vi/prompt-sharing/blob/main/README.md" target="_blank" rel="noopener" class="help-link" title="View documentation" style="padding:6px 10px; font-size:12px;">📖 Help</a>
     </div>
   </div>
 </header>
