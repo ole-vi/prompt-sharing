@@ -1,0 +1,185 @@
+/* =============================================================================
+   COMPONENT - MODALS
+   ============================================================================= */
+
+/* Jules Key Modal */
+#julesKeyModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: var(--z-modal);
+  display: none !important;
+  align-items: center;
+  justify-content: center;
+}
+
+#julesKeyModal.show {
+  display: flex !important;
+}
+
+#julesKeyModal > div {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--shadow-lg);
+}
+
+#julesKeyModal h2 {
+  margin: 0 0 var(--spacing-md);
+  font-size: var(--font-2xl);
+}
+
+#julesKeyModal p {
+  margin: 0 0 var(--spacing-lg);
+  color: var(--muted);
+  font-size: var(--font-md);
+}
+
+#julesKeyInput {
+  width: 100%;
+  padding: var(--spacing-lg) var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #12162a;
+  color: var(--text);
+  outline: none;
+  margin-bottom: var(--spacing-lg);
+  box-sizing: border-box;
+  font-size: var(--font-base);
+}
+
+#julesKeyInput::placeholder {
+  color: var(--muted);
+}
+
+/* Generic Modal Styles */
+.modal {
+  display: none !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: var(--z-modal);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-content.modal-lg {
+  max-width: 600px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.modal-content h2 {
+  margin: 0 0 var(--spacing-md);
+  font-size: var(--font-2xl);
+}
+
+.modal-content p {
+  margin: 0 0 var(--spacing-lg);
+  color: var(--muted);
+  font-size: var(--font-md);
+}
+
+.modal-textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #12162a;
+  color: var(--text);
+  outline: none;
+  margin-bottom: var(--spacing-lg);
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, Noto Sans, Liberation Sans, Helvetica Neue, sans-serif;
+  font-size: var(--font-base);
+}
+
+.modal select,
+.modal-input {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: #11152a;
+  color: var(--text);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-md);
+  cursor: pointer;
+  outline: none;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, Noto Sans, Liberation Sans, Helvetica Neue, sans-serif;
+  transition: border-color var(--transition-base) var(--transition-ease),
+              box-shadow var(--transition-base) var(--transition-ease);
+}
+
+.modal select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(77, 217, 255, 0.1);
+}
+
+.modal select option {
+  color: var(--text);
+  background: var(--card);
+  padding: var(--spacing-sm);
+  border-radius: 0;
+}
+
+.modal select option:checked {
+  background: linear-gradient(135deg, rgba(77,217,255,0.2), rgba(77,217,255,0.1)) !important;
+  color: var(--accent) !important;
+  font-weight: var(--font-semibold);
+}
+
+.modal select option:hover {
+  background: rgba(77, 217, 255, 0.08);
+}
+
+/* Firefox-specific styling */
+@-moz-document url-prefix() {
+  .modal select option:checked {
+    background-color: rgba(77, 217, 255, 0.2) !important;
+  }
+}
+
+.modal select optgroup {
+  font-weight: var(--font-semibold);
+  color: var(--muted);
+  background: var(--card);
+}
+
+.modal-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+.modal-buttons .btn {
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.modal-buttons .btn.primary {
+  border-color: var(--accent);
+  color: var(--accent);
+}

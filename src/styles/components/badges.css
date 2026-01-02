@@ -1,0 +1,85 @@
+/* =============================================================================
+   COMPONENT - PILLS & BADGES
+   ============================================================================= */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--accent);
+  background: var(--accent-glow);
+  font-size: var(--font-sm);
+  color: var(--accent);
+  font-weight: var(--font-medium);
+}
+
+/* Tag Badges */
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.tag-badge {
+  display: inline-block;
+  padding: 2px var(--spacing-sm);
+  font-size: var(--font-xs);
+  font-weight: var(--font-semibold);
+  line-height: 1.5;
+  border-radius: 2em;
+  cursor: pointer;
+  transition: background var(--transition-base) var(--transition-ease),
+              border-color var(--transition-base) var(--transition-ease),
+              transform var(--transition-base) var(--transition-ease);
+}
+
+.tag-review {
+  color: #d876e3;
+  background-color: rgba(216, 118, 227, 0.1);
+  border: 1px solid rgba(216, 118, 227, 0.3);
+}
+
+.tag-review:hover {
+  background-color: rgba(216, 118, 227, 0.3);
+  border-color: rgba(216, 118, 227, 0.5);
+  transform: scale(1.05);
+}
+
+.tag-bug {
+  color: var(--color-error);
+  background-color: rgba(255, 133, 133, 0.1);
+  border: 1px solid rgba(255, 133, 133, 0.3);
+}
+
+.tag-bug:hover {
+  background-color: rgba(255, 133, 133, 0.3);
+  border-color: rgba(255, 133, 133, 0.5);
+  transform: scale(1.05);
+}
+
+.tag-design {
+  color: var(--color-info);
+  background-color: rgba(121, 192, 255, 0.1);
+  border: 1px solid rgba(121, 192, 255, 0.3);
+}
+
+.tag-design:hover {
+  background-color: rgba(121, 192, 255, 0.3);
+  border-color: rgba(121, 192, 255, 0.5);
+  transform: scale(1.05);
+}
+
+.tag-refactor {
+  color: #a371f7;
+  background-color: rgba(163, 113, 247, 0.1);
+  border: 1px solid rgba(163, 113, 247, 0.3);
+}
+
+.tag-refactor:hover {
+  background-color: rgba(163, 113, 247, 0.3);
+  border-color: rgba(163, 113, 247, 0.5);
+  transform: scale(1.05);
+}

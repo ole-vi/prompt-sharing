@@ -1,0 +1,17 @@
+/* =============================================================================
+   LAYOUT - MAIN CONTAINER & GRID
+   ============================================================================= */
+
+.wrap { 
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-md) 40px;
+  transition: grid-template-columns var(--transition-slow) var(--transition-ease);
+}
+
+.wrap:has(#sidebar.collapsed) {
+  grid-template-columns: var(--sidebar-collapsed) 1fr;
+}

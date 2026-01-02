@@ -25,6 +25,32 @@
       "**/.*",
       "**/node_modules/**",
       "functions/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/",
+        "destination": "/pages/home/index.html"
+      },
+      {
+        "source": "/jules",
+        "destination": "/pages/jules/jules.html"
+      },
+      {
+        "source": "/profile",
+        "destination": "/pages/profile/profile.html"
+      },
+      {
+        "source": "/queue",
+        "destination": "/pages/queue/queue.html"
+      },
+      {
+        "source": "/sessions",
+        "destination": "/pages/sessions/sessions.html"
+      },
+      {
+        "source": "/webcapture",
+        "destination": "/pages/webcapture/webcapture.html"
+      }
     ]
   }
 }

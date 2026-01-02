@@ -4,13 +4,32 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Jules Sessions - PromptSync</title>
-  <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
-  <link rel="stylesheet" href="src/styles.css" />
+  <link rel="icon" type="image/x-icon" href="../../assets/favicon.ico" />
+  
+  <!-- Core Styles -->
+  <link rel="stylesheet" href="../../src/styles/core/variables.css" />
+  <link rel="stylesheet" href="../../src/styles/core/reset.css" />
+  <link rel="stylesheet" href="../../src/styles/core/animations.css" />
+  
+  <!-- Layout Styles -->
+  <link rel="stylesheet" href="../../src/styles/layout/header.css" />
+  <link rel="stylesheet" href="../../src/styles/layout/main.css" />
+  
+  <!-- Component Styles -->
+  <link rel="stylesheet" href="../../src/styles/components/cards.css" />
+  <link rel="stylesheet" href="../../src/styles/components/buttons.css" />
+  <link rel="stylesheet" href="../../src/styles/components/badges.css" />
+  <link rel="stylesheet" href="../../src/styles/components/dropdowns.css" />
+  <link rel="stylesheet" href="../../src/styles/components/jules-profile.css" />
+  
+  <!-- Responsive Styles -->
+  <link rel="stylesheet" href="../../src/styles/media-queries.css" />
+  
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
-  <script src="firebase-init.js"></script>
+  <script src="../../firebase-init.js"></script>
 </head>
 <body data-page="sessions">
 
@@ -18,7 +37,7 @@
     <main class="card" style="padding:32px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
         <h2 style="margin:0; font-size:24px; font-weight:700;">📖 All Jules Sessions</h2>
-        <a href="jules.html" class="btn primary" style="text-decoration:none; padding:8px 16px; font-size:13px; white-space:nowrap;">← Back to Jules</a>
+        <a href="/pages/jules/jules.html" class="btn primary" style="text-decoration:none; padding:8px 16px; font-size:13px; white-space:nowrap;">← Back to Jules</a>
       </div>
 
       <!-- Search -->
@@ -43,7 +62,6 @@
 
       <!-- Sessions List -->
       <div id="allSessionsList" style="display:flex; flex-direction:column; gap:12px;">
-        <div style="color:var(--muted); text-align:center; padding:24px;">Loading sessions...</div>
       </div>
 
       <!-- Load More -->
@@ -53,11 +71,11 @@
     </main>
   </div>
 
-  <script type="module" src="./src/shared-init.js"></script>
+  <script type="module" src="../../src/shared-init.js"></script>
   <script type="module">
-    import { waitForFirebase } from './src/shared-init.js';
-    import { listJulesSessions } from './src/modules/jules-api.js';
-    import { getDecryptedJulesKey } from './src/modules/jules-api.js';
+    import { waitForFirebase } from '../../src/shared-init.js';
+    import { listJulesSessions } from '../../src/modules/jules-api.js';
+    import { getDecryptedJulesKey } from '../../src/modules/jules-api.js';
 
     let allSessionsCache = [];
     let sessionNextPageToken = null;
@@ -207,7 +225,20 @@
 
     async function initApp() {
       waitForFirebase(() => {
-        loadSessions();
+        // Listen for auth state changes
+        window.auth.onAuthStateChanged((user) => {
+          if (user) {
+            loadSessions();
+          } else {
+            const loadingDiv = document.getElementById('sessionsLoading');
+            const notSignedInDiv = document.getElementById('sessionsNotSignedIn');
+            const sessionsList = document.getElementById('allSessionsList');
+            
+            loadingDiv.style.display = 'none';
+            sessionsList.style.display = 'none';
+            notSignedInDiv.style.display = 'block';
+          }
+        });
         
         // Set up search functionality
         const searchInput = document.getElementById('sessionSearchInput');

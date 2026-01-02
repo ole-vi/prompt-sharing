@@ -1,0 +1,53 @@
+/* =============================================================================
+   COMPONENT - BUTTONS
+   ============================================================================= */
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--gradient-button);
+  color: var(--text);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-md);
+  cursor: pointer;
+  transition: border-color var(--transition-base) var(--transition-ease),
+              background var(--transition-base) var(--transition-ease),
+              box-shadow var(--transition-base) var(--transition-ease),
+              transform var(--transition-base) var(--transition-ease);
+}
+
+.btn:hover {
+  border-color: var(--accent);
+  background: var(--gradient-button-hover);
+  box-shadow: var(--shadow-accent-sm);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.help-link {
+  text-decoration: none;
+  color: var(--muted);
+  font-size: var(--font-md);
+  cursor: pointer;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  display: inline-block;
+  transition: color var(--transition-base) var(--transition-ease),
+              border-color var(--transition-base) var(--transition-ease),
+              background var(--transition-base) var(--transition-ease);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+}
+
+.help-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(77, 217, 255, 0.1);
+}
+
+#freeInputBtn {
+  width: 100%;
+  text-align: center;
+}

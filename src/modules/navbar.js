@@ -1,6 +1,6 @@
 export async function loadNavbar(activePage) {
   try {
-    const response = await fetch('./navbar.html');
+    const response = await fetch('/navbar.html');
     const navbarHtml = await response.text();
     
     // Find the header element and insert navbar after it

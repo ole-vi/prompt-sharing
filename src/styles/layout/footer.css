@@ -1,0 +1,18 @@
+/* =============================================================================
+   COMPONENT - FOOTER
+   ============================================================================= */
+
+footer {
+  max-width: 1100px;
+  margin: var(--spacing-xl) auto 40px;
+  color: var(--muted);
+  font-size: var(--font-md);
+  padding: 0 var(--spacing-lg);
+}
+
+footer code {
+  background: #0b0f21;
+  padding: 1px var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+}

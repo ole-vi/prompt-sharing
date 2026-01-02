@@ -1219,16 +1219,12 @@ async function loadAndDisplayJulesProfile(uid) {
     loadBtn.disabled = true;
     loadBtn.textContent = '⏳ Loading...';
     
-    // Check cache first
-    let profileData = getCache(CACHE_KEYS.JULES_ACCOUNT, uid);
+    // Always fetch fresh data to ensure we get all pages
+    sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sources...</div>';
+    sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
     
-    if (!profileData) {
-      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sources...</div>';
-      sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
-      
-      profileData = await loadJulesProfileInfo(uid);
-      setCache(CACHE_KEYS.JULES_ACCOUNT, profileData, uid);
-    }
+    const profileData = await loadJulesProfileInfo(uid);
+    setCache(CACHE_KEYS.JULES_ACCOUNT, profileData, uid);
 
     if (profileData.sources && profileData.sources.length > 0) {
       sourcesListDiv.innerHTML = profileData.sources.map((source, index) => {
@@ -1859,14 +1855,21 @@ export function hideFreeInputForm() {
 }
 
 async function populateFreeInputRepoSelection() {
+  // Check if elements exist on this page
+  const dropdownBtn = document.getElementById('freeInputRepoDropdownBtn');
+  const dropdownText = document.getElementById('freeInputRepoDropdownText');
+  const dropdownMenu = document.getElementById('freeInputRepoDropdownMenu');
+  
+  if (!dropdownBtn || !dropdownText || !dropdownMenu) {
+    return; // Elements don't exist on this page, skip initialization
+  }
+  
   // Clear selections
   lastSelectedSourceId = null;
   lastSelectedBranch = null;
   
   const user = getCurrentUser();
   if (!user) {
-    const dropdownText = document.getElementById('freeInputRepoDropdownText');
-    const dropdownBtn = document.getElementById('freeInputRepoDropdownBtn');
     dropdownText.textContent = 'Please sign in first';
     dropdownBtn.disabled = true;
     return;
@@ -1875,9 +1878,9 @@ async function populateFreeInputRepoSelection() {
   // Initialize RepoSelector
   const repoSelector = new RepoSelector({
     favoriteContainer: null, // Free input doesn't have a favorite container
-    dropdownBtn: document.getElementById('freeInputRepoDropdownBtn'),
-    dropdownText: document.getElementById('freeInputRepoDropdownText'),
-    dropdownMenu: document.getElementById('freeInputRepoDropdownMenu'),
+    dropdownBtn: dropdownBtn,
+    dropdownText: dropdownText,
+    dropdownMenu: dropdownMenu,
     onSelect: (sourceId, branch, repoName) => {
       lastSelectedSourceId = sourceId;
       lastSelectedBranch = branch;

@@ -1,0 +1,46 @@
+/* =============================================================================
+   COMPONENT - STATUS BAR
+   ============================================================================= */
+
+#statusBar {
+  position: fixed;
+  left: var(--spacing-md);
+  right: var(--spacing-md);
+  bottom: var(--spacing-md);
+  z-index: var(--z-status);
+  display: none;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+#statusBar .status-inner {
+  max-width: 1200px;
+  width: 100%;
+  background: linear-gradient(90deg, rgba(20,24,41,0.9), rgba(16,20,34,0.85));
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--text);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+}
+
+#statusBar.status-visible { 
+  display: flex; 
+}
+
+#statusBar .status-msg { 
+  font-size: var(--font-md); 
+  color: var(--text); 
+}
+
+#statusBar .status-progress { 
+  font-size: var(--font-sm); 
+  color: var(--muted); 
+}
+
+#statusBar .status-action { 
+  font-size: var(--font-md); 
+}

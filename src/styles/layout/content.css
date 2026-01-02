@@ -1,0 +1,50 @@
+/* =============================================================================
+   LAYOUT - MAIN CONTENT
+   ============================================================================= */
+
+#main {
+  padding: var(--spacing-md);
+}
+
+#empty {
+  color: var(--muted);
+  font-size: var(--font-base);
+}
+
+#title {
+  margin: 0 0 var(--spacing-sm);
+  font-size: var(--font-3xl);
+}
+
+#meta {
+  color: var(--muted);
+  font-size: var(--font-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+#actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+#content {
+  line-height: 1.55;
+  font-size: var(--font-lg);
+}
+
+#content pre {
+  background: #0b0f21;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: auto;
+}
+
+#content code {
+  background: #0b0f21;
+  padding: 1px var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  font-family: 'Courier New', monospace;
+}

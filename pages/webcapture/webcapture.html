@@ -4,13 +4,31 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Web Capture Extension - PromptSync</title>
-  <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
-  <link rel="stylesheet" href="src/styles.css" />
+  <link rel="icon" type="image/x-icon" href="../../assets/favicon.ico" />
+  
+  <!-- Core Styles -->
+  <link rel="stylesheet" href="../../src/styles/core/variables.css" />
+  <link rel="stylesheet" href="../../src/styles/core/reset.css" />
+  <link rel="stylesheet" href="../../src/styles/core/animations.css" />
+  
+  <!-- Layout Styles -->
+  <link rel="stylesheet" href="../../src/styles/layout/header.css" />
+  <link rel="stylesheet" href="../../src/styles/layout/main.css" />
+  <link rel="stylesheet" href="../../src/styles/layout/content.css" />
+  
+  <!-- Component Styles -->
+  <link rel="stylesheet" href="../../src/styles/components/cards.css" />
+  <link rel="stylesheet" href="../../src/styles/components/buttons.css" />
+  <link rel="stylesheet" href="../../src/styles/components/dropdowns.css" />
+  
+  <!-- Responsive Styles -->
+  <link rel="stylesheet" href="../../src/styles/media-queries.css" />
+  
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
-  <script src="firebase-init.js"></script>
+  <script src="../../firebase-init.js"></script>
 </head>
 <body data-page="webcapture">
 
@@ -187,7 +205,7 @@
     </main>
   </div>
 
-  <script type="module" src="./src/shared-init.js"></script>
+  <script type="module" src="../../src/shared-init.js"></script>
   <script type="module">
     function waitForComponents() {
       if (document.querySelector('header')) {
