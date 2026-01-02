@@ -48,51 +48,61 @@ This is a zero-build, modular single-page application using plain JavaScript ES6
 
 ```
 prompt-sharing/
-├── pages/                 # Application pages
-│   ├── home/index.html    # Home / Prompt list
-│   ├── profile/profile.html
-│   ├── jules/jules.html
-│   ├── queue/queue.html
-│   ├── sessions/sessions.html
-│   └── webcapture/webcapture.html
-├── partials/              # Shared HTML partials
-│   └── header.html
-├── docs/                  # Documentation
-│   ├── GITHUB_APP_SETUP.md
-│   ├── GITHUB_OAUTH_SETUP.md
-│   ├── IMPLEMENTATION_SUMMARY.md
-│   └── JULES_API_INTEGRATION.md
+├── pages/                                 # Application pages
+│   ├── home/index.html                    # Home / Prompt list
+│   ├── profile/profile.html               # User profile & Jules settings
+│   ├── jules/jules.html                   # Jules integration dashboard
+│   ├── queue/queue.html                   # Jules task queue
+│   ├── sessions/sessions.html             # Jules sessions history
+│   └── webcapture/webcapture.html         # Web clip browser & importer
+├── partials/                              # Shared HTML partials
+│   └── header.html                        # Shared header & navigation
+├── docs/                                  # Documentation
+│   ├── GITHUB_APP_SETUP.md                # Jules GitHub App install & config
+│   ├── GITHUB_OAUTH_SETUP.md              # OAuth setup for web extension
+│   ├── IMPLEMENTATION_SUMMARY.md          # Engineering notes & change log
+│   └── JULES_API_INTEGRATION.md           # Jules API usage and flows
 ├── config/
-│   └── firestore/firestore.rules
-├── src/firebase-init.js   # Firebase SDK initialization
-├── firebase.json          # Firebase hosting config
-├── oauth-callback.html    # GitHub OAuth callback for extension
+│   └── firestore/firestore.rules          # Firestore security rules
+├── src/firebase-init.js                   # Firebase SDK initialization
+├── firebase.json                          # Firebase hosting config
+├── oauth-callback.html                    # GitHub OAuth callback for extension
 ├── src/
-│   ├── app.js             # Main application initialization
-│   ├── shared-init.js     # Shared initialization for all pages
-│   ├── modules/           # Feature modules (ES6)
-│   │   ├── auth.js
-│   │   ├── header.js
-│   │   ├── jules.js
-│   │   ├── jules-api.js
-│   │   ├── prompt-list.js
-│   │   ├── prompt-renderer.js
-│   │   ├── branch-selector.js
-│   │   ├── subtask-manager.js
-│   │   └── status-bar.js
-│   └── utils/             # Shared utilities
-│       ├── constants.js
-│       ├── slug.js
-│       ├── url-params.js
-│       ├── dom-helpers.js
-│       ├── session-cache.js
-│       └── title.js
-├── prompts/
-├── webclips/
-├── browser-extension/
-└── functions/
-  ├── index.js
-  └── package.json
+│   ├── app.js                             # Main application initialization
+│   ├── shared-init.js                     # Shared initialization for all pages
+│   ├── modules/                           # Feature modules (ES6)
+│   │   ├── auth.js                        # Firebase auth + GitHub OAuth
+│   │   ├── header.js                      # Load shared header partial
+│   │   ├── jules.js                       # Jules UI: send, queue, sessions
+│   │   ├── jules-api.js                   # Jules API client wrapper
+│   │   ├── prompt-list.js                 # Sidebar prompt browser
+│   │   ├── prompt-renderer.js             # Markdown render + copy to clipboard
+│   │   ├── branch-selector.js             # Branch selection & switching
+│   │   ├── subtask-manager.js             # Split prompts into subtasks
+│   │   └── status-bar.js                  # Global status & notifications
+│   └── utils/                             # Shared utilities
+│       ├── constants.js                   # Config, keys, regex, emoji maps
+│       ├── slug.js                        # Filename → URL-safe slug
+│       ├── url-params.js                  # Parse URL query/hash params
+│       ├── dom-helpers.js                 # DOM helpers (show/hide, classes)
+│       ├── session-cache.js               # SessionStorage caching helpers
+│       └── title.js                       # Extract markdown title
+├── prompts/                               # Prompt markdown files
+├── webclips/                              # Saved web clips by user
+├── browser-extension/                     # Chrome extension (Manifest v3)
+│   ├── manifest.json                      # Extension manifest
+│   ├── popup.html                         # Popup UI
+│   ├── popup.css                          # Popup styles
+│   ├── popup.js                           # Popup logic
+│   ├── content.js                         # Content script: capture page → Markdown
+│   ├── background.js                      # Service worker: lifecycle & messaging
+│   ├── config.js                          # Repo paths, constants, runtime config
+│   ├── github-auth.js                     # OAuth login helper (GitHub via Firebase)
+│   ├── github-sync.js                     # Commit clips to repository
+│   └── README.md                          # Extension docs & setup
+└── functions/                             # Firebase Cloud Functions
+    ├── index.js                           # Functions entrypoint
+    └── package.json                       # Functions dependencies
 ```
 
 ## Adding a new prompt
