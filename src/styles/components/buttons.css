@@ -27,6 +27,14 @@
   transform: translateY(1px);
 }
 
+/* Size Variants */
+.btn--sm {
+  padding: 4px 10px;
+  font-size: 12px;
+  line-height: 1;
+  border-radius: var(--radius-md);
+}
+
 .help-link {
   text-decoration: none;
   color: var(--muted);

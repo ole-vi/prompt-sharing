@@ -222,6 +222,14 @@
   margin-bottom: 0;
 }
 
+/* Section Heading */
+.section-heading {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
 /* Spacing Utilities */
 .mb-0 {
   margin-bottom: 0;

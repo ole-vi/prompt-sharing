@@ -42,11 +42,6 @@
     <main class="card content-box--large">
       <h2 class="page-header mb-24">🤖 Jules Account</h2>
       
-      <!-- Loading Message -->
-      <div id="julesLoading" class="hidden message-box text-center">
-        <div class="message-box__text" style="font-size:16px;">Loading Jules account information...</div>
-      </div>
-      
       <!-- Not Signed In Message -->
       <div id="julesNotSignedIn" class="hidden message-box text-center">
         <div class="message-box__text" style="font-size:16px;">Please sign in to view Jules account information.</div>
@@ -57,7 +52,7 @@
         <!-- Jules API Key Section -->
         <div id="julesKeyStatusDiv" class="content-box mb-20">
           <div class="text-sm text-muted mb-6">Jules API Key</div>
-          <div id="julesKeyStatus" class="font-medium text-muted" style="font-size:15px;">Loading...</div>
+          <div id="julesKeyStatus" class="font-medium text-muted" style="font-size:15px;"></div>
         </div>
         
         <!-- No Jules Key Message -->
@@ -79,9 +74,9 @@
         
         <!-- Recent Sessions -->
         <div class="mb-20">
-          <div class="text-sm font-medium text-muted mb-16 flex-between">
+          <div class="section-heading flex-between">
             <span>📖 Recent Sessions</span>
-            <a href="/pages/sessions/sessions.html" class="btn primary" style="text-decoration:none; padding:8px 16px; font-size:13px; white-space:nowrap;">View All Sessions</a>
+            <a href="/pages/sessions/sessions.html" class="btn primary btn--sm" style="text-decoration:none; white-space:nowrap;">View All Sessions</a>
           </div>
           <div id="julesSessionsList" class="content-box" style="max-height:300px; overflow-y:auto;">
             <div class="text-muted text-center" style="font-size:14px;">Loading sessions...</div>
@@ -89,9 +84,9 @@
         </div>
         <!-- Connected Sources -->
         <div class="mb-20">
-          <div class="text-sm font-medium text-muted mb-10">🔗 Connected Repositories</div>
+          <div class="section-heading">🔗 Connected Repositories</div>
           <div id="julesSourcesList" class="content-box" style="max-height:250px; overflow-y:auto;">
-            <div class="text-muted text-center" style="font-size:14px;">Loading sources...</div>
+            <div class="text-muted text-center" style="font-size:14px;">Loading repositories...</div>
           </div>
         </div>
         
@@ -138,7 +133,6 @@
     async function loadJulesInfo() {
       const user = window.auth?.currentUser;
       
-      const loadingDiv = document.getElementById('julesLoading');
       const notSignedInDiv = document.getElementById('julesNotSignedIn');
       const profileSection = document.getElementById('julesProfileInfoSection');
       const noJulesKeySection = document.getElementById('noJulesKeySection');
@@ -147,16 +141,13 @@
       const dangerZoneSection = document.getElementById('dangerZoneSection');
       
       if (!user) {
-        loadingDiv.classList.add('hidden');
         profileSection.classList.add('hidden');
         notSignedInDiv.classList.remove('hidden');
         return;
       }
 
       try {
-        loadingDiv.classList.remove('hidden');
         notSignedInDiv.classList.add('hidden');
-        profileSection.classList.add('hidden');
         
         // Check if user has Jules key
         const hasKey = await checkJulesKey(user.uid);
@@ -166,7 +157,6 @@
           julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
         }
         
-        loadingDiv.classList.add('hidden');
         profileSection.classList.remove('hidden');
         
         if (hasKey) {
@@ -183,7 +173,6 @@
         }
       } catch (err) {
         console.error('Jules info loading error:', err);
-        loadingDiv.classList.add('hidden');
       }
     }
 

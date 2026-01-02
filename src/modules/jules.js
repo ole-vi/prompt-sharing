@@ -1217,10 +1217,9 @@ async function loadAndDisplayJulesProfile(uid) {
 
   try {
     loadBtn.disabled = true;
-    loadBtn.textContent = '⏳ Loading...';
     
     // Always fetch fresh data to ensure we get all pages
-    sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sources...</div>';
+    sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading repositories...</div>';
     sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
     
     const profileData = await loadJulesProfileInfo(uid);
