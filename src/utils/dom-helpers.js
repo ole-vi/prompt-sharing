@@ -8,7 +8,11 @@ export function createElement(tag, className = '', textContent = '') {
 }
 
 export function setElementDisplay(el, show = true) {
-  el.style.display = show ? '' : 'none';
+  if (show) {
+    el.classList.remove('hidden');
+  } else {
+    el.classList.add('hidden');
+  }
 }
 
 export function toggleClass(el, className, force) {
