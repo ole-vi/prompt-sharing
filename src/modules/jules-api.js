@@ -41,9 +41,14 @@ function createJulesHeaders(apiKey) {
   };
 }
 
-export async function listJulesSources(apiKey) {
+export async function listJulesSources(apiKey, pageToken = null) {
   try {
-    const response = await fetch(`${JULES_API_BASE}/sources`, {
+    const url = new URL(`${JULES_API_BASE}/sources`);
+    if (pageToken) {
+      url.searchParams.set('pageToken', pageToken);
+    }
+    
+    const response = await fetch(url.toString(), {
       headers: createJulesHeaders(apiKey)
     });
 

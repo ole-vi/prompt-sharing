@@ -8,6 +8,11 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
+    // User preferences (favorites, settings, etc.) - users can only access their own
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
     // Jules Queues - users can only access their own queue items
     match /julesQueues/{userId}/items/{itemId} {
       allow read, write, delete: if request.auth != null && request.auth.uid == userId;
