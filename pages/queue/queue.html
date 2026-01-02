@@ -21,6 +21,9 @@
   <link rel="stylesheet" href="../../src/styles/components/badges.css" />
   <link rel="stylesheet" href="../../src/styles/components/dropdowns.css" />
   
+  <!-- Utilities -->
+  <link rel="stylesheet" href="../../src/styles/utilities.css" />
+  
   <!-- Responsive Styles -->
   <link rel="stylesheet" href="../../src/styles/media-queries.css" />
   
@@ -32,26 +35,26 @@
 </head>
 <body data-page="queue">
 
-  <div class="wrap" style="grid-template-columns: 1fr;">
-    <main class="card" style="display:flex; flex-direction:column; padding:24px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h1 style="margin:0; font-size:24px; font-weight:700;">🧾 Jules Queue</h1>
+  <div class="wrap grid-cols-1">
+    <main class="card flex-col content-box">
+      <div class="page-header mb-20">
+        <h1 class="page-title">🧾 Jules Queue</h1>
       </div>
 
       <!-- Not Signed In Message -->
-      <div id="queueNotSignedIn" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:48px; text-align:center;">
-        <div style="color:var(--muted); font-size:16px;">Please sign in to view your queue.</div>
+      <div id="queueNotSignedIn" class="message-box hidden">
+        <div class="message-box__text">Please sign in to view your queue.</div>
       </div>
 
       <!-- Queue Controls (hidden when not signed in) -->
       <div id="queueControls">
-        <div style="margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueSelectAll" type="checkbox" /> Select All</label>
+        <div class="flex-between mb-16 gap-12" style="flex-wrap:wrap;">
+          <div class="flex-center gap-8">
+            <label class="flex-center gap-8 text-sm"><input id="queueSelectAll" type="checkbox" /> Select All</label>
           </div>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueSuppressPopupsCheckbox" type="checkbox" /> Suppress Popups</label>
-            <label style="display:flex; align-items:center; gap:8px; font-size:13px;"><input id="queueOpenInBackgroundCheckbox" type="checkbox" /> Open in Background</label>
+          <div class="flex-center gap-8" style="flex-wrap:wrap;">
+            <label class="flex-center gap-8 text-sm"><input id="queueSuppressPopupsCheckbox" type="checkbox" /> Suppress Popups</label>
+            <label class="flex-center gap-8 text-sm"><input id="queueOpenInBackgroundCheckbox" type="checkbox" /> Open in Background</label>
             <script>
               (function() {
                 const suppressCheckbox = document.getElementById('queueSuppressPopupsCheckbox');
@@ -72,8 +75,8 @@
           </div>
         </div>
 
-        <div id="allQueueList" style="display:flex; flex-direction:column; gap:8px; min-height:400px;">
-          <div style="color:var(--muted); text-align:center; padding:48px;">Loading queue...</div>
+        <div id="allQueueList" class="flex-col gap-8" style="min-height:400px;">
+          <div class="text-muted text-center" style="padding:48px;">Loading queue...</div>
         </div>
       </div>
     </main>
@@ -97,23 +100,23 @@
       
       const user = window.auth?.currentUser;
       if (user) {
-        document.getElementById('queueControls').style.display = 'block';
-        document.getElementById('queueNotSignedIn').style.display = 'none';
+        document.getElementById('queueControls').classList.remove('hidden');
+        document.getElementById('queueNotSignedIn').classList.add('hidden');
         loadQueue();
       } else {
-        document.getElementById('queueControls').style.display = 'none';
-        document.getElementById('queueNotSignedIn').style.display = 'block';
+        document.getElementById('queueControls').classList.add('hidden');
+        document.getElementById('queueNotSignedIn').classList.remove('hidden');
       }
       
       // Listen for auth state changes
       window.auth.onAuthStateChanged((user) => {
         if (user) {
-          document.getElementById('queueControls').style.display = 'block';
-          document.getElementById('queueNotSignedIn').style.display = 'none';
+          document.getElementById('queueControls').classList.remove('hidden');
+          document.getElementById('queueNotSignedIn').classList.add('hidden');
           loadQueue();
         } else {
-          document.getElementById('queueControls').style.display = 'none';
-          document.getElementById('queueNotSignedIn').style.display = 'block';
+          document.getElementById('queueControls').classList.add('hidden');
+          document.getElementById('queueNotSignedIn').classList.remove('hidden');
         }
       });
     }

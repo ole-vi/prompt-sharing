@@ -30,6 +30,9 @@
   <link rel="stylesheet" href="../../src/styles/components/jules-profile.css" />
   <link rel="stylesheet" href="../../src/styles/components/status-bar.css" />
   
+  <!-- Utilities -->
+  <link rel="stylesheet" href="../../src/styles/utilities.css" />
+  
   <!-- Responsive Styles -->
   <link rel="stylesheet" href="../../src/styles/media-queries.css" />
   
@@ -58,22 +61,22 @@
       <div id="list"></div>
     </aside>
 
-    <main id="main" class="card" style="display:flex; flex-direction:column;">
-      <div id="empty" style="display:none; flex-direction:column; align-items:center; justify-content:center; flex:1; min-height:300px; color:var(--muted); font-size:16px;">
+    <main id="main" class="card flex-col">
+      <div id="empty" class="hidden flex-col flex-center" style="flex:1; min-height:300px; font-size:16px;">
       </div>
       
       <!-- Free Input Section (shown in main area) -->
-      <div id="freeInputSection" style="display:none; flex-direction:column; flex:1;">
-        <h2 style="margin:0 0 12px; font-size:20px;">Free Input</h2>
-        <p style="margin:0 0 16px; color:var(--muted); font-size:13px;">Enter your custom prompt below: <span style="font-size: 11px; color: var(--muted);">(Use --- to split into subtasks)</span></p>
+      <div id="freeInputSection" class="hidden flex-col" style="flex:1;">
+        <h2 class="mb-12" style="font-size:20px;">Free Input</h2>
+        <p class="text-muted text-sm mb-16">Enter your custom prompt below: <span style="font-size: 11px; color: var(--muted);">(Use --- to split into subtasks)</span></p>
         <textarea id="freeInputTextarea" placeholder="Enter your prompt here..." style="width:100%; min-height:250px; padding:12px; border:1px solid var(--border); border-radius:8px; background:#12162a; color:var(--text); outline:none; margin-bottom:16px; box-sizing:border-box; resize:vertical; font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, Noto Sans, Liberation Sans, Helvetica Neue, sans-serif; font-size:14px; flex:1;"></textarea>
         
         <!-- Repository and Branch Selection -->
-        <div style="margin: 16px 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.02);">
-          <div style="display: flex; gap: 12px; align-items: start;">
+        <div class="content-box" style="margin: 16px 0;">
+          <div class="flex gap-12" style="align-items: start;">
             <!-- Repository Selection -->
             <div style="flex: 1;">
-              <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Repository:</label>
+              <label class="block mb-8 font-medium text-sm">Repository:</label>
               <div id="freeInputRepoDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
                 <button id="freeInputRepoDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
                   <span id="freeInputRepoDropdownText">Select repository...</span>
@@ -85,7 +88,7 @@
             
             <!-- Branch Selection -->
             <div style="flex: 1;">
-              <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Branch:</label>
+              <label class="block mb-8 font-medium text-sm">Branch:</label>
               <div id="freeInputBranchDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
                 <button id="freeInputBranchDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
                   <span id="freeInputBranchDropdownText">Select branch...</span>
@@ -97,18 +100,18 @@
           </div>
         </div>
         
-        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px; padding:8px; background:rgba(255,255,255,0.02); border-radius:8px;">
-          <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+        <div class="flex-col gap-8 mb-16 content-box" style="padding:8px;">
+          <label class="flex gap-6 text-sm" style="align-items:center; cursor:pointer;">
             <input type="checkbox" id="freeInputSuppressPopupsCheckbox" style="cursor:pointer;" />
             <span>Suppress Popups</span>
           </label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+          <label class="flex gap-6 text-sm" style="align-items:center; cursor:pointer;">
             <input type="checkbox" id="freeInputOpenInBackgroundCheckbox" style="cursor:pointer;" />
             <span>Open in Background</span>
           </label>
         </div>
         
-        <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <div class="flex gap-8" style="justify-content:flex-end;">
           <button id="freeInputSplitBtn" class="btn" title="Split into Subtasks">✂️</button>
           <div style="position:relative; display:inline-block;">
             <button id="freeInputCopenBtn" class="btn" title="Copy prompt and open in new tab">📋⤴ ▼</button>
@@ -126,9 +129,9 @@
         </div>
       </div>
       
-      <h1 id="title" style="display:none"></h1>
-      <div id="meta" style="display:none"></div>
-      <div id="actions" style="display:none">
+      <h1 id="title" class="hidden"></h1>
+      <div id="meta" class="hidden"></div>
+      <div id="actions" class="hidden">
         <button class="btn" id="copyBtn" title="Copy the entire prompt">📋 Copy</button>
         <div style="position:relative; display:inline-block;">
           <button class="btn" id="copenBtn" title="Copy prompt and open in new tab">📋⤴ Copen ▼</button>
@@ -177,13 +180,13 @@
       <h2 style="margin:0 0 12px; font-size:18px;">Choose Repository</h2>
       <p style="margin:0 0 16px; color:var(--muted); font-size:13px;">Select a connected repository to open in Jules.</p>
       
-      <div id="favoriteReposContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
+      <div id="favoriteReposContainer" class="flex-col gap-8 mb-16"></div>
       
-      <div id="allReposContainer" style="margin-bottom:16px;">
-        <div style="display:flex; gap:12px; align-items:start;">
+      <div id="allReposContainer" class="mb-16">
+        <div class="flex gap-12" style="align-items:start;">
           <!-- Repository Selection -->
           <div style="flex:1;">
-            <label style="display:block; margin-bottom:8px; font-weight:600; font-size:14px;">Repository:</label>
+            <label class="block mb-8 font-medium text-sm">Repository:</label>
             <div id="julesRepoDropdown" class="custom-dropdown" style="width:100%; position:relative;">
               <button id="julesRepoDropdownBtn" class="custom-dropdown-btn" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--text); font-size:14px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;">
                 <span id="julesRepoDropdownText">Select a repository...</span>
@@ -196,7 +199,7 @@
           
           <!-- Branch Selection -->
           <div style="flex:1;">
-            <label style="display:block; margin-bottom:8px; font-weight:600; font-size:14px;">Branch:</label>
+            <label class="block mb-8 font-medium text-sm">Branch:</label>
             <div id="julesBranchDropdown" class="custom-dropdown" style="width:100%; position:relative;">
               <button id="julesBranchDropdownBtn" class="custom-dropdown-btn" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--text); font-size:14px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;" disabled>
                 <span id="julesBranchDropdownText">Select branch...</span>
@@ -209,18 +212,18 @@
         </div>
       </div>
       
-      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px; padding:8px; background:rgba(255,255,255,0.02); border-radius:8px;">
-        <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+      <div class="flex-col gap-8 mb-16 content-box" style="padding:8px;">
+        <label class="flex gap-6 text-sm" style="align-items:center; cursor:pointer;">
           <input type="checkbox" id="julesEnvSuppressPopupsCheckbox" style="cursor:pointer;" />
           <span>Suppress Popups</span>
         </label>
-        <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+        <label class="flex gap-6 text-sm" style="align-items:center; cursor:pointer;">
           <input type="checkbox" id="julesEnvOpenInBackgroundCheckbox" style="cursor:pointer;" />
           <span>Open in Background</span>
         </label>
       </div>
       
-      <div style="display:flex; gap:8px; justify-content:flex-end;">
+      <div class="flex gap-8" style="justify-content:flex-end;">
         <button id="julesEnvCancelBtn" class="btn" style="padding:8px 12px;">Cancel</button>
         <button id="julesEnvQueueBtn" class="btn" style="padding:8px 12px;" disabled>Queue</button>
         <button id="julesEnvSubmitBtn" class="btn" style="padding:8px 12px; border-color: var(--accent); color: var(--accent);" disabled>Submit</button>
@@ -274,12 +277,12 @@
         <div id="splitEditList" style="padding: 8px;"></div>
       </div>
 
-      <div style="margin-bottom: 12px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px;">
-        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+      <div class="content-box mb-12" style="padding: 8px;">
+        <label class="flex gap-8 text-sm" style="align-items: center; cursor: pointer;">
           <input id="splitSuppressPopupsCheckbox" type="checkbox" style="cursor: pointer;" />
           <span>Suppress popups</span>
         </label>
-        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; margin-top: 8px;">
+        <label class="flex gap-8 text-sm mt-8" style="align-items: center; cursor: pointer;">
           <input id="splitOpenInBackgroundCheckbox" type="checkbox" style="cursor: pointer;" />
           <span>Open in background</span>
         </label>
@@ -331,13 +334,13 @@
       <div style="margin-bottom: 16px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: monospace; font-size: 12px; color: var(--muted);">
         <div id="errorDetails" style="word-break: break-word;"></div>
       </div>
-      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; flex: 1;">
+      <div class="flex gap-8 mb-16">
+        <label class="flex gap-6 text-xs" style="align-items: center; flex: 1;">
           <input id="errorRetryDelayCheckbox" type="checkbox" checked style="cursor: pointer;" />
           <span>Wait 5 seconds before retry</span>
         </label>
       </div>
-      <div class="modal-buttons" style="display: flex; gap: 8px; justify-content: flex-end;">
+      <div class="modal-buttons flex gap-8" style="justify-content: flex-end;">
         <button id="subtaskErrorCancelBtn" class="btn" style="padding: 8px 16px;">Cancel All</button>
         <button id="subtaskErrorSkipBtn" class="btn" style="padding: 8px 16px; border-color: #f39c12; color: #f39c12;">Skip This</button>
         <button id="subtaskErrorQueueBtn" class="btn" style="padding: 8px 16px; border-color: #2980b9; color: #2980b9;">Queue Remainder</button>
@@ -369,11 +372,11 @@
     }
   </script>
   <!-- Status Bar -->
-  <div id="statusBar" style="display:none;" aria-live="polite">
+  <div id="statusBar" class="hidden" aria-live="polite">
     <div class="status-inner">
       <div class="status-msg" style="flex:1;">Ready</div>
-      <div class="status-progress" style="display:none; margin-left:12px; color:var(--muted); font-size:13px;"></div>
-      <button class="status-action btn" style="display:none; margin-left:12px; padding:6px 10px;">Action</button>
+      <div class="status-progress hidden text-muted text-sm" style="margin-left:12px;"></div>
+      <button class="status-action btn hidden" style="margin-left:12px; padding:6px 10px;">Action</button>
     </div>
   </div>
 </body>

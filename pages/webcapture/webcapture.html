@@ -21,6 +21,9 @@
   <link rel="stylesheet" href="../../src/styles/components/buttons.css" />
   <link rel="stylesheet" href="../../src/styles/components/dropdowns.css" />
   
+  <!-- Utilities -->
+  <link rel="stylesheet" href="../../src/styles/utilities.css" />
+  
   <!-- Responsive Styles -->
   <link rel="stylesheet" href="../../src/styles/media-queries.css" />
   
@@ -32,69 +35,69 @@
 </head>
 <body data-page="webcapture">
 
-  <div class="wrap" style="grid-template-columns: 1fr;">
-    <main class="card" style="padding:32px;">
-      <h2 style="margin:0 0 24px; font-size:28px; font-weight:700;">📸 PromptSync Web Capture</h2>
+  <div class="wrap grid-cols-1">
+    <main class="card content-box--large">
+      <h1 class="page-header mb-24">📸 PromptSync Web Capture</h1>
       
-      <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:32px; margin-bottom:40px; text-align:center;">
-        <h3 style="margin:0 0 12px; font-size:20px; font-weight:600;">Capture Any Webpage as Markdown</h3>
-        <p style="margin:0 0 24px; color:var(--muted); font-size:15px; line-height:1.6;">
+      <div class="message-box mb-40 text-center">
+        <h3 class="mb-12" style="font-size:20px; font-weight:600;">Capture Any Webpage as Markdown</h3>
+        <p class="message-box__text mb-24" style="font-size:15px; line-height:1.6;">
           A browser extension that converts any webpage to clean Markdown and syncs it directly to your GitHub repository.
         </p>
         <button id="downloadExtensionBtn" class="btn primary" style="padding:16px 32px; font-size:16px; font-weight:600; cursor:pointer;">
           ⬇️ Download Extension
         </button>
-        <p style="margin:8px 0 0; color:var(--muted); font-size:13px;">Compatible with Chrome, Edge, Brave, and other Chromium browsers</p>
+        <p class="text-muted text-sm mt-8">Compatible with Chrome, Edge, Brave, and other Chromium browsers</p>
       </div>
 
       <!-- Features -->
-      <div style="margin-bottom:40px;">
-        <h3 style="margin:0 0 20px; font-size:18px; font-weight:600;">✨ Features</h3>
-        <div style="display:grid; gap:16px;">
-          <div style="display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
-            <div style="font-size:24px; flex-shrink:0;">💾</div>
+      <div class="mb-40">
+        <h3 class="section-heading mb-20">✨ Features</h3>
+        <div class="flex-col gap-16">
+          <div class="feature-card">
+            <div class="feature-card__icon">💾</div>
             <div>
-              <div style="font-weight:600; margin-bottom:4px;">One-Click Capture</div>
-              <div style="color:var(--muted); font-size:14px;">Click the extension icon to save any webpage instantly</div>
+              <div class="feature-card__title">One-Click Capture</div>
+              <div class="feature-card__description">Click the extension icon to save any webpage instantly</div>
             </div>
           </div>
-          <div style="display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
-            <div style="font-size:24px; flex-shrink:0;">📝</div>
+          <div class="feature-card">
+            <div class="feature-card__icon">📝</div>
             <div>
-              <div style="font-weight:600; margin-bottom:4px;">Markdown Conversion</div>
-              <div style="color:var(--muted); font-size:14px;">Automatically converts HTML to clean, readable Markdown</div>
+              <div class="feature-card__title">Markdown Conversion</div>
+              <div class="feature-card__description">Automatically converts HTML to clean, readable Markdown</div>
             </div>
           </div>
-          <div style="display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
-            <div style="font-size:24px; flex-shrink:0;">☁️</div>
+          <div class="feature-card">
+            <div class="feature-card__icon">☁️</div>
             <div>
-              <div style="font-weight:600; margin-bottom:4px;">GitHub Sync</div>
-              <div style="color:var(--muted); font-size:14px;">Automatically sync captures to your GitHub repository</div>
+              <div class="feature-card__title">GitHub Sync</div>
+              <div class="feature-card__description">Automatically sync captures to your GitHub repository</div>
             </div>
           </div>
-          <div style="display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
-            <div style="font-size:24px; flex-shrink:0;">🔐</div>
+          <div class="feature-card">
+            <div class="feature-card__icon">🔐</div>
             <div>
-              <div style="font-weight:600; margin-bottom:4px;">Secure OAuth</div>
-              <div style="color:var(--muted); font-size:14px;">Connect via GitHub OAuth - no personal access tokens needed</div>
+              <div class="feature-card__title">Secure OAuth</div>
+              <div class="feature-card__description">Connect via GitHub OAuth - no personal access tokens needed</div>
             </div>
           </div>
-          <div style="display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
-            <div style="font-size:24px; flex-shrink:0;">📊</div>
+          <div class="feature-card">
+            <div class="feature-card__icon">📊</div>
             <div>
-              <div style="font-weight:600; margin-bottom:4px;">Smart Extraction</div>
-              <div style="color:var(--muted); font-size:14px;">Removes navigation, ads, and clutter - keeps only the content</div>
+              <div class="feature-card__title">Smart Extraction</div>
+              <div class="feature-card__description">Removes navigation, ads, and clutter - keeps only the content</div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Installation Instructions -->
-      <div style="margin-bottom:40px;">
-        <h3 style="margin:0 0 20px; font-size:18px; font-weight:600;">📦 Installation Instructions</h3>
+      <div class="mb-40">
+        <h3 class="section-heading mb-20">📦 Installation Instructions</h3>
         
-        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:24px;">
-          <h4 style="margin:0 0 16px; font-size:16px; font-weight:600;">Chrome / Edge / Brave</h4>
+        <div class="content-box">
+          <h4 class="mb-16" style="font-size:16px; font-weight:600;">Chrome / Edge / Brave</h4>
           
           <ol style="margin:0; padding-left:24px; line-height:1.8; color:var(--muted);">
             <li style="margin-bottom:12px;">
@@ -126,10 +129,10 @@
       </div>
 
       <!-- How to Use -->
-      <div style="margin-bottom:40px;">
-        <h3 style="margin:0 0 20px; font-size:18px; font-weight:600;">🚀 How to Use</h3>
+      <div class="mb-40">
+        <h3 class="section-heading mb-20">🚀 How to Use</h3>
         
-        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:24px;">
+        <div class="content-box">
           <ol style="margin:0; padding-left:24px; line-height:1.8; color:var(--muted);">
             <li style="margin-bottom:12px;">
               <strong style="color:var(--text);">Navigate to any webpage</strong> you want to capture
@@ -152,10 +155,10 @@
       </div>
 
       <!-- GitHub Setup -->
-      <div style="margin-bottom:40px;">
-        <h3 style="margin:0 0 20px; font-size:18px; font-weight:600;">🔗 GitHub Setup</h3>
+      <div class="mb-40">
+        <h3 class="section-heading mb-20">🔗 GitHub Setup</h3>
         
-        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:24px;">
+        <div class="content-box">
           <p style="margin:0 0 16px; color:var(--muted); line-height:1.6;">
             To sync captures directly to GitHub, you'll need to authenticate the extension with your GitHub account:
           </p>
@@ -178,9 +181,9 @@
 
       <!-- Troubleshooting -->
       <div>
-        <h3 style="margin:0 0 20px; font-size:18px; font-weight:600;">🔧 Troubleshooting</h3>
+        <h3 class="section-heading mb-20">🔧 Troubleshooting</h3>
         
-        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:24px;">
+        <div class="content-box">
           <div style="margin-bottom:16px;">
             <strong style="color:var(--text);">Extension not appearing after installation?</strong>
             <p style="margin:4px 0 0; color:var(--muted); font-size:14px;">

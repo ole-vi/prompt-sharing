@@ -1094,15 +1094,15 @@ export function showUserProfileModal() {
     }
     
     if (hasKey) {
-      if (addBtn) addBtn.style.display = 'none';
-      if (dangerZoneSection) dangerZoneSection.style.display = 'block';
-      if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'block';
+      if (addBtn) addBtn.classList.add('hidden');
+      if (dangerZoneSection) dangerZoneSection.classList.remove('hidden');
+      if (julesProfileInfoSection) julesProfileInfoSection.classList.remove('hidden');
       
       await loadAndDisplayJulesProfile(user.uid);
     } else {
-      if (addBtn) addBtn.style.display = 'block';
-      if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-      if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+      if (addBtn) addBtn.classList.remove('hidden');
+      if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
+      if (julesProfileInfoSection) julesProfileInfoSection.classList.add('hidden');
     }
   });
 
@@ -1132,9 +1132,9 @@ export function showUserProfileModal() {
           resetBtn.textContent = '🗑️ Delete Jules API Key';
           resetBtn.disabled = false;
           
-          if (addBtn) addBtn.style.display = 'block';
-          if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-          if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+          if (addBtn) addBtn.classList.remove('hidden');
+          if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
+          if (julesProfileInfoSection) julesProfileInfoSection.classList.add('hidden');
           
           alert('Jules API key has been deleted. You can enter a new one next time.');
         } else {

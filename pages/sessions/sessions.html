@@ -22,6 +22,9 @@
   <link rel="stylesheet" href="../../src/styles/components/dropdowns.css" />
   <link rel="stylesheet" href="../../src/styles/components/jules-profile.css" />
   
+  <!-- Utilities -->
+  <link rel="stylesheet" href="../../src/styles/utilities.css" />
+  
   <!-- Responsive Styles -->
   <link rel="stylesheet" href="../../src/styles/media-queries.css" />
   
@@ -33,35 +36,41 @@
 </head>
 <body data-page="sessions">
 
-  <div class="wrap" style="grid-template-columns: 1fr;">
-    <main class="card" style="padding:32px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-        <h2 style="margin:0; font-size:24px; font-weight:700;">📖 All Jules Sessions</h2>
-        <a href="/pages/jules/jules.html" class="btn primary" style="text-decoration:none; padding:8px 16px; font-size:13px; white-space:nowrap;">← Back to Jules</a>
+  <div class="wrap grid-cols-1">
+    <main class="card content-box--large">
+      <div class="page-header">
+        <h2 class="page-title">📖 All Jules Sessions</h2>
+        <a href="/pages/jules/jules.html" class="btn primary text-sm" style="text-decoration:none; padding:8px 16px; white-space:nowrap;">← Back to Jules</a>
       </div>
 
       <!-- Search -->
-      <div style="margin-bottom:16px;">
+      <div class="mb-16" style="position:relative;">
         <input 
           type="text" 
           id="sessionSearchInput" 
           placeholder="Search sessions..." 
-          style="width:100%; padding:10px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;"
+          style="width:100%; padding:10px 40px 10px 10px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;"
         />
+        <button 
+          id="sessionSearchClear" 
+          class="btn" 
+          style="position:absolute; right:8px; top:50%; transform:translateY(-50%); padding:4px 8px; display:none; opacity:0.7;"
+          title="Clear search"
+        >✕</button>
       </div>
       
       <!-- Loading Message -->
-      <div id="sessionsLoading" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:48px; text-align:center;">
-        <div style="color:var(--muted); font-size:16px;">Loading sessions...</div>
+      <div id="sessionsLoading" class="message-box hidden">
+        <div class="message-box__text">Loading sessions...</div>
       </div>
       
       <!-- Not Signed In Message -->
-      <div id="sessionsNotSignedIn" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:48px; text-align:center;">
-        <div style="color:var(--muted); font-size:16px;">Please sign in to view your sessions.</div>
+      <div id="sessionsNotSignedIn" class="message-box hidden">
+        <div class="message-box__text">Please sign in to view your sessions.</div>
       </div>
 
       <!-- Sessions List -->
-      <div id="allSessionsList" style="display:flex; flex-direction:column; gap:12px;">
+      <div id="allSessionsList" class="flex-col gap-12">
       </div>
 
       <!-- Load More -->
@@ -203,23 +212,23 @@
       const sessionsList = document.getElementById('allSessionsList');
       
       if (!user) {
-        loadingDiv.style.display = 'none';
-        sessionsList.style.display = 'none';
-        notSignedInDiv.style.display = 'block';
+        loadingDiv.classList.add('hidden');
+        sessionsList.classList.add('hidden');
+        notSignedInDiv.classList.remove('hidden');
         return;
       }
 
       try {
-        loadingDiv.style.display = 'block';
-        notSignedInDiv.style.display = 'none';
-        sessionsList.style.display = 'flex';
+        loadingDiv.classList.remove('hidden');
+        notSignedInDiv.classList.add('hidden');
+        sessionsList.classList.remove('hidden');
         
         await loadSessionsPage();
         
-        loadingDiv.style.display = 'none';
+        loadingDiv.classList.add('hidden');
       } catch (err) {
         console.error('Sessions loading error:', err);
-        loadingDiv.style.display = 'none';
+        loadingDiv.classList.add('hidden');
       }
     }
 
@@ -234,16 +243,27 @@
             const notSignedInDiv = document.getElementById('sessionsNotSignedIn');
             const sessionsList = document.getElementById('allSessionsList');
             
-            loadingDiv.style.display = 'none';
-            sessionsList.style.display = 'none';
-            notSignedInDiv.style.display = 'block';
+            loadingDiv.classList.add('hidden');
+            sessionsList.classList.add('hidden');
+            notSignedInDiv.classList.remove('hidden');
           }
         });
         
         // Set up search functionality
         const searchInput = document.getElementById('sessionSearchInput');
-        if (searchInput) {
-          searchInput.addEventListener('input', () => renderAllSessions(allSessionsCache));
+        const searchClear = document.getElementById('sessionSearchClear');
+        
+        if (searchInput && searchClear) {
+          searchInput.addEventListener('input', (e) => {
+            searchClear.style.display = e.target.value ? 'block' : 'none';
+            renderAllSessions(allSessionsCache);
+          });
+          
+          searchClear.addEventListener('click', () => {
+            searchInput.value = '';
+            searchClear.style.display = 'none';
+            renderAllSessions(allSessionsCache);
+          });
         }
         
         // Set up load more button
