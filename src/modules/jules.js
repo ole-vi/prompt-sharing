@@ -11,7 +11,7 @@ import statusBar from './status-bar.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 
-let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
+let lastSelectedSourceId = null;
 let lastSelectedBranch = 'master';
 
 function openUrlInBackground(url) {
