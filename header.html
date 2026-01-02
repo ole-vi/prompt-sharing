@@ -142,7 +142,8 @@
       color: var(--muted);
       text-decoration: none;
       transition: all 0.2s;
-      font-size: 15px;
+      font-size: 16px;
+      font-weight: 700;
     }
     
     .mobile-nav-item:hover {
@@ -161,7 +162,7 @@
       font-size: 20px;
     }
     
-    @media (max-width: 900px) {
+    @media (max-width: 1000px) {
       #mobileMenuBtn {
         display: block;
       }
@@ -183,14 +184,6 @@
       }
       #headerNav {
         display: none !important;
-      }
-      #headerControls {
-        gap: 8px !important;
-        min-width: 40px !important;
-        max-width: 80px !important;
-      }
-      #branchSelect {
-        max-width: 80px !important;
       }
       #headerContainer > div:last-child {
         flex: 0 0 auto !important;
@@ -234,10 +227,9 @@
     </div>
   </div>
   
-  <div id="headerContainer" style="display:flex; justify-content:space-between; align-items:center; gap:20px; padding:12px 20px; width:100%;">
+  <div id="headerContainer" style="display:flex; justify-content:space-between; align-items:center; gap:6px; padding:8px 12px; width:100%;">
     <!-- Left: Logo & Tagline -->
-    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0; flex:1; min-width:0;">
-      <button id="mobileMenuBtn" aria-label="Open menu">☰</button>
+    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0; flex:1; min-width:0;">      <button id="mobileMenuBtn" aria-label="Open menu">☰</button>
       <div id="headerBranding">
         <a id="logoLink" href="/" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:10px;">
           <img src="assets/PromptSyncLogo.svg" alt="PromptSync" style="width:32px; height:32px; flex-shrink:0; object-fit:contain;">
@@ -275,8 +267,7 @@
     </nav>
 
     <!-- Right: Controls & Auth -->
-    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0; flex:1; min-width:0; justify-content:flex-end;">
-      <div id="headerControls" style="display:flex; gap:6px; align-items:center; flex-shrink:1; min-width:40px;">
+      <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:0; justify-content:flex-end;">      <div id="headerControls"style="display:flex; gap:6px; align-items:center; flex:0 0 auto; min-width:0;">
         <select id="branchSelect">
           <option>Loading…</option>
         </select>
