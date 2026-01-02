@@ -64,7 +64,7 @@ prompt-sharing/
 │   └── JULES_API_INTEGRATION.md
 ├── config/
 │   └── firestore/firestore.rules
-├── firebase-init.js       # Firebase SDK initialization
+├── src/firebase-init.js   # Firebase SDK initialization
 ├── firebase.json          # Firebase hosting config
 ├── oauth-callback.html    # GitHub OAuth callback for extension
 ├── src/
