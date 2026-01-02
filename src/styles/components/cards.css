@@ -1,0 +1,10 @@
+/* =============================================================================
+   COMPONENT - CARDS
+   ============================================================================= */
+
+.card {
+  background: var(--gradient-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(8px);
+}

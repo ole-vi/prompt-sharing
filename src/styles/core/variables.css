@@ -1,0 +1,83 @@
+/* =============================================================================
+   CSS VARIABLES & TOKENS
+   ============================================================================= */
+
+:root {
+  /* Colors - Base Palette */
+  --bg: #0a0e1a;
+  --card: #141829;
+  --muted: #8b94a8;
+  --text: #f0f3f8;
+  --accent: #4dd9ff;
+  --accent-glow: #4dd9ff1a;
+  --border: #222438;
+  
+  /* Colors - Semantic */
+  --color-success: #4ade80;
+  --color-error: #ff8585;
+  --color-warning: #d876e3;
+  --color-info: #79c0ff;
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #4dd9ff 0%, #5ad1ff 100%);
+  --gradient-bg: linear-gradient(180deg, #0d1424 0%, #0a0e1a 100%);
+  --gradient-card: linear-gradient(135deg, rgba(20,24,41,0.6), rgba(20,24,41,0.3));
+  --gradient-card-hover: linear-gradient(135deg, rgba(77,217,255,0.12), rgba(77,217,255,0.06));
+  --gradient-button: linear-gradient(135deg, rgba(20,24,41,0.5), rgba(20,24,41,0.3));
+  --gradient-button-hover: linear-gradient(135deg, rgba(77,217,255,0.15), rgba(77,217,255,0.08));
+  
+  /* Spacing Scale */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  
+  /* Font Sizes */
+  --font-xs: 10px;
+  --font-sm: 12px;
+  --font-md: 13px;
+  --font-base: 14px;
+  --font-lg: 15px;
+  --font-xl: 16px;
+  --font-2xl: 18px;
+  --font-3xl: 22px;
+  
+  /* Font Weights */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  
+  /* Transitions */
+  --transition-fast: 0.15s;
+  --transition-base: 0.2s;
+  --transition-slow: 0.3s;
+  --transition-ease: ease;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-accent: 0 0 12px rgba(77, 217, 255, 0.2);
+  --shadow-accent-sm: 0 0 10px rgba(77, 217, 255, 0.12);
+  
+  /* Z-Index Scale */
+  --z-base: 1;
+  --z-sticky: 2;
+  --z-modal: 1000;
+  --z-status: 9999;
+  
+  /* Layout */
+  --header-height: 76px;
+  --sidebar-width: 220px;
+  --sidebar-collapsed: 48px;
+  --max-content-width: 1400px;
+}

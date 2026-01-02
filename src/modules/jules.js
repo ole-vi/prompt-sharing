@@ -11,7 +11,7 @@ import statusBar from './status-bar.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 
-let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
+let lastSelectedSourceId = null;
 let lastSelectedBranch = 'master';
 
 function openUrlInBackground(url) {
@@ -1002,7 +1002,7 @@ export function initJulesKeyModalListeners() {
         hideJulesEnvModal();
       }
       const freeInputSection = document.getElementById('freeInputSection');
-      if (freeInputSection && freeInputSection.style.display === 'flex') {
+      if (freeInputSection && !freeInputSection.classList.contains('hidden')) {
         hideFreeInputForm();
       }
       if (profileModal && profileModal.style.display === 'flex') {
@@ -1094,15 +1094,15 @@ export function showUserProfileModal() {
     }
     
     if (hasKey) {
-      if (addBtn) addBtn.style.display = 'none';
-      if (dangerZoneSection) dangerZoneSection.style.display = 'block';
-      if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'block';
+      if (addBtn) addBtn.classList.add('hidden');
+      if (dangerZoneSection) dangerZoneSection.classList.remove('hidden');
+      if (julesProfileInfoSection) julesProfileInfoSection.classList.remove('hidden');
       
       await loadAndDisplayJulesProfile(user.uid);
     } else {
-      if (addBtn) addBtn.style.display = 'block';
-      if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-      if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+      if (addBtn) addBtn.classList.remove('hidden');
+      if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
+      if (julesProfileInfoSection) julesProfileInfoSection.classList.add('hidden');
     }
   });
 
@@ -1132,9 +1132,9 @@ export function showUserProfileModal() {
           resetBtn.textContent = '🗑️ Delete Jules API Key';
           resetBtn.disabled = false;
           
-          if (addBtn) addBtn.style.display = 'block';
-          if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-          if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+          if (addBtn) addBtn.classList.remove('hidden');
+          if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
+          if (julesProfileInfoSection) julesProfileInfoSection.classList.add('hidden');
           
           alert('Jules API key has been deleted. You can enter a new one next time.');
         } else {
@@ -1217,18 +1217,13 @@ async function loadAndDisplayJulesProfile(uid) {
 
   try {
     loadBtn.disabled = true;
-    loadBtn.textContent = '⏳ Loading...';
     
-    // Check cache first
-    let profileData = getCache(CACHE_KEYS.JULES_ACCOUNT, uid);
+    // Always fetch fresh data to ensure we get all pages
+    sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading repositories...</div>';
+    sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
     
-    if (!profileData) {
-      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sources...</div>';
-      sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
-      
-      profileData = await loadJulesProfileInfo(uid);
-      setCache(CACHE_KEYS.JULES_ACCOUNT, profileData, uid);
-    }
+    const profileData = await loadJulesProfileInfo(uid);
+    setCache(CACHE_KEYS.JULES_ACCOUNT, profileData, uid);
 
     if (profileData.sources && profileData.sources.length > 0) {
       sourcesListDiv.innerHTML = profileData.sources.map((source, index) => {
@@ -1552,13 +1547,13 @@ export function showFreeInputForm() {
   const actions = document.getElementById('actions');
   const content = document.getElementById('content');
   
-  empty.style.display = 'none';
-  title.style.display = 'none';
-  meta.style.display = 'none';
-  actions.style.display = 'none';
-  content.style.display = 'none';
+  empty.classList.add('hidden');
+  title.classList.add('hidden');
+  meta.classList.add('hidden');
+  actions.classList.add('hidden');
+  content.classList.add('hidden');
   
-  freeInputSection.style.display = 'flex';
+  freeInputSection.classList.remove('hidden');
   
   const textarea = document.getElementById('freeInputTextarea');
   const submitBtn = document.getElementById('freeInputSubmitBtn');
@@ -1860,19 +1855,26 @@ export function hideFreeInputForm() {
   const freeInputSection = document.getElementById('freeInputSection');
   const empty = document.getElementById('empty');
   
-  freeInputSection.style.display = 'none';
-  empty.style.display = 'flex';
+  freeInputSection.classList.add('hidden');
+  empty.classList.remove('hidden');
 }
 
 async function populateFreeInputRepoSelection() {
+  // Check if elements exist on this page
+  const dropdownBtn = document.getElementById('freeInputRepoDropdownBtn');
+  const dropdownText = document.getElementById('freeInputRepoDropdownText');
+  const dropdownMenu = document.getElementById('freeInputRepoDropdownMenu');
+  
+  if (!dropdownBtn || !dropdownText || !dropdownMenu) {
+    return; // Elements don't exist on this page, skip initialization
+  }
+  
   // Clear selections
   lastSelectedSourceId = null;
   lastSelectedBranch = null;
   
   const user = getCurrentUser();
   if (!user) {
-    const dropdownText = document.getElementById('freeInputRepoDropdownText');
-    const dropdownBtn = document.getElementById('freeInputRepoDropdownBtn');
     dropdownText.textContent = 'Please sign in first';
     dropdownBtn.disabled = true;
     return;
@@ -1881,9 +1883,9 @@ async function populateFreeInputRepoSelection() {
   // Initialize RepoSelector
   const repoSelector = new RepoSelector({
     favoriteContainer: null, // Free input doesn't have a favorite container
-    dropdownBtn: document.getElementById('freeInputRepoDropdownBtn'),
-    dropdownText: document.getElementById('freeInputRepoDropdownText'),
-    dropdownMenu: document.getElementById('freeInputRepoDropdownMenu'),
+    dropdownBtn: dropdownBtn,
+    dropdownText: dropdownText,
+    dropdownMenu: dropdownMenu,
     onSelect: (sourceId, branch, repoName) => {
       lastSelectedSourceId = sourceId;
       lastSelectedBranch = branch;

@@ -1,0 +1,126 @@
+/* =============================================================================
+   MEDIA QUERIES - RESPONSIVE BREAKPOINTS
+   ============================================================================= */
+
+/* Tablet and below (1000px) */
+@media (max-width: 1000px) {
+  /* Header adjustments */
+  header {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+
+  #authStatus {
+    font-size: 11px !important;
+  }
+
+  #authBtn, #signOutBtn {
+    padding: var(--spacing-sm) var(--spacing-sm) !important;
+    font-size: 11px !important;
+  }
+
+  .pill {
+    font-size: 11px;
+  }
+
+  /* Navigation adjustments */
+  #navbar {
+    top: 69px;
+  }
+  
+  .nav-container {
+    justify-content: space-around;
+    gap: 0;
+  }
+  
+  .nav-item {
+    padding: var(--spacing-lg) var(--spacing-sm);
+    min-width: 70px;
+    gap: 2px;
+  }
+  
+  .nav-icon {
+    font-size: var(--font-2xl);
+  }
+  
+  .nav-label {
+    font-size: var(--font-xl);
+    font-weight: var(--font-bold);
+    letter-spacing: 0.2px;
+  }
+
+  /* Layout adjustments */
+  .wrap {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .wrap:has(#sidebar.collapsed) {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Sidebar adjustments */
+  #sidebar {
+    position: static;
+    transition: height var(--transition-slow) var(--transition-ease),
+                padding var(--transition-slow) var(--transition-ease);
+    width: 100%;
+  }
+  
+  /* On mobile, collapsed sidebar becomes a thin horizontal bar */
+  #sidebar.collapsed {
+    width: 100% !important;
+    min-width: 100% !important;
+    height: auto;
+    padding: var(--spacing-lg);
+    overflow: visible;
+  }
+  
+  #sidebar.collapsed > *:not(.sidebar-header) {
+    display: none;
+  }
+  
+  /* On mobile, keep Library text visible when collapsed */
+  #sidebar.collapsed .sidebar-title {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  
+  /* Show toggle button on mobile */
+  .sidebar-header {
+    display: flex !important;
+  }
+}
+
+/* Small mobile (600px and below) */
+@media (max-width: 600px) {
+  #sidebar {
+    position: static !important;
+  }
+
+  #statusBar { 
+    left: var(--spacing-sm); 
+    right: var(--spacing-sm); 
+    bottom: var(--spacing-sm); 
+  }
+  
+  #statusBar .status-inner { 
+    padding: var(--spacing-sm); 
+  }
+}
+
+/* Extra small mobile (400px and below) */
+@media (max-width: 400px) {
+  .nav-item {
+    padding: var(--spacing-lg) var(--spacing-xs);
+    min-width: 60px;
+  }
+  
+  .nav-icon {
+    font-size: var(--font-xl);
+  }
+  
+  .nav-label {
+    font-size: var(--font-xl);
+    font-weight: var(--font-bold);
+    letter-spacing: 0.2px;
+  }
+}

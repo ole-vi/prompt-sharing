@@ -1,0 +1,61 @@
+/* =============================================================================
+   COMPONENT - JULES PROFILE INFO
+   ============================================================================= */
+
+#julesProfileInfoSection {
+  animation: fadeIn var(--transition-slow) ease-in;
+}
+
+#julesSourcesList::-webkit-scrollbar,
+#julesSessionsList::-webkit-scrollbar {
+  width: 6px;
+}
+
+#julesSourcesList::-webkit-scrollbar-track,
+#julesSessionsList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#julesSourcesList::-webkit-scrollbar-thumb,
+#julesSessionsList::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+#julesSourcesList::-webkit-scrollbar-thumb:hover,
+#julesSessionsList::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+#julesSourcesList a,
+#julesSessionsList a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: opacity var(--transition-base) var(--transition-ease);
+}
+
+#julesSourcesList a:hover,
+#julesSessionsList a:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+#loadJulesInfoBtn:hover {
+  background: rgba(77, 217, 255, 0.1);
+  border-color: var(--accent);
+}
+
+#loadJulesInfoBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Jules sources expand/collapse animation */
+#julesSourcesList .expand-arrow {
+  transition: transform var(--transition-base) var(--transition-ease);
+}
+
+#julesSourcesList [id$="-branches"] {
+  animation: slideDown var(--transition-base) ease-out;
+  overflow: hidden;
+}

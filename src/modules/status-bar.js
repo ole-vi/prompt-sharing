@@ -31,7 +31,7 @@ class StatusBar {
 
     this.msgElement.textContent = message;
     this.element.classList.add('status-visible');
-    this.element.style.display = 'flex';
+    this.element.classList.remove('hidden');
 
     if (this.currentTimeout) {
       clearTimeout(this.currentTimeout);
@@ -49,27 +49,27 @@ class StatusBar {
     if (!this.progressElement) return;
 
     this.progressElement.textContent = text;
-    this.progressElement.style.display = 'block';
+    this.progressElement.classList.remove('hidden');
   }
 
   clearProgress() {
     if (!this.progressElement) return;
     this.progressElement.textContent = '';
-    this.progressElement.style.display = 'none';
+    this.progressElement.classList.add('hidden');
   }
 
   setAction(label, callback) {
     if (!this.actionElement) return;
 
     this.actionElement.textContent = label;
-    this.actionElement.style.display = 'block';
+    this.actionElement.classList.remove('hidden');
     this.actionElement.onclick = callback;
   }
 
   clearAction() {
     if (!this.actionElement) return;
     this.actionElement.textContent = '';
-    this.actionElement.style.display = 'none';
+    this.actionElement.classList.add('hidden');
     this.actionElement.onclick = null;
   }
 
@@ -77,7 +77,7 @@ class StatusBar {
     if (!this.element) return;
     
     this.element.classList.remove('status-visible');
-    this.element.style.display = 'none';
+    this.element.classList.add('hidden');
     
     if (this.currentTimeout) {
       clearTimeout(this.currentTimeout);

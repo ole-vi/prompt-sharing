@@ -197,15 +197,23 @@ export async function loadJulesProfileInfo(uid) {
       throw new Error(ERRORS.JULES_KEY_REQUIRED);
     }
 
-    // Fetch sources and sessions in parallel
-    const [sourcesData, sessionsData] = await Promise.all([
-      listJulesSources(apiKey),
-      listJulesSessions(apiKey, 10)
-    ]);
+    // Fetch all sources by paginating through results
+    const sourcesData = await listJulesSources(apiKey);
+    let allSources = sourcesData.sources || [];
+    let nextPageToken = sourcesData.nextPageToken;
+    
+    while (nextPageToken) {
+      const nextPage = await listJulesSources(apiKey, nextPageToken);
+      allSources = allSources.concat(nextPage.sources || []);
+      nextPageToken = nextPage.nextPageToken;
+    }
+
+    // Fetch sessions
+    const sessionsData = await listJulesSessions(apiKey, 10);
 
     // Fetch branch details for each source
     const sourcesWithBranches = await Promise.all(
-      (sourcesData.sources || []).map(async (source) => {
+      allSources.map(async (source) => {
         try {
           // Source object has both 'name' (full path like "sources/github/owner/repo") 
           // and 'id' fields. Use 'name' for the API call.

@@ -1,0 +1,82 @@
+/* =============================================================================
+   COMPONENT - TREE NAVIGATION
+   ============================================================================= */
+
+.tree-dir {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  color: var(--text);
+  transition: background var(--transition-base) var(--transition-ease);
+}
+
+.tree-dir:hover {
+  background: rgba(77, 217, 255, 0.08);
+}
+
+.tree-dir.submenu-open {
+  background: linear-gradient(135deg, rgba(77,217,255,0.15), rgba(77,217,255,0.05));
+  border: 1px solid var(--accent);
+  box-shadow: var(--shadow-accent-sm);
+}
+
+.tree-dir button {
+  appearance: none;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: var(--font-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+}
+
+.tree-dir button:focus {
+  outline: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+}
+
+.tree-dir .folder-name {
+  font-size: var(--font-md);
+  font-weight: var(--font-semibold);
+  flex: 1;
+}
+
+.tree-dir .folder-icons {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-left: auto;
+}
+
+.tree-dir .folder-icons span {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity var(--transition-base) var(--transition-ease),
+              background var(--transition-base) var(--transition-ease);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  min-width: 28px;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tree-dir .folder-icons span:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tree-dir .add-file-icon {
+  color: var(--color-success);
+  font-weight: bold;
+}
+
+.tree-dir .add-file-icon:hover {
+  background: rgba(74, 222, 128, 0.1) !important;
+}
