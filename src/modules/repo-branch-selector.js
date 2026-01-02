@@ -7,16 +7,23 @@ function extractDefaultBranch(source) {
   
   return typeof defaultBranchObj === 'string' 
     ? defaultBranchObj 
-    : (defaultBranchObj?.displayName || 'master');
+    : (defaultBranchObj?.displayName || 'main');
 }
 
 function setupClickOutsideClose(targetBtn, targetMenu) {
+  // Remove any previously registered handler for this button, if present
+  if (targetBtn._closeDropdownHandler) {
+    document.removeEventListener('click', targetBtn._closeDropdownHandler);
+  }
+  
   const closeDropdown = (e) => {
     if (!targetBtn.contains(e.target) && !targetMenu.contains(e.target)) {
       targetMenu.style.display = 'none';
     }
   };
-  document.removeEventListener('click', closeDropdown);
+  
+  // Store handler on the button so we can remove it on re-initialization
+  targetBtn._closeDropdownHandler = closeDropdown;
   document.addEventListener('click', closeDropdown);
 }
 
@@ -25,7 +32,6 @@ export class RepoSelector {
     this.dropdownBtn = options.dropdownBtn;
     this.dropdownText = options.dropdownText;
     this.dropdownMenu = options.dropdownMenu;
-    this.favoriteContainer = options.favoriteContainer;
     this.onSelect = options.onSelect;
     this.showFavorites = options.showFavorites !== false;
     
@@ -249,8 +255,7 @@ export class RepoSelector {
     if (!favorite.branch || favorite.branch === 'master') {
       try {
         const user = getCurrentUser();
-        const { listJulesSources } = await import('./jules-api.js');
-        const { getDecryptedJulesKey } = await import('./jules-api.js');
+        const { listJulesSources, getDecryptedJulesKey } = await import('./jules-api.js');
         const apiKey = await getDecryptedJulesKey(user.uid);
         
         if (apiKey) {
@@ -282,8 +287,7 @@ export class RepoSelector {
   async verifyDefaultBranchInBackground(favorite) {
     try {
       const user = getCurrentUser();
-      const { listJulesSources } = await import('./jules-api.js');
-      const { getDecryptedJulesKey } = await import('./jules-api.js');
+      const { listJulesSources, getDecryptedJulesKey } = await import('./jules-api.js');
       const apiKey = await getDecryptedJulesKey(user.uid);
       
       if (!apiKey) return;
@@ -314,6 +318,7 @@ export class RepoSelector {
         await window.db.collection('users').doc(user.uid).set({
           favoriteRepos: newFavorites
         }, { merge: true });
+        this.favorites = newFavorites;
       }
     } catch (error) {
       console.error('Failed to save favorites:', error);
@@ -321,15 +326,37 @@ export class RepoSelector {
   }
 
   async addFavorite(sourceId, name, branch) {
-    const newFavorites = [...this.favorites, { id: sourceId, name, branch }];
-    await this.saveFavorites(newFavorites);
-    this.favorites = newFavorites;
+    const user = getCurrentUser();
+    const newFavorite = { id: sourceId, name, branch };
+    
+    try {
+      if (window.db) {
+        await window.db.collection('users').doc(user.uid).set({
+          favoriteRepos: window.firebase.firestore.FieldValue.arrayUnion(newFavorite)
+        }, { merge: true });
+        this.favorites = [...this.favorites, newFavorite];
+      }
+    } catch (error) {
+      console.error('Failed to add favorite:', error);
+    }
   }
 
   async removeFavorite(sourceId) {
-    const newFavorites = this.favorites.filter(f => f.id !== sourceId);
-    await this.saveFavorites(newFavorites);
-    this.favorites = newFavorites;
+    const user = getCurrentUser();
+    const favoriteToRemove = this.favorites.find(f => f.id === sourceId);
+    
+    if (!favoriteToRemove) return;
+    
+    try {
+      if (window.db) {
+        await window.db.collection('users').doc(user.uid).set({
+          favoriteRepos: window.firebase.firestore.FieldValue.arrayRemove(favoriteToRemove)
+        }, { merge: true });
+        this.favorites = this.favorites.filter(f => f.id !== sourceId);
+      }
+    } catch (error) {
+      console.error('Failed to remove favorite:', error);
+    }
   }
 }
 

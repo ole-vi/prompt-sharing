@@ -748,8 +748,6 @@ export async function showJulesEnvModal(promptText) {
   const modal = document.getElementById('julesEnvModal');
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 
-  const favoriteContainer = document.getElementById('favoriteReposContainer');
-  const allReposContainer = document.getElementById('allReposContainer');
   const submitBtn = document.getElementById('julesEnvSubmitBtn');
   const queueBtn = document.getElementById('julesEnvQueueBtn');
   const cancelBtn = document.getElementById('julesEnvCancelBtn');
@@ -760,17 +758,9 @@ export async function showJulesEnvModal(promptText) {
   
   let selectedSourceId = null;
   let selectedBranch = null;
-  
-  const user = getCurrentUser();
-  if (!user) {
-    favoriteContainer.innerHTML = '<div style="color:var(--muted); text-align:center; padding:12px;">Please sign in first</div>';
-    allReposContainer.style.display = 'none';
-    return;
-  }
 
   // Initialize RepoSelector
   const repoSelector = new RepoSelector({
-    favoriteContainer,
     dropdownBtn: document.getElementById('julesRepoDropdownBtn'),
     dropdownText: document.getElementById('julesRepoDropdownText'),
     dropdownMenu: document.getElementById('julesRepoDropdownMenu'),
