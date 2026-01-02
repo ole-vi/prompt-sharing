@@ -48,56 +48,51 @@ This is a zero-build, modular single-page application using plain JavaScript ES6
 
 ```
 prompt-sharing/
-├── index.html              # Main HTML entry point (Home/Prompt List)
-├── profile.html            # User profile & settings
-├── jules.html              # Jules account management & sessions
-├── queue.html              # Jules task queue management
-├── sessions.html           # Full list of Jules sessions
-├── webcapture.html         # Web Capture extension download & info
-├── firebase-init.js        # Firebase SDK initialization
-├── firebase.json           # Firebase hosting config
-├── firestore.rules         # Firestore security rules
-├── oauth-callback.html     # GitHub OAuth callback for extension
+├── pages/                 # Application pages
+│   ├── home/index.html    # Home / Prompt list
+│   ├── profile/profile.html
+│   ├── jules/jules.html
+│   ├── queue/queue.html
+│   ├── sessions/sessions.html
+│   └── webcapture/webcapture.html
+├── partials/              # Shared HTML partials
+│   └── header.html
+├── docs/                  # Documentation
+│   ├── GITHUB_APP_SETUP.md
+│   ├── GITHUB_OAUTH_SETUP.md
+│   ├── IMPLEMENTATION_SUMMARY.md
+│   └── JULES_API_INTEGRATION.md
+├── config/
+│   └── firestore/firestore.rules
+├── firebase-init.js       # Firebase SDK initialization
+├── firebase.json          # Firebase hosting config
+├── oauth-callback.html    # GitHub OAuth callback for extension
 ├── src/
 │   ├── app.js             # Main application initialization
 │   ├── shared-init.js     # Shared initialization for all pages
-│   ├── styles.css         # All application styles
 │   ├── modules/           # Feature modules (ES6)
-│   │   ├── auth.js        # GitHub OAuth & auth state management
-│   │   ├── jules.js       # Jules integration, modals, queue system
-│   │   ├── jules-api.js   # Jules API client (sources, sessions, activities)
-│   │   ├── github-api.js  # GitHub API calls & Gist handling
-│   │   ├── prompt-list.js # Sidebar tree navigation & rendering
-│   │   ├── prompt-renderer.js # Markdown rendering & display
-│   │   ├── branch-selector.js # Branch listing & switching
-│   │   ├── subtask-manager.js # Prompt splitting & parsing
-│   │   ├── header.js      # Shared header component
-│   │   ├── navbar.js      # Shared navigation component
-│   │   └── status-bar.js  # Status notifications
+│   │   ├── auth.js
+│   │   ├── header.js
+│   │   ├── jules.js
+│   │   ├── jules-api.js
+│   │   ├── prompt-list.js
+│   │   ├── prompt-renderer.js
+│   │   ├── branch-selector.js
+│   │   ├── subtask-manager.js
+│   │   └── status-bar.js
 │   └── utils/             # Shared utilities
-│       ├── constants.js   # Config, regex patterns, storage keys
-│       ├── slug.js        # URL-safe slug generation
-│       ├── url-params.js  # URL parameter parsing
-│       ├── dom-helpers.js # DOM manipulation helpers
-│       ├── session-cache.js # Session data caching
-│       └── title.js       # Title extraction from prompts
-├── prompts/               # Markdown prompt files
-│   ├── planet/           # Planet repo onboarding
-│   ├── myplanet/         # myPlanet repo onboarding
-│   └── promptsync/       # PromptSync repo onboarding
-├── webclips/             # User web clips from browser extension
-│   └── {username}/       # Each user's synced clips
-├── browser-extension/    # Web capture browser extension
-│   ├── manifest.json     # Extension configuration
-│   ├── content.js        # Page content extraction
-│   ├── popup.html/js     # Extension UI
-│   ├── config.js         # OAuth configuration
-│   ├── github-auth.js    # GitHub OAuth flow
-│   ├── github-sync.js    # GitHub sync logic
-│   └── background.js     # Service worker
-└── functions/            # Firebase Cloud Functions
-    ├── index.js          # Jules backend + GitHub OAuth proxy
-    └── package.json
+│       ├── constants.js
+│       ├── slug.js
+│       ├── url-params.js
+│       ├── dom-helpers.js
+│       ├── session-cache.js
+│       └── title.js
+├── prompts/
+├── webclips/
+├── browser-extension/
+└── functions/
+  ├── index.js
+  └── package.json
 ```
 
 ## Adding a new prompt

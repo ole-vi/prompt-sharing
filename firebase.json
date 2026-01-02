@@ -3,7 +3,7 @@
     "default": "prompt-sharing-f8eeb"
   },
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "config/firestore/firestore.rules"
   },
   "functions": [
     {
