@@ -148,13 +148,32 @@
       
       <div id="favoriteReposContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
       
-      <div id="allReposContainer" style="margin-bottom:16px; position:relative;">
-        <div id="julesRepoDropdown" class="custom-dropdown" style="width:100%; position:relative;">
-          <button id="julesRepoDropdownBtn" class="custom-dropdown-btn" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--text); font-size:14px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;">
-            <span id="julesRepoDropdownText">Select a repository...</span>
-            <span style="color:var(--muted);">▼</span>
-          </button>
-          <div id="julesRepoDropdownMenu" class="custom-dropdown-menu" style="display:none; position:absolute; top:100%; left:0; right:0; margin-top:4px; max-height:300px; overflow-y:auto; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000;">
+      <div id="allReposContainer" style="margin-bottom:16px;">
+        <div style="display:flex; gap:12px; align-items:start;">
+          <!-- Repository Selection -->
+          <div style="flex:1;">
+            <label style="display:block; margin-bottom:8px; font-weight:600; font-size:14px;">Repository:</label>
+            <div id="julesRepoDropdown" class="custom-dropdown" style="width:100%; position:relative;">
+              <button id="julesRepoDropdownBtn" class="custom-dropdown-btn" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--text); font-size:14px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;">
+                <span id="julesRepoDropdownText">Select a repository...</span>
+                <span style="color:var(--muted);">▼</span>
+              </button>
+              <div id="julesRepoDropdownMenu" class="custom-dropdown-menu" style="display:none; position:absolute; top:100%; left:0; right:0; margin-top:4px; max-height:300px; overflow-y:auto; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000;">
+              </div>
+            </div>
+          </div>
+          
+          <!-- Branch Selection -->
+          <div style="flex:1;">
+            <label style="display:block; margin-bottom:8px; font-weight:600; font-size:14px;">Branch:</label>
+            <div id="julesBranchDropdown" class="custom-dropdown" style="width:100%; position:relative;">
+              <button id="julesBranchDropdownBtn" class="custom-dropdown-btn" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--text); font-size:14px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;" disabled>
+                <span id="julesBranchDropdownText">Select branch...</span>
+                <span style="color:var(--muted);">▼</span>
+              </button>
+              <div id="julesBranchDropdownMenu" class="custom-dropdown-menu" style="display:none; position:absolute; top:100%; left:0; right:0; margin-top:4px; max-height:300px; overflow-y:auto; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000;">
+              </div>
+            </div>
           </div>
         </div>
       </div>
