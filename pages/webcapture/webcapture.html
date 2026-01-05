@@ -4,13 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Web Capture Extension - PromptSync</title>
-  <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
-  <link rel="stylesheet" href="src/styles.css" />
+  <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+  <link rel="stylesheet" href="/src/styles.css" />
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
-  <script src="firebase-init.js"></script>
+  <script src="/src/firebase-init.js"></script>
 </head>
 <body data-page="webcapture">
 
@@ -187,7 +187,16 @@
     </main>
   </div>
 
-  <script type="module" src="./src/shared-init.js"></script>
+  <!-- Status Bar -->
+  <div id="statusBar" style="display:none;" aria-live="polite">
+    <div class="status-inner">
+      <div class="status-msg" style="flex:1;">Ready</div>
+      <div class="status-progress" style="display:none; margin-left:12px; color:var(--muted); font-size:13px;"></div>
+      <button class="status-action btn" style="display:none; margin-left:12px; padding:6px 10px;">Action</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/shared-init.js"></script>
   <script type="module">
     function waitForComponents() {
       if (document.querySelector('header')) {
@@ -200,47 +209,48 @@
     function initApp() {
       // Download extension button
       const downloadBtn = document.getElementById('downloadExtensionBtn');
-      if (downloadBtn) {
+      if (downloadBtn && !downloadBtn.dataset.bound) {
+        downloadBtn.dataset.bound = 'true';
         downloadBtn.addEventListener('click', async () => {
           try {
             downloadBtn.disabled = true;
             downloadBtn.textContent = '⏳ Preparing download...';
-            
-            // Import JSZip dynamically
+
+            // Import JSZip dynamically (ESM via CDN)
             const JSZip = (await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm')).default;
             const zip = new JSZip();
-            
+
             // Extension files to include
             const files = [
-              'browser-extension/manifest.json',
-              'browser-extension/background.js',
-              'browser-extension/config.js',
-              'browser-extension/content.js',
-              'browser-extension/github-auth.js',
-              'browser-extension/github-sync.js',
-              'browser-extension/popup.html',
-              'browser-extension/popup.css',
-              'browser-extension/popup.js',
-              'browser-extension/README.md'
+              '/browser-extension/manifest.json',
+              '/browser-extension/background.js',
+              '/browser-extension/config.js',
+              '/browser-extension/content.js',
+              '/browser-extension/github-auth.js',
+              '/browser-extension/github-sync.js',
+              '/browser-extension/popup.html',
+              '/browser-extension/popup.css',
+              '/browser-extension/popup.js',
+              '/browser-extension/README.md'
             ];
-            
+
             // Fetch and add each file to zip
             for (const filePath of files) {
               try {
                 const response = await fetch(filePath);
                 if (response.ok) {
                   const content = await response.text();
-                  const fileName = filePath.replace('browser-extension/', '');
+                  const fileName = filePath.replace('/browser-extension/', '');
                   zip.file(fileName, content);
                 }
               } catch (error) {
                 console.error(`Failed to fetch ${filePath}:`, error);
               }
             }
-            
+
             // Generate zip file
             const blob = await zip.generateAsync({ type: 'blob' });
-            
+
             // Create download link
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -250,7 +260,7 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            
+
             downloadBtn.textContent = '✅ Downloaded!';
             setTimeout(() => {
               downloadBtn.textContent = '⬇️ Download Extension';
@@ -274,15 +284,5 @@
       waitForComponents();
     }
   </script>
-
-  <!-- Status Bar -->
-  <div id="statusBar" style="display:none;" aria-live="polite">
-    <div class="status-inner">
-      <div class="status-msg" style="flex:1;">Ready</div>
-      <div class="status-progress" style="display:none; margin-left:12px; color:var(--muted); font-size:13px;"></div>
-      <button class="status-action btn" style="display:none; margin-left:12px; padding:6px 10px;">Action</button>
-    </div>
-  </div>
-
 </body>
 </html>

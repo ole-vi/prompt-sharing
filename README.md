@@ -28,7 +28,7 @@ To test the app locally, you must serve it over HTTP (not open the HTML file dir
 python -m http.server 8888
 ```
 
-Then open **`http://localhost:8888`** in your browser. 
+Then open **`http://localhost:8888/pages/home/index.html`** in your browser. 
 
 **Important:** Opening `index.html` directly (via `file://` URL) will not work with Firebase authentication. The app must be served over HTTP for GitHub OAuth to function.
 
@@ -48,16 +48,20 @@ This is a zero-build, modular single-page application using plain JavaScript ES6
 
 ```
 prompt-sharing/
-├── index.html              # Main HTML entry point (Home/Prompt List)
-├── profile.html            # User profile & settings
-├── jules.html              # Jules account management & sessions
-├── queue.html              # Jules task queue management
-├── sessions.html           # Full list of Jules sessions
-├── webcapture.html         # Web Capture extension download & info
-├── firebase-init.js        # Firebase SDK initialization
-├── firebase.json           # Firebase hosting config
-├── firestore.rules         # Firestore security rules
-├── oauth-callback.html     # GitHub OAuth callback for extension
+├── pages/                 # Routed pages
+│   ├── home/index.html    # Home / Prompt Library
+│   ├── jules/jules.html   # Jules account management & sessions
+│   ├── queue/queue.html   # Jules task queue management
+│   ├── sessions/sessions.html # Full list of Jules sessions
+│   ├── profile/profile.html   # User profile & settings
+│   └── webcapture/webcapture.html # Web Capture extension
+├── partials/
+│   └── header.html        # Shared header partial (loaded on all pages)
+├── src/firebase-init.js   # Firebase SDK initialization (src)
+├── firebase.json          # Firebase hosting config
+├── config/
+│   └── firestore/firestore.rules # Firestore security rules
+├── oauth-callback.html    # GitHub OAuth callback for extension
 ├── src/
 │   ├── app.js             # Main application initialization
 │   ├── shared-init.js     # Shared initialization for all pages
@@ -96,8 +100,8 @@ prompt-sharing/
 │   ├── github-sync.js    # GitHub sync logic
 │   └── background.js     # Service worker
 └── functions/            # Firebase Cloud Functions
-    ├── index.js          # Jules backend + GitHub OAuth proxy
-    └── package.json
+  ├── index.js          # Jules backend + GitHub OAuth proxy
+  └── package.json
 ```
 
 ## Adding a new prompt
@@ -326,8 +330,12 @@ For issues, questions, or feature requests, please open an issue on GitHub.
 ```bash
 cd prompt-sharing
 python -m http.server 8888
-# Visit http://localhost:8888
+# Visit http://localhost:8888/pages/home/index.html
 ```
+
+Routing notes:
+- Hosting redirects `/` to `/pages/home/index.html` via `firebase.json`.
+- Legacy root pages have been removed; use `/pages/*` paths.
 
 The dev setup loads modules directly without compilation. Changes are reflected immediately (reload browser).
 
