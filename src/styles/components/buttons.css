@@ -17,6 +17,7 @@
 /* Size variants */
 .btn.lg { padding: 12px 20px; font-size: 14px; }
 .btn.xl { padding: 16px 32px; font-size: 16px; font-weight: 600; }
+.btn.sm { padding: 6px 8px; font-size: 12px; }
 
 .help-link { text-decoration: none; color: var(--muted); font-size: 13px; cursor: pointer; padding: 6px 10px; display: inline-block; transition: all 0.2s; border-radius: 8px; border: 1px solid transparent; }
 .help-link:hover { color: var(--accent); border-color: var(--accent); background: rgba(77, 217, 255, 0.1); }

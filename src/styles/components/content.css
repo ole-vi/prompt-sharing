@@ -42,6 +42,10 @@ a:hover { text-decoration: underline; }
 .row { display:flex; gap:12px; align-items:flex-start; }
 .ml-auto { margin-left:auto; }
 
+/* Inline search variant for flex rows */
+.search-inline { width:auto; }
+.search-inline .modal-input { width:240px; }
+
 /* Guide lists inside panels */
 .guidelist { margin:0; padding-left:24px; line-height:1.8; }
 
@@ -62,7 +66,9 @@ a:hover { text-decoration: underline; }
 .pad-xl { padding:48px; }
 .muted { color:var(--muted); }
 .font-16 { font-size:16px; }
+.mb-sm { margin-bottom:8px; }
 .mb-md { margin-bottom:16px; }
+.mt-sm { margin-top:8px; }
 .mt-md { margin-top:16px; }
 .w-full { width:100%; }
 /* removed max-height utilities after feedback */

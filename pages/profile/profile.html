@@ -14,31 +14,31 @@
 </head>
 <body data-page="profile">
 
-  <div class="wrap">
-    <main class="card pad-lg">
-      <h2 class="section-title-lg">👤 User Profile</h2>
+  <div class="wrap" style="grid-template-columns: 1fr;">
+    <main class="card" style="padding:32px;">
+      <h2 style="margin:0 0 24px; font-size:24px; font-weight:700;">👤 User Profile</h2>
       
       <!-- User Info Section -->
-      <div class="panel">
-        <div class="small-text muted-text mb-md">Signed in as</div>
-        <div id="profileUserName" class="font-16" style="font-weight:600;">Loading...</div>
+      <div style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px;">
+        <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">Signed in as</div>
+        <div id="profileUserName" style="font-weight:600; font-size:16px;">Loading...</div>
       </div>
       
       <!-- Jules API Key Section -->
-      <div id="julesKeyStatusDiv" class="panel">
-        <div class="small-text muted-text mb-md">Jules API Key</div>
-        <div id="julesKeyStatus" class="font-16 muted-text" style="font-weight:600;">Loading...</div>
+      <div id="julesKeyStatusDiv" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px;">
+        <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">Jules API Key</div>
+        <div id="julesKeyStatus" style="font-weight:600; font-size:16px; color:var(--muted);">Loading...</div>
       </div>
       
-      <div class="mb-md">
-        <button id="addJulesKeyBtn" class="btn" style="display:none;">➕ Add Jules API Key</button>
+      <div style="display:flex; gap:8px; flex-direction:column; margin-bottom:16px;">
+        <button id="addJulesKeyBtn" class="btn" style="padding:12px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:8px; text-align:center; display:none;">➕ Add Jules API Key</button>
       </div>
       
       <!-- Danger Zone -->
-      <div id="dangerZoneSection" style="display:none;" class="panel mt-md">
-        <div class="small-text" style="font-weight:600; color:#c0504d;">⚠️ Danger Zone</div>
-        <div class="small-text muted-text mb-md">This action will delete your stored Jules API key. You'll need to enter a new one next time.</div>
-        <button id="resetJulesKeyBtn" class="btn danger" style="width:100%; font-weight:600;">🗑️ Delete Jules API Key</button>
+      <div id="dangerZoneSection" style="display:none; margin-top:28px; padding:18px; border:1px solid #c0504d; border-radius:8px; background:rgba(192,80,77,0.08);">
+        <div style="font-size:15px; font-weight:600; color:#c0504d; margin-bottom:10px;">⚠️ Danger Zone</div>
+        <div style="font-size:13px; color:var(--muted); margin-bottom:14px;">This action will delete your stored Jules API key. You'll need to enter a new one next time.</div>
+        <button id="resetJulesKeyBtn" class="btn" style="padding:12px; width:100%; border:1px solid #c0504d; background:rgba(192,80,77,0.2); color:#ff9a97; cursor:pointer; border-radius:8px; text-align:center; font-weight:600;">🗑️ Delete Jules API Key</button>
       </div>
     </main>
   </div>
@@ -87,7 +87,7 @@
             const dangerZoneSection = document.getElementById('dangerZoneSection');
             
             if (profileUserName) {
-              profileUserName.innerHTML = '<div class="panel text-center pad-xl muted-text">Please sign in to view your profile.</div>';
+              profileUserName.innerHTML = '<div style="color:var(--muted); text-align:center; padding:48px;">Please sign in to view your profile.</div>';
             }
             if (julesKeyStatusDiv) julesKeyStatusDiv.style.display = 'none';
             if (addJulesKeyBtn) addJulesKeyBtn.style.display = 'none';
