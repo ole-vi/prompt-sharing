@@ -46,7 +46,7 @@
 .custom-dropdown-item.selected { background: linear-gradient(135deg, rgba(77,217,255,0.2), rgba(77,217,255,0.1)); color: var(--accent); font-weight: 600; border-left: 3px solid var(--accent); }
 
 /* Utility: compact trigger width */
-.custom-dropdown--compact { width: clamp(100px, 18vw, 180px); }
+.custom-dropdown--compact { width: clamp(70px, 14vw, 160px); }
 
 /* Utility: wide menu independent of trigger width */
 .custom-dropdown--wide-menu .custom-dropdown-menu {
