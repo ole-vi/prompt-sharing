@@ -3,5 +3,8 @@
 .btn:hover { border-color: var(--accent); background: linear-gradient(135deg, rgba(77,217,255,0.15), rgba(77,217,255,0.08)); box-shadow: 0 0 10px rgba(77, 217, 255, 0.12); }
 .btn:active { transform: translateY(1px); }
 
+/* Primary emphasis variant */
+.btn.primary { border-color: var(--accent); color: var(--accent); }
+
 .help-link { text-decoration: none; color: var(--muted); font-size: 13px; cursor: pointer; padding: 6px 10px; display: inline-block; transition: all 0.2s; border-radius: 8px; border: 1px solid transparent; }
 .help-link:hover { color: var(--accent); border-color: var(--accent); background: rgba(77, 217, 255, 0.1); }
