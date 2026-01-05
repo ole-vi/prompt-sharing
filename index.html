@@ -4,14 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PromptSync</title>
-  <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
-  <link rel="stylesheet" href="/src/styles.css" />
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+  <link rel="stylesheet" href="src/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
-  <script src="/src/firebase-init.js"></script>
+  <script src="src/firebase-init.js"></script>
 </head>
 <body data-page="home">
 
@@ -31,40 +31,40 @@
       <div id="list"></div>
     </aside>
 
-    <main id="main" class="card">
-      <div id="empty" style="display:none;">
+    <main id="main" class="card" style="display:flex; flex-direction:column;">
+      <div id="empty" style="display:none; flex-direction:column; align-items:center; justify-content:center; flex:1; min-height:300px; color:var(--muted); font-size:16px;">
       </div>
       
       <!-- Free Input Section (shown in main area) -->
       <div id="freeInputSection" style="display:none; flex-direction:column; flex:1;">
-        <h2 class="section-title">Free Input</h2>
-        <p class="muted-text small-text" style="margin:0 0 16px;">Enter your custom prompt below: <span class="muted-text" style="font-size: 11px;">(Use --- to split into subtasks)</span></p>
-        <textarea id="freeInputTextarea" class="text-input" placeholder="Enter your prompt here..."></textarea>
+        <h2 style="margin:0 0 12px; font-size:20px;">Free Input</h2>
+        <p style="margin:0 0 16px; color:var(--muted); font-size:13px;">Enter your custom prompt below: <span style="font-size: 11px; color: var(--muted);">(Use --- to split into subtasks)</span></p>
+        <textarea id="freeInputTextarea" placeholder="Enter your prompt here..." style="width:100%; min-height:250px; padding:12px; border:1px solid var(--border); border-radius:8px; background:#12162a; color:var(--text); outline:none; margin-bottom:16px; box-sizing:border-box; resize:vertical; font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, Noto Sans, Liberation Sans, Helvetica Neue, sans-serif; font-size:14px; flex:1;"></textarea>
         
         <!-- Repository and Branch Selection -->
-        <div class="panel">
-          <div class="form-row">
+        <div style="margin: 16px 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.02);">
+          <div style="display: flex; gap: 12px; align-items: start;">
             <!-- Repository Selection -->
-            <div class="form-col">
-              <label class="form-label">Repository:</label>
-              <div id="freeInputRepoDropdown" class="custom-dropdown">
-                <button id="freeInputRepoDropdownBtn" class="custom-dropdown-btn">
+            <div style="flex: 1;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Repository:</label>
+              <div id="freeInputRepoDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
+                <button id="freeInputRepoDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
                   <span id="freeInputRepoDropdownText">Select repository...</span>
-                  <span class="custom-dropdown-caret">▼</span>
+                  <span style="color: var(--muted);">▼</span>
                 </button>
-                <div id="freeInputRepoDropdownMenu" class="custom-dropdown-menu"></div>
+                <div id="freeInputRepoDropdownMenu" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 300px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
               </div>
             </div>
             
             <!-- Branch Selection -->
-            <div class="form-col">
-              <label class="form-label">Branch:</label>
-              <div id="freeInputBranchDropdown" class="custom-dropdown">
-                <button id="freeInputBranchDropdownBtn" class="custom-dropdown-btn">
+            <div style="flex: 1;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Branch:</label>
+              <div id="freeInputBranchDropdown" class="custom-dropdown" style="width: 100%; position: relative;">
+                <button id="freeInputBranchDropdownBtn" class="custom-dropdown-btn" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
                   <span id="freeInputBranchDropdownText">Select branch...</span>
-                  <span class="custom-dropdown-caret">▼</span>
+                  <span style="color: var(--muted);">▼</span>
                 </button>
-                <div id="freeInputBranchDropdownMenu" class="custom-dropdown-menu"></div>
+                <div id="freeInputBranchDropdownMenu" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 300px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;"></div>
               </div>
             </div>
           </div>
@@ -81,11 +81,11 @@
           </label>
         </div>
         
-        <div class="actions-right">
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
           <button id="freeInputSplitBtn" class="btn" title="Split into Subtasks">✂️</button>
-          <div class="menu-anchor">
+          <div style="position:relative; display:inline-block;">
             <button id="freeInputCopenBtn" class="btn" title="Copy prompt and open in new tab">📋⤴ ▼</button>
-            <div id="freeInputCopenMenu" class="menu-panel menu-panel--above menu-panel-sm">
+            <div id="freeInputCopenMenu" style="display:none; position:absolute; bottom:100%; left:0; margin-bottom:4px; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000; min-width:150px;">
               <div class="custom-dropdown-item" data-target="blank">🌐 Blank</div>
               <div class="custom-dropdown-item" data-target="claude">🤖 Claude</div>
               <div class="custom-dropdown-item" data-target="codex">💬 Codex</div>
@@ -95,7 +95,7 @@
           </div>
           <button id="freeInputCancelBtn" class="btn">Cancel</button>
           <button id="freeInputQueueBtn" class="btn">Queue</button>
-          <button id="freeInputSubmitBtn" class="btn primary">Submit to Jules</button>
+          <button id="freeInputSubmitBtn" class="btn primary" style="border-color:var(--accent); color:var(--accent);">Submit to Jules</button>
         </div>
       </div>
       
@@ -103,9 +103,9 @@
       <div id="meta" style="display:none"></div>
       <div id="actions" style="display:none">
         <button class="btn" id="copyBtn" title="Copy the entire prompt">📋 Copy</button>
-        <div class="menu-anchor">
+        <div style="position:relative; display:inline-block;">
           <button class="btn" id="copenBtn" title="Copy prompt and open in new tab">📋⤴ Copen ▼</button>
-          <div id="copenMenu" class="menu-panel menu-panel--below-left menu-panel-sm">
+          <div id="copenMenu" style="display:none; position:absolute; top:100%; left:0; margin-top:4px; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000; min-width:150px;">
             <div class="custom-dropdown-item" data-target="blank">🌐 Blank</div>
             <div class="custom-dropdown-item" data-target="claude">🤖 Claude</div>
             <div class="custom-dropdown-item" data-target="codex">💬 Codex</div>
@@ -115,12 +115,12 @@
         </div>
         <button class="btn" id="julesBtn" title="Try this prompt in Jules">⚡ Try in Jules</button>
         <button class="btn" id="shareBtn" title="Copy a link to this prompt">🔗 Copy link</button>
-        <div class="menu-anchor">
+        <div style="position:relative; display:inline-block;">
           <button class="btn" id="moreBtn" title="More actions">⋯ More</button>
-          <div id="moreMenu" class="menu-panel menu-panel--below-right menu-panel-md">
-            <div class="custom-dropdown-item" id="moreEditBtn">✏️ Edit on GitHub</div>
-            <div class="custom-dropdown-item" id="moreGhBtn">🗂️ View on GitHub</div>
-            <div class="custom-dropdown-item" id="moreRawBtn">📄 Open raw</div>
+          <div id="moreMenu" style="display:none; position:absolute; top:100%; right:0; margin-top:4px; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000; min-width:180px;">
+            <div class="custom-dropdown-item" id="moreEditBtn" style="cursor:pointer;">✏️ Edit on GitHub</div>
+            <div class="custom-dropdown-item" id="moreGhBtn" style="cursor:pointer;">🗂️ View on GitHub</div>
+            <div class="custom-dropdown-item" id="moreRawBtn" style="cursor:pointer;">📄 Open raw</div>
           </div>
         </div>
         <a class="btn" id="editBtn" target="_blank" rel="noopener" title="Edit the file on GitHub" style="display:none;">✏️ Edit on GitHub</a>
@@ -132,71 +132,71 @@
   </div>
 
   <!-- Jules API Key Modal -->
-  <div id="julesKeyModal" class="modal">
-    <div class="modal-content">
-      <h2>Save Jules API Key</h2>
-      <p>Enter your Jules API key. This will be encrypted and stored securely.</p>
-      <input id="julesKeyInput" type="password" class="modal-input" placeholder="Paste your Jules API key..." />
-      <div class="modal-buttons">
-        <button id="julesCancelBtn" class="btn">Cancel</button>
-        <button id="julesSaveBtn" class="btn primary">Save & Continue</button>
+  <div id="julesKeyModal" style="display:none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; flex-direction:column; align-items:center; justify-content:center;">
+    <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; max-width:400px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+      <h2 style="margin:0 0 12px; font-size:18px;">Save Jules API Key</h2>
+      <p style="margin:0 0 16px; color:var(--muted); font-size:13px;">Enter your Jules API key. This will be encrypted and stored securely.</p>
+      <input id="julesKeyInput" type="password" placeholder="Paste your Jules API key..." style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; background:#12162a; color:var(--text); outline:none; margin-bottom:16px; box-sizing:border-box;" />
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button id="julesCancelBtn" class="btn" style="padding:8px 12px;">Cancel</button>
+        <button id="julesSaveBtn" class="btn" style="padding:8px 12px; border-color:var(--accent); color:var(--accent);">Save & Continue</button>
       </div>
     </div>
   </div>
 
   <!-- Jules Environment Modal -->
-  <div id="julesEnvModal" class="modal">
-    <div class="modal-content">
-      <h2>Choose Repository</h2>
-      <p>Select a connected repository to open in Jules.</p>
+  <div id="julesEnvModal" style="display:none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; flex-direction:column; align-items:center; justify-content:center;">
+    <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; max-width:400px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+      <h2 style="margin:0 0 12px; font-size:18px;">Choose Repository</h2>
+      <p style="margin:0 0 16px; color:var(--muted); font-size:13px;">Select a connected repository to open in Jules.</p>
       
       <div id="favoriteReposContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
       
       <div id="allReposContainer" style="margin-bottom:16px;">
-        <div class="form-row">
+        <div style="display:flex; gap:12px; align-items:start;">
           <!-- Repository Selection -->
-          <div class="form-col">
-            <label class="form-label">Repository:</label>
-            <div id="julesRepoDropdown" class="custom-dropdown">
-              <button id="julesRepoDropdownBtn" class="custom-dropdown-btn">
+          <div style="flex:1;">
+            <label style="display:block; margin-bottom:8px; font-weight:600; font-size:14px;">Repository:</label>
+            <div id="julesRepoDropdown" class="custom-dropdown" style="width:100%; position:relative;">
+              <button id="julesRepoDropdownBtn" class="custom-dropdown-btn" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--text); font-size:14px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;">
                 <span id="julesRepoDropdownText">Select a repository...</span>
-                <span class="custom-dropdown-caret">▼</span>
+                <span style="color:var(--muted);">▼</span>
               </button>
-              <div id="julesRepoDropdownMenu" class="custom-dropdown-menu">
+              <div id="julesRepoDropdownMenu" class="custom-dropdown-menu" style="display:none; position:absolute; top:100%; left:0; right:0; margin-top:4px; max-height:300px; overflow-y:auto; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000;">
               </div>
             </div>
           </div>
           
           <!-- Branch Selection -->
-          <div class="form-col">
-            <label class="form-label">Branch:</label>
-            <div id="julesBranchDropdown" class="custom-dropdown">
-              <button id="julesBranchDropdownBtn" class="custom-dropdown-btn" disabled>
+          <div style="flex:1;">
+            <label style="display:block; margin-bottom:8px; font-weight:600; font-size:14px;">Branch:</label>
+            <div id="julesBranchDropdown" class="custom-dropdown" style="width:100%; position:relative;">
+              <button id="julesBranchDropdownBtn" class="custom-dropdown-btn" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--text); font-size:14px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center;" disabled>
                 <span id="julesBranchDropdownText">Select branch...</span>
-                <span class="custom-dropdown-caret">▼</span>
+                <span style="color:var(--muted);">▼</span>
               </button>
-              <div id="julesBranchDropdownMenu" class="custom-dropdown-menu">
+              <div id="julesBranchDropdownMenu" class="custom-dropdown-menu" style="display:none; position:absolute; top:100%; left:0; right:0; margin-top:4px; max-height:300px; overflow-y:auto; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:1000;">
               </div>
             </div>
           </div>
         </div>
       </div>
       
-      <div class="options-box">
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px; padding:8px; background:rgba(255,255,255,0.02); border-radius:8px;">
         <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
-          <input type="checkbox" id="julesEnvSuppressPopupsCheckbox" />
+          <input type="checkbox" id="julesEnvSuppressPopupsCheckbox" style="cursor:pointer;" />
           <span>Suppress Popups</span>
         </label>
         <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
-          <input type="checkbox" id="julesEnvOpenInBackgroundCheckbox" />
+          <input type="checkbox" id="julesEnvOpenInBackgroundCheckbox" style="cursor:pointer;" />
           <span>Open in Background</span>
         </label>
       </div>
       
-      <div class="modal-buttons">
-        <button id="julesEnvCancelBtn" class="btn">Cancel</button>
-        <button id="julesEnvQueueBtn" class="btn" disabled>Queue</button>
-        <button id="julesEnvSubmitBtn" class="btn primary" disabled>Submit</button>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button id="julesEnvCancelBtn" class="btn" style="padding:8px 12px;">Cancel</button>
+        <button id="julesEnvQueueBtn" class="btn" style="padding:8px 12px;" disabled>Queue</button>
+        <button id="julesEnvSubmitBtn" class="btn" style="padding:8px 12px; border-color: var(--accent); color: var(--accent);" disabled>Submit</button>
       </div>
     </div>
   </div>
@@ -319,13 +319,9 @@
     </div>
   </div>
 
-
-
-
-
-  <script type="module" src="/src/shared-init.js"></script>
+  <script type="module" src="./src/shared-init.js"></script>
   <script type="module">
-    import { initApp } from '/src/app.js';
+    import { initApp } from './src/app.js';
     
     // Wait for shared components to load, then initialize app
     function waitForComponents() {
@@ -352,4 +348,3 @@
   </div>
 </body>
 </html>
- 

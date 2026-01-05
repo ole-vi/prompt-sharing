@@ -4,13 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Web Capture Extension - PromptSync</title>
-  <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
-  <link rel="stylesheet" href="/src/styles.css" />
+  <link rel="icon" type="image/x-icon" href="../../assets/favicon.ico" />
+  <link rel="stylesheet" href="../../src/styles.css" />
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
-  <script src="/src/firebase-init.js"></script>
+  <script src="../../src/firebase-init.js"></script>
 </head>
 <body data-page="webcapture">
 
@@ -196,7 +196,7 @@
     </div>
   </div>
 
-  <script type="module" src="/src/shared-init.js"></script>
+  <script type="module" src="../../src/shared-init.js"></script>
   <script type="module">
     function waitForComponents() {
       if (document.querySelector('header')) {
@@ -222,16 +222,16 @@
 
             // Extension files to include
             const files = [
-              '/browser-extension/manifest.json',
-              '/browser-extension/background.js',
-              '/browser-extension/config.js',
-              '/browser-extension/content.js',
-              '/browser-extension/github-auth.js',
-              '/browser-extension/github-sync.js',
-              '/browser-extension/popup.html',
-              '/browser-extension/popup.css',
-              '/browser-extension/popup.js',
-              '/browser-extension/README.md'
+              '../../browser-extension/manifest.json',
+              '../../browser-extension/background.js',
+              '../../browser-extension/config.js',
+              '../../browser-extension/content.js',
+              '../../browser-extension/github-auth.js',
+              '../../browser-extension/github-sync.js',
+              '../../browser-extension/popup.html',
+              '../../browser-extension/popup.css',
+              '../../browser-extension/popup.js',
+              '../../browser-extension/README.md'
             ];
 
             // Fetch and add each file to zip
