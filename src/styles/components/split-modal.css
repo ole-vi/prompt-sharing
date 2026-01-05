@@ -1,0 +1,9 @@
+/* Subtask Split Modal */
+#splitModeSendAll, #splitModeSplitTasks { transition: all 0.2s ease; }
+#splitModeSendAll:hover, #splitModeSplitTasks:hover { background: rgba(255,255,255,0.05); }
+#splitPreviewPanel, #splitEditPanel { font-size: 12px; line-height: 1.5; }
+#splitPreviewPanel div, #splitEditPanel div { word-break: break-word; }
+#splitPreviewPanel::-webkit-scrollbar, #splitEditPanel::-webkit-scrollbar { width: 6px; }
+#splitPreviewPanel::-webkit-scrollbar-track, #splitEditPanel::-webkit-scrollbar-track { background: transparent; }
+#splitPreviewPanel::-webkit-scrollbar-thumb, #splitEditPanel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+#splitPreviewPanel::-webkit-scrollbar-thumb:hover, #splitEditPanel::-webkit-scrollbar-thumb:hover { background: var(--muted); }

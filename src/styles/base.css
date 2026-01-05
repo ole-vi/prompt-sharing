@@ -1,0 +1,28 @@
+/* Base variables, reset, and global styles */
+:root {
+  --bg: #0a0e1a;
+  --card: #141829;
+  --muted: #8b94a8;
+  --text: #f0f3f8;
+  --accent: #4dd9ff;
+  --accent-glow: #4dd9ff1a;
+  --border: #222438;
+  --gradient-primary: linear-gradient(135deg, #4dd9ff 0%, #5ad1ff 100%);
+  --gradient-bg: linear-gradient(180deg, #0d1424 0%, #0a0e1a 100%);
+}
+
+* { box-sizing: border-box; }
+
+html, body { 
+  height: 100%; 
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, Noto Sans, Liberation Sans, Helvetica Neue, sans-serif;
+  background: var(--gradient-bg);
+  color: var(--text);
+  background-attachment: fixed;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

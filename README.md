@@ -44,6 +44,19 @@ This is a zero-build, modular single-page application using plain JavaScript ES6
 * **Zero Dependencies**: Only CDN-loaded libraries (marked.js, Firebase)
 * **Fast**: Caching, lazy loading, and optimized rendering
 
+### CSS Structure
+
+- Aggregator: See [src/styles.css](src/styles.css) for ordered imports.
+- Base: [src/styles/base.css](src/styles/base.css) defines variables and resets.
+- Layout: [src/styles/layout.css](src/styles/layout.css) contains grid and responsive rules.
+- Components: Modular styles in [src/styles/components/](src/styles/components/) (header, navbar, sidebar, buttons, status bar, etc.).
+- Pages: Per-page overrides in [src/styles/pages/](src/styles/pages/).
+
+Guidelines:
+- Keep base/layout first, components next, pages last in the aggregator.
+- Add new components under `src/styles/components/` and import them in `src/styles.css`.
+- Use page styles sparingly for view-specific tweaks.
+
 ### Folder structure
 
 ```
@@ -65,7 +78,7 @@ prompt-sharing/
 ├── src/
 │   ├── app.js             # Main application initialization
 │   ├── shared-init.js     # Shared initialization for all pages
-│   ├── styles.css         # All application styles
+│   ├── styles.css         # Aggregated stylesheet importing modular CSS
 │   ├── modules/           # Feature modules (ES6)
 │   │   ├── auth.js        # GitHub OAuth & auth state management
 │   │   ├── jules.js       # Jules integration, modals, queue system

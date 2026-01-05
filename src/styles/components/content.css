@@ -1,0 +1,7 @@
+/* Content */
+#content { line-height: 1.55; font-size: 15px; }
+#content pre { background: #0b0f21; padding: 12px; border: 1px solid var(--border); border-radius: 10px; overflow: auto; }
+#content code { background: #0b0f21; padding: 1px 4px; border-radius: 6px; font-family: 'Courier New', monospace; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
