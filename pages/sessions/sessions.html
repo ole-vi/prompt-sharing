@@ -15,31 +15,31 @@
 <body data-page="sessions">
 
   <div class="wrap" style="grid-template-columns: 1fr;">
-    <main class="card" style="padding:32px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-        <h2 style="margin:0; font-size:24px; font-weight:700;">📖 All Jules Sessions</h2>
-        <a href="../jules/jules.html" class="btn primary" style="text-decoration:none; padding:8px 16px; font-size:13px; white-space:nowrap;">← Back to Jules</a>
+    <main class="card pad-lg">
+      <div class="page-header">
+        <h2 class="section-title-lg">📖 All Jules Sessions</h2>
+        <a href="../jules/jules.html" class="btn primary">← Back to Jules</a>
       </div>
 
       <!-- Search -->
-      <div style="margin-bottom:16px;" class="search-wrapper">
+      <div class="search-wrapper" style="margin-bottom:16px;">
         <input 
           type="text" 
           id="sessionSearchInput" 
           placeholder="Search sessions..." 
-          style="width:100%; padding:10px 36px 10px 12px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;"
+          class="modal-input" style="width:100%; padding-right:36px;"
         />
         <button id="sessionSearchClear" class="search-clear" style="display:none;" title="Clear search">✕</button>
       </div>
       
       <!-- Loading Message -->
-      <div id="sessionsLoading" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:48px; text-align:center;">
-        <div style="color:var(--muted); font-size:16px;">Loading sessions...</div>
+      <div id="sessionsLoading" class="panel text-center pad-xl" style="display:none;">
+        <div class="muted font-16">Loading sessions...</div>
       </div>
       
       <!-- Not Signed In Message -->
-      <div id="sessionsNotSignedIn" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:48px; text-align:center;">
-        <div style="color:var(--muted); font-size:16px;">Please sign in to view your sessions.</div>
+      <div id="sessionsNotSignedIn" class="panel text-center pad-xl" style="display:none;">
+        <div class="muted font-16">Please sign in to view your sessions.</div>
       </div>
 
       <!-- Sessions List -->
@@ -47,7 +47,7 @@
 
       <!-- Load More -->
       <div id="sessionsLoadMore" style="display:none; margin-top:16px; text-align:center;">
-        <button id="loadMoreSessionsBtn" class="btn" style="padding:10px 24px;">Load More</button>
+        <button id="loadMoreSessionsBtn" class="btn">Load More</button>
       </div>
     </main>
   </div>
@@ -103,11 +103,11 @@
             loadMoreSection.style.display = 'none';
           }
         } else if (allSessionsCache.length === 0) {
-          allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions found</div>';
+          allSessionsList.innerHTML = '<div class="muted text-center pad-lg">No sessions found</div>';
         }
       } catch (error) {
         if (allSessionsCache.length === 0) {
-          allSessionsList.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">Failed to load sessions: ${error.message}</div>`;
+          allSessionsList.innerHTML = `<div class="text-center pad-lg" style="color:#e74c3c;">Failed to load sessions: ${error.message}</div>`;
         }
         loadMoreBtn.disabled = false;
         loadMoreBtn.textContent = 'Load More';
@@ -161,16 +161,13 @@
         const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
         
         return `
-          <div style="padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all 0.2s;"
-               onmouseover="this.style.background='rgba(77,217,255,0.05)'; this.style.borderColor='var(--accent)'"
-               onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='var(--border)'"
-               onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
-            <div style="font-size:13px; color:var(--muted); margin-bottom:4px;">${createdAt}</div>
-            <div style="font-size:14px; color:var(--text); margin-bottom:8px; white-space:pre-wrap;">${displayPrompt}</div>
-            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;" onclick="event.stopPropagation();">
-              <span style="font-size:12px; padding:4px 8px; background:rgba(77,217,255,0.1); border-radius:4px; color:var(--accent);">${stateEmoji} ${stateLabel}</span>
-              ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" style="font-size:12px; color:var(--accent); text-decoration:none;">🔗 View PR</a>` : ''}
-              <span style="font-size:11px; color:var(--muted); margin-left:auto;">💡 Click to view session</span>
+          <div class="session-card" onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
+            <div class="session-meta">${createdAt}</div>
+            <div class="session-prompt">${displayPrompt}</div>
+            <div class="session-row" onclick="event.stopPropagation();">
+              <span class="session-pill">${stateEmoji} ${stateLabel}</span>
+              ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" style="color:var(--accent); text-decoration:none;">🔗 View PR</a>` : ''}
+              <span class="session-hint">💡 Click to view session</span>
             </div>
           </div>
         `;
@@ -262,8 +259,8 @@
   <div id="statusBar" style="display:none;" aria-live="polite">
     <div class="status-inner">
       <div class="status-msg" style="flex:1;">Ready</div>
-      <div class="status-progress" style="display:none; margin-left:12px; color:var(--muted); font-size:13px;"></div>
-      <button class="status-action btn" style="display:none; margin-left:12px; padding:6px 10px;">Action</button>
+      <div class="status-progress" style="display:none;"></div>
+      <button class="status-action btn" style="display:none;">Action</button>
     </div>
   </div>
 </body>

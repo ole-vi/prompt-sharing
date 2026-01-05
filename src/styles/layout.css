@@ -9,6 +9,11 @@
   transition: grid-template-columns 0.3s ease;
 }
 
+/* When no desktop sidebar is present, use full-width content */
+.wrap:not(:has(#sidebar)) {
+  grid-template-columns: 1fr;
+}
+
 .wrap:has(#sidebar.collapsed) { grid-template-columns: 48px 1fr; }
 
 @media (max-width: 1000px) {

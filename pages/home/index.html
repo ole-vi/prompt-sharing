@@ -281,11 +281,11 @@
   </div>
 
   <!-- Subtask Preview Modal -->
-  <div id="subtaskPreviewModal" class="modal" style="z-index: 1002;">
-    <div class="modal-content" style="max-width: 700px; max-height: 80vh; display: flex; flex-direction: column;">
-      <h2 id="subtaskPreviewTitle" style="margin: 0 0 16px; font-size: 18px;">Subtask Preview</h2>
-      <div id="subtaskPreviewContent" style="flex: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; color: var(--text);"></div>
-      <div class="modal-buttons" style="margin-top: 16px;">
+  <div id="subtaskPreviewModal" class="modal">
+    <div class="modal-content modal-xl">
+      <h2 id="subtaskPreviewTitle">Subtask Preview</h2>
+      <div id="subtaskPreviewContent" class="scroll-box"></div>
+      <div class="modal-buttons">
         <button id="subtaskPreviewCloseBtn" class="btn">Close</button>
       </div>
     </div>
@@ -293,28 +293,28 @@
 
   <!-- Subtask Error Modal -->
   <div id="subtaskErrorModal" class="modal">
-    <div class="modal-content" style="max-width: 500px;">
-      <h2 style="margin: 0 0 8px; font-size: 18px; color: #ff6b6b;">⚠️ Subtask Failed</h2>
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; background: rgba(255,107,107,0.1); padding: 12px; border-radius: 8px; border-left: 3px solid #ff6b6b;">
+    <div class="modal-content modal-sm">
+      <h2 class="error-title">⚠️ Subtask Failed</h2>
+      <div class="error-banner">
         <div style="flex: 1;">
-          <div id="errorSubtaskNumber" style="font-size: 12px; color: var(--muted); margin-bottom: 4px;"></div>
-          <div id="errorMessage" style="font-size: 13px; color: var(--text);"></div>
+          <div id="errorSubtaskNumber" class="small-text muted-text" style="margin-bottom: 4px;"></div>
+          <div id="errorMessage" class="small-text" style="color: var(--text);"></div>
         </div>
       </div>
-      <div style="margin-bottom: 16px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: monospace; font-size: 12px; color: var(--muted);">
+      <div class="error-details">
         <div id="errorDetails" style="word-break: break-word;"></div>
       </div>
       <div style="display: flex; gap: 8px; margin-bottom: 16px;">
         <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; flex: 1;">
-          <input id="errorRetryDelayCheckbox" type="checkbox" checked style="cursor: pointer;" />
+          <input id="errorRetryDelayCheckbox" type="checkbox" checked />
           <span>Wait 5 seconds before retry</span>
         </label>
       </div>
       <div class="modal-buttons" style="display: flex; gap: 8px; justify-content: flex-end;">
-        <button id="subtaskErrorCancelBtn" class="btn" style="padding: 8px 16px;">Cancel All</button>
-        <button id="subtaskErrorSkipBtn" class="btn" style="padding: 8px 16px; border-color: #f39c12; color: #f39c12;">Skip This</button>
-        <button id="subtaskErrorQueueBtn" class="btn" style="padding: 8px 16px; border-color: #2980b9; color: #2980b9;">Queue Remainder</button>
-        <button id="subtaskErrorRetryBtn" class="btn primary" style="padding: 8px 16px; border-color: #27ae60; background: rgba(39,174,96,0.2); color: #27ae60;">Retry</button>
+        <button id="subtaskErrorCancelBtn" class="btn">Cancel All</button>
+        <button id="subtaskErrorSkipBtn" class="btn" style="border-color: #f39c12; color: #f39c12;">Skip This</button>
+        <button id="subtaskErrorQueueBtn" class="btn" style="border-color: #2980b9; color: #2980b9;">Queue Remainder</button>
+        <button id="subtaskErrorRetryBtn" class="btn primary" style="border-color: #27ae60; background: rgba(39,174,96,0.2); color: #27ae60;">Retry</button>
       </div>
     </div>
   </div>
