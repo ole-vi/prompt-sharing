@@ -222,16 +222,16 @@
 
             // Extension files to include
             const files = [
-              'browser-extension/manifest.json',
-              'browser-extension/background.js',
-              'browser-extension/config.js',
-              'browser-extension/content.js',
-              'browser-extension/github-auth.js',
-              'browser-extension/github-sync.js',
-              'browser-extension/popup.html',
-              'browser-extension/popup.css',
-              'browser-extension/popup.js',
-              'browser-extension/README.md'
+              '/browser-extension/manifest.json',
+              '/browser-extension/background.js',
+              '/browser-extension/config.js',
+              '/browser-extension/content.js',
+              '/browser-extension/github-auth.js',
+              '/browser-extension/github-sync.js',
+              '/browser-extension/popup.html',
+              '/browser-extension/popup.css',
+              '/browser-extension/popup.js',
+              '/browser-extension/README.md'
             ];
 
             // Fetch and add each file to zip
@@ -240,7 +240,7 @@
                 const response = await fetch(filePath);
                 if (response.ok) {
                   const content = await response.text();
-                  const fileName = filePath.replace('browser-extension/', '');
+                  const fileName = filePath.replace('/browser-extension/', '');
                   zip.file(fileName, content);
                 }
               } catch (error) {
