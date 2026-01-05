@@ -11,6 +11,7 @@ a:hover { text-decoration: underline; }
 .muted-text { color: var(--muted); }
 .small-text { font-size: 13px; }
 .panel { margin: 16px 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.02); }
+.panel-tight { margin: 0; }
 .form-row { display: flex; gap: 12px; align-items: start; }
 .form-col { flex: 1; }
 .form-label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; }
@@ -28,9 +29,21 @@ a:hover { text-decoration: underline; }
 /* Scroll box utility for content preview blocks */
 .scroll-box { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; color: var(--text); }
 .scroll-box-sm { max-height: 150px; }
+/* Simple overflow utility without pre-wrap for lists */
+.y-scroll { overflow-y: auto; }
 
 /* Vertical list container */
 .vlist { display:flex; flex-direction:column; gap:8px; }
+
+/* Simple grid and row utilities */
+.grid { display:grid; }
+.gap-md { gap:16px; }
+.gap-sm { gap:8px; }
+.row { display:flex; gap:12px; align-items:flex-start; }
+.ml-auto { margin-left:auto; }
+
+/* Guide lists inside panels */
+.guidelist { margin:0; padding-left:24px; line-height:1.8; }
 
 /* Error banner and title */
 .error-title { color: #ff6b6b; }
@@ -52,6 +65,7 @@ a:hover { text-decoration: underline; }
 .mb-md { margin-bottom:16px; }
 .mt-md { margin-top:16px; }
 .w-full { width:100%; }
+/* removed max-height utilities after feedback */
 
 /* Sessions list cards */
 .session-card { padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all 0.2s; }

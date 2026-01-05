@@ -1231,57 +1231,57 @@ async function loadAndDisplayJulesProfile(uid) {
     }
 
     if (profileData.sources && profileData.sources.length > 0) {
-      sourcesListDiv.innerHTML = profileData.sources.map((source, index) => {
+      const sourcesHtml = profileData.sources.map((source, index) => {
         const repoName = source.githubRepo?.name || source.name || source.id;
-        const githubPath = repoName.includes('github/') 
-          ? repoName.split('github/')[1] 
+        const githubPath = repoName.includes('github/')
+          ? repoName.split('github/')[1]
           : repoName.replace('sources/', '');
         const branches = source.branches || [];
         const sourceId = `source-${index}`;
-        const branchList = branches.length > 0 
-          ? `<div id="${sourceId}-branches" style="margin-top:6px; padding-left:12px; font-size:12px; color:var(--muted); display:none;">
+
+        const branchSummaryText = branches.length > 0
+          ? `(${branches.length} ${branches.length === 1 ? 'branch' : 'branches'})`
+          : '(no branches)';
+
+        const branchesHtml = branches.length > 0
+          ? `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted);">
                <div style="margin-bottom:4px; color:var(--text);">🌿 Branches (${branches.length}):</div>
-               ${branches.map(b => `<div style="padding:4px 0 4px 8px; cursor:pointer; transition:color 0.2s;" 
-                  onmouseover="this.style.color='var(--accent)'" 
-                  onmouseout="this.style.color='var(--muted)'" 
+               ${branches.map(b => `<div style="padding:3px 0 3px 8px; cursor:pointer;"
                   onclick="window.open('https://github.com/${githubPath}/tree/${encodeURIComponent(b.displayName || b.name)}', '_blank')">
                   • ${b.displayName || b.name}
                 </div>`).join('')}
              </div>`
-          : '<div id="' + sourceId + '-branches" style="display:none; margin-top:6px; padding-left:12px; font-size:12px; color:var(--muted); font-style:italic;">No branches found</div>';
-        
-        const branchSummary = branches.length > 0 
-          ? `<span style="color:var(--muted); font-size:11px; margin-left:8px;">(${branches.length} ${branches.length === 1 ? 'branch' : 'branches'})</span>`
-          : '<span style="color:var(--muted); font-size:11px; margin-left:8px;">(no branches)</span>';
-        
-        return `<div style="padding:8px; margin-bottom:4px; border-bottom:1px solid var(--border); font-size:13px;">
-          <div style="font-weight:600; cursor:pointer; user-select:none; display:flex; align-items:center; transition:color 0.2s;" 
-               onclick="(function(e) {
-                 const branches = document.getElementById('${sourceId}-branches');
-                 const arrow = e.currentTarget.querySelector('.expand-arrow');
-                 if (branches.style.display === 'none') {
-                   branches.style.display = 'block';
-                   arrow.textContent = '▼';
-                 } else {
-                   branches.style.display = 'none';
-                   arrow.textContent = '▶';
-                 }
-               })(event)"
-               onmouseover="this.style.color='var(--accent)'"
-               onmouseout="this.style.color='var(--text)'">
-            <span class="expand-arrow" style="display:inline-block; width:12px; font-size:10px; margin-right:6px;">▶</span>
-            <span>📂 ${githubPath}</span>
-            ${branchSummary}
+          : `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted); font-style:italic;">No branches found</div>`;
+
+        const cardHtml = `
+          <div class="queue-card">
+            <div class="queue-row">
+              <div class="queue-content">
+                <div class="queue-title" style="cursor:pointer; user-select:none;"
+                    onclick="(function(){
+                      const el = document.getElementById('${sourceId}-branches');
+                      const arrow = document.getElementById('${sourceId}-arrow');
+                      if (el.style.display === 'none') { el.style.display = 'block'; arrow.textContent = '▼'; }
+                      else { el.style.display = 'none'; arrow.textContent = '▶'; }
+                    })()">
+                  <span id="${sourceId}-arrow" style="display:inline-block; width:12px; font-size:10px; margin-right:6px;">▶</span>
+                  📂 ${githubPath}
+                  <span class="queue-status">${branchSummaryText}</span>
+                </div>
+              </div>
+            </div>
+            ${branchesHtml}
           </div>
-          ${branchList}
-        </div>`;
+        `;
+        return cardHtml;
       }).join('');
+      sourcesListDiv.innerHTML = `<div class="vlist">${sourcesHtml}</div>`;
     } else {
       sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No connected repositories found.<br><small>Connect repos in the Jules UI.</small></div>';
     }
 
     if (profileData.sessions && profileData.sessions.length > 0) {
-      sessionsListDiv.innerHTML = profileData.sessions.map(session => {
+      const sessionsHtml = profileData.sessions.map(session => {
         const state = session.state || 'UNKNOWN';
         const stateEmoji = {
           'COMPLETED': '✅',
@@ -1291,7 +1291,7 @@ async function loadAndDisplayJulesProfile(uid) {
           'QUEUED': '⏸️',
           'AWAITING_USER_FEEDBACK': '💬'
         }[state] || '❓';
-        
+
         const stateLabel = {
           'COMPLETED': 'COMPLETED',
           'FAILED': 'FAILED',
@@ -1300,35 +1300,25 @@ async function loadAndDisplayJulesProfile(uid) {
           'QUEUED': 'QUEUED',
           'AWAITING_USER_FEEDBACK': 'AWAITING USER FEEDBACK'
         }[state] || state.replace(/_/g, ' ');
-        
+
         const promptPreview = (session.prompt || 'No prompt text').substring(0, 80);
         const displayPrompt = promptPreview.length < (session.prompt || '').length ? promptPreview + '...' : promptPreview;
         const createdAt = session.createTime ? new Date(session.createTime).toLocaleDateString() : 'Unknown';
-        const prUrl = session.outputs?.[0]?.pullRequest?.url;
-        
         const sessionId = session.name?.split('sessions/')[1] || session.id?.split('sessions/')[1] || session.id;
         const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
-        
-        const prLink = prUrl 
-          ? `<a href="${prUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:none; font-size:11px; margin-right:8px;" 
-              onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">🔗 View PR</a>` 
-          : '';
-        
-        return `<div style="padding:10px; margin-bottom:8px; border:1px solid var(--border); border-radius:8px; font-size:12px; cursor:pointer; transition:all 0.2s; background:rgba(255,255,255,0.02);"
-                     onmouseover="this.style.background='rgba(77,217,255,0.05)'; this.style.borderColor='var(--accent)'"
-                     onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.borderColor='var(--border)'"
-                     onclick="window.open('${sessionUrl}', '_blank', 'noopener,noreferrer')">
-          <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:6px;">
-            <div style="font-weight:600; flex:1;">${stateEmoji} ${stateLabel}</div>
-            <div style="color:var(--muted); font-size:11px;">${createdAt}</div>
+
+        const cardHtml = `
+          <div class="session-card" onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
+            <div class="session-row">
+              <div class="session-pill">${stateEmoji} ${stateLabel}</div>
+              <div class="session-hint">Created: ${createdAt}</div>
+            </div>
+            <div class="session-prompt">${displayPrompt}</div>
           </div>
-          <div style="color:var(--text); margin-bottom:6px; line-height:1.4;">${displayPrompt}</div>
-          <div style="display:flex; justify-content:space-between; align-items:center;" onclick="event.stopPropagation();">
-            ${prLink ? `<div>${prLink}</div>` : '<div></div>'}
-            <span style="color:var(--muted); font-size:11px;">💡 Click to view session</span>
-          </div>
-        </div>`;
+        `;
+        return cardHtml;
       }).join('');
+      sessionsListDiv.innerHTML = `<div class="vlist">${sessionsHtml}</div>`;
     } else {
       sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No recent sessions found.</div>';
     }
