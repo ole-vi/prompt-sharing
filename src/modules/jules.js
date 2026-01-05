@@ -1869,21 +1869,33 @@ async function populateFreeInputRepoSelection() {
   lastSelectedSourceId = null;
   lastSelectedBranch = null;
   
+  // Guard: only run on pages that include Free Input controls
+  const repoDropdownText = document.getElementById('freeInputRepoDropdownText');
+  const repoDropdownBtn = document.getElementById('freeInputRepoDropdownBtn');
+  const repoDropdownMenu = document.getElementById('freeInputRepoDropdownMenu');
+  const branchDropdownBtn = document.getElementById('freeInputBranchDropdownBtn');
+  const branchDropdownText = document.getElementById('freeInputBranchDropdownText');
+  const branchDropdownMenu = document.getElementById('freeInputBranchDropdownMenu');
+
+  if (!repoDropdownText || !repoDropdownBtn || !repoDropdownMenu ||
+      !branchDropdownBtn || !branchDropdownText || !branchDropdownMenu) {
+    // Elements not present on this page; safely no-op
+    return;
+  }
+
   const user = getCurrentUser();
   if (!user) {
-    const dropdownText = document.getElementById('freeInputRepoDropdownText');
-    const dropdownBtn = document.getElementById('freeInputRepoDropdownBtn');
-    dropdownText.textContent = 'Please sign in first';
-    dropdownBtn.disabled = true;
+    repoDropdownText.textContent = 'Please sign in first';
+    repoDropdownBtn.disabled = true;
     return;
   }
 
   // Initialize RepoSelector
   const repoSelector = new RepoSelector({
     favoriteContainer: null, // Free input doesn't have a favorite container
-    dropdownBtn: document.getElementById('freeInputRepoDropdownBtn'),
-    dropdownText: document.getElementById('freeInputRepoDropdownText'),
-    dropdownMenu: document.getElementById('freeInputRepoDropdownMenu'),
+    dropdownBtn: repoDropdownBtn,
+    dropdownText: repoDropdownText,
+    dropdownMenu: repoDropdownMenu,
     onSelect: (sourceId, branch, repoName) => {
       lastSelectedSourceId = sourceId;
       lastSelectedBranch = branch;
@@ -1893,9 +1905,9 @@ async function populateFreeInputRepoSelection() {
 
   // Initialize BranchSelector
   const branchSelector = new BranchSelector({
-    dropdownBtn: document.getElementById('freeInputBranchDropdownBtn'),
-    dropdownText: document.getElementById('freeInputBranchDropdownText'),
-    dropdownMenu: document.getElementById('freeInputBranchDropdownMenu'),
+    dropdownBtn: branchDropdownBtn,
+    dropdownText: branchDropdownText,
+    dropdownMenu: branchDropdownMenu,
     onSelect: (branch) => {
       lastSelectedBranch = branch;
     }

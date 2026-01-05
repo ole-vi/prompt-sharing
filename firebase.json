@@ -3,7 +3,7 @@
     "default": "prompt-sharing-f8eeb"
   },
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "config/firestore/firestore.rules"
   },
   "functions": [
     {
@@ -25,6 +25,9 @@
       "**/.*",
       "**/node_modules/**",
       "functions/**"
+    ],
+    "redirects": [
+      { "source": "/favicon.ico", "destination": "/assets/favicon.ico", "type": 301 }
     ]
   }
 }
