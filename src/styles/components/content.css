@@ -51,6 +51,7 @@ a:hover { text-decoration: underline; }
 .font-16 { font-size:16px; }
 .mb-md { margin-bottom:16px; }
 .mt-md { margin-top:16px; }
+.w-full { width:100%; }
 
 /* Sessions list cards */
 .session-card { padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all 0.2s; }
