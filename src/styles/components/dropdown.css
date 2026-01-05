@@ -54,3 +54,6 @@
 	left: auto;
 	right: 0; /* anchor to right edge of trigger to avoid off-screen overflow */
 }
+
+/* Caret styling for dropdown buttons */
+.custom-dropdown-caret { color: var(--muted); }

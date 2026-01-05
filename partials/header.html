@@ -5,9 +5,9 @@
   <!-- Mobile Sidebar -->
   <div id="mobileSidebar">
     <div class="mobile-sidebar-header">
-      <div style="display:flex; align-items:center; gap:10px;">
-        <img src="/assets/PromptSyncLogo.svg" alt="PromptSync" style="width:28px; height:28px;">
-        <div style="font-size:18px; font-weight:900; letter-spacing:0.5px;">PromptSync</div>
+      <div class="sidebar-branding">
+        <img src="/assets/PromptSyncLogo.svg" alt="PromptSync" class="sidebar-logo">
+        <div class="sidebar-title">PromptSync</div>
       </div>
       <button class="mobile-sidebar-close" id="mobileSidebarClose" aria-label="Close menu">✕</button>
     </div>
@@ -51,7 +51,7 @@
     </div>
 
     <!-- Center: Navigation -->
-    <nav id="headerNav" style="display:flex; gap:0; align-items:center; justify-content:center; flex-shrink:0;">
+    <nav id="headerNav">
       <a href="/pages/home/index.html" class="nav-item" data-page="home" title="View and create prompts">
         <span class="nav-icon">🏠</span>
         <span class="nav-label">Home</span>
@@ -76,7 +76,7 @@
 
     <!-- Right: Controls & Auth -->
       <div class="header-right">
-      <div id="authStatus" style="display:flex; align-items:center; gap:6px; font-size:13px; flex-shrink:0;">
+      <div id="authStatus">
         <!-- Branch dropdown placed next to avatar -->
         <!-- Native select kept for logic fallback; hidden to use custom dropdown -->
         <select id="branchSelect" style="display:none;">
@@ -96,16 +96,16 @@
             <span id="userDisplay">
               👤
             </span>
-            <strong id="userName" style="display:none;">Guest</strong>
+            <strong id="userName">Guest</strong>
             <span class="user-menu-caret">▾</span>
           </button>
           <div id="userMenuDropdown" class="user-dropdown" role="menu" aria-labelledby="userMenuButton">
-            <div style="padding: 12px 10px 8px; border-bottom: 1px solid var(--border); margin-bottom: 6px;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <img id="dropdownAvatar" src="" alt="" style="display:none;">
-                <div style="flex: 1; min-width: 0;">
+            <div class="user-dropdown-header">
+              <div class="user-dropdown-header-inner">
+                <img id="dropdownAvatar" src="" alt="">
+                <div class="user-info">
                   <div id="dropdownUserName">Guest</div>
-                  <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">Not signed in</div>
+                  <div class="user-status">Not signed in</div>
                 </div>
               </div>
             </div>
