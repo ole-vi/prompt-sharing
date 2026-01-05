@@ -15,6 +15,7 @@
 	align-items: center; 
 	transition: all 0.2s; 
 }
+.custom-dropdown-btn > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 .custom-dropdown-btn:hover { border-color: var(--accent); background: rgba(77, 217, 255, 0.05); }
 .custom-dropdown-btn:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(77, 217, 255, 0.1); }
 .custom-dropdown-menu { 
