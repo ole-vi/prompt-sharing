@@ -49,6 +49,8 @@ a:hover { text-decoration: underline; }
 .pad-xl { padding:48px; }
 .muted { color:var(--muted); }
 .font-16 { font-size:16px; }
+.mb-md { margin-bottom:16px; }
+.mt-md { margin-top:16px; }
 
 /* Sessions list cards */
 .session-card { padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all 0.2s; }
@@ -58,3 +60,23 @@ a:hover { text-decoration: underline; }
 .session-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
 .session-pill { font-size:12px; padding:4px 8px; background:rgba(77,217,255,0.1); border-radius:4px; color:var(--accent); }
 .session-hint { font-size:11px; color:var(--muted); margin-left:auto; }
+
+/* Queue list cards */
+.queue-card { padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.02); }
+.queue-row { display:flex; gap:12px; align-items:flex-start; }
+.queue-checkbox-col { flex:0 0 28px; display:flex; align-items:center; }
+.queue-content { flex:1; }
+.queue-title { font-weight:600; font-size:13px; }
+.queue-status { color:var(--muted); font-size:12px; margin-left:8px; }
+.queue-meta { font-size:11px; color:var(--muted); margin-bottom:8px; }
+.queue-repo { font-size:11px; color:var(--accent); margin-top:4px; }
+.queue-prompt { font-size:12px; color:var(--text); white-space:pre-wrap; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px; margin-top:8px; }
+.queue-subtasks { margin-left:40px; }
+.queue-subtask { padding:8px; border:1px solid var(--border); border-radius:6px; display:flex; gap:8px; align-items:flex-start; background:rgba(255,255,255,0.01); margin-bottom:6px; }
+.queue-subtask-index { flex:0 0 24px; display:flex; align-items:center; }
+.queue-subtask-content { flex:1; }
+.queue-subtask-meta { font-size:12px; color:var(--muted); margin-bottom:4px; }
+.queue-subtask-text { font-size:12px; color:var(--text); white-space:pre-wrap; }
+
+/* Misc */
+.mono { font-family: monospace; }

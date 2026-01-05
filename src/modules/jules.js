@@ -180,7 +180,7 @@ async function loadQueuePage() {
   const user = window.auth?.currentUser;
   const listDiv = document.getElementById('allQueueList');
   if (!user) {
-    listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">Please sign in to view your queue.</div>';
+    listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Please sign in to view your queue.</div>';
     return;
   }
 
@@ -189,7 +189,7 @@ async function loadQueuePage() {
     let items = getCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
     
     if (!items) {
-      listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">Loading queue...</div>';
+      listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Loading queue...</div>';
       items = await listJulesQueue(user.uid);
       setCache(CACHE_KEYS.QUEUE_ITEMS, items, user.uid);
     }
@@ -198,7 +198,7 @@ async function loadQueuePage() {
     renderQueueList(items);
     attachQueueModalHandlers();
   } catch (err) {
-    listDiv.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">Failed to load queue: ${err.message}</div>`;
+    listDiv.innerHTML = `<div class="panel text-center pad-xl">Failed to load queue: ${err.message}</div>`;
   }
 }
 
@@ -212,7 +212,7 @@ function renderQueueList(items) {
   const listDiv = document.getElementById('allQueueList');
   if (!listDiv) return;
   if (!items || items.length === 0) {
-    listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No queued items.</div>';
+    listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">No queued items.</div>';
     return;
   }
 
@@ -225,36 +225,36 @@ function renderQueueList(items) {
       const subtasksHtml = item.remaining.map((subtask, index) => {
         const preview = (subtask.fullContent || '').substring(0, 150);
         return `
-          <div style="padding:8px; border:1px solid var(--border); border-radius:6px; display:flex; gap:8px; align-items:flex-start; background:rgba(255,255,255,0.01); margin-bottom:6px;">
-            <div style="flex:0 0 24px; display:flex; align-items:center;">
+          <div class="queue-subtask">
+            <div class="queue-subtask-index">
               <input class="subtask-checkbox" type="checkbox" data-docid="${item.id}" data-index="${index}" />
             </div>
-            <div style="flex:1;">
-              <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Subtask ${index + 1} of ${item.remaining.length}</div>
-              <div style="font-size:12px; color:var(--text); white-space:pre-wrap;">${escapeHtml(preview)}${preview.length >= 150 ? '...' : ''}</div>
+            <div class="queue-subtask-content">
+              <div class="queue-subtask-meta">Subtask ${index + 1} of ${item.remaining.length}</div>
+              <div class="queue-subtask-text">${escapeHtml(preview)}${preview.length >= 150 ? '...' : ''}</div>
             </div>
           </div>
         `;
       }).join('');
 
-      const repoDisplay = item.sourceId ? `<div style="font-size:11px; color:var(--accent); margin-top:4px;">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+      const repoDisplay = item.sourceId ? `<div class="queue-repo">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
       
       return `
-        <div class="queue-item" data-docid="${item.id}" style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.02); margin-bottom:8px;">
-          <div style="display:flex; gap:12px; align-items:flex-start; margin-bottom:12px;">
-            <div style="flex:0 0 28px; display:flex; align-items:center;">
+        <div class="queue-card queue-item" data-docid="${item.id}">
+          <div class="queue-row">
+            <div class="queue-checkbox-col">
               <input class="queue-checkbox" type="checkbox" data-docid="${item.id}" />
             </div>
-            <div style="flex:1;">
-              <div style="font-weight:600; font-size:13px; margin-bottom:6px;">
-                Subtasks Batch <span style="color:var(--muted); font-size:12px; margin-left:8px;">${status}</span>
-                <span style="color:var(--muted); font-size:12px; margin-left:8px;">(${remainingCount} remaining)</span>
+            <div class="queue-content">
+              <div class="queue-title">
+                Subtasks Batch <span class="queue-status">${status}</span>
+                <span class="queue-status">(${remainingCount} remaining)</span>
               </div>
-              <div style="font-size:11px; color:var(--muted);">Created: ${created} • ID: <span style="font-family:monospace;">${item.id}</span></div>
+              <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
               ${repoDisplay}
             </div>
           </div>
-          <div style="margin-left:40px;">
+          <div class="queue-subtasks">
             ${subtasksHtml}
           </div>
         </div>
@@ -262,21 +262,21 @@ function renderQueueList(items) {
     }
 
     const promptPreview = (item.prompt || '').substring(0, 200);
-    const repoDisplay = item.sourceId ? `<div style="font-size:11px; color:var(--accent); margin-top:4px;">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+    const repoDisplay = item.sourceId ? `<div class="queue-repo">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
     
     return `
-      <div class="queue-item" data-docid="${item.id}" style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.02); margin-bottom:8px;">
-        <div style="display:flex; gap:12px; align-items:flex-start;">
-          <div style="flex:0 0 28px; display:flex; align-items:center;">
+      <div class="queue-card queue-item" data-docid="${item.id}">
+        <div class="queue-row">
+          <div class="queue-checkbox-col">
             <input class="queue-checkbox" type="checkbox" data-docid="${item.id}" />
           </div>
-          <div style="flex:1;">
-            <div style="font-weight:600; font-size:13px; margin-bottom:6px;">
-              Single Prompt <span style="color:var(--muted); font-size:12px; margin-left:8px;">${status}</span>
+          <div class="queue-content">
+            <div class="queue-title">
+              Single Prompt <span class="queue-status">${status}</span>
             </div>
-            <div style="font-size:11px; color:var(--muted); margin-bottom:8px;">Created: ${created} • ID: <span style="font-family:monospace;">${item.id}</span></div>
+            <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
             ${repoDisplay}
-            <div style="font-size:12px; color:var(--text); white-space:pre-wrap; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px; margin-top:8px;">${escapeHtml(promptPreview)}${promptPreview.length >= 200 ? '...' : ''}</div>
+            <div class="queue-prompt">${escapeHtml(promptPreview)}${promptPreview.length >= 200 ? '...' : ''}</div>
           </div>
         </div>
       </div>

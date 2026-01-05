@@ -14,7 +14,7 @@
 </head>
 <body data-page="sessions">
 
-  <div class="wrap" style="grid-template-columns: 1fr;">
+  <div class="wrap">
     <main class="card pad-lg">
       <div class="page-header">
         <h2 class="section-title-lg">📖 All Jules Sessions</h2>
@@ -22,12 +22,12 @@
       </div>
 
       <!-- Search -->
-      <div class="search-wrapper" style="margin-bottom:16px;">
+      <div class="search-wrapper mb-md">
         <input 
           type="text" 
           id="sessionSearchInput" 
           placeholder="Search sessions..." 
-          class="modal-input" style="width:100%; padding-right:36px;"
+          class="modal-input"
         />
         <button id="sessionSearchClear" class="search-clear" style="display:none;" title="Clear search">✕</button>
       </div>
@@ -43,10 +43,10 @@
       </div>
 
       <!-- Sessions List -->
-      <div id="allSessionsList" style="display:flex; flex-direction:column; gap:12px;"></div>
+      <div id="allSessionsList" class="vlist"></div>
 
       <!-- Load More -->
-      <div id="sessionsLoadMore" style="display:none; margin-top:16px; text-align:center;">
+      <div id="sessionsLoadMore" style="display:none;" class="mt-md text-center">
         <button id="loadMoreSessionsBtn" class="btn">Load More</button>
       </div>
     </main>

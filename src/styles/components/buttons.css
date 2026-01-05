@@ -6,5 +6,8 @@
 /* Primary emphasis variant */
 .btn.primary { border-color: var(--accent); color: var(--accent); }
 
+/* Danger variant for destructive actions */
+.btn.danger { border-color: #c0504d; color: #c0504d; }
+
 .help-link { text-decoration: none; color: var(--muted); font-size: 13px; cursor: pointer; padding: 6px 10px; display: inline-block; transition: all 0.2s; border-radius: 8px; border: 1px solid transparent; }
 .help-link:hover { color: var(--accent); border-color: var(--accent); background: rgba(77, 217, 255, 0.1); }
