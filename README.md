@@ -333,6 +333,10 @@ python -m http.server 8888
 # Visit http://localhost:8888/pages/home/index.html
 ```
 
+Routing notes:
+- Hosting redirects `/` to `/pages/home/index.html` via `firebase.json`.
+- Legacy root pages have been removed; use `/pages/*` paths.
+
 The dev setup loads modules directly without compilation. Changes are reflected immediately (reload browser).
 
 ### Project organization

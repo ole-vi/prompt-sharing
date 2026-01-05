@@ -27,7 +27,8 @@
       "functions/**"
     ],
     "redirects": [
-      { "source": "/favicon.ico", "destination": "/assets/favicon.ico", "type": 301 }
+      { "source": "/favicon.ico", "destination": "/assets/favicon.ico", "type": 301 },
+      { "source": "/", "destination": "/pages/home/index.html", "type": 302 }
     ]
   }
 }
