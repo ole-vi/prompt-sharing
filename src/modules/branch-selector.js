@@ -3,18 +3,39 @@ import { getBranches } from './github-api.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 
 let branchSelect = null;
+let branchDropdownBtn = null;
+let branchDropdownMenu = null;
+let branchDropdown = null;
 let currentBranch = null;
 let currentOwner = null;
 let currentRepo = null;
 
 export function initBranchSelector(owner, repo, branch) {
   branchSelect = document.getElementById('branchSelect');
+  branchDropdownBtn = document.getElementById('branchDropdownBtn');
+  branchDropdownMenu = document.getElementById('branchDropdownMenu');
+  branchDropdown = document.getElementById('branchDropdown');
   currentOwner = owner;
   currentRepo = repo;
   currentBranch = branch;
 
   if (branchSelect) {
     branchSelect.addEventListener('change', handleBranchChange);
+  }
+
+  if (branchDropdownBtn && branchDropdownMenu) {
+    branchDropdownBtn.addEventListener('click', () => {
+      const isOpen = branchDropdownMenu.style.display === 'block';
+      branchDropdownMenu.style.display = isOpen ? 'none' : 'block';
+      branchDropdownBtn.setAttribute('aria-expanded', (!isOpen).toString());
+    });
+    document.addEventListener('click', (e) => {
+      if (!branchDropdown || branchDropdownMenu.style.display !== 'block') return;
+      if (!branchDropdown.contains(e.target)) {
+        branchDropdownMenu.style.display = 'none';
+        branchDropdownBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
   }
 }
 
@@ -190,6 +211,62 @@ export async function loadBranches() {
 
     branchSelect.value = currentBranch;
     branchSelect.title = '';
+
+    // Populate custom dropdown menu if present
+    if (branchDropdownMenu && branchDropdownBtn) {
+      const frag = document.createDocumentFragment();
+
+      // Helper to add a group header
+      const addGroupHeader = (label) => {
+        const header = document.createElement('div');
+        header.textContent = label;
+        header.style.cssText = 'padding: 8px 12px; font-size: 12px; color: var(--muted); background: var(--card); position: sticky; top: 0;';
+        frag.appendChild(header);
+      };
+
+      // Helper to add items
+      const addItems = (list) => {
+        for (const b of list) {
+          const item = document.createElement('div');
+          item.className = 'custom-dropdown-item';
+          item.textContent = b.name;
+          item.setAttribute('role', 'option');
+          item.dataset.value = b.name;
+          if (b.name === currentBranch) {
+            item.classList.add('selected');
+          }
+          item.addEventListener('click', () => {
+            // Update native select and trigger change
+            branchSelect.value = b.name;
+            handleBranchChange();
+            // Close menu and update label
+            branchDropdownMenu.style.display = 'none';
+            branchDropdownBtn.setAttribute('aria-expanded', 'false');
+            const labelEl = document.getElementById('branchDropdownLabel');
+            if (labelEl) labelEl.textContent = `${b.name}`;
+          });
+          frag.appendChild(item);
+        }
+      };
+
+      branchDropdownMenu.innerHTML = '';
+      if (mainBranches.length > 0) {
+        addGroupHeader(`Main Branches (${mainBranches.length})`);
+        addItems(mainBranches);
+      }
+      if (userBranchesArr.length > 0) {
+        addGroupHeader(`User Branches (${userBranchesArr.length})`);
+        addItems(userBranchesArr);
+      }
+      if (featureBranches.length > 0) {
+        addGroupHeader(`Feature Branches (${featureBranches.length})`);
+        addItems(featureBranches);
+      }
+      branchDropdownMenu.appendChild(frag);
+
+      const labelEl = document.getElementById('branchDropdownLabel');
+      if (labelEl) labelEl.textContent = `${currentBranch}`;
+    }
   } catch (e) {
     branchSelect.innerHTML = `<option value="${currentBranch}">${currentBranch}</option>`;
     branchSelect.title = (e && e.message) ? e.message : 'Failed to load branches';

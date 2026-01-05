@@ -267,10 +267,20 @@
     </nav>
 
     <!-- Right: Controls & Auth -->
-      <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:0; justify-content:flex-end;">      <div id="headerControls"style="display:flex; gap:6px; align-items:center; flex:0 0 auto; min-width:0;">
-        <select id="branchSelect">
+      <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:0; justify-content:flex-end;">
+      <div id="headerControls" style="display:flex; gap:6px; align-items:center; flex:0 0 auto; min-width:0;">
+        <!-- Native select kept for logic fallback; hidden to use custom dropdown -->
+        <select id="branchSelect" style="display:none;">
           <option>Loading…</option>
         </select>
+        <!-- Custom Branch Dropdown -->
+        <div id="branchDropdown" class="custom-dropdown">
+          <button id="branchDropdownBtn" class="custom-dropdown-btn" type="button" aria-haspopup="listbox" aria-expanded="false" title="Select branch">
+            <span id="branchDropdownLabel">Loading…</span>
+            <span aria-hidden="true">▾</span>
+          </button>
+          <div id="branchDropdownMenu" class="custom-dropdown-menu" role="listbox" aria-labelledby="branchDropdownBtn"></div>
+        </div>
       </div>
 
       <div id="authStatus" style="display:flex; align-items:center; gap:6px; font-size:13px; flex-shrink:0;">

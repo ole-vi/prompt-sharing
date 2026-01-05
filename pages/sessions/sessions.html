@@ -22,13 +22,14 @@
       </div>
 
       <!-- Search -->
-      <div style="margin-bottom:16px;">
+      <div style="margin-bottom:16px;" class="search-wrapper">
         <input 
           type="text" 
           id="sessionSearchInput" 
           placeholder="Search sessions..." 
-          style="width:100%; padding:10px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;"
+          style="width:100%; padding:10px 36px 10px 12px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px;"
         />
+        <button id="sessionSearchClear" class="search-clear" style="display:none;" title="Clear search">✕</button>
       </div>
       
       <!-- Loading Message -->
@@ -213,10 +214,26 @@
       waitForFirebase(() => {
         loadSessions();
         
-        // Set up search functionality
+        // Set up search functionality with clear button
         const searchInput = document.getElementById('sessionSearchInput');
+        const searchClear = document.getElementById('sessionSearchClear');
         if (searchInput) {
-          searchInput.addEventListener('input', () => renderAllSessions(allSessionsCache));
+          const toggleClear = () => {
+            if (searchClear) {
+              searchClear.style.display = searchInput.value ? 'inline-block' : 'none';
+            }
+          };
+          searchInput.addEventListener('input', () => { toggleClear(); renderAllSessions(allSessionsCache); });
+          if (searchClear && !searchClear.dataset.bound) {
+            searchClear.dataset.bound = 'true';
+            searchClear.addEventListener('click', () => {
+              searchInput.value = '';
+              toggleClear();
+              renderAllSessions(allSessionsCache);
+              searchInput.focus();
+            });
+          }
+          toggleClear();
         }
         
         // Set up load more button
