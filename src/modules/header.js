@@ -6,9 +6,23 @@ export async function loadHeader() {
     const headerHtml = await response.text();
     
     document.body.insertAdjacentHTML('afterbegin', headerHtml);
+      // Detect GitHub Pages project base (e.g., /prompt-sharing)
+      const firstSegment = location.pathname.replace(/^\//, '').split('/')[0] || '';
+      const BASE = firstSegment === 'prompt-sharing' ? '/prompt-sharing' : '';
 
-    // Wire up user menu interactions (toggle + outside click close)
-    const setupUserMenu = () => {
+      // Fetch header partial using the correct base
+      const response = await fetch(`${BASE}/partials/header.html`);
+      const headerHtml = await response.text();
+
+      // Rewrite absolute href/src inside injected markup to respect project base
+      const fixedHtml = headerHtml
+        .replaceAll('href="/','href="'+BASE+'/')
+        .replaceAll('src="/','src="'+BASE+'/');
+    
+      document.body.insertAdjacentHTML('afterbegin', fixedHtml);
+    
+      // Wire up user menu interactions (toggle + outside click close)
+      const setupUserMenu = () => {
       const btn = document.getElementById('userMenuButton');
       const menu = document.getElementById('userMenuDropdown');
       if (!btn || !menu) return;
