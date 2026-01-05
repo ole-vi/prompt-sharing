@@ -2,7 +2,7 @@ export async function loadHeader() {
   if (document.querySelector('header')) return;
   
   try {
-    const response = await fetch('./header.html');
+    const response = await fetch('/partials/header.html');
     const headerHtml = await response.text();
     
     document.body.insertAdjacentHTML('afterbegin', headerHtml);
