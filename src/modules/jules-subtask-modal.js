@@ -9,7 +9,7 @@ import { lastSelectedSourceId, lastSelectedBranch } from './jules-modal.js';
 import { addToJulesQueue } from './jules-queue.js';
 import { callRunJulesFunction } from './jules-api.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
-import { statusBar } from './status-bar.js';
+import statusBar from './status-bar.js';
 
 // Module state
 let currentFullPrompt = '';
