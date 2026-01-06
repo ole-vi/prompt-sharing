@@ -4,25 +4,31 @@ const fetch = require("node-fetch");
 
 admin.initializeApp();
 
-async function decryptJulesKeyBase64(b64, uid) {
-  try {
-    const enc = Buffer.from(b64, "base64");
-    const encView = enc.buffer.slice(enc.byteOffset, enc.byteOffset + enc.byteLength);
-    const te = new TextEncoder();
-    const td = new TextDecoder();
+const internals = {
+  async decryptJulesKeyBase64(b64, uid) {
+    try {
+      const enc = Buffer.from(b64, "base64");
+      const encView = enc.buffer.slice(enc.byteOffset, enc.byteOffset + enc.byteLength);
+      const te = new TextEncoder();
+      const td = new TextDecoder();
 
-    const paddedKeyString = (uid + '\0'.repeat(32)).slice(0, 32);
-    const keyBytes = te.encode(paddedKeyString);
-    const key = await crypto.subtle.importKey("raw", keyBytes, { name: "AES-GCM" }, false, ["decrypt"]);
+      const paddedKeyString = (uid + '\0'.repeat(32)).slice(0, 32);
+      const keyBytes = te.encode(paddedKeyString);
+      const key = await crypto.subtle.importKey("raw", keyBytes, { name: "AES-GCM" }, false, ["decrypt"]);
 
-    const ivBytes = te.encode(uid.slice(0, 12).padEnd(12, "0")).slice(0, 12);
-    const plainBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv: ivBytes }, key, encView);
+      const ivBytes = te.encode(uid.slice(0, 12).padEnd(12, "0")).slice(0, 12);
+      const plainBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv: ivBytes }, key, encView);
 
-    return td.decode(plainBuf);
-  } catch (error) {
-    console.error("Decryption error:", error.message);
-    throw new Error("Failed to decrypt Jules API key");
+      return td.decode(plainBuf);
+    } catch (error) {
+      console.error("Decryption error:", error.message);
+      throw new Error("Failed to decrypt Jules API key");
+    }
   }
+};
+
+if (process.env.NODE_ENV === 'test') {
+  exports.internals = internals;
 }
 
 exports.runJules = functions.https.onCall(async (data, context) => {
@@ -69,7 +75,7 @@ exports.runJules = functions.https.onCall(async (data, context) => {
 
     let julesKey;
     try {
-      julesKey = await decryptJulesKeyBase64(encryptedBase64, uid);
+      julesKey = await internals.decryptJulesKeyBase64(encryptedBase64, uid);
     } catch (e) {
       console.error("Decryption failed for user:", uid);
       throw new functions.https.HttpsError("internal", "Failed to decrypt Jules API key");
@@ -175,7 +181,7 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
 
     let julesKey;
     try {
-      julesKey = await decryptJulesKeyBase64(encryptedBase64, uid);
+      julesKey = await internals.decryptJulesKeyBase64(encryptedBase64, uid);
     } catch (e) {
       console.error('Decryption failed:', e.message);
       res.status(500).json({ error: 'Failed to decrypt Jules API key' });
@@ -240,7 +246,7 @@ exports.validateJulesKey = functions.https.onCall(async (data, context) => {
     }
 
     const encryptedBase64 = snap.data().key;
-    const julesKey = await decryptJulesKeyBase64(encryptedBase64, uid);
+    const julesKey = await internals.decryptJulesKeyBase64(encryptedBase64, uid);
 
     const r = await fetch("https://jules.googleapis.com/v1alpha/sessions", {
       method: "GET",
