@@ -123,11 +123,10 @@ export class RepoSelector {
             this.branchSelector.dropdownText.textContent = 'Detecting branch...';
             this.branchSelector.dropdownBtn.disabled = true;
           }
-          
           currentBranch = await this.verifyDefaultBranch(fav);
         } else {
           // Branch already stored - use it and verify in background
-          this.verifyDefaultBranchInBackground(fav);
+          this.verifyDefaultBranch(fav, true);
         }
         
         if (this.onSelect) {
@@ -261,40 +260,7 @@ export class RepoSelector {
     return item;
   }
 
-  async getDefaultBranch(favorite) {
-    if (!favorite.branch || favorite.branch === 'master') {
-      try {
-        const user = getCurrentUser();
-        const { listJulesSources, getDecryptedJulesKey } = await import('./jules-api.js');
-        const apiKey = await getDecryptedJulesKey(user.uid);
-        
-        if (apiKey) {
-          if (!this.sourcesCache) {
-            this.sourcesCache = await listJulesSources(apiKey);
-          }
-          const matchingSource = this.sourcesCache.sources?.find(s => (s.name || s.id) === favorite.id);
-          
-          const defaultBranch = extractDefaultBranch(matchingSource);
-          
-          if (favorite.branch !== defaultBranch) {
-            const updatedFavorites = this.favorites.map(f => 
-              f.id === favorite.id ? { ...f, branch: defaultBranch } : f
-            );
-            await this.saveFavorites(updatedFavorites);
-            this.favorites = updatedFavorites;
-          }
-          
-          return defaultBranch;
-        }
-      } catch (error) {
-        console.error('Failed to fetch default branch:', error);
-      }
-    }
-    
-    return favorite.branch || 'master';
-  }
-
-  async verifyDefaultBranch(favorite) {
+  async verifyDefaultBranch(favorite, updateUI = false) {
     try {
       const user = getCurrentUser();
       const { listJulesSources, getDecryptedJulesKey } = await import('./jules-api.js');
@@ -327,50 +293,8 @@ export class RepoSelector {
         );
         await this.saveFavorites(updatedFavorites);
         this.favorites = updatedFavorites;
-      }
-      
-      return defaultBranch;
-    } catch (error) {
-      console.error('[RepoSelector] Failed to verify default branch:', error);
-      return favorite.branch || 'master';
-    }
-  }
-
-  async verifyDefaultBranchInBackground(favorite) {
-    try {
-      const user = getCurrentUser();
-      const { listJulesSources, getDecryptedJulesKey } = await import('./jules-api.js');
-      const apiKey = await getDecryptedJulesKey(user.uid);
-      
-      if (!apiKey) return;
-      
-      if (!this.sourcesCache) {
-        let allSources = [];
-        let pageToken = null;
-        do {
-          const response = await listJulesSources(apiKey, pageToken);
-          if (response.sources) allSources.push(...response.sources);
-          pageToken = response.nextPageToken;
-        } while (pageToken);
-        this.sourcesCache = { sources: allSources };
-      }
-      
-      const favoriteIdToMatch = favorite.id.replace(/^sources\//, '');
-      const matchingSource = this.sourcesCache.sources?.find(s => 
-        (s.name || s.id) === favoriteIdToMatch
-      );
-      if (!matchingSource) return;
-      
-      const defaultBranch = extractDefaultBranch(matchingSource);
-      
-      if (favorite.branch !== defaultBranch) {
-        const updatedFavorites = this.favorites.map(f => 
-          f.id === favorite.id ? { ...f, branch: defaultBranch } : f
-        );
-        await this.saveFavorites(updatedFavorites);
-        this.favorites = updatedFavorites;
         
-        if (this.selectedSourceId === favorite.id) {
+        if (updateUI && this.selectedSourceId === favorite.id) {
           if (this.branchSelector) {
             this.branchSelector.initialize(favorite.id, defaultBranch);
           }
@@ -379,8 +303,11 @@ export class RepoSelector {
           }
         }
       }
+      
+      return defaultBranch;
     } catch (error) {
       console.error('[RepoSelector] Failed to verify default branch:', error);
+      return favorite.branch || 'master';
     }
   }
 
