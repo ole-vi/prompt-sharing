@@ -2,7 +2,6 @@
 #splitModeSendAll, #splitModeSplitTasks { transition: background 0.2s ease; }
 #splitModeSendAll:hover, #splitModeSplitTasks:hover { background: rgba(255,255,255,0.05); }
 .split-panel { font-size: 12px; line-height: 1.5; word-break: break-word; }
-#splitPreviewPanel, #splitEditPanel { }
 .split-panel::-webkit-scrollbar { width: 6px; }
 .split-panel::-webkit-scrollbar-track { background: transparent; }
 .split-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }

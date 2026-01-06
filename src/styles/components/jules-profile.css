@@ -7,6 +7,5 @@
 .jules-list::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 .jules-list a { color: var(--accent); text-decoration: none; transition: opacity 0.2s ease; }
 .jules-list a:hover { opacity: 0.8; text-decoration: underline; }
-#julesSourcesList, #julesSessionsList { }
 #loadJulesInfoBtn:hover { background: rgba(77, 217, 255, 0.1); border-color: var(--accent); }
 #loadJulesInfoBtn:disabled { opacity: 0.5; cursor: not-allowed; }
