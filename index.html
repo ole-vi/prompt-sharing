@@ -333,5 +333,25 @@
       <button class="status-action btn" style="display:none;">Action</button>
     </div>
   </div>
+  <div id="offlineIndicator">
+    Offline mode
+  </div>
+  <script>
+    const offlineIndicator = document.getElementById('offlineIndicator');
+
+    function updateOnlineStatus() {
+      if (navigator.onLine) {
+        offlineIndicator.style.display = 'none';
+      } else {
+        offlineIndicator.style.display = 'block';
+      }
+    }
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    // Initial check
+    updateOnlineStatus();
+  </script>
 </body>
 </html>

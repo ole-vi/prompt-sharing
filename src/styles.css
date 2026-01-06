@@ -28,5 +28,18 @@
 @import url('./styles/pages/jules.css');
 @import url('./styles/pages/sessions.css');
 @import url('./styles/pages/queue.css');
+
+#offlineIndicator {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background-color: #ffc107;
+  color: #000;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  z-index: 1000;
+  display: none;
+}
 @import url('./styles/pages/profile.css');
 @import url('./styles/pages/webcapture.css');

@@ -211,4 +211,27 @@ if (document.readyState === 'loading') {
   initializeSharedComponents(activePage);
 }
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js').then(registration => {
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      registration.onupdatefound = () => {
+        const installingWorker = registration.installing;
+        if (installingWorker) {
+          installingWorker.onstatechange = () => {
+            if (installingWorker.state === 'installed') {
+              if (navigator.serviceWorker.controller) {
+                // New update available
+                showUpdateBanner(new Date().toLocaleDateString('en-CA'), 'new');
+              }
+            }
+          };
+        }
+      };
+    }).catch(error => {
+      console.log('ServiceWorker registration failed: ', error);
+    });
+  });
+}
+
 export { initializeSharedComponents, waitForFirebase };
