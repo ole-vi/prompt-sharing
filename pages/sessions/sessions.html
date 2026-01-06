@@ -10,6 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
   <script src="../../src/firebase-init.js"></script>
 </head>
 <body data-page="sessions">
@@ -116,15 +117,25 @@
     function renderAllSessions(sessions) {
       const allSessionsList = document.getElementById('allSessionsList');
       const searchInput = document.getElementById('sessionSearchInput');
-      const searchTerm = searchInput.value.toLowerCase();
+      const searchTerm = searchInput.value.trim();
       
-      const filteredSessions = searchTerm 
-        ? sessions.filter(s => {
-            const promptText = s.prompt || s.displayName || '';
-            const sessionId = s.name?.split('/').pop() || '';
-            return promptText.toLowerCase().includes(searchTerm) || sessionId.toLowerCase().includes(searchTerm);
-          })
-        : sessions;
+      let filteredSessions = [];
+      if (!searchTerm) {
+        filteredSessions = sessions;
+      } else {
+        const sessionsWithSearchableFields = sessions.map(s => ({
+          ...s,
+          promptText: s.prompt || s.displayName || '',
+          sessionId: s.name?.split('/').pop() || ''
+        }));
+        
+        const fuse = new Fuse(sessionsWithSearchableFields, {
+          keys: ['promptText', 'sessionId'],
+          includeScore: true,
+          threshold: 0.4,
+        });
+        filteredSessions = fuse.search(searchTerm).map(result => result.item);
+      }
       
       if (filteredSessions.length === 0 && searchTerm) {
         allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions match your search</div>';
