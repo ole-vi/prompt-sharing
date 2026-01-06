@@ -121,9 +121,7 @@ export class RepoSelector {
           this.onSelect(fav.id, currentBranch, fav.name);
         }
         
-        if (!fav.branch || fav.branch === 'master') {
-          this.verifyDefaultBranchInBackground(fav);
-        }
+        this.verifyDefaultBranchInBackground(fav);
       });
       
       this.dropdownMenu.appendChild(item);
@@ -294,9 +292,21 @@ export class RepoSelector {
       if (!apiKey) return;
       
       if (!this.sourcesCache) {
-        this.sourcesCache = await listJulesSources(apiKey);
+        let allSources = [];
+        let pageToken = null;
+        do {
+          const response = await listJulesSources(apiKey, pageToken);
+          if (response.sources) allSources.push(...response.sources);
+          pageToken = response.nextPageToken;
+        } while (pageToken);
+        this.sourcesCache = { sources: allSources };
       }
-      const matchingSource = this.sourcesCache.sources?.find(s => (s.name || s.id) === favorite.id);
+      
+      const favoriteIdToMatch = favorite.id.replace(/^sources\//, '');
+      const matchingSource = this.sourcesCache.sources?.find(s => 
+        (s.name || s.id) === favoriteIdToMatch
+      );
+      if (!matchingSource) return;
       
       const defaultBranch = extractDefaultBranch(matchingSource);
       
@@ -317,7 +327,7 @@ export class RepoSelector {
         }
       }
     } catch (error) {
-      console.error('Failed to verify default branch in background:', error);
+      console.error('[RepoSelector] Failed to verify default branch:', error);
     }
   }
 
