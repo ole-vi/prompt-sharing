@@ -502,18 +502,24 @@ export async function loadList(owner, repo, branch, cacheKey) {
 }
 
 export async function refreshList(owner, repo, branch, cacheKey) {
-  let data;
   const folder = getPromptFolder(branch);
+  let data;
   try {
     data = await listPromptsViaContents(owner, repo, branch, folder);
   } catch (e) {
-    if (e.status === 403 || e.status === 404) {
+    console.error('Failed to list prompts via contents, falling back to trees API', e);
+    try {
       data = await listPromptsViaTrees(owner, repo, branch, folder);
-    } else {
-      throw e;
+    } catch (e2) {
+      console.error('Failed to list prompts via trees API as well', e2);
+      // Do not update cache or render list if both methods fail
+      throw new Error('Failed to fetch prompt list from GitHub API.');
     }
   }
-  files = (data || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
-  sessionStorage.setItem(cacheKey, JSON.stringify(files));
-  renderList(files, owner, repo, branch);
+
+  if (data) {
+    files = data.filter(x => x && x.type === 'file' && typeof x.path === 'string');
+    sessionStorage.setItem(cacheKey, JSON.stringify(files));
+    renderList(files, owner, repo, branch);
+  }
 }

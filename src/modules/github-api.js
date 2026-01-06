@@ -6,28 +6,42 @@ export function setViaProxy(proxyFn) {
   viaProxy = proxyFn;
 }
 
-export async function fetchJSON(url) {
+export async function fetchJSON(url, retries = 3, delay = 1000) {
   try {
     const res = await fetch(viaProxy(url), {
       cache: 'no-store',
       headers: { 'Accept': 'application/vnd.github+json' }
     });
+    if (res.status === 403 && retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return fetchJSON(url, retries - 1, delay * 2);
+    }
     if (!res.ok) return null;
     return res.json();
   } catch (e) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return fetchJSON(url, retries - 1, delay * 2);
+    }
     return null;
   }
 }
 
 export async function listPromptsViaContents(owner, repo, branch, path = 'prompts') {
+  console.time(`listPromptsViaContents:${path}`);
   const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}&ts=${Date.now()}`;
   const entries = await fetchJSON(url);
-  if (!Array.isArray(entries)) return [];
+  if (!Array.isArray(entries)) {
+    console.timeEnd(`listPromptsViaContents:${path}`);
+    return [];
+  }
 
-  const results = [];
+  const files = [];
+  const dirPromises = [];
+
   for (const entry of entries) {
     if (entry.type === 'file' && /\.md$/i.test(entry.name)) {
-      results.push({
+      files.push({
         type: 'file',
         name: entry.name,
         path: entry.path,
@@ -35,9 +49,23 @@ export async function listPromptsViaContents(owner, repo, branch, path = 'prompt
         download_url: entry.download_url
       });
     } else if (entry.type === 'dir') {
-      const children = await listPromptsViaContents(owner, repo, branch, entry.path);
-      results.push(...children);
+      dirPromises.push(listPromptsViaContents(owner, repo, branch, entry.path));
     }
+  }
+
+  const subDirFiles = await processWithConcurrency(dirPromises, 5);
+  const allFiles = files.concat(...subDirFiles);
+  console.timeEnd(`listPromptsViaContents:${path}`);
+  return allFiles;
+}
+
+async function processWithConcurrency(promises, limit) {
+  const results = [];
+  let i = 0;
+  while (i < promises.length) {
+    const batch = promises.slice(i, i + limit);
+    results.push(...await Promise.all(batch));
+    i += limit;
   }
   return results;
 }
