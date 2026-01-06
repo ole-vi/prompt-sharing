@@ -187,42 +187,6 @@
       </div>
     </div>
   </div>
-  
-  <script>
-    // Mutual exclusivity for Jules Environment Modal checkboxes
-    (function() {
-      const suppressCheckbox = document.getElementById('julesEnvSuppressPopupsCheckbox');
-      const backgroundCheckbox = document.getElementById('julesEnvOpenInBackgroundCheckbox');
-      
-      if (suppressCheckbox && backgroundCheckbox) {
-        suppressCheckbox.addEventListener('change', function() {
-          if (this.checked) backgroundCheckbox.checked = false;
-        });
-        backgroundCheckbox.addEventListener('change', function() {
-          if (this.checked) suppressCheckbox.checked = false;
-        });
-      }
-    })();
-  </script>
-
-
-
-  <script>
-    // Mutual exclusivity for Free Input checkboxes
-    (function() {
-      const suppressCheckbox = document.getElementById('freeInputSuppressPopupsCheckbox');
-      const backgroundCheckbox = document.getElementById('freeInputOpenInBackgroundCheckbox');
-      
-      if (suppressCheckbox && backgroundCheckbox) {
-        suppressCheckbox.addEventListener('change', function() {
-          if (this.checked) backgroundCheckbox.checked = false;
-        });
-        backgroundCheckbox.addEventListener('change', function() {
-          if (this.checked) suppressCheckbox.checked = false;
-        });
-      }
-    })();
-  </script>
 
   <!-- Subtask Split Modal -->
   <div id="subtaskSplitModal" class="modal">
@@ -243,20 +207,6 @@
           <input id="splitOpenInBackgroundCheckbox" type="checkbox" style="cursor: pointer;" />
           <span>Open in background</span>
         </label>
-        <script>
-          (function() {
-            const suppressCheckbox = document.getElementById('splitSuppressPopupsCheckbox');
-            const backgroundCheckbox = document.getElementById('splitOpenInBackgroundCheckbox');
-            if (suppressCheckbox && backgroundCheckbox) {
-              suppressCheckbox.addEventListener('change', () => {
-                if (suppressCheckbox.checked) backgroundCheckbox.checked = false;
-              });
-              backgroundCheckbox.addEventListener('change', () => {
-                if (backgroundCheckbox.checked) suppressCheckbox.checked = false;
-              });
-            }
-          })();
-        </script>
       </div>
 
       <div class="modal-buttons">
@@ -307,31 +257,4 @@
   </div>
 
   <script type="module" src="./src/shared-init.js"></script>
-  <script type="module">
-    import { initApp } from './src/app.js';
-    
-    // Wait for shared components to load, then initialize app
-    function waitForComponents() {
-      if (document.querySelector('header')) {
-        initApp();
-      } else {
-        setTimeout(waitForComponents, 50);
-      }
-    }
-    
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', waitForComponents);
-    } else {
-      waitForComponents();
-    }
-  </script>
-  <!-- Status Bar -->
-  <div id="statusBar" style="display:none;" aria-live="polite">
-    <div class="status-inner">
-      <div class="status-msg" style="flex:1;">Ready</div>
-      <div class="status-progress" style="display:none;"></div>
-      <button class="status-action btn" style="display:none;">Action</button>
-    </div>
-  </div>
-</body>
-</html>
+  <script type="module" src="./src/pages/index-page.js"></script>
