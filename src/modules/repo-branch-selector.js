@@ -92,13 +92,19 @@ export class RepoSelector {
         this.dropdownText.textContent = favorite.name;
         
         // Restore branch selector if available
+        let restoredBranch = favorite.branch;
         if (this.branchSelector) {
           const savedBranch = this.branchSelector.loadFromStorage();
           if (savedBranch && savedBranch.sourceId === savedRepoId) {
+            restoredBranch = savedBranch.branch;
             this.branchSelector.initialize(savedRepoId, savedBranch.branch);
           } else if (favorite.branch) {
             this.branchSelector.initialize(savedRepoId, favorite.branch);
           }
+        }
+        // Notify parent component of restored selection
+        if (this.onSelect) {
+          this.onSelect(savedRepoId, restoredBranch, favorite.name);
         }
       } else {
         // Not in favorites, show generic text
@@ -108,11 +114,17 @@ export class RepoSelector {
         this.dropdownText.textContent = repoName;
         
         // Restore branch selector if available
+        let restoredBranch = null;
         if (this.branchSelector) {
           const savedBranch = this.branchSelector.loadFromStorage();
           if (savedBranch && savedBranch.sourceId === savedRepoId) {
+            restoredBranch = savedBranch.branch;
             this.branchSelector.initialize(savedRepoId, savedBranch.branch);
           }
+        }
+        // Notify parent component of restored selection
+        if (this.onSelect && restoredBranch) {
+          this.onSelect(savedRepoId, restoredBranch, repoName);
         }
       }
     } else {
