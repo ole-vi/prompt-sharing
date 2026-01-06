@@ -2,13 +2,27 @@ export async function loadHeader() {
   if (document.querySelector('header')) return;
   
   try {
-    const response = await fetch('/partials/header.html');
-    const headerHtml = await response.text();
-    
-    document.body.insertAdjacentHTML('afterbegin', headerHtml);
+    // Detect GitHub Pages project base (e.g., /prompt-sharing)
+    const firstSegment = location.pathname.replace(/^\//, '').split('/')[0] || '';
+    const BASE = firstSegment === 'prompt-sharing' ? '/prompt-sharing' : '';
 
-    // Wire up user menu interactions (toggle + outside click close)
-    const setupUserMenu = () => {
+    // Fetch header partial using the correct base, fallback to root if needed
+    let headerHtml = '';
+    let res = await fetch(`${BASE}/partials/header.html`);
+    if (!res.ok) {
+      res = await fetch('/partials/header.html');
+    }
+    headerHtml = await res.text();
+
+    // Rewrite absolute href/src inside injected markup to respect project base (only when BASE is set)
+    const fixedHtml = BASE
+      ? headerHtml.replaceAll('href="/','href="'+BASE+'/').replaceAll('src="/','src="'+BASE+'/')
+      : headerHtml;
+    
+    document.body.insertAdjacentHTML('afterbegin', fixedHtml);
+    
+      // Wire up user menu interactions (toggle + outside click close)
+      const setupUserMenu = () => {
       const btn = document.getElementById('userMenuButton');
       const menu = document.getElementById('userMenuDropdown');
       if (!btn || !menu) return;
