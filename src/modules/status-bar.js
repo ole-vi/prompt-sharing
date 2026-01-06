@@ -12,7 +12,6 @@ class StatusBar {
   init() {
     this.element = document.getElementById('statusBar');
     if (!this.element) {
-      console.warn('Status bar element not found');
       return;
     }
     
@@ -25,10 +24,7 @@ class StatusBar {
   }
 
   showMessage(message, options = {}) {
-    if (!this.element || !this.msgElement) {
-      console.warn('Status bar not initialized');
-      return;
-    }
+    if (!this.element || !this.msgElement) return;
 
     const { timeout = 3000 } = options;
 
