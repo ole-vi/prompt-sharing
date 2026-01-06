@@ -5,6 +5,8 @@
 
 These conventions ensure UI changes remain consistent, maintainable, and accessible across all pages and features. Follow them for new features and when refactoring existing code.
 
+> **Note**: For JavaScript patterns and code style, see [CODE_STYLE_GUIDE.md](CODE_STYLE_GUIDE.md).
+
 ---
 
 ## Design Principles
@@ -401,91 +403,6 @@ Defined in `layout.css`:
 
 ---
 
-## JavaScript Patterns
-
-### Module Structure
-
-- **Location**: `src/modules/`
-- **Utilities**: `src/utils/`
-- **Pattern**: ES6 modules with named exports
-
-### DOM Helpers
-
-Located in `src/utils/dom-helpers.js`:
-
-```javascript
-import { 
-  createElement, 
-  setElementDisplay, 
-  toggleClass, 
-  clearElement, 
-  onElement,
-  stopPropagation 
-} from '../utils/dom-helpers.js';
-
-// Toggle visibility
-setElementDisplay(element, true);  // Show
-setElementDisplay(element, false); // Hide
-
-// Toggle classes
-toggleClass(element, 'active');
-toggleClass(element, 'open', true); // Force add
-
-// Clear element content
-clearElement(listElement);
-
-// Create element
-const div = createElement('div', 'my-class', 'Text content');
-```
-
-### Visibility Management
-
-**Preferred**: Use `.hidden` class and `toggleClass()`
-
-```javascript
-element.classList.add('hidden');    // Hide
-element.classList.remove('hidden'); // Show
-element.classList.toggle('hidden'); // Toggle
-```
-
-**Avoid**: Direct `style.display` manipulation unless absolutely necessary
-
-### State Classes
-
-Use state classes for interactive components:
-
-```javascript
-// Modals
-modal.classList.add('show');
-modal.classList.remove('show');
-
-// Dropdowns
-dropdown.classList.add('open');
-
-// Tree items
-treeItem.classList.add('submenu-open');
-
-// Active items
-listItem.classList.add('active');
-```
-
-### Event Delegation
-
-Prefer delegated event listeners for dynamic content:
-
-```javascript
-listEl.addEventListener('click', (event) => {
-  const badge = event.target.closest('.tag-badge');
-  if (badge) {
-    event.preventDefault();
-    event.stopPropagation();
-    // Handle badge click
-  }
-});
-```
-
----
-
 ## Accessibility Guidelines
 
 ### Keyboard Support
@@ -581,16 +498,15 @@ Before merging UI changes, verify:
 
 - [ ] Section spacing consistent (`.section-heading`, `.page-header`)
 - [ ] Header actions use `.btn.sm` for compactness
-- [ ] No inline styles; visibility via `.hidden` and state classes
+- [ ] No inline styles; use utility/component classes
 - [ ] Modals and dropdowns use shared structure
 - [ ] Keyboard accessible (Enter/Space/Arrow/Esc support)
 - [ ] Focus management implemented for modals/dropdowns
 - [ ] ARIA attributes present where appropriate
 - [ ] Color contrast meets WCAG AA standards
-- [ ] No native blocking popups (alert/confirm/prompt)
 - [ ] Responsive across breakpoints (1000px, 600px, 400px)
 - [ ] Semantic HTML elements used
-- [ ] CSS variables used for colors
+- [ ] CSS variables used for colors (not hard-coded hex values)
 - [ ] Works with dark theme
 
 ---
@@ -621,36 +537,22 @@ Before merging UI changes, verify:
 4. Use `.wrap` layout with `.card` containers
 5. Add page-specific styles in `src/styles/pages/`
 
-### Show a status message
-
-```javascript
-import { showStatus } from './modules/status-bar.js';
-showStatus('Processing...', 'progress');
-```
-
 ---
 
 ## File Reference
 
-### Key Modules
+### CSS Files
 
-- `src/modules/header.js` - Shared header component
-- `src/modules/prompt-list.js` - Sidebar tree navigation
-- `src/modules/navbar.js` - Bottom navigation bar
-- `src/modules/status-bar.js` - Status notifications
-- `src/modules/jules.js` - Jules integration
-- `src/modules/auth.js` - Authentication
+- `src/styles/base.css` - Variables, reset, global utilities
+- `src/styles/layout.css` - Grid layout, responsive breakpoints
+- `src/styles/components/*.css` - Reusable UI components
+- `src/styles/pages/*.css` - Page-specific styles
 
-### Key Utilities
-
-- `src/utils/dom-helpers.js` - DOM manipulation helpers
-- `src/utils/constants.js` - Shared constants and configs
-- `src/utils/slug.js` - String slugification
-- `src/utils/url-params.js` - URL parameter handling
-
-### Shared Components
+### HTML Templates
 
 - `partials/header.html` - Shared header HTML (loaded by `header.js`)
+- `index.html` - Home page template
+- `pages/*/*.html` - Individual page templates
 
 ---
 
@@ -665,19 +567,11 @@ When adding new features:
 
 ---
 
-## Additional Resources
-
-- **Marked.js**: Used for Markdown rendering
-- **Fuse.js**: Used for fuzzy search
-- **Firebase**: Authentication, Firestore, Functions
-
----
-
 ## Version History
 
-- **v2.0** (Jan 6, 2026): Updated based on current codebase audit
-- **v1.0**: Initial guidelines
+- **v2.0** (Jan 6, 2026): Split from combined guide; focused on UI/CSS only
+- **v1.0**: Initial combined guidelines
 
 ---
 
-**Questions?** Check existing implementations in `src/modules/` and `src/styles/components/` for reference patterns.
+**Questions?** Check existing implementations in `src/styles/components/` for reference patterns. For JavaScript patterns, see [CODE_STYLE_GUIDE.md](CODE_STYLE_GUIDE.md).
