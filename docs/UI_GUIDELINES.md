@@ -14,8 +14,9 @@ These conventions ensure UI changes remain consistent, maintainable, and accessi
 1. **Consistency first**: Use shared utilities, components, and patterns.
 2. **Semantic HTML**: Proper headings (`<h1>`, `<h2>`), lists (`<ul>`, `<ol>`), buttons (`<button>`), and inputs with appropriate elements.
 3. **No inline styles**: Prefer utility classes and component styles. Avoid `style=""` attributes.
-4. **Responsive by default**: Layouts should flex/stack cleanly across breakpoints (1000px, 600px, 400px).
-5. **Dark theme optimized**: Use CSS custom properties (`:root` variables) for colors.
+4. **File type segregation**: Keep CSS in `.css` files, JS in `.js` files, HTML in `.html` files. No `<style>` or `<script>` tags in HTML. No HTML strings in JS.
+5. **Responsive by default**: Layouts should flex/stack cleanly across breakpoints (1000px, 600px, 400px).
+6. **Dark theme optimized**: Use CSS custom properties (`:root` variables) for colors.
 
 ---
 
@@ -640,6 +641,9 @@ Before merging UI changes, verify:
 - [ ] Section spacing consistent (`.section-heading`, `.page-header`)
 - [ ] Header actions use `.btn.sm` for compactness
 - [ ] No inline styles; use utility/component classes
+- [ ] No `<style>` tags in HTML files
+- [ ] No `<script>` tags with inline JS in HTML files
+- [ ] No HTML string generation in JS files
 - [ ] Modals and dropdowns use shared structure
 - [ ] Keyboard accessible (Enter/Space/Arrow/Esc support)
 - [ ] Focus management implemented for modals/dropdowns

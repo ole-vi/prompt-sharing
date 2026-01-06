@@ -7,6 +7,72 @@ This guide covers JavaScript patterns, module architecture, and coding conventio
 
 ---
 
+## File Type Segregation
+
+**Critical Rule**: Keep file types separate. Do not mix languages in single files.
+
+### ❌ Never Do This:
+
+```javascript
+// Bad: HTML strings in JavaScript
+const html = `
+  <div class="card">
+    <h2>${title}</h2>
+    <p>${description}</p>
+  </div>
+`;
+element.innerHTML = html;
+```
+
+```javascript
+// Bad: Inline CSS in JavaScript
+element.style.color = 'red';
+element.style.padding = '10px';
+element.style.background = 'blue';
+```
+
+```html
+<!-- Bad: Style tags in HTML -->
+<style>
+  .my-class { color: red; }
+</style>
+
+<!-- Bad: Script tags in HTML -->
+<script>
+  function myFunction() { }
+</script>
+```
+
+### ✅ Do This Instead:
+
+```javascript
+// Good: Use createElement and classes
+const card = createElement('div', 'card');
+const heading = createElement('h2', '', title);
+const desc = createElement('p', '', description);
+card.appendChild(heading);
+card.appendChild(desc);
+element.appendChild(card);
+```
+
+```javascript
+// Good: Use CSS classes for styling
+element.classList.add('highlighted');
+element.classList.add('padded');
+```
+
+```html
+<!-- Good: Link external files -->
+<link rel="stylesheet" href="src/styles.css" />
+<script type="module" src="src/app.js"></script>
+```
+
+**Exceptions**:
+- `style.display` manipulation is acceptable when toggling visibility dynamically, but prefer `.hidden` class
+- Dynamic positioning/sizing (e.g., tooltips, popovers) may require direct style manipulation
+
+---
+
 ## Module Architecture
 
 ### File Organization
@@ -747,6 +813,28 @@ element.style.display = 'none';
 
 ## Anti-Patterns
 
+### ❌ HTML String Generation
+
+```javascript
+// Bad: HTML in JavaScript
+element.innerHTML = `<div class="item">${name}</div>`;
+
+// Good: Use createElement helper
+const item = createElement('div', 'item', name);
+element.appendChild(item);
+```
+
+### ❌ Inline CSS in JavaScript
+
+```javascript
+// Bad: Style manipulation for presentation
+element.style.color = 'red';
+element.style.fontSize = '14px';
+
+// Good: CSS classes
+element.classList.add('error-text');
+```
+
 ### ❌ Global Variables
 
 ```javascript
@@ -796,6 +884,45 @@ const data = fetchDataSync();
 
 // Good: Async
 const data = await fetchData();
+```
+
+---
+
+## Anti-Patterns
+
+### ❌ HTML String Generation
+
+```javascript
+// Bad: HTML in JavaScript
+element.innerHTML = `<div class="item">${name}</div>`;
+
+// Good: Use createElement helper
+const item = createElement('div', 'item', name);
+element.appendChild(item);
+```
+
+### ❌ Inline CSS in JavaScript
+
+```javascript
+// Bad: Style manipulation for presentation
+element.style.color = 'red';
+element.style.fontSize = '14px';
+
+// Good: CSS classes
+element.classList.add('error-text');
+```
+
+### ❌ Global Variables
+
+```javascript
+// Bad: Pollutes global scope
+window.currentUser = user;
+
+// Good: Module-scoped
+let currentUser = null;
+export function setCurrentUser(user) {
+  currentUser = user;
+}
 ```
 
 ---
