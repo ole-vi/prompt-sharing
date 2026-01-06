@@ -68,6 +68,8 @@ a:hover { text-decoration: underline; }
 .pad-xl { padding:48px; }
 .muted { color:var(--muted); }
 .font-16 { font-size:16px; }
+.font-48 { font-size:48px; }
+.fw-600 { font-weight:600; }
 .mb-sm { margin-bottom:8px; }
 .mb-md { margin-bottom:16px; }
 .mt-sm { margin-top:8px; }
@@ -103,3 +105,10 @@ a:hover { text-decoration: underline; }
 
 /* Misc */
 .mono { font-family: monospace; }
+
+/* Danger panel */
+.danger-panel { padding:16px; border:1px solid #c0504d; border-radius:8px; background:rgba(192,80,77,0.08); }
+.danger-text { color:#c0504d; }
+
+/* Max height helpers */
+.max-h-250 { max-height:250px; }
