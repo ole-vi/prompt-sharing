@@ -33,6 +33,7 @@ export class RepoSelector {
     this.dropdownText = options.dropdownText;
     this.dropdownMenu = options.dropdownMenu;
     this.onSelect = options.onSelect;
+    this.branchSelector = options.branchSelector;
     this.showFavorites = options.showFavorites !== false;
     
     this.favorites = [];
@@ -305,6 +306,15 @@ export class RepoSelector {
         );
         await this.saveFavorites(updatedFavorites);
         this.favorites = updatedFavorites;
+        
+        if (this.selectedSourceId === favorite.id) {
+          if (this.branchSelector) {
+            this.branchSelector.initialize(favorite.id, defaultBranch);
+          }
+          if (this.onSelect) {
+            this.onSelect(favorite.id, defaultBranch, favorite.name);
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to verify default branch in background:', error);

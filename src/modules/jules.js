@@ -759,27 +759,28 @@ export async function showJulesEnvModal(promptText) {
   let selectedSourceId = null;
   let selectedBranch = null;
 
-  // Initialize RepoSelector
-  const repoSelector = new RepoSelector({
-    dropdownBtn: document.getElementById('julesRepoDropdownBtn'),
-    dropdownText: document.getElementById('julesRepoDropdownText'),
-    dropdownMenu: document.getElementById('julesRepoDropdownMenu'),
-    onSelect: (sourceId, branch, repoName) => {
-      selectedSourceId = sourceId;
-      selectedBranch = branch;
-      submitBtn.disabled = false;
-      queueBtn.disabled = false;
-      branchSelector.initialize(sourceId, branch);
-    }
-  });
-
-  // Initialize BranchSelector
+  // Initialize BranchSelector first
   const branchSelector = new BranchSelector({
     dropdownBtn: document.getElementById('julesBranchDropdownBtn'),
     dropdownText: document.getElementById('julesBranchDropdownText'),
     dropdownMenu: document.getElementById('julesBranchDropdownMenu'),
     onSelect: (branch) => {
       selectedBranch = branch;
+    }
+  });
+
+  // Initialize RepoSelector with branchSelector reference
+  const repoSelector = new RepoSelector({
+    dropdownBtn: document.getElementById('julesRepoDropdownBtn'),
+    dropdownText: document.getElementById('julesRepoDropdownText'),
+    dropdownMenu: document.getElementById('julesRepoDropdownMenu'),
+    branchSelector: branchSelector,
+    onSelect: (sourceId, branch, repoName) => {
+      selectedSourceId = sourceId;
+      selectedBranch = branch;
+      submitBtn.disabled = false;
+      queueBtn.disabled = false;
+      branchSelector.initialize(sourceId, branch);
     }
   });
 
@@ -1890,26 +1891,27 @@ async function populateFreeInputRepoSelection() {
     return;
   }
 
-  // Initialize RepoSelector
-  const repoSelector = new RepoSelector({
-    favoriteContainer: null, // Free input doesn't have a favorite container
-    dropdownBtn: repoDropdownBtn,
-    dropdownText: repoDropdownText,
-    dropdownMenu: repoDropdownMenu,
-    onSelect: (sourceId, branch, repoName) => {
-      lastSelectedSourceId = sourceId;
-      lastSelectedBranch = branch;
-      branchSelector.initialize(sourceId, branch);
-    }
-  });
-
-  // Initialize BranchSelector
+  // Initialize BranchSelector first
   const branchSelector = new BranchSelector({
     dropdownBtn: branchDropdownBtn,
     dropdownText: branchDropdownText,
     dropdownMenu: branchDropdownMenu,
     onSelect: (branch) => {
       lastSelectedBranch = branch;
+    }
+  });
+
+  // Initialize RepoSelector with branchSelector reference
+  const repoSelector = new RepoSelector({
+    favoriteContainer: null, // Free input doesn't have a favorite container
+    dropdownBtn: repoDropdownBtn,
+    dropdownText: repoDropdownText,
+    dropdownMenu: repoDropdownMenu,
+    branchSelector: branchSelector,
+    onSelect: (sourceId, branch, repoName) => {
+      lastSelectedSourceId = sourceId;
+      lastSelectedBranch = branch;
+      branchSelector.initialize(sourceId, branch);
     }
   });
 
