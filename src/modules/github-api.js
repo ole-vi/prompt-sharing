@@ -20,7 +20,7 @@ export async function fetchJSON(url) {
 }
 
 export async function listPromptsViaContents(owner, repo, branch, path = 'prompts') {
-  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}&ts=${Date.now()}`;
+  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${path}?ref=${encodeURIComponent(branch)}&ts=${Date.now()}`;
   const entries = await fetchJSON(url);
   if (!Array.isArray(entries)) return [];
 
@@ -43,7 +43,7 @@ export async function listPromptsViaContents(owner, repo, branch, path = 'prompt
 }
 
 export async function listPromptsViaTrees(owner, repo, branch, path = 'prompts') {
-  const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1&ts=${Date.now()}`;
+  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(branch)}?recursive=1&ts=${Date.now()}`;
   const data = await fetchJSON(url);
   const pathRegex = new RegExp(`^${path}/.+\\.md$`, 'i');
   const items = (data.tree || []).filter(n => n.type === 'blob' && pathRegex.test(n.path));
@@ -56,7 +56,7 @@ export async function listPromptsViaTrees(owner, repo, branch, path = 'prompts')
 }
 
 export async function fetchRawFile(owner, repo, branch, path) {
-  const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}?ts=${Date.now()}`;
+  const url = `https://raw.githubusercontent.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${encodeURIComponent(branch)}/${path}?ts=${Date.now()}`;
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
   return res.text();
@@ -128,6 +128,6 @@ export function isGistUrl(url) {
 }
 
 export async function getBranches(owner, repo) {
-  const url = `https://api.github.com/repos/${owner}/${repo}/branches?per_page=100&ts=${Date.now()}`;
+  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=100&ts=${Date.now()}`;
   return fetchJSON(viaProxy(url));
 }
