@@ -132,6 +132,45 @@ Located in `base.css`:
 ```css
 .y-scroll      /* overflow-y: auto */
 .max-h-300     /* max-height: 300px */
+.max-h-250     /* max-height: 250px */
+.min-h-400     /* min-height: 400px */
+```
+
+### Additional Typography
+
+```css
+.font-12       /* font-size: 12px */
+.font-15       /* font-size: 15px */
+.font-18       /* font-size: 18px */
+.font-20       /* font-size: 20px */
+.font-24       /* font-size: 24px */
+.font-28       /* font-size: 28px */
+.font-48       /* font-size: 48px */
+.lh-16         /* line-height: 1.6 */
+.lh-18         /* line-height: 1.8 */
+```
+
+### Additional Spacing
+
+```css
+.mb-lg         /* margin-bottom: 24px */
+.mb-xl         /* margin-bottom: 40px */
+.mt-lg         /* margin-top: 28px */
+.mt-none       /* margin-top: 0 */
+.m-auto        /* margin-left/right: auto */
+```
+
+### Flex Utilities
+
+```css
+.flex-1        /* flex: 1 */
+.flex-shrink-0 /* flex-shrink: 0 */
+```
+
+### Layout Overrides
+
+```css
+.wrap-single   /* Force single column layout */
 ```
 
 ---
@@ -294,6 +333,65 @@ statusBar.querySelector('.status-msg').textContent = 'Processing...';
 
 **State class**: `.submenu-open` when expanded
 
+### Menu Panels
+
+**Structure**: Contextual popup menus
+
+```html
+<div class="menu-anchor">
+  <button class="btn">Actions ▼</button>
+  <div class="menu-panel menu-panel-sm menu-panel--below-left">
+    <div class="custom-dropdown-item">Option 1</div>
+    <div class="custom-dropdown-item">Option 2</div>
+  </div>
+</div>
+```
+
+**Size variants**:
+- `.menu-panel-sm`: min-width 150px
+- `.menu-panel-md`: min-width 180px
+
+**Position variants**:
+- `.menu-panel--above`: Opens above trigger
+- `.menu-panel--below-left`: Opens below, aligned left
+- `.menu-panel--below-right`: Opens below, aligned right
+
+### Scroll Boxes
+
+**Class**: `.scroll-box` for content previews
+
+```html
+<div class="scroll-box scroll-box-sm">
+  <!-- Scrollable content -->
+</div>
+```
+
+**Variants**:
+- `.scroll-box-sm`: max-height 150px
+
+**Guidelines**:
+- Use for content previews and text displays
+- Includes pre-wrap and overflow-y auto
+
+### Tag Badges
+
+**Structure**: Colored classification tags
+
+```html
+<div class="tag-container">
+  <span class="tag-badge tag-review">Review</span>
+  <span class="tag-badge tag-bug">Bug</span>
+  <span class="tag-badge tag-design">Design</span>
+  <span class="tag-badge tag-refactor">Refactor</span>
+</div>
+```
+
+**Variants**:
+- `.tag-review`: Purple theme
+- `.tag-bug`: Red theme
+- `.tag-design`: Blue theme
+- `.tag-refactor`: Purple theme
+
 ---
 
 ## Layout Patterns
@@ -331,8 +429,11 @@ statusBar.querySelector('.status-msg').textContent = 'Processing...';
 - Use for major page sections
 
 **Variants**:
-- `.section-title`: Alternative section heading style
+- `.section-title`: Alternative section heading style (20px)
 - `.section-title-lg`: Larger page-level heading (24px, bold)
+- `.section-subheading`: Smaller subheading (16px, bold)
+- `.section-label`: Muted label text (14px, muted color)
+- `.section-mb`: Bottom margin for sections (40px)
 
 ### Page Headers with Actions
 
@@ -381,6 +482,46 @@ statusBar.querySelector('.status-msg').textContent = 'Processing...';
 - `.modal-textarea`: Textareas
 - `.text-input`: Larger textarea variant
 - `.form-label`: Form labels
+- `.options-box`: Container for checkbox/radio groups
+
+### Panels
+
+**Classes**: `.panel`, `.panel-tight`
+
+```html
+<div class="panel">
+  <!-- Panel content -->
+</div>
+```
+
+**Variants**:
+- `.panel`: Standard panel with margin
+- `.panel-tight`: No margin
+- `.danger-panel`: Red-themed warning panel
+- `.hero-panel`: Large centered promotional panel
+- `.instruction-panel`: Documentation/guide panel
+- `.info-card`: Information display card
+
+### Error Display
+
+**Components for error states**:
+
+```html
+<div class="error-banner">
+  <span>⚠️</span>
+  <span>Error message here</span>
+</div>
+
+<div class="error-details">
+  <!-- Error stack trace or details -->
+</div>
+```
+
+**Classes**:
+- `.error-banner`: Alert-style error display
+- `.error-details`: Monospace error details
+- `.error-title`: Error heading
+- `.danger-text`: Red danger text
 
 ---
 
@@ -536,6 +677,31 @@ Before merging UI changes, verify:
 3. Include shared header via `header.js`
 4. Use `.wrap` layout with `.card` containers
 5. Add page-specific styles in `src/styles/pages/`
+
+### Style a hero/marketing section
+
+```html
+<div class="hero-panel">
+  <h2 class="hero-title">Feature Title</h2>
+  <p class="hero-desc">Description text</p>
+  <button class="btn xl primary">Call to Action</button>
+  <p class="hero-note">Additional note</p>
+</div>
+```
+
+### Create a feature grid
+
+```html
+<div class="feature-grid">
+  <div class="feature-card">
+    <div class="feature-icon">🚀</div>
+    <div class="feature-content">
+      <div class="feature-title">Feature Name</div>
+      <div class="feature-desc">Feature description</div>
+    </div>
+  </div>
+</div>
+```
 
 ---
 

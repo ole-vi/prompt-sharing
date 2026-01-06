@@ -416,20 +416,37 @@ document.addEventListener('click', (e) => {
 ### Show Status
 
 ```javascript
-import { showStatus } from './modules/status-bar.js';
+import statusBar from './modules/status-bar.js';
 
-// Success message
-showStatus('Changes saved successfully', 'success');
+// Show message with auto-hide
+statusBar.showMessage('Changes saved successfully', { timeout: 3000 });
 
-// Error message
-showStatus('Failed to save changes', 'error');
+// Show message without auto-hide
+statusBar.showMessage('Processing...', { timeout: 0 });
 
-// Progress message
-showStatus('Processing...', 'progress');
+// Add progress indicator
+statusBar.setProgress('Step 1 of 3', 33);
 
-// Info message
-showStatus('No changes detected', 'info');
+// Clear progress
+statusBar.clearProgress();
+
+// Add action button
+statusBar.setAction('Retry', handleRetry);
+
+// Clear action
+statusBar.clearAction();
+
+// Hide status bar
+statusBar.hide();
+
+// Clear everything
+statusBar.clear();
 ```
+
+**Guidelines**:
+- Use `timeout: 0` for persistent messages
+- Default timeout is 3000ms (3 seconds)
+- Call `clear()` to reset all elements
 
 ### Replace Native Dialogs
 
@@ -440,7 +457,7 @@ const confirmed = confirm('Are you sure?');
 const input = prompt('Enter value:');
 
 // ✅ Good: Non-blocking UI
-showStatus('Success!', 'success');
+statusBar.showMessage('Success!', { timeout: 3000 });
 openConfirmModal('Are you sure?', handleConfirm);
 openInputModal('Enter value:', handleInput);
 ```
@@ -507,7 +524,113 @@ export async function submitTask(task, apiKey) {
 
 ---
 
-## Local Storage
+## Constants
+
+### Using Shared Constants
+
+All magic strings and regex patterns should be defined in `src/utils/constants.js`:
+
+```javascript
+import { 
+  OWNER, 
+  REPO, 
+  BRANCH, 
+  STORAGE_KEYS, 
+  TAG_DEFINITIONS,
+  ERRORS,
+  UI_TEXT,
+  JULES_API_BASE
+} from '../utils/constants.js';
+
+// Repository defaults
+console.log(OWNER, REPO, BRANCH);
+
+// Storage keys
+localStorage.setItem(STORAGE_KEYS.expandedState(owner, repo, branch), state);
+
+// Error messages
+throw new Error(ERRORS.AUTH_REQUIRED);
+
+// UI text
+button.textContent = UI_TEXT.SIGN_IN;
+
+// API base URL
+const url = `${JULES_API_BASE}/sessions`;
+```
+
+**Available constants**:
+- `OWNER`, `REPO`, `BRANCH`: Default repository info
+- `STORAGE_KEYS`: Functions to generate storage keys
+- `TAG_DEFINITIONS`: Tag classification config
+- `ERRORS`: Error message strings
+- `UI_TEXT`: UI label strings
+- `JULES_API_BASE`: Jules API base URL
+- `GIST_POINTER_REGEX`, `GIST_URL_REGEX`, `CODEX_URL_REGEX`: URL validation
+
+---
+
+## Session Caching
+
+### Using Session Cache
+
+```javascript
+import { setCache, getCache, clearCache, clearAllCache, CACHE_KEYS } from '../utils/session-cache.js';
+
+// Save to cache
+setCache(CACHE_KEYS.JULES_SESSIONS, sessionsData, userId);
+
+// Load from cache
+const cached = getCache(CACHE_KEYS.JULES_SESSIONS, userId);
+
+// Clear specific cache
+clearCache(CACHE_KEYS.JULES_SESSIONS, userId);
+
+// Clear all caches
+clearAllCache();
+```
+
+**Cache expiration**:
+- Some keys cache for entire session (no expiration)
+- Some keys expire after 5 minutes
+- Defined in `CACHE_DURATION` in `session-cache.js`
+
+**Available cache keys**:
+- `CACHE_KEYS.JULES_ACCOUNT`
+- `CACHE_KEYS.JULES_SESSIONS`
+- `CACHE_KEYS.JULES_REPOS`
+- `CACHE_KEYS.QUEUE_ITEMS`
+- `CACHE_KEYS.BRANCHES`
+- `CACHE_KEYS.CURRENT_BRANCH`
+- `CACHE_KEYS.CURRENT_REPO`
+- `CACHE_KEYS.USER_PROFILE`
+
+---
+
+## URL Parameter Handling
+
+### Parse URL Parameters
+
+```javascript
+import { parseParams, getHashParam, setHashParam } from '../utils/url-params.js';
+
+// Parse all params from query string and hash
+const params = parseParams();
+
+// Get specific hash parameter
+const fileSlug = getHashParam('file');
+
+// Set hash parameter
+setHashParam('file', 'my-prompt');
+```
+
+**Guidelines**:
+- Use `parseParams()` to get all URL parameters
+- Use `getHashParam()` for hash-based routing
+- Use `setHashParam()` to update hash parameters
+
+---
+
+## Session Caching
 
 ### Constants
 
@@ -677,6 +800,66 @@ const data = await fetchData();
 
 ---
 
+## Error Handling
+
+### Consistent Error Handling
+
+```javascript
+// ✅ Good: Try-catch with user feedback
+async function loadData() {
+  try {
+    const data = await fetchData();
+    return data;
+  } catch (error) {
+    console.error('Failed to load data:', error);
+    showStatus('Failed to load data', 'error');
+    throw error; // Re-throw if caller needs to handle
+  }
+}
+```
+
+### Console Logging Conventions
+
+```javascript
+// Errors: Use console.error
+console.error('Failed to fetch data:', error);
+
+// Warnings: Use console.warn
+console.warn('Cache expired, refetching...');
+
+// Debug info: Use console.log (remove before production)
+console.log('Debug: current state:', state);
+
+// Info: Rarely used
+console.info('Module initialized');
+```
+
+**Guidelines**:
+- Always log errors with context
+- Include error object in console.error
+- Remove debug console.log statements before committing
+- Use `showStatus()` for user-facing errors
+
+### Status Bar for User Errors
+
+```javascript
+import statusBar from './modules/status-bar.js';
+
+// Show error to user
+statusBar.showMessage('Failed to save changes', { timeout: 5000 });
+
+// With progress
+statusBar.setProgress('Uploading...', 50);
+
+// With action button
+statusBar.setAction('Retry', handleRetry);
+
+// Clear everything
+statusBar.clear();
+```
+
+---
+
 ## Testing Considerations
 
 ### Testable Functions
@@ -792,6 +975,8 @@ list.appendChild(fragment);
 | `slug.js` | String slugification |
 | `url-params.js` | URL parameter handling |
 | `session-cache.js` | Session caching |
+| `title.js` | Extract titles from markdown |
+| `checkbox-helpers.js` | Mutual exclusivity for checkboxes |
 
 ---
 
