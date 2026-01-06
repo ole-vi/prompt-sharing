@@ -17,7 +17,8 @@ export function initBranchSelector(owner, repo, branch) {
   branchDropdown = document.getElementById('branchDropdown');
   currentOwner = owner;
   currentRepo = repo;
-  currentBranch = branch;
+  const savedBranch = loadBranchFromStorage(owner, repo);
+  currentBranch = savedBranch || branch;
 
   if (branchSelect) {
     branchSelect.addEventListener('change', handleBranchChange);
@@ -44,6 +45,40 @@ export function setCurrentBranch(branch) {
   if (branchSelect) {
     branchSelect.value = branch;
   }
+  
+  // Persist to localStorage
+  saveBranchToStorage(branch, currentOwner, currentRepo);
+}
+
+function saveBranchToStorage(branch, owner, repo) {
+  if (branch && owner && repo) {
+    try {
+      localStorage.setItem('selectedBranch', JSON.stringify({
+        branch,
+        owner,
+        repo,
+        timestamp: Date.now()
+      }));
+    } catch (error) {
+      console.error('Failed to save branch to storage:', error);
+    }
+  }
+}
+
+function loadBranchFromStorage(owner, repo) {
+  try {
+    const stored = localStorage.getItem('selectedBranch');
+    if (stored) {
+      const data = JSON.parse(stored);
+      // Only return if it matches the current repo
+      if (data.owner === owner && data.repo === repo) {
+        return data.branch;
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load branch from storage:', error);
+  }
+  return null;
 }
 
 export function getCurrentBranch() {
@@ -53,6 +88,12 @@ export function getCurrentBranch() {
 export function setCurrentRepo(owner, repo) {
   currentOwner = owner;
   currentRepo = repo;
+  
+  // Try to restore branch from storage for this repo
+  const savedBranch = loadBranchFromStorage(owner, repo);
+  if (savedBranch) {
+    currentBranch = savedBranch;
+  }
 }
 
 function classifyBranch(branchName) {
@@ -108,6 +149,9 @@ async function handleBranchChange(e) {
   }
 
   currentBranch = branchSelect.value;
+  
+  // Save to localStorage
+  saveBranchToStorage(currentBranch, currentOwner, currentRepo);
 
   const qs = new URLSearchParams(location.search);
   qs.set('branch', currentBranch);

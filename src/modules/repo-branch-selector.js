@@ -43,6 +43,21 @@ export class RepoSelector {
     this.selectedSourceId = null;
   }
 
+  saveToStorage() {
+    if (this.selectedSourceId) {
+      localStorage.setItem('selectedRepoId', this.selectedSourceId);
+    }
+  }
+
+  loadFromStorage() {
+    try {
+      return localStorage.getItem('selectedRepoId');
+    } catch (error) {
+      console.error('Failed to load repo from storage:', error);
+    }
+    return null;
+  }
+
   async initialize() {
     const user = getCurrentUser();
     if (!user) {
@@ -52,7 +67,6 @@ export class RepoSelector {
     }
 
     this.dropdownBtn.disabled = false;
-    this.dropdownText.textContent = 'Select a repository...';
 
     const { DEFAULT_FAVORITE_REPOS } = await import('../utils/constants.js');
     
@@ -66,6 +80,43 @@ export class RepoSelector {
       }
     } catch (error) {
       console.error('Failed to load favorites:', error);
+    }
+
+    // Try to restore previous selection
+    const savedRepoId = this.loadFromStorage();
+    if (savedRepoId) {
+      // Try to find the repo in favorites to get its display name
+      const favorite = this.favorites.find(f => f.id === savedRepoId);
+      if (favorite) {
+        this.selectedSourceId = savedRepoId;
+        this.dropdownText.textContent = favorite.name;
+        
+        // Restore branch selector if available
+        if (this.branchSelector) {
+          const savedBranch = this.branchSelector.loadFromStorage();
+          if (savedBranch && savedBranch.sourceId === savedRepoId) {
+            this.branchSelector.initialize(savedRepoId, savedBranch.branch);
+          } else if (favorite.branch) {
+            this.branchSelector.initialize(savedRepoId, favorite.branch);
+          }
+        }
+      } else {
+        // Not in favorites, show generic text
+        this.selectedSourceId = savedRepoId;
+        const pathParts = savedRepoId.split('/');
+        const repoName = pathParts.length >= 4 ? pathParts.slice(-2).join('/') : savedRepoId;
+        this.dropdownText.textContent = repoName;
+        
+        // Restore branch selector if available
+        if (this.branchSelector) {
+          const savedBranch = this.branchSelector.loadFromStorage();
+          if (savedBranch && savedBranch.sourceId === savedRepoId) {
+            this.branchSelector.initialize(savedRepoId, savedBranch.branch);
+          }
+        }
+      }
+    } else {
+      this.dropdownText.textContent = 'Select a repository...';
     }
 
     this.setupDropdownToggle();
@@ -114,6 +165,9 @@ export class RepoSelector {
         this.selectedSourceId = fav.id;
         this.dropdownText.textContent = fav.name;
         this.dropdownMenu.style.display = 'none';
+        
+        // Save repo selection
+        this.saveToStorage();
         
         let currentBranch = fav.branch;
         
@@ -213,6 +267,9 @@ export class RepoSelector {
         this.selectedSourceId = source.name || source.id;
         this.dropdownText.textContent = repoName;
         this.dropdownMenu.style.display = 'none';
+        
+        // Save repo selection
+        this.saveToStorage();
         
         if (this.onSelect) {
           this.onSelect(source.name || source.id, defaultBranch, repoName);
@@ -375,7 +432,37 @@ export class BranchSelector {
     this.allBranchesLoaded = false;
   }
 
+  saveToStorage() {
+    if (this.sourceId && this.selectedBranch) {
+      localStorage.setItem('selectedBranchRepo', JSON.stringify({
+        sourceId: this.sourceId,
+        branch: this.selectedBranch
+      }));
+    }
+  }
+
+  loadFromStorage() {
+    try {
+      const stored = localStorage.getItem('selectedBranchRepo');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.error('Failed to load branch from storage:', error);
+    }
+    return null;
+  }
+
   initialize(sourceId, defaultBranch) {
+    // Try to restore from storage if no sourceId provided
+    if (!sourceId) {
+      const stored = this.loadFromStorage();
+      if (stored) {
+        sourceId = stored.sourceId;
+        defaultBranch = stored.branch;
+      }
+    }
+    
     this.sourceId = sourceId;
     this.selectedBranch = defaultBranch;
     this.allBranchesLoaded = false;
@@ -392,6 +479,9 @@ export class BranchSelector {
     this.dropdownBtn.disabled = false;
     this.dropdownBtn.style.opacity = '1';
     this.dropdownBtn.style.cursor = 'pointer';
+    
+    // Save to storage
+    this.saveToStorage();
     
     this.setupDropdownToggle();
   }
@@ -483,6 +573,10 @@ export class BranchSelector {
   setSelectedBranch(branch) {
     this.selectedBranch = branch;
     this.dropdownText.textContent = branch;
+    
+    // Save to storage
+    this.saveToStorage();
+    
     if (this.onSelect) {
       this.onSelect(branch);
     }
