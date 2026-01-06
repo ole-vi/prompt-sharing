@@ -57,3 +57,6 @@
 
 /* Caret styling for dropdown buttons */
 .custom-dropdown-caret { color: var(--muted); }
+
+/* Generic dropdown item utility for menu items with icons */
+.dropdown-item { display: flex; align-items: center; gap: 8px; }

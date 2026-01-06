@@ -33,17 +33,3 @@ button.nav-item:hover { text-decoration: none !important; }
 
 .nav-label { font-size: 16px; font-weight: 700; letter-spacing: 0.2px; display: inline-block; }
 
-/* Mobile navbar */
-@media (max-width: 1000px) {
-  #navbar { top: 69px; }
-  .nav-container { justify-content: space-around; gap: 0; }
-  .nav-item { padding: 10px 8px; min-width: 70px; gap: 2px; }
-  .nav-icon { font-size: 18px; }
-  .nav-label { font-size: 16px; font-weight: 700; letter-spacing: 0.2px; }
-}
-
-@media (max-width: 400px) {
-  .nav-item { padding: 10px 4px; min-width: 60px; }
-  .nav-icon { font-size: 16px; }
-  .nav-label { font-size: 16px; font-weight: 700; letter-spacing: 0.2px; }
-}

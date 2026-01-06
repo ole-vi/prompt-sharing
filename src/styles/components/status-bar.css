@@ -5,4 +5,3 @@
 #statusBar .status-msg { font-size: 13px; color: var(--text); }
 #statusBar .status-progress { font-size: 12px; color: var(--muted); }
 #statusBar .status-action { font-size: 13px; }
-@media (max-width: 600px) { #statusBar { left: 8px; right: 8px; bottom: 8px; } #statusBar .status-inner { padding: 8px; } }

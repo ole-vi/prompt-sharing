@@ -14,11 +14,6 @@ header {
 #headerBranding:hover a > div > div:nth-child(1) { filter: brightness(1.2); }
 #headerBranding:hover a > div > div:nth-child(2) { filter: brightness(1.2); }
 
-/* Header-specific responsive tweaks only (no dropdown styling) */
-@media (max-width: 1000px) {
-  header { padding: 12px 16px; }
-}
-
 /* Moved from inline <style> in header.html */
 .user-menu { position: relative; }
 .user-menu-button {
@@ -43,6 +38,8 @@ header {
 }
 .user-menu-button img { width: 100%; height: 100%; object-fit: cover; }
 #userName, .user-menu-caret { display: none; }
+
+/* User dropdown uses shared dropdown component styles with custom positioning */
 .user-dropdown {
   position: absolute;
   right: 0;
@@ -55,7 +52,6 @@ header {
   padding: 6px;
   display: none;
   z-index: 10;
-  backdrop-filter: none;
 }
 .user-dropdown a,
 .user-dropdown button {
@@ -76,7 +72,6 @@ header {
   background: rgba(77, 217, 255, 0.08);
   color: var(--accent);
 }
-.dropdown-item { display: flex; align-items: center; gap: 8px; }
 .user-dropdown-sep { height: 1px; background: var(--border); margin: 6px 0; }
 
 /* Mobile Navigation */
@@ -99,17 +94,6 @@ header {
 /* Branding link utilities */
 .branding-link { text-decoration:none; color:inherit; display:flex; align-items:center; gap:10px; }
 .logo-img { width:32px; height:32px; flex-shrink:0; object-fit:contain; }
-
-@media (max-width: 1000px) {
-  #mobileMenuBtn { display: block; }
-  #headerContainer { padding: 12px 16px !important; }
-  #headerContainer > div:first-child { flex: 0 0 auto !important; min-width: auto !important; }
-  #headerBranding a { gap: 8px !important; }
-  #headerBranding a > div > div:first-child { font-size: 18px !important; }
-  #headerBranding a > div > div:nth-child(2) { display: none !important; }
-  #headerNav { display: none !important; }
-  #headerContainer > div:last-child { flex: 0 0 auto !important; min-width: auto !important; }
-}
 
 /* Extracted from inline styles: layout helpers */
 #headerContainer { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:8px 12px; width:100%; }

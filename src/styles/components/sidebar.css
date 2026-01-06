@@ -23,8 +23,6 @@
 #sidebar.collapsed .toggle-icon { transform: rotate(180deg); }
 .toggle-icon { transition: transform 0.3s ease; display: inline-block; }
 
-@media (max-width: 600px) { #sidebar { position: static !important; } }
-
 /* Search */
 .search-wrapper { position: relative; width: 100%; }
 #search { width: 100%; padding: 10px 36px 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: linear-gradient(135deg, rgba(20,24,41,0.5), rgba(20,24,41,0.3)); color: var(--text); outline: none; font-size: 14px; transition: all 0.3s; }

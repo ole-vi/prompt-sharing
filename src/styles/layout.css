@@ -16,20 +16,61 @@
 
 .wrap:has(#sidebar.collapsed) { grid-template-columns: 48px 1fr; }
 
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+
+/* Mobile/Tablet (1000px and below) */
 @media (max-width: 1000px) {
+  /* Layout */
   .wrap { grid-template-columns: 1fr !important; }
   .wrap:has(#sidebar.collapsed) { grid-template-columns: 1fr !important; }
-}
-
-/* Mobile Responsiveness (1000px and below) */
-@media (max-width: 1000px) {
+  
+  /* Header */
   header { padding: 12px 16px; }
+  #mobileMenuBtn { display: block; }
+  #headerContainer { padding: 12px 16px !important; }
+  #headerContainer > div:first-child { flex: 0 0 auto !important; min-width: auto !important; }
+  #headerBranding a { gap: 8px !important; }
+  #headerBranding a > div > div:first-child { font-size: 18px !important; }
+  #headerBranding a > div > div:nth-child(2) { display: none !important; }
+  #headerNav { display: none !important; }
+  #headerContainer > div:last-child { flex: 0 0 auto !important; min-width: auto !important; }
+  
+  /* Auth */
   #authStatus { font-size: 11px !important; }
   #authBtn, #signOutBtn { padding: 6px 8px !important; font-size: 11px !important; }
+  
+  /* Components */
   .pill { font-size: 11px; }
+  
+  /* Sidebar */
   #sidebar { position: static; transition: height 0.3s ease, padding 0.3s ease; width: 100%; }
   #sidebar.collapsed { width: 100% !important; min-width: 100% !important; height: auto; padding: 10px; overflow: visible; }
   #sidebar.collapsed > *:not(.sidebar-header) { display: none; }
   #sidebar.collapsed .sidebar-title { opacity: 1 !important; pointer-events: auto !important; }
   .sidebar-header { display: flex !important; }
+  
+  /* Navbar */
+  #navbar { top: 69px; }
+  .nav-container { justify-content: space-around; gap: 0; }
+  .nav-item { padding: 10px 8px; min-width: 70px; gap: 2px; }
+  .nav-icon { font-size: 18px; }
+  .nav-label { font-size: 16px; font-weight: 700; letter-spacing: 0.2px; }
+}
+
+/* Mobile (600px and below) */
+@media (max-width: 600px) {
+  /* Status Bar */
+  #statusBar { left: 8px; right: 8px; bottom: 8px; }
+  #statusBar .status-inner { padding: 8px; }
+  
+  /* Sidebar */
+  #sidebar { position: static !important; }
+}
+
+/* Small Mobile (400px and below) */
+@media (max-width: 400px) {
+  /* Navbar */
+  .nav-item { padding: 10px 4px; min-width: 60px; }
+  .nav-icon { font-size: 16px; }
+  .nav-label { font-size: 16px; font-weight: 700; letter-spacing: 0.2px; }
 }
