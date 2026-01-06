@@ -346,6 +346,20 @@ python -m http.server 8888
 # Visit http://localhost:8888/pages/home/index.html
 ```
 
+### Testing
+
+This project uses Vitest for unit testing. To run the tests:
+
+1.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+2.  **Run the test suite:**
+    ```bash
+    npm test
+    ```
+
 Routing notes:
 - Hosting redirects `/` to `/pages/home/index.html` via `firebase.json`.
 - Legacy root pages have been removed; use `/pages/*` paths.

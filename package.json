@@ -1,0 +1,25 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "Share and amplify your team's AI knowledge. Hosted for free with GitHub Pages, backed by simple `.md` files.",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ole-vi/prompt-sharing.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ole-vi/prompt-sharing/issues"
+  },
+  "homepage": "https://github.com/ole-vi/prompt-sharing#readme",
+  "devDependencies": {
+    "jsdom": "^27.4.0",
+    "vitest": "^4.0.16"
+  }
+}
