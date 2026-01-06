@@ -25,18 +25,18 @@
       </div>
       <div class="search-wrapper">
         <input id="search" placeholder="Search prompts..." />
-        <button id="searchClear" class="search-clear" style="display:none;" title="Clear search">✕</button>
+        <button id="searchClear" class="search-clear hidden" title="Clear search">✕</button>
       </div>
       <button class="btn" id="freeInputBtn" title="Send a custom prompt to Jules">✏️ Free Input</button>
       <div id="list"></div>
     </aside>
 
     <main id="main" class="card pad-lg">
-      <div id="empty" class="panel text-center pad-xl muted" style="display:none;">
+      <div id="empty" class="panel text-center pad-xl muted hidden">
       </div>
       
       <!-- Free Input Section (shown in main area) -->
-      <div id="freeInputSection" style="display:none;">
+      <div id="freeInputSection" class="hidden">
         <h2 class="section-title">Free Input</h2>
         <p class="muted-text small-text mb-md">Enter your custom prompt below: <span class="small-text">(Use --- to split into subtasks)</span></p>
         <textarea id="freeInputTextarea" class="text-input" placeholder="Enter your prompt here..."></textarea>

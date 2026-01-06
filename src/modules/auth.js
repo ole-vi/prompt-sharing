@@ -61,19 +61,19 @@ export async function updateAuthUI(user) {
     
     if (userAvatar && user.photoURL) {
       userDisplay.style.display = 'flex';
-      userAvatar.style.display = 'none';
+      userAvatar.classList.add('hidden');
       userAvatar.onload = () => {
-        userAvatar.style.display = 'block';
+        userAvatar.classList.remove('hidden');
         userDisplay.style.display = 'none';
       };
       userAvatar.onerror = () => {
-        userAvatar.style.display = 'none';
+        userAvatar.classList.add('hidden');
         userDisplay.style.display = 'flex';
       };
       userAvatar.src = user.photoURL;
       userAvatar.alt = displayName;
     } else {
-      userAvatar.style.display = 'none';
+      userAvatar.classList.add('hidden');
       userDisplay.style.display = 'flex';
     }
     
@@ -90,15 +90,15 @@ export async function updateAuthUI(user) {
     }
     
     if (signInItem) {
-      signInItem.style.display = 'none';
+      signInItem.classList.add('hidden');
       signInItem.onclick = null;
     }
     if (signOutItem) {
-      signOutItem.style.display = '';
+      signOutItem.classList.remove('hidden');
       signOutItem.onclick = signOutUser;
     }
   } else {
-    if (userAvatar) userAvatar.style.display = 'none';
+    if (userAvatar) userAvatar.classList.add('hidden');
     if (userDisplay) userDisplay.style.display = 'flex';
     
     if (dropdownUserName) {
@@ -110,11 +110,11 @@ export async function updateAuthUI(user) {
     if (dropdownAvatar) dropdownAvatar.style.display = 'none';
     
     if (signInItem) {
-      signInItem.style.display = '';
+      signInItem.classList.remove('hidden');
       signInItem.onclick = signInWithGitHub;
     }
     if (signOutItem) {
-      signOutItem.style.display = 'none';
+      signOutItem.classList.add('hidden');
       signOutItem.onclick = null;
     }
   }

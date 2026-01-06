@@ -112,3 +112,80 @@ a:hover { text-decoration: underline; }
 
 /* Max height helpers */
 .max-h-250 { max-height:250px; }
+.min-h-400 { min-height:400px; }
+
+/* Display utilities */
+.hidden { display:none !important; }
+
+/* Layout overrides for single-column pages */
+.wrap-single { grid-template-columns:1fr !important; }
+
+/* Centered content containers */
+.centered-content { max-width:500px; margin-left:auto; margin-right:auto; margin-bottom:16px; }
+
+/* Additional font sizes */
+.font-15 { font-size:15px; }
+.font-18 { font-size:18px; }
+.font-20 { font-size:20px; }
+.font-24 { font-size:24px; }
+.font-28 { font-size:28px; }
+
+/* Line height */
+.lh-16 { line-height:1.6; }
+.lh-18 { line-height:1.8; }
+
+/* Additional margins */
+.mb-lg { margin-bottom:24px; }
+.mb-xl { margin-bottom:40px; }
+.mt-lg { margin-top:28px; }
+.mt-none { margin-top:0; }
+.m-auto { margin-left:auto; margin-right:auto; }
+
+/* Flex shrink */
+.flex-shrink-0 { flex-shrink:0; }
+
+/* Hero/CTA sections for marketing pages */
+.hero-panel { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:32px; margin-bottom:40px; text-align:center; }
+.hero-title { margin:0 0 12px; font-size:20px; font-weight:600; }
+.hero-desc { margin:0 0 24px; color:var(--muted); font-size:15px; line-height:1.6; }
+.hero-note { margin:8px 0 0; color:var(--muted); font-size:13px; }
+
+/* Feature grid and cards */
+.feature-grid { display:grid; gap:16px; }
+.feature-card { display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; }
+.feature-icon { font-size:24px; flex-shrink:0; }
+.feature-content { flex:1; }
+.feature-title { font-weight:600; margin-bottom:4px; }
+.feature-desc { color:var(--muted); font-size:14px; }
+
+/* Section spacing and headings */
+.section-mb { margin-bottom:40px; }
+.section-heading { margin:0 0 20px; font-size:18px; font-weight:600; }
+.section-subheading { margin:0 0 16px; font-size:16px; font-weight:600; }
+
+/* Instruction panels and lists */
+.instruction-panel { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:24px; }
+.instruction-list { margin:0; padding-left:24px; line-height:1.8; color:var(--muted); }
+.instruction-item { margin-bottom:12px; }
+.instruction-item:last-child { margin-bottom:0; }
+.instruction-strong { color:var(--text); }
+.instruction-sublist { margin:8px 0 0; padding-left:24px; }
+
+/* Code inline */
+.code-inline { background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; font-family:monospace; }
+
+/* Profile info cards */
+.info-card { background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px; }
+.info-label { font-size:12px; color:var(--muted); margin-bottom:6px; }
+.info-value { font-weight:600; font-size:16px; }
+
+/* Additional font sizes */
+.font-12 { font-size:12px; }
+.font-15 { font-size:15px; }
+
+/* Button containers */
+.btn-container { display:flex; gap:8px; flex-direction:column; margin-bottom:16px; }
+
+/* Danger zone variations */
+.danger-title { font-size:15px; font-weight:600; color:#c0504d; margin-bottom:10px; }
+.danger-desc { font-size:13px; color:var(--muted); margin-bottom:14px; }

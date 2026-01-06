@@ -28,17 +28,17 @@
             placeholder="Search sessions..." 
             class="modal-input"
           />
-          <button id="sessionSearchClear" class="search-clear" style="display:none;" title="Clear search">✕</button>
+          <button id="sessionSearchClear" class="search-clear hidden" title="Clear search">✕</button>
         </div>
       </div>
       
       <!-- Loading Message -->
-      <div id="sessionsLoading" class="panel text-center pad-xl" style="display:none;">
+      <div id="sessionsLoading" class="panel text-center pad-xl hidden">
         <div class="muted font-16">Loading sessions...</div>
       </div>
       
       <!-- Not Signed In Message -->
-      <div id="sessionsNotSignedIn" class="panel text-center pad-xl" style="display:none;">
+      <div id="sessionsNotSignedIn" class="panel text-center pad-xl hidden">
         <div class="muted font-16">Please sign in to view your sessions.</div>
       </div>
 
@@ -46,7 +46,7 @@
       <div id="allSessionsList" class="vlist"></div>
 
       <!-- Load More -->
-      <div id="sessionsLoadMore" style="display:none;" class="mt-md text-center">
+      <div id="sessionsLoadMore" class="mt-md text-center hidden">
         <button id="loadMoreSessionsBtn" class="btn">Load More</button>
       </div>
     </main>
@@ -96,11 +96,11 @@
           renderAllSessions(allSessionsCache);
           
           if (sessionNextPageToken) {
-            loadMoreSection.style.display = 'block';
+            loadMoreSection.classList.remove('hidden');
             loadMoreBtn.disabled = false;
             loadMoreBtn.textContent = 'Load More';
           } else {
-            loadMoreSection.style.display = 'none';
+            loadMoreSection.classList.add('hidden');
           }
         } else if (allSessionsCache.length === 0) {
           allSessionsList.innerHTML = '<div class="muted text-center pad-lg">No sessions found</div>';
@@ -183,25 +183,25 @@
       const sessionsList = document.getElementById('allSessionsList');
       
       if (!user) {
-        loadingDiv.style.display = 'none';
-        sessionsList.style.display = 'none';
-        notSignedInDiv.style.display = 'block';
+        loadingDiv.classList.add('hidden');
+        sessionsList.classList.add('hidden');
+        notSignedInDiv.classList.remove('hidden');
         return;
       }
 
       try {
         isSessionsLoading = true;
-        loadingDiv.style.display = 'block';
-        notSignedInDiv.style.display = 'none';
-        sessionsList.style.display = 'none';
+        loadingDiv.classList.remove('hidden');
+        notSignedInDiv.classList.add('hidden');
+        sessionsList.classList.add('hidden');
         
         await loadSessionsPage();
         
-        loadingDiv.style.display = 'none';
-        sessionsList.style.display = 'flex';
+        loadingDiv.classList.add('hidden');
+        sessionsList.classList.remove('hidden');
       } catch (err) {
         console.error('Sessions loading error:', err);
-        loadingDiv.style.display = 'none';
+        loadingDiv.classList.add('hidden');
       } finally {
         isSessionsLoading = false;
       }
@@ -217,7 +217,11 @@
         if (searchInput) {
           const toggleClear = () => {
             if (searchClear) {
-              searchClear.style.display = searchInput.value ? 'inline-block' : 'none';
+              if (searchInput.value) {
+                searchClear.classList.remove('hidden');
+              } else {
+                searchClear.classList.add('hidden');
+              }
             }
           };
           searchInput.addEventListener('input', () => { toggleClear(); renderAllSessions(allSessionsCache); });

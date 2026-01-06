@@ -21,7 +21,7 @@
       </div>
 
       <!-- Not Signed In Message -->
-      <div id="queueNotSignedIn" class="panel text-center pad-xl" style="display:none;">
+      <div id="queueNotSignedIn" class="panel text-center pad-xl hidden">
         <div class="muted-text small-text">Please sign in to view your queue.</div>
       </div>
 
@@ -54,7 +54,7 @@
           </div>
         </div>
 
-        <div id="allQueueList" class="vlist" style="min-height:400px;">
+        <div id="allQueueList" class="vlist min-h-400">
           <div class="panel text-center pad-xl muted-text">Loading queue...</div>
         </div>
       </div>
@@ -79,23 +79,23 @@
       
       const user = window.auth?.currentUser;
       if (user) {
-        document.getElementById('queueControls').style.display = 'block';
-        document.getElementById('queueNotSignedIn').style.display = 'none';
+        document.getElementById('queueControls').classList.remove('hidden');
+        document.getElementById('queueNotSignedIn').classList.add('hidden');
         loadQueue();
       } else {
-        document.getElementById('queueControls').style.display = 'none';
-        document.getElementById('queueNotSignedIn').style.display = 'block';
+        document.getElementById('queueControls').classList.add('hidden');
+        document.getElementById('queueNotSignedIn').classList.remove('hidden');
       }
       
       // Listen for auth state changes
       window.auth.onAuthStateChanged((user) => {
         if (user) {
-          document.getElementById('queueControls').style.display = 'block';
-          document.getElementById('queueNotSignedIn').style.display = 'none';
+          document.getElementById('queueControls').classList.remove('hidden');
+          document.getElementById('queueNotSignedIn').classList.add('hidden');
           loadQueue();
         } else {
-          document.getElementById('queueControls').style.display = 'none';
-          document.getElementById('queueNotSignedIn').style.display = 'block';
+          document.getElementById('queueControls').classList.add('hidden');
+          document.getElementById('queueNotSignedIn').classList.remove('hidden');
         }
       });
     }

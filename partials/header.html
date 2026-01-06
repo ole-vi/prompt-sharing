@@ -39,8 +39,8 @@
     <!-- Left: Logo & Tagline -->
     <div class="header-left">      <button id="mobileMenuBtn" aria-label="Open menu">☰</button>
       <div id="headerBranding">
-        <a id="logoLink" href="/" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:10px;">
-          <img src="/assets/PromptSyncLogo.svg" alt="PromptSync" style="width:32px; height:32px; flex-shrink:0; object-fit:contain;">
+        <a id="logoLink" href="/" class="branding-link">
+          <img src="/assets/PromptSyncLogo.svg" alt="PromptSync" class="logo-img">
           <div>
             <div class="site-title">PromptSync</div>
             <div class="site-tagline">Share and amplify your team's AI knowledge.</div>
@@ -51,7 +51,7 @@
     </div>
 
     <!-- Center: Navigation -->
-    <nav id="headerNav" style="display:flex; gap:0; align-items:center; justify-content:center; flex-shrink:0;">
+    <nav id="headerNav">
       <a href="/" class="nav-item" data-page="home" title="View and create prompts">
         <span class="nav-icon">🏠</span>
         <span class="nav-label">Home</span>
@@ -79,7 +79,7 @@
       <div id="authStatus">
         <!-- Branch dropdown placed next to avatar -->
         <!-- Native select kept for logic fallback; hidden to use custom dropdown -->
-        <select id="branchSelect" style="display:none;">
+        <select id="branchSelect" class="hidden">
           <option>Loading…</option>
         </select>
         <!-- Custom Branch Dropdown -->
@@ -92,7 +92,7 @@
         </div>
         <div id="userMenu" class="user-menu">
           <button id="userMenuButton" class="user-menu-button" aria-haspopup="true" aria-expanded="false" title="Account menu">
-            <img id="userAvatar" src="" alt="" style="display:none;">
+            <img id="userAvatar" src="" alt="" class="hidden">
             <span id="userDisplay">
               👤
             </span>
@@ -110,7 +110,7 @@
               </div>
             </div>
             <button id="headerSignIn" class="dropdown-item" role="menuitem">🔑 Sign In with GitHub</button>
-            <button id="headerSignOut" class="dropdown-item" role="menuitem" style="display:none;">🚪 Sign Out</button>
+            <button id="headerSignOut" class="dropdown-item hidden" role="menuitem">🚺 Sign Out</button>
           </div>
         </div>
       </div>

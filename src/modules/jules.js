@@ -1002,7 +1002,7 @@ export function initJulesKeyModalListeners() {
         hideJulesEnvModal();
       }
       const freeInputSection = document.getElementById('freeInputSection');
-      if (freeInputSection && freeInputSection.style.display === 'flex') {
+      if (freeInputSection && !freeInputSection.classList.contains('hidden')) {
         hideFreeInputForm();
       }
       if (profileModal && profileModal.style.display === 'flex') {
@@ -1542,13 +1542,13 @@ export function showFreeInputForm() {
   const actions = document.getElementById('actions');
   const content = document.getElementById('content');
   
-  empty.style.display = 'none';
+  empty.classList.add('hidden');
   title.style.display = 'none';
   meta.style.display = 'none';
   actions.style.display = 'none';
   content.style.display = 'none';
   
-  freeInputSection.style.display = 'flex';
+  freeInputSection.classList.remove('hidden');
   
   const textarea = document.getElementById('freeInputTextarea');
   const submitBtn = document.getElementById('freeInputSubmitBtn');
@@ -1850,8 +1850,8 @@ export function hideFreeInputForm() {
   const freeInputSection = document.getElementById('freeInputSection');
   const empty = document.getElementById('empty');
   
-  freeInputSection.style.display = 'none';
-  empty.style.display = 'flex';
+  freeInputSection.classList.add('hidden');
+  empty.classList.remove('hidden');
 }
 
 async function populateFreeInputRepoSelection() {

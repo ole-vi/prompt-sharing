@@ -19,17 +19,17 @@
       <h2 class="section-title-lg mb-md">🤖 Jules Account</h2>
       
       <!-- Loading Message -->
-      <div id="julesLoading" style="display:none;" class="panel pad-xl text-center mb-md">
+      <div id="julesLoading" class="panel pad-xl text-center mb-md hidden">
         <div class="muted-text font-16">Loading Jules account information...</div>
       </div>
       
       <!-- Not Signed In Message -->
-      <div id="julesNotSignedIn" style="display:none;" class="panel pad-xl text-center mb-md">
+      <div id="julesNotSignedIn" class="panel pad-xl text-center mb-md hidden">
         <div class="muted-text font-16">Please sign in to view Jules account information.</div>
       </div>
 
       <!-- Jules Profile Info Section -->
-      <div id="julesProfileInfoSection" style="display:none;">
+      <div id="julesProfileInfoSection" class="hidden">
         <!-- Jules API Key Section -->
         <div id="julesKeyStatusDiv" class="panel mb-md">
           <div class="small-text muted-text mb-sm">Jules API Key</div>
@@ -37,10 +37,10 @@
         </div>
         
         <!-- No Jules Key Message -->
-        <div id="noJulesKeySection" style="display:none;" class="panel pad-xl text-center mb-md">
+        <div id="noJulesKeySection" class="panel pad-xl text-center mb-md hidden">
           <div class="font-48 mb-sm">🔑</div>
-          <h3 class="small-text fw-600 mb-sm" style="font-size:18px;">Jules API Key Required</h3>
-          <p class="muted-text small-text" style="max-width:500px; margin-left:auto; margin-right:auto; margin-bottom:16px;">
+          <h3 class="small-text fw-600 mb-sm font-18">Jules API Key Required</h3>
+          <p class="muted-text small-text centered-content">
             To use Jules AI coding agent, you need to add your Jules API key. Get your API key from the 
             <a href="https://jules.google.com/settings/api" target="_blank" rel="noopener">Jules API settings</a> 
             and add it below to get started.
@@ -51,7 +51,7 @@
         </div>
         
         <!-- Jules Content (only visible when key exists) -->
-        <div id="julesContentSection" style="display:none;">
+        <div id="julesContentSection" class="hidden">
         
         <!-- Recent Sessions -->
         <div class="mb-md">
@@ -76,7 +76,7 @@
         <!-- End Jules Content Section -->
         
         <!-- Danger Zone -->
-        <div id="dangerZoneSection" style="display:none;" class="danger-panel mt-md">
+        <div id="dangerZoneSection" class="danger-panel mt-md hidden">
           <div class="small-text fw-600 danger-text mb-sm">⚠️ Danger Zone</div>
           <div class="small-text muted-text mb-sm">This action will delete your stored Jules API key. You'll need to enter a new one next time.</div>
           <button id="resetJulesKeyBtn" class="btn danger w-full fw-600">🗑️ Delete Jules API Key</button>
@@ -123,16 +123,16 @@
       const dangerZoneSection = document.getElementById('dangerZoneSection');
       
       if (!user) {
-        loadingDiv.style.display = 'none';
-        profileSection.style.display = 'none';
-        notSignedInDiv.style.display = 'block';
+        loadingDiv.classList.add('hidden');
+        profileSection.classList.add('hidden');
+        notSignedInDiv.classList.remove('hidden');
         return;
       }
 
       try {
-        loadingDiv.style.display = 'block';
-        notSignedInDiv.style.display = 'none';
-        profileSection.style.display = 'none';
+        loadingDiv.classList.remove('hidden');
+        notSignedInDiv.classList.add('hidden');
+        profileSection.classList.add('hidden');
         
         // Check if user has Jules key
         const hasKey = await checkJulesKey(user.uid);
@@ -142,24 +142,24 @@
           julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
         }
         
-        loadingDiv.style.display = 'none';
-        profileSection.style.display = 'block';
+        loadingDiv.classList.add('hidden');
+        profileSection.classList.remove('hidden');
         
         if (hasKey) {
-          if (noJulesKeySection) noJulesKeySection.style.display = 'none';
-          if (julesContentSection) julesContentSection.style.display = 'block';
-          if (dangerZoneSection) dangerZoneSection.style.display = 'block';
+          if (noJulesKeySection) noJulesKeySection.classList.add('hidden');
+          if (julesContentSection) julesContentSection.classList.remove('hidden');
+          if (dangerZoneSection) dangerZoneSection.classList.remove('hidden');
           
           // Load Jules account information
           await loadJulesAccountInfo(user);
         } else {
-          if (noJulesKeySection) noJulesKeySection.style.display = 'block';
-          if (julesContentSection) julesContentSection.style.display = 'none';
-          if (dangerZoneSection) dangerZoneSection.style.display = 'none';
+          if (noJulesKeySection) noJulesKeySection.classList.remove('hidden');
+          if (julesContentSection) julesContentSection.classList.add('hidden');
+          if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
         }
       } catch (err) {
         console.error('Jules info loading error:', err);
-        loadingDiv.style.display = 'none';
+        loadingDiv.classList.add('hidden');
       }
     }
 
@@ -207,10 +207,10 @@
               
               const noJulesKeySection = document.getElementById('noJulesKeySection');
               const julesContentSection = document.getElementById('julesContentSection');
-              if (noJulesKeySection) noJulesKeySection.style.display = 'block';
-              if (julesContentSection) julesContentSection.style.display = 'none';
-              document.getElementById('dangerZoneSection').style.display = 'none';
-              document.getElementById('julesProfileInfoSection').style.display = 'block';
+              if (noJulesKeySection) noJulesKeySection.classList.remove('hidden');
+              if (julesContentSection) julesContentSection.classList.add('hidden');
+              document.getElementById('dangerZoneSection').classList.add('hidden');
+              document.getElementById('julesProfileInfoSection').classList.remove('hidden');
               
               alert('Jules API key has been deleted. You can enter a new one next time.');
             } else {
@@ -240,8 +240,8 @@
           if (user) {
             loadJulesInfo();
           } else {
-            document.getElementById('julesProfileInfoSection').style.display = 'none';
-            document.getElementById('julesNotSignedIn').style.display = 'block';
+            document.getElementById('julesProfileInfoSection').classList.add('hidden');
+            document.getElementById('julesNotSignedIn').classList.remove('hidden');
           }
         });
       });
