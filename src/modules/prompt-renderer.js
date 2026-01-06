@@ -5,6 +5,8 @@ import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './
 import { CODEX_URL_REGEX } from '../utils/constants.js';
 import { setElementDisplay } from '../utils/dom-helpers.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
+import { showFreeInputModal, showFreeInputForm } from './jules-modal.js';
+import { handleTryInJules } from './jules.js';
 
 let cacheRaw = new Map();
 let currentPromptText = null;
@@ -84,7 +86,6 @@ export function initPromptRenderer() {
   }
   if (freeInputBtn) {
     freeInputBtn.addEventListener('click', async () => {
-      const { showFreeInputModal } = await import('./jules.js');
       showFreeInputModal();
     });
   }
@@ -151,7 +152,6 @@ export function initPromptRenderer() {
     currentPromptText = null;
     updateActiveItem();
     
-    const { showFreeInputForm } = await import('./jules.js');
     showFreeInputForm();
   });
 }

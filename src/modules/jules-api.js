@@ -232,3 +232,85 @@ export async function loadJulesProfileInfo(uid) {
     throw error;
   }
 }
+
+export async function callRunJulesFunction(promptText, sourceId, branch = 'master', title = '') {
+    const user = window.auth ? window.auth.currentUser : null;
+    if (!user) {
+      alert('Not logged in.');
+      return null;
+    }
+
+    if (!sourceId) {
+      throw new Error('No repository selected');
+    }
+
+    const julesBtn = document.getElementById('julesBtn');
+    const originalText = julesBtn?.textContent;
+    if (julesBtn) {
+      julesBtn.textContent = 'Running...';
+      julesBtn.disabled = true;
+    }
+
+    try {
+      const sessionUrl = await runJulesAPI(promptText, sourceId, branch, title, user);
+
+      if (julesBtn) {
+        julesBtn.textContent = originalText;
+        julesBtn.disabled = false;
+      }
+
+      return sessionUrl;
+    } catch (error) {
+      if (julesBtn) {
+        julesBtn.textContent = '⚡ Try in Jules';
+        julesBtn.disabled = false;
+      }
+      throw error;
+    }
+  }
+
+  async function runJulesAPI(promptText, sourceId, branch, title, user) {
+    const token = await user.getIdToken(true);
+    const functionUrl = 'https://runjuleshttp-n7gaasoeoq-uc.a.run.app';
+
+    const payload = { promptText: promptText || '', sourceId: sourceId, branch: branch, title: title };
+
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || `HTTP ${response.status}`);
+    }
+
+    return result.sessionUrl || null;
+  }
+
+  export function openUrlInBackground(url) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+
+    const evt = new MouseEvent('click', {
+      view: window,
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+      metaKey: true
+    });
+
+    a.dispatchEvent(evt);
+
+    setTimeout(() => {
+      document.body.removeChild(a);
+    }, 100);
+  }

@@ -2,7 +2,8 @@
 
 import { OWNER, REPO, BRANCH, STORAGE_KEYS } from './utils/constants.js';
 import { parseParams, getHashParam } from './utils/url-params.js';
-import { initJulesKeyModalListeners, handleTryInJules } from './modules/jules.js';
+import { handleTryInJules } from './modules/jules.js';
+import { initJulesKeyModalListeners, showFreeInputForm } from './modules/jules-modal.js';
 import statusBar from './modules/status-bar.js';
 import { initPromptList, loadList, loadExpandedState, renderList, setSelectFileCallback, setRepoContext } from './modules/prompt-list.js';
 import { initPromptRenderer, selectBySlug, selectFile, setHandleTryInJulesCallback } from './modules/prompt-renderer.js';
@@ -53,7 +54,6 @@ async function loadPrompts() {
   if (hashSlug) {
     await selectBySlug(hashSlug, files, currentOwner, currentRepo, currentBranch);
   } else {
-    const { showFreeInputForm } = await import('./modules/jules.js');
     showFreeInputForm();
   }
 }
