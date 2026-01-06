@@ -78,7 +78,7 @@ a:hover { text-decoration: underline; }
 /* removed max-height utilities after feedback */
 
 /* Sessions list cards */
-.session-card { padding:12px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all 0.2s; }
+.session-card { padding:12px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:background 0.2s, border-color 0.2s; }
 .session-card:hover { background:rgba(77,217,255,0.05); border-color:var(--accent); }
 .session-meta { font-size:13px; color:var(--muted); margin-bottom:4px; }
 .session-prompt { font-size:14px; color:var(--text); margin-bottom:8px; white-space:pre-wrap; }

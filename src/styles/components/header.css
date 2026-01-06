@@ -29,7 +29,7 @@ header {
   background: linear-gradient(135deg, rgba(20,24,41,0.6), rgba(20,24,41,0.3));
   color: var(--text);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
   overflow: hidden;
 }
 .user-menu-button:hover { 
@@ -64,7 +64,7 @@ header {
   color: var(--text);
   font: inherit;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease;
   font-size: 13px;
 }
 .user-dropdown a:hover,
@@ -83,7 +83,7 @@ header {
 .mobile-sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
 .mobile-sidebar-close { background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; padding: 4px; line-height: 1; }
 .mobile-nav-items { padding: 20px 0; }
-.mobile-nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 20px; color: var(--muted); text-decoration: none; transition: all 0.2s; font-size: 16px; font-weight: 700; }
+.mobile-nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 20px; color: var(--muted); text-decoration: none; transition: background 0.2s, color 0.2s; font-size: 16px; font-weight: 700; }
 .mobile-nav-item:hover { background: rgba(77, 217, 255, 0.08); color: var(--text); }
 .mobile-nav-item.active { background: rgba(77, 217, 255, 0.12); color: var(--accent); border-left: 3px solid var(--accent); padding-left: 17px; }
 .mobile-nav-item .nav-icon { font-size: 20px; }

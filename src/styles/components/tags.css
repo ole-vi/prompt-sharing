@@ -1,6 +1,6 @@
 /* Tag Badges */
 .tag-container { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-.tag-badge { display: inline-block; padding: 2px 8px; font-size: 10px; font-weight: 600; line-height: 1.5; border-radius: 2em; cursor: pointer; transition: all 0.2s; }
+.tag-badge { display: inline-block; padding: 2px 8px; font-size: 10px; font-weight: 600; line-height: 1.5; border-radius: 2em; cursor: pointer; transition: background 0.2s, border-color 0.2s, transform 0.2s; }
 .tag-review { color: #d876e3; background-color: rgba(216, 118, 227, 0.1); border: 1px solid rgba(216, 118, 227, 0.3); }
 .tag-review:hover { background-color: rgba(216, 118, 227, 0.3); border-color: rgba(216, 118, 227, 0.5); transform: scale(1.05); }
 .tag-bug { color: #ff8585; background-color: rgba(255, 133, 133, 0.1); border: 1px solid rgba(255, 133, 133, 0.3); }

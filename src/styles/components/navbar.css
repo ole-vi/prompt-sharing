@@ -10,7 +10,7 @@
   padding: 8px 16px;
   text-decoration: none !important;
   color: var(--muted);
-  transition: all 0.2s ease;
+  transition: color 0.2s ease, background 0.2s ease;
   border-radius: 8px;
   position: relative;
   min-width: auto;

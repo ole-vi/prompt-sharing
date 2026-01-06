@@ -13,7 +13,7 @@
 	display: flex; 
 	justify-content: space-between; 
 	align-items: center; 
-	transition: all 0.2s; 
+	transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; 
 }
 .custom-dropdown-btn > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 .custom-dropdown-btn:hover { border-color: var(--accent); background: rgba(77, 217, 255, 0.05); }
@@ -39,7 +39,7 @@
 .custom-dropdown-menu::-webkit-scrollbar-track { background: var(--card); border-radius: 4px; }
 .custom-dropdown-menu::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 .custom-dropdown-menu::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-.custom-dropdown-item { padding: 10px 12px; cursor: pointer; font-size: 13px; color: var(--text); transition: all 0.15s; border-bottom: 1px solid rgba(34, 36, 56, 0.5); display: block; }
+.custom-dropdown-item { padding: 10px 12px; cursor: pointer; font-size: 13px; color: var(--text); transition: background 0.15s, color 0.15s; border-bottom: 1px solid rgba(34, 36, 56, 0.5); display: block; }
 .custom-dropdown-item:last-child { border-bottom: none; }
 .custom-dropdown-item:hover { background: rgba(77, 217, 255, 0.08); color: var(--accent); }
 .custom-dropdown .custom-dropdown-menu .custom-dropdown-item:hover { background: rgba(77, 217, 255, 0.08); color: var(--accent); }
