@@ -25,6 +25,7 @@ import {
   hideJulesQueueModal,
   loadQueuePage
 } from './jules-queue.js';
+import { showSubtaskErrorModal, hideSubtaskErrorModal } from './error-modal.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { CACHE_KEYS, getCache, setCache } from '../utils/session-cache.js';
@@ -330,6 +331,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
         const result = await showSubtaskErrorModal(1, 1, error);
 
         if (result.action === 'cancel') {
+          statusBar.showMessage('Cancelled', { timeout: 3000 });
           return;
         } else if (result.action === 'skip') {
           return;
@@ -354,6 +356,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
           return;
         } else if (result.action === 'retry') {
           if (result.shouldDelay) {
+            statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
             await new Promise(resolve => setTimeout(resolve, 5000));
           }
         }
@@ -383,6 +386,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
         
         if (result.action === 'retry') {
           if (result.shouldDelay) {
+            statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
             await new Promise(resolve => setTimeout(resolve, 5000));
           }
           try {
@@ -406,56 +410,8 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
 }
 
 // --- Subtask Error Modal ---
-
-export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
-  return new Promise((resolve) => {
-    const modal = document.getElementById('subtaskErrorModal');
-    const subtaskNumDiv = document.getElementById('errorSubtaskNumber');
-    const messageDiv = document.getElementById('errorMessage');
-    const detailsDiv = document.getElementById('errorDetails');
-    const retryBtn = document.getElementById('subtaskErrorRetryBtn');
-    const skipBtn = document.getElementById('subtaskErrorSkipBtn');
-    const queueBtn = document.getElementById('subtaskErrorQueueBtn');
-    const cancelBtn = document.getElementById('subtaskErrorCancelBtn');
-    const retryDelayCheckbox = document.getElementById('errorRetryDelayCheckbox');
-
-    if (!modal) {
-      resolve({ action: 'cancel', shouldDelay: false });
-      return;
-    }
-
-    subtaskNumDiv.textContent = `Subtask ${subtaskNumber} of ${totalSubtasks}`;
-    messageDiv.textContent = error.message || String(error);
-    detailsDiv.textContent = error.toString();
-
-    modal.style.removeProperty('display');
-    modal.style.setProperty('display', 'flex', 'important');
-
-    const handleAction = (action) => {
-      retryBtn.onclick = null;
-      skipBtn.onclick = null;
-      cancelBtn.onclick = null;
-      if (queueBtn) queueBtn.onclick = null;
-
-      hideSubtaskErrorModal();
-
-      const shouldDelay = action === 'retry' ? retryDelayCheckbox.checked : false;
-      resolve({ action, shouldDelay });
-    };
-
-    retryBtn.onclick = () => handleAction('retry');
-    skipBtn.onclick = () => handleAction('skip');
-    cancelBtn.onclick = () => handleAction('cancel');
-    if (queueBtn) queueBtn.onclick = () => handleAction('queue');
-  });
-}
-
-export function hideSubtaskErrorModal() {
-  const modal = document.getElementById('subtaskErrorModal');
-  if (modal) {
-    modal.style.removeProperty('display');
-  }
-}
+// Now imported from error-modal.js to avoid circular dependencies
+export { showSubtaskErrorModal, hideSubtaskErrorModal };
 
 // --- User Profile Modal ---
 
@@ -1134,6 +1090,7 @@ export function showFreeInputForm() {
             const result = await showSubtaskErrorModal(1, 1, error);
 
             if (result.action === 'cancel') {
+              statusBar.showMessage('Cancelled', { timeout: 3000 });
               return;
             } else if (result.action === 'skip') {
               return;
@@ -1158,6 +1115,7 @@ export function showFreeInputForm() {
               return;
             } else if (result.action === 'retry') {
               if (result.shouldDelay) {
+                statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
                 await new Promise(resolve => setTimeout(resolve, 5000));
               }
             }
@@ -1187,6 +1145,7 @@ export function showFreeInputForm() {
 
             if (result.action === 'retry') {
               if (result.shouldDelay) {
+                statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
                 await new Promise(resolve => setTimeout(resolve, 5000));
               }
               try {
@@ -1663,11 +1622,13 @@ async function submitSubtasks(subtasks) {
         if (retryCount < maxRetries) {
           const result = await showSubtaskErrorModal(1, 1, error);
           if (result.action === 'cancel') {
+            statusBar.showMessage('Cancelled', { timeout: 3000 });
             return;
           } else if (result.action === 'skip') {
             return;
           } else if (result.action === 'retry') {
             if (result.shouldDelay) {
+              statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
               await new Promise(resolve => setTimeout(resolve, 5000));
             }
           }
@@ -1675,6 +1636,7 @@ async function submitSubtasks(subtasks) {
           const result = await showSubtaskErrorModal(1, 1, error);
           if (result.action === 'retry') {
             if (result.shouldDelay) {
+              statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
               await new Promise(resolve => setTimeout(resolve, 5000));
             }
             try {
@@ -1802,7 +1764,7 @@ async function submitSubtasks(subtasks) {
           if (result.action === 'cancel') {
             statusBar.clearProgress();
             statusBar.clearAction();
-            alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
+            statusBar.showMessage(`Cancelled. Submitted ${successCount} of ${totalCount} subtasks.`, { timeout: 5000 });
             return;
           } else if (result.action === 'skip') {
             skippedCount++;
@@ -1837,6 +1799,7 @@ async function submitSubtasks(subtasks) {
             return;
           } else if (result.action === 'retry') {
             if (result.shouldDelay) {
+              statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
               await new Promise(resolve => setTimeout(resolve, 5000));
             }
           }
@@ -1850,7 +1813,7 @@ async function submitSubtasks(subtasks) {
           if (result.action === 'cancel') {
             statusBar.clearProgress();
             statusBar.clearAction();
-            alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
+            statusBar.showMessage(`Cancelled. Submitted ${successCount} of ${totalCount} subtasks.`, { timeout: 5000 });
             return;
           } else {
             if (result.action === 'queue') {

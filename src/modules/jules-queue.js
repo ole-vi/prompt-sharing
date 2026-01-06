@@ -5,6 +5,14 @@ import { CACHE_KEYS, getCache, setCache, clearCache } from '../utils/session-cac
 import statusBar from './status-bar.js';
 import { callRunJulesFunction, openUrlInBackground } from './jules-api.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
+import { showSubtaskErrorModal } from './error-modal.js';
+
+class CancellationError extends Error {
+  constructor(message = 'User cancelled') {
+    super(message);
+    this.name = 'CancellationError';
+  }
+}
 
 let queueCache = [];
 
@@ -97,7 +105,7 @@ export function attachQueueHandlers() {
   attachQueueModalHandlers();
 }
 
-async function loadQueuePage() {
+export async function loadQueuePage() {
   const user = window.auth?.currentUser;
   const listDiv = document.getElementById('allQueueList');
   if (!user) {
@@ -241,21 +249,60 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
   const sortedIndices = indices.sort((a, b) => a - b);
   const toRun = sortedIndices.map(i => item.remaining[i]).filter(Boolean);
 
-  for (const subtask of toRun) {
-    try {
-      const title = extractTitleFromPrompt(subtask.fullContent);
-      const sessionUrl = await callRunJulesFunction(subtask.fullContent, item.sourceId, item.branch || 'master', title);
-      if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
-        if (openInBackground) {
-          openUrlInBackground(sessionUrl);
+  for (let idx = 0; idx < toRun.length; idx++) {
+    const subtask = toRun[idx];
+    let retryCount = 0;
+    const maxRetries = 3;
+    let success = false;
+
+    while (!success && retryCount < maxRetries) {
+      try {
+        const title = extractTitleFromPrompt(subtask.fullContent);
+        const sessionUrl = await callRunJulesFunction(subtask.fullContent, item.sourceId, item.branch || 'master', title);
+        if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
+          if (openInBackground) {
+            openUrlInBackground(sessionUrl);
+          } else {
+            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          }
+        }
+        success = true;
+        await new Promise(r => setTimeout(r, 800));
+      } catch (err) {
+        retryCount++;
+        
+        if (retryCount < maxRetries) {
+          const result = await showSubtaskErrorModal(idx + 1, toRun.length, err, { hideQueueButton: true });
+          
+          if (result.action === 'cancel') {
+            statusBar.clearProgress();
+            statusBar.clearAction();
+            statusBar.showMessage('Cancelled', { timeout: 3000 });
+            throw new CancellationError();
+          } else if (result.action === 'skip') {
+            success = true; // Mark as success to skip and continue
+          } else if (result.action === 'retry') {
+            if (result.shouldDelay) {
+              statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
+              await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+            // Status bar keeps showing processing state
+            // Loop will retry
+          }
         } else {
-          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          // Max retries reached, show final error
+          const result = await showSubtaskErrorModal(idx + 1, toRun.length, err, { hideQueueButton: true });
+          
+          if (result.action === 'skip') {
+            success = true; // Skip and continue
+          } else {
+            statusBar.clearProgress();
+            statusBar.clearAction();
+            statusBar.showMessage('Cancelled', { timeout: 3000 });
+            throw new CancellationError(); // Cancel or any other action
+          }
         }
       }
-      await new Promise(r => setTimeout(r, 800));
-    } catch (err) {
-      statusBar.showMessage(`Error running subtask: ${err.message}`, { timeout: 6000 });
-      throw err;
     }
   }
 
@@ -395,7 +442,20 @@ async function runSelectedQueueItems() {
     if (paused) break;
     if (queueSelections.includes(docId)) continue;
 
-    await runSelectedSubtasks(docId, indices.slice().sort((a, b) => a - b), suppressPopups, openInBackground);
+    try {
+      await runSelectedSubtasks(docId, indices.slice().sort((a, b) => a - b), suppressPopups, openInBackground);
+    } catch (err) {
+      if (err instanceof CancellationError) {
+        // User already cancelled, don't show modal again
+        return;
+      }
+      console.error('Failed running subtasks for', docId, err);
+      const result = await showSubtaskErrorModal(1, 1, err, { hideQueueButton: true });
+      statusBar.clearProgress();
+      statusBar.clearAction();
+      await loadQueuePage();
+      return;
+    }
   }
 
   for (const id of sortByCreatedAt(queueSelections)) {
@@ -438,54 +498,109 @@ async function runSelectedQueueItems() {
           }
 
           const s = remaining[0];
-          try {
-            const title = extractTitleFromPrompt(s.fullContent);
-            const sessionUrl = await callRunJulesFunction(s.fullContent, item.sourceId, item.branch || 'master', title);
-            if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
-              if (openInBackground) {
-                openUrlInBackground(sessionUrl);
+          let retryCount = 0;
+          const maxRetries = 3;
+          let success = false;
+
+          while (!success && retryCount < maxRetries) {
+            try {
+              const title = extractTitleFromPrompt(s.fullContent);
+              const sessionUrl = await callRunJulesFunction(s.fullContent, item.sourceId, item.branch || 'master', title);
+              if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
+                if (openInBackground) {
+                  openUrlInBackground(sessionUrl);
+                } else {
+                  window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+                }
+              }
+              success = true;
+
+              // remove the completed subtask from remaining
+              remaining.shift();
+
+              // persist progress after each successful subtask
+              try {
+                await updateJulesQueueItem(user.uid, id, {
+                  remaining,
+                  status: remaining.length === 0 ? 'done' : 'in-progress',
+                  updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+              } catch (e) {
+                console.warn('Failed to persist progress for queue item', id, e.message || e);
+              }
+
+              // update status bar progress
+              try {
+                const done = initialCount - remaining.length;
+                const percent = initialCount > 0 ? Math.round((done / initialCount) * 100) : 100;
+                statusBar.setProgress(`${done}/${initialCount}`, percent);
+                statusBar.showMessage(`Processing subtask ${done}/${initialCount}`, { timeout: 0 });
+              } catch (e) {}
+
+              // slight delay between subtasks
+              await new Promise(r => setTimeout(r, 800));
+            } catch (err) {
+              retryCount++;
+
+              if (retryCount < maxRetries) {
+                const done = initialCount - remaining.length;
+                const result = await showSubtaskErrorModal(done + 1, initialCount, err, { hideQueueButton: true });
+                
+                if (result.action === 'cancel') {
+                  try {
+                    await updateJulesQueueItem(user.uid, id, {
+                      remaining,
+                      status: 'error',
+                      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                  } catch (e) {
+                    console.warn('Failed to persist error state for queue item', id, e.message || e);
+                  }
+                  
+                  statusBar.clearProgress();
+                  statusBar.clearAction();
+                  statusBar.showMessage('Cancelled', { timeout: 3000 });
+                  await loadQueuePage();
+                  throw new CancellationError();
+                } else if (result.action === 'skip') {
+                  // Skip this subtask and continue
+                  remaining.shift();
+                  success = true;
+                } else if (result.action === 'retry') {
+                  if (result.shouldDelay) {
+                    statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                  }
+                  // Status bar keeps showing processing state
+                  // Loop will retry
+                }
               } else {
-                window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+                // Max retries reached
+                const done = initialCount - remaining.length;
+                const result = await showSubtaskErrorModal(done + 1, initialCount, err, { hideQueueButton: true });
+                
+                if (result.action === 'skip') {
+                  remaining.shift();
+                  success = true;
+                } else {
+                  try {
+                    await updateJulesQueueItem(user.uid, id, {
+                      remaining,
+                      status: 'error',
+                      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                  } catch (e) {
+                    console.warn('Failed to persist error state for queue item', id, e.message || e);
+                  }
+                  
+                  statusBar.clearProgress();
+                  statusBar.clearAction();
+                  statusBar.showMessage('Cancelled', { timeout: 3000 });
+                  await loadQueuePage();
+                  throw new CancellationError();
+                }
               }
             }
-
-            // remove the completed subtask from remaining
-            remaining.shift();
-
-            // persist progress after each successful subtask
-            try {
-              await updateJulesQueueItem(user.uid, id, {
-                remaining,
-                status: remaining.length === 0 ? 'done' : 'in-progress',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
-            } catch (e) {
-              console.warn('Failed to persist progress for queue item', id, e.message || e);
-            }
-
-            // update status bar progress
-            try {
-              const done = initialCount - remaining.length;
-              const percent = initialCount > 0 ? Math.round((done / initialCount) * 100) : 100;
-              statusBar.setProgress(`${done}/${initialCount}`, percent);
-              statusBar.showMessage(`Processing subtask ${done}/${initialCount}`, { timeout: 0 });
-            } catch (e) {}
-
-            // slight delay between subtasks
-            await new Promise(r => setTimeout(r, 800));
-          } catch (err) {
-            // If a subtask fails, persist remaining and stop processing this queued item
-            statusBar.showMessage(`Error running queued subtask: ${err.message}`, { timeout: 6000 });
-            try {
-              await updateJulesQueueItem(user.uid, id, {
-                remaining,
-                status: 'error',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
-            } catch (e) {
-              console.warn('Failed to persist error state for queue item', id, e.message || e);
-            }
-            throw err;
           }
         }
 
@@ -496,7 +611,12 @@ async function runSelectedQueueItems() {
       }
     } catch (err) {
       // stop processing further items to avoid fast repeated failures
+      if (err instanceof CancellationError) {
+        // User already cancelled, don't show modal again
+        return;
+      }
       console.error('Failed running queue item', id, err);
+      const result = await showSubtaskErrorModal(1, 1, err, { hideQueueButton: true });
       await loadQueuePage();
       return;
     }

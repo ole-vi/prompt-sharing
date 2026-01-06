@@ -101,7 +101,8 @@
   <script type="module" src="../../src/shared-init.js"></script>
   <script type="module">
     import { waitForFirebase } from '../../src/shared-init.js';
-    import { loadJulesAccountInfo, showJulesKeyModal, deleteStoredJulesKey, checkJulesKey } from '../../src/modules/jules.js';
+    import { loadJulesAccountInfo, showJulesKeyModal } from '../../src/modules/jules-modal.js';
+    import { deleteStoredJulesKey, checkJulesKey } from '../../src/modules/jules-keys.js';
 
     function waitForComponents() {
       if (document.querySelector('header')) {

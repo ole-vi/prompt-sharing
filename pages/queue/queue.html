@@ -61,9 +61,37 @@
     </main>
   </div>
 
+  <!-- Subtask Error Modal -->
+  <div id="subtaskErrorModal" class="modal">
+    <div class="modal-content">
+      <h2 class="error-title">⚠️ Subtask Failed</h2>
+      <div class="error-banner">
+        <div style="flex:1;">
+          <div id="errorSubtaskNumber" class="small-text muted-text mb-md"></div>
+          <div id="errorMessage"></div>
+        </div>
+      </div>
+      <div class="error-details">
+        <div id="errorDetails" style="word-break: break-word;"></div>
+      </div>
+      <div class="mb-md">
+        <label class="small-text" style="display:flex; align-items:center; gap:6px;">
+          <input id="errorRetryDelayCheckbox" type="checkbox" checked />
+          <span>Wait 5 seconds before retry</span>
+        </label>
+      </div>
+      <div class="modal-buttons">
+        <button id="subtaskErrorCancelBtn" class="btn">Cancel All</button>
+        <button id="subtaskErrorSkipBtn" class="btn warn">Skip This</button>
+        <button id="subtaskErrorQueueBtn" class="btn primary">Queue Remainder</button>
+        <button id="subtaskErrorRetryBtn" class="btn success">Retry</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="../../src/shared-init.js"></script>
   <script type="module">
-    import { attachQueueHandlers } from '../../src/modules/jules.js';
+    import { attachQueueHandlers } from '../../src/modules/jules-queue.js';
 
     function waitForComponents() {
       if (document.querySelector('header')) {
@@ -118,7 +146,7 @@
         listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Loading queue...</div>';
         
         // Import the jules module to access queue functions
-        const julesModule = await import('../../src/modules/jules.js');
+        const julesModule = await import('../../src/modules/jules-queue.js');
         
         // Get the queue items
         const items = await julesModule.listJulesQueue(user.uid);
