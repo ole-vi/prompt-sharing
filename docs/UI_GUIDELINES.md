@@ -658,6 +658,71 @@ Before merging UI changes, verify:
 
 ## Common Tasks
 
+### Add a new page
+
+**1. Create HTML file** in `pages/pagename/pagename.html`:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Page Title</title>
+  <link rel="stylesheet" href="../../src/styles.css" />
+</head>
+<body data-page="pagename">
+  <div class="wrap">
+    <!-- Page content -->
+  </div>
+  
+  <!-- Load shared components (header, Firebase) -->
+  <script type="module" src="../../src/shared-init.js"></script>
+  
+  <!-- Load page-specific initialization -->
+  <script type="module" src="../../src/pages/pagename-page.js"></script>
+</body>
+</html>
+```
+
+**2. Create page initialization file** in `src/pages/pagename-page.js`:
+
+```javascript
+import { waitForFirebase } from '../shared-init.js';
+
+function waitForComponents() {
+  if (document.querySelector('header')) {
+    initApp();
+  } else {
+    setTimeout(waitForComponents, 50);
+  }
+}
+
+function initApp() {
+  // Set up event handlers
+  const btn = document.getElementById('myBtn');
+  if (btn) {
+    btn.onclick = handleClick;
+  }
+  
+  // Initialize features
+  waitForFirebase(() => {
+    window.auth.onAuthStateChanged((user) => {
+      if (user) {
+        loadUserData();
+      }
+    });
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', waitForComponents);
+} else {
+  waitForComponents();
+}
+```
+
+**3. Add page-specific styles** (if needed) in `src/styles/pages/pagename.css`
+
 ### Add a new modal
 
 1. Create HTML structure with `.modal` and `.modal-content`
@@ -673,14 +738,6 @@ Before merging UI changes, verify:
 3. Add outside-click handler to close
 4. Implement keyboard navigation (Arrow/Enter/Esc)
 5. Add ARIA attributes
-
-### Add a new page
-
-1. Copy structure from existing page (e.g., `jules.html`)
-2. Set appropriate `data-page` attribute on `<body>`
-3. Include shared header via `header.js`
-4. Use `.wrap` layout with `.card` containers
-5. Add page-specific styles in `src/styles/pages/`
 
 ### Style a hero/marketing section
 

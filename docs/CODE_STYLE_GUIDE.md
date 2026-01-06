@@ -5,6 +5,77 @@
 
 This guide covers JavaScript patterns, module architecture, and coding conventions for the PromptSync application. For UI/CSS guidelines, see [UI_GUIDELINES.md](UI_GUIDELINES.md).
 
+**Recent Architecture Update (PR #218)**: All inline `<script>` blocks have been removed from HTML files. Each page now has a dedicated initialization file in `src/pages/`. See [Page Initialization Pattern](#page-initialization-pattern) section.
+
+---
+
+## Page Initialization Pattern
+
+Each HTML page has a dedicated initialization file in `src/pages/` that handles page-specific setup:
+
+### HTML Page Structure
+
+```html
+<!-- pages/example/example.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example Page</title>
+  <link rel="stylesheet" href="../../src/styles.css" />
+</head>
+<body>
+  <!-- Page content -->
+  
+  <!-- Load shared components (header, Firebase) -->
+  <script type="module" src="../../src/shared-init.js"></script>
+  
+  <!-- Load page-specific initialization -->
+  <script type="module" src="../../src/pages/example-page.js"></script>
+</body>
+</html>
+```
+
+### Page Initialization File
+
+```javascript
+// src/pages/example-page.js
+import { waitForFirebase } from '../shared-init.js';
+import { someModule } from '../modules/some-module.js';
+
+function waitForComponents() {
+  if (document.querySelector('header')) {
+    initApp();
+  } else {
+    setTimeout(waitForComponents, 50);
+  }
+}
+
+function initApp() {
+  // Set up event handlers
+  const btn = document.getElementById('myBtn');
+  if (btn) {
+    btn.onclick = handleClick;
+  }
+  
+  // Initialize features
+  waitForFirebase(() => {
+    window.auth.onAuthStateChanged((user) => {
+      if (user) {
+        loadUserData();
+      }
+    });
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', waitForComponents);
+} else {
+  waitForComponents();
+}
+```
+
+**Key Pattern**: Each page waits for shared components (header) to load before initializing page-specific functionality.
+
 ---
 
 ## File Type Segregation
@@ -79,7 +150,15 @@ element.classList.add('padded');
 
 ```
 src/
-├── modules/           # Feature modules
+├── pages/            # Page-specific initialization
+│   ├── index-page.js
+│   ├── jules-page.js
+│   ├── oauth-callback-page.js
+│   ├── profile-page.js
+│   ├── queue-page.js
+│   ├── sessions-page.js
+│   └── webcapture-page.js
+├── modules/          # Feature modules
 │   ├── auth.js
 │   ├── branch-selector.js
 │   ├── github-api.js
@@ -94,6 +173,7 @@ src/
 │   ├── status-bar.js
 │   └── subtask-manager.js
 └── utils/            # Shared utilities
+    ├── checkbox-helpers.js
     ├── constants.js
     ├── dom-helpers.js
     ├── session-cache.js
@@ -1103,14 +1183,25 @@ list.appendChild(fragment);
 | `url-params.js` | URL parameter handling |
 | `session-cache.js` | Session caching |
 | `title.js` | Extract titles from markdown |
-| `checkbox-helpers.js` | Mutual exclusivity for checkboxes |
+| `checkbox-helpers.js` | Mutual exclusivity for checkboxes - `setupMutualExclusivity(id1, id2)` |
+
+**Example usage:**
+
+```javascript
+// src/pages/index-page.js
+import { setupMutualExclusivity } from '../utils/checkbox-helpers.js';
+
+// Make checkboxes mutually exclusive (call at module level)
+setupMutualExclusivity('julesEnvSuppressPopupsCheckbox', 'julesEnvOpenInBackgroundCheckbox');
+setupMutualExclusivity('freeInputSuppressPopupsCheckbox', 'freeInputOpenInBackgroundCheckbox');
+```
 
 ---
 
 ## Version History
 
-- **v1.0** (Jan 6, 2026): Initial code style guide
+- **v1.0** (Jan 6, 2026): Initial code style guide with PR #218 page architecture
 
 ---
 
-**Questions?** Check existing implementations in `src/modules/` for reference patterns. For UI/CSS guidelines, see [UI_GUIDELINES.md](UI_GUIDELINES.md).
+**Questions?** Check existing implementations in `src/pages/` and `src/modules/` for reference patterns. For UI/CSS guidelines, see [UI_GUIDELINES.md](UI_GUIDELINES.md).
