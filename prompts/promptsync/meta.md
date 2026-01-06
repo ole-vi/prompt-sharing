@@ -1,7 +1,7 @@
 ---
 name: vision
 description: Authoritative charter and execution mandate for the prompt-sharing repository.
-version: 6.0
+version: 7.0
 ---
 
 # prompt-sharing: Agentic Charter and Execution Framework
@@ -84,6 +84,30 @@ Your default output should be plans and code changes.
 Documentation and markdown updates are secondary and should only be produced when they directly support code changes.
 
 If you are running in this repository, you are expected to improve the web application.
+
+---
+
+## ⚠️ CRITICAL: CODE STYLE COMPLIANCE (READ FIRST, CHECK LAST)
+
+**BEFORE starting any work:**
+
+1. **READ** `docs/UI_GUIDELINES.md` - Contains UI/CSS/HTML patterns and component conventions
+2. **READ** `docs/CODE_STYLE_GUIDE.md` - Contains JavaScript patterns, module architecture, and coding standards
+
+These documents define the required patterns, naming conventions, component structures, and anti-patterns for this codebase.
+
+**Every code change must comply with these guidelines.**
+
+**AFTER completing any work:**
+
+1. **RE-READ** `docs/UI_GUIDELINES.md` to verify your UI changes match established patterns
+2. **RE-READ** `docs/CODE_STYLE_GUIDE.md` to verify your code matches established conventions
+
+Failing to follow these guidelines creates technical debt and inconsistency.
+
+**DO NOT SKIP THIS STEP.**
+
+If your changes violate the guidelines, fix them before considering the work complete.
 
 ---
 
@@ -209,6 +233,8 @@ When choosing what to plan or execute, use this priority order:
 
 ## Operating Rules
 
+- **Consult guidelines BEFORE coding**: Read `docs/UI_GUIDELINES.md` and `docs/CODE_STYLE_GUIDE.md` before making changes
+- **Verify compliance AFTER coding**: Re-check your changes against both guideline documents before finishing
 - Prefer composable changes over large rewrites unless blocked
 - Make intent explicit in commits or PR descriptions
 - Avoid overfitting to a single model, provider, or tool
@@ -227,19 +253,22 @@ The following outputs are incorrect unless explicitly requested:
 - Single change execution without a broader plan
 - Philosophical discussion without implementation
 - Automatic execution without explicit task selection
+- **Code that violates `docs/UI_GUIDELINES.md` or `docs/CODE_STYLE_GUIDE.md`**
+- **Changes made without consulting the guideline documents**
 
 If you find yourself only writing markdown or executing without a task selection, stop and redirect.
 
+If you're writing code that doesn't match the established patterns in the guidelines, stop and fix it.
+
 ---
 
-## Definition of Success
-
-Your work is successful when:
-
+##**All code changes comply with `docs/UI_GUIDELINES.md` and `docs/CODE_STYLE_GUIDE.md`**
 - The web application evolves through clearly scoped, selectable tasks
 - Improvements compound rather than accumulate as debt
 - The system becomes easier to extend and reason about
 - Planning and execution remain cleanly separated
+- **UI components follow established patterns and naming conventions**
+- **JavaScript follows documented module architecture and coding standards**
 
 ---
 
@@ -247,6 +276,14 @@ Your work is successful when:
 
 You are operating inside a living software system.
 
+**Before you start:** Read the guidelines in `docs/UI_GUIDELINES.md` and `docs/CODE_STYLE_GUIDE.md`.
+
+Plan broadly.
+Emit executable tasks.
+Wait for selection.
+Execute precisely.
+
+**After you finish:** Verify your changes comply with `docs/UI_GUIDELINES.md` and `docs/CODE_STYLE_GUIDE.md`
 Plan broadly.
 Emit executable tasks.
 Wait for selection.
