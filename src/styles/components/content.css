@@ -52,8 +52,8 @@ a:hover { text-decoration: underline; }
 .guidelist { margin:0; padding-left:24px; line-height:1.8; }
 
 /* Error banner and title */
-.error-title { color: #ff6b6b; }
-.error-banner { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; background: rgba(255,107,107,0.1); padding: 12px; border-radius: 8px; border-left: 3px solid #ff6b6b; }
+.error-title { color: var(--error); }
+.error-banner { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; background: rgba(255,107,107,0.1); padding: 12px; border-radius: 8px; border-left: 3px solid var(--error); }
 .error-details { margin-bottom: 16px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: monospace; font-size: 12px; color: var(--muted); }
 
 /* Page headers and toolbars */
@@ -107,8 +107,8 @@ a:hover { text-decoration: underline; }
 .mono { font-family: monospace; }
 
 /* Danger panel */
-.danger-panel { padding:16px; border:1px solid #c0504d; border-radius:8px; background:rgba(192,80,77,0.08); }
-.danger-text { color:#c0504d; }
+.danger-panel { padding:16px; border:1px solid var(--danger); border-radius:8px; background:rgba(192,80,77,0.08); }
+.danger-text { color:var(--danger); }
 
 /* Max height helpers */
 .max-h-250 { max-height:250px; }
@@ -187,5 +187,5 @@ a:hover { text-decoration: underline; }
 .btn-container { display:flex; gap:8px; flex-direction:column; margin-bottom:16px; }
 
 /* Danger zone variations */
-.danger-title { font-size:15px; font-weight:600; color:#c0504d; margin-bottom:10px; }
+.danger-title { font-size:15px; font-weight:600; color:var(--danger); margin-bottom:10px; }
 .danger-desc { font-size:13px; color:var(--muted); margin-bottom:14px; }

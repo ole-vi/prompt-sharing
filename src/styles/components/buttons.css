@@ -7,12 +7,12 @@
 .btn.primary { border-color: var(--accent); color: var(--accent); }
 
 /* Danger variant for destructive actions */
-.btn.danger { border-color: #c0504d; color: #c0504d; }
+.btn.danger { border-color: var(--danger); color: var(--danger); }
 
 /* Warning, Info, Success variants */
-.btn.warn { border-color: #f39c12; color: #f39c12; }
-.btn.info { border-color: #2980b9; color: #2980b9; }
-.btn.success { border-color: #27ae60; color: #27ae60; }
+.btn.warn { border-color: var(--warn); color: var(--warn); }
+.btn.info { border-color: var(--info); color: var(--info); }
+.btn.success { border-color: var(--success); color: var(--success); }
 
 /* Size variants */
 .btn.lg { padding: 12px 20px; font-size: 14px; }

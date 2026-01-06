@@ -9,6 +9,13 @@
   --border: #222438;
   --gradient-primary: linear-gradient(135deg, #4dd9ff 0%, #5ad1ff 100%);
   --gradient-bg: linear-gradient(180deg, #0d1424 0%, #0a0e1a 100%);
+  
+  /* Semantic colors */
+  --danger: #c0504d;
+  --warn: #f39c12;
+  --info: #2980b9;
+  --success: #27ae60;
+  --error: #ff6b6b;
 }
 
 * { box-sizing: border-box; }
