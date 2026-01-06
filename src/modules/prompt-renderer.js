@@ -184,7 +184,7 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
 
   const freeInputSection = document.getElementById('freeInputSection');
   if (freeInputSection) {
-    freeInputSection.style.display = 'none';
+    freeInputSection.classList.add('hidden');
   }
 
   setElementDisplay(emptyEl, false);

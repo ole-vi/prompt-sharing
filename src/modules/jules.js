@@ -180,7 +180,7 @@ async function loadQueuePage() {
   const user = window.auth?.currentUser;
   const listDiv = document.getElementById('allQueueList');
   if (!user) {
-    listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">Please sign in to view your queue.</div>';
+    listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Please sign in to view your queue.</div>';
     return;
   }
 
@@ -189,7 +189,7 @@ async function loadQueuePage() {
     let items = getCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
     
     if (!items) {
-      listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">Loading queue...</div>';
+      listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Loading queue...</div>';
       items = await listJulesQueue(user.uid);
       setCache(CACHE_KEYS.QUEUE_ITEMS, items, user.uid);
     }
@@ -198,7 +198,7 @@ async function loadQueuePage() {
     renderQueueList(items);
     attachQueueModalHandlers();
   } catch (err) {
-    listDiv.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">Failed to load queue: ${err.message}</div>`;
+    listDiv.innerHTML = `<div class="panel text-center pad-xl">Failed to load queue: ${err.message}</div>`;
   }
 }
 
@@ -212,7 +212,7 @@ function renderQueueList(items) {
   const listDiv = document.getElementById('allQueueList');
   if (!listDiv) return;
   if (!items || items.length === 0) {
-    listDiv.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No queued items.</div>';
+    listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">No queued items.</div>';
     return;
   }
 
@@ -225,36 +225,36 @@ function renderQueueList(items) {
       const subtasksHtml = item.remaining.map((subtask, index) => {
         const preview = (subtask.fullContent || '').substring(0, 150);
         return `
-          <div style="padding:8px; border:1px solid var(--border); border-radius:6px; display:flex; gap:8px; align-items:flex-start; background:rgba(255,255,255,0.01); margin-bottom:6px;">
-            <div style="flex:0 0 24px; display:flex; align-items:center;">
+          <div class="queue-subtask">
+            <div class="queue-subtask-index">
               <input class="subtask-checkbox" type="checkbox" data-docid="${item.id}" data-index="${index}" />
             </div>
-            <div style="flex:1;">
-              <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Subtask ${index + 1} of ${item.remaining.length}</div>
-              <div style="font-size:12px; color:var(--text); white-space:pre-wrap;">${escapeHtml(preview)}${preview.length >= 150 ? '...' : ''}</div>
+            <div class="queue-subtask-content">
+              <div class="queue-subtask-meta">Subtask ${index + 1} of ${item.remaining.length}</div>
+              <div class="queue-subtask-text">${escapeHtml(preview)}${preview.length >= 150 ? '...' : ''}</div>
             </div>
           </div>
         `;
       }).join('');
 
-      const repoDisplay = item.sourceId ? `<div style="font-size:11px; color:var(--accent); margin-top:4px;">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+      const repoDisplay = item.sourceId ? `<div class="queue-repo">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
       
       return `
-        <div class="queue-item" data-docid="${item.id}" style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.02); margin-bottom:8px;">
-          <div style="display:flex; gap:12px; align-items:flex-start; margin-bottom:12px;">
-            <div style="flex:0 0 28px; display:flex; align-items:center;">
+        <div class="queue-card queue-item" data-docid="${item.id}">
+          <div class="queue-row">
+            <div class="queue-checkbox-col">
               <input class="queue-checkbox" type="checkbox" data-docid="${item.id}" />
             </div>
-            <div style="flex:1;">
-              <div style="font-weight:600; font-size:13px; margin-bottom:6px;">
-                Subtasks Batch <span style="color:var(--muted); font-size:12px; margin-left:8px;">${status}</span>
-                <span style="color:var(--muted); font-size:12px; margin-left:8px;">(${remainingCount} remaining)</span>
+            <div class="queue-content">
+              <div class="queue-title">
+                Subtasks Batch <span class="queue-status">${status}</span>
+                <span class="queue-status">(${remainingCount} remaining)</span>
               </div>
-              <div style="font-size:11px; color:var(--muted);">Created: ${created} • ID: <span style="font-family:monospace;">${item.id}</span></div>
+              <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
               ${repoDisplay}
             </div>
           </div>
-          <div style="margin-left:40px;">
+          <div class="queue-subtasks">
             ${subtasksHtml}
           </div>
         </div>
@@ -262,21 +262,21 @@ function renderQueueList(items) {
     }
 
     const promptPreview = (item.prompt || '').substring(0, 200);
-    const repoDisplay = item.sourceId ? `<div style="font-size:11px; color:var(--accent); margin-top:4px;">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+    const repoDisplay = item.sourceId ? `<div class="queue-repo">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
     
     return `
-      <div class="queue-item" data-docid="${item.id}" style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.02); margin-bottom:8px;">
-        <div style="display:flex; gap:12px; align-items:flex-start;">
-          <div style="flex:0 0 28px; display:flex; align-items:center;">
+      <div class="queue-card queue-item" data-docid="${item.id}">
+        <div class="queue-row">
+          <div class="queue-checkbox-col">
             <input class="queue-checkbox" type="checkbox" data-docid="${item.id}" />
           </div>
-          <div style="flex:1;">
-            <div style="font-weight:600; font-size:13px; margin-bottom:6px;">
-              Single Prompt <span style="color:var(--muted); font-size:12px; margin-left:8px;">${status}</span>
+          <div class="queue-content">
+            <div class="queue-title">
+              Single Prompt <span class="queue-status">${status}</span>
             </div>
-            <div style="font-size:11px; color:var(--muted); margin-bottom:8px;">Created: ${created} • ID: <span style="font-family:monospace;">${item.id}</span></div>
+            <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
             ${repoDisplay}
-            <div style="font-size:12px; color:var(--text); white-space:pre-wrap; padding:8px; background:rgba(0,0,0,0.2); border-radius:4px; margin-top:8px;">${escapeHtml(promptPreview)}${promptPreview.length >= 200 ? '...' : ''}</div>
+            <div class="queue-prompt">${escapeHtml(promptPreview)}${promptPreview.length >= 200 ? '...' : ''}</div>
           </div>
         </div>
       </div>
@@ -1002,7 +1002,7 @@ export function initJulesKeyModalListeners() {
         hideJulesEnvModal();
       }
       const freeInputSection = document.getElementById('freeInputSection');
-      if (freeInputSection && freeInputSection.style.display === 'flex') {
+      if (freeInputSection && !freeInputSection.classList.contains('hidden')) {
         hideFreeInputForm();
       }
       if (profileModal && profileModal.style.display === 'flex') {
@@ -1231,57 +1231,57 @@ async function loadAndDisplayJulesProfile(uid) {
     }
 
     if (profileData.sources && profileData.sources.length > 0) {
-      sourcesListDiv.innerHTML = profileData.sources.map((source, index) => {
+      const sourcesHtml = profileData.sources.map((source, index) => {
         const repoName = source.githubRepo?.name || source.name || source.id;
-        const githubPath = repoName.includes('github/') 
-          ? repoName.split('github/')[1] 
+        const githubPath = repoName.includes('github/')
+          ? repoName.split('github/')[1]
           : repoName.replace('sources/', '');
         const branches = source.branches || [];
         const sourceId = `source-${index}`;
-        const branchList = branches.length > 0 
-          ? `<div id="${sourceId}-branches" style="margin-top:6px; padding-left:12px; font-size:12px; color:var(--muted); display:none;">
+
+        const branchSummaryText = branches.length > 0
+          ? `(${branches.length} ${branches.length === 1 ? 'branch' : 'branches'})`
+          : '(no branches)';
+
+        const branchesHtml = branches.length > 0
+          ? `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted);">
                <div style="margin-bottom:4px; color:var(--text);">🌿 Branches (${branches.length}):</div>
-               ${branches.map(b => `<div style="padding:4px 0 4px 8px; cursor:pointer; transition:color 0.2s;" 
-                  onmouseover="this.style.color='var(--accent)'" 
-                  onmouseout="this.style.color='var(--muted)'" 
+               ${branches.map(b => `<div style="padding:3px 0 3px 8px; cursor:pointer;"
                   onclick="window.open('https://github.com/${githubPath}/tree/${encodeURIComponent(b.displayName || b.name)}', '_blank')">
                   • ${b.displayName || b.name}
                 </div>`).join('')}
              </div>`
-          : '<div id="' + sourceId + '-branches" style="display:none; margin-top:6px; padding-left:12px; font-size:12px; color:var(--muted); font-style:italic;">No branches found</div>';
-        
-        const branchSummary = branches.length > 0 
-          ? `<span style="color:var(--muted); font-size:11px; margin-left:8px;">(${branches.length} ${branches.length === 1 ? 'branch' : 'branches'})</span>`
-          : '<span style="color:var(--muted); font-size:11px; margin-left:8px;">(no branches)</span>';
-        
-        return `<div style="padding:8px; margin-bottom:4px; border-bottom:1px solid var(--border); font-size:13px;">
-          <div style="font-weight:600; cursor:pointer; user-select:none; display:flex; align-items:center; transition:color 0.2s;" 
-               onclick="(function(e) {
-                 const branches = document.getElementById('${sourceId}-branches');
-                 const arrow = e.currentTarget.querySelector('.expand-arrow');
-                 if (branches.style.display === 'none') {
-                   branches.style.display = 'block';
-                   arrow.textContent = '▼';
-                 } else {
-                   branches.style.display = 'none';
-                   arrow.textContent = '▶';
-                 }
-               })(event)"
-               onmouseover="this.style.color='var(--accent)'"
-               onmouseout="this.style.color='var(--text)'">
-            <span class="expand-arrow" style="display:inline-block; width:12px; font-size:10px; margin-right:6px;">▶</span>
-            <span>📂 ${githubPath}</span>
-            ${branchSummary}
+          : `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted); font-style:italic;">No branches found</div>`;
+
+        const cardHtml = `
+          <div class="queue-card">
+            <div class="queue-row">
+              <div class="queue-content">
+                <div class="queue-title" style="cursor:pointer; user-select:none;"
+                    onclick="(function(){
+                      const el = document.getElementById('${sourceId}-branches');
+                      const arrow = document.getElementById('${sourceId}-arrow');
+                      if (el.style.display === 'none') { el.style.display = 'block'; arrow.textContent = '▼'; }
+                      else { el.style.display = 'none'; arrow.textContent = '▶'; }
+                    })()">
+                  <span id="${sourceId}-arrow" style="display:inline-block; width:12px; font-size:10px; margin-right:6px;">▶</span>
+                  📂 ${githubPath}
+                  <span class="queue-status">${branchSummaryText}</span>
+                </div>
+              </div>
+            </div>
+            ${branchesHtml}
           </div>
-          ${branchList}
-        </div>`;
+        `;
+        return cardHtml;
       }).join('');
+      sourcesListDiv.innerHTML = `<div class="vlist">${sourcesHtml}</div>`;
     } else {
       sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No connected repositories found.<br><small>Connect repos in the Jules UI.</small></div>';
     }
 
     if (profileData.sessions && profileData.sessions.length > 0) {
-      sessionsListDiv.innerHTML = profileData.sessions.map(session => {
+      const sessionsHtml = profileData.sessions.map(session => {
         const state = session.state || 'UNKNOWN';
         const stateEmoji = {
           'COMPLETED': '✅',
@@ -1291,7 +1291,7 @@ async function loadAndDisplayJulesProfile(uid) {
           'QUEUED': '⏸️',
           'AWAITING_USER_FEEDBACK': '💬'
         }[state] || '❓';
-        
+
         const stateLabel = {
           'COMPLETED': 'COMPLETED',
           'FAILED': 'FAILED',
@@ -1300,35 +1300,25 @@ async function loadAndDisplayJulesProfile(uid) {
           'QUEUED': 'QUEUED',
           'AWAITING_USER_FEEDBACK': 'AWAITING USER FEEDBACK'
         }[state] || state.replace(/_/g, ' ');
-        
+
         const promptPreview = (session.prompt || 'No prompt text').substring(0, 80);
         const displayPrompt = promptPreview.length < (session.prompt || '').length ? promptPreview + '...' : promptPreview;
         const createdAt = session.createTime ? new Date(session.createTime).toLocaleDateString() : 'Unknown';
-        const prUrl = session.outputs?.[0]?.pullRequest?.url;
-        
         const sessionId = session.name?.split('sessions/')[1] || session.id?.split('sessions/')[1] || session.id;
         const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
-        
-        const prLink = prUrl 
-          ? `<a href="${prUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:none; font-size:11px; margin-right:8px;" 
-              onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">🔗 View PR</a>` 
-          : '';
-        
-        return `<div style="padding:10px; margin-bottom:8px; border:1px solid var(--border); border-radius:8px; font-size:12px; cursor:pointer; transition:all 0.2s; background:rgba(255,255,255,0.02);"
-                     onmouseover="this.style.background='rgba(77,217,255,0.05)'; this.style.borderColor='var(--accent)'"
-                     onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.borderColor='var(--border)'"
-                     onclick="window.open('${sessionUrl}', '_blank', 'noopener,noreferrer')">
-          <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:6px;">
-            <div style="font-weight:600; flex:1;">${stateEmoji} ${stateLabel}</div>
-            <div style="color:var(--muted); font-size:11px;">${createdAt}</div>
+
+        const cardHtml = `
+          <div class="session-card" onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
+            <div class="session-row">
+              <div class="session-pill">${stateEmoji} ${stateLabel}</div>
+              <div class="session-hint">Created: ${createdAt}</div>
+            </div>
+            <div class="session-prompt">${displayPrompt}</div>
           </div>
-          <div style="color:var(--text); margin-bottom:6px; line-height:1.4;">${displayPrompt}</div>
-          <div style="display:flex; justify-content:space-between; align-items:center;" onclick="event.stopPropagation();">
-            ${prLink ? `<div>${prLink}</div>` : '<div></div>'}
-            <span style="color:var(--muted); font-size:11px;">💡 Click to view session</span>
-          </div>
-        </div>`;
+        `;
+        return cardHtml;
       }).join('');
+      sessionsListDiv.innerHTML = `<div class="vlist">${sessionsHtml}</div>`;
     } else {
       sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No recent sessions found.</div>';
     }
@@ -1552,13 +1542,13 @@ export function showFreeInputForm() {
   const actions = document.getElementById('actions');
   const content = document.getElementById('content');
   
-  empty.style.display = 'none';
+  empty.classList.add('hidden');
   title.style.display = 'none';
   meta.style.display = 'none';
   actions.style.display = 'none';
   content.style.display = 'none';
   
-  freeInputSection.style.display = 'flex';
+  freeInputSection.classList.remove('hidden');
   
   const textarea = document.getElementById('freeInputTextarea');
   const submitBtn = document.getElementById('freeInputSubmitBtn');
@@ -1860,8 +1850,8 @@ export function hideFreeInputForm() {
   const freeInputSection = document.getElementById('freeInputSection');
   const empty = document.getElementById('empty');
   
-  freeInputSection.style.display = 'none';
-  empty.style.display = 'flex';
+  freeInputSection.classList.add('hidden');
+  empty.classList.remove('hidden');
 }
 
 async function populateFreeInputRepoSelection() {
@@ -1940,7 +1930,7 @@ export function showSubtaskSplitModal(promptText) {
   const analysis = analyzePromptStructure(promptText);
   currentSubtasks = analysis.subtasks;
   
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.classList.remove('hidden');
 
   renderSplitEdit(currentSubtasks, promptText);
 
@@ -2103,22 +2093,22 @@ function showSubtaskPreview(subtask, partNumber) {
   title.textContent = `Part ${partNumber}: ${subtask.title || `Part ${partNumber}`}`;
   content.textContent = subtask.fullContent || subtask.content || '';
   
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center;');
+  modal.classList.remove('hidden');
   
   closeBtn.onclick = () => {
-    modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center;');
+    modal.classList.add('hidden');
   };
   
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
-      modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center;');
+      modal.classList.add('hidden');
     }
   });
 }
 
 export function hideSubtaskSplitModal() {
   const modal = document.getElementById('subtaskSplitModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.classList.add('hidden');
   currentSubtasks = [];
 }
 

@@ -1,0 +1,7 @@
+/* Cards */
+.card {
+  background: linear-gradient(135deg, rgba(20,24,41,0.6), rgba(20,24,41,0.3));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+}

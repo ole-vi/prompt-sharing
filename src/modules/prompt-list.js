@@ -44,7 +44,11 @@ export function initPromptList() {
       renderList(files, currentOwner, currentRepo, currentBranch);
       // Show/hide clear button based on input value
       if (searchClearBtn) {
-        searchClearBtn.style.display = searchEl.value ? 'block' : 'none';
+        if (searchEl.value) {
+          searchClearBtn.classList.remove('hidden');
+        } else {
+          searchClearBtn.classList.add('hidden');
+        }
       }
     });
   }

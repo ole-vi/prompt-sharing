@@ -1,0 +1,7 @@
+/* Status Bar */
+#statusBar { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 9999; display: none; justify-content: center; pointer-events: auto; }
+#statusBar .status-inner, #statusBar { max-width: 1200px; width: 100%; background: linear-gradient(90deg, rgba(20,24,41,0.9), rgba(16,20,34,0.85)); border: 1px solid rgba(255,255,255,0.04); color: var(--text); padding: 8px 12px; border-radius: 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.6); }
+#statusBar.status-visible { display: flex; }
+#statusBar .status-msg { font-size: 13px; color: var(--text); }
+#statusBar .status-progress { font-size: 12px; color: var(--muted); }
+#statusBar .status-action { font-size: 13px; }

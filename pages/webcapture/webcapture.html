@@ -14,93 +14,93 @@
 </head>
 <body data-page="webcapture">
 
-  <div class="wrap" style="grid-template-columns: 1fr;">
-    <main class="card" style="padding:32px;">
-      <h2 style="margin:0 0 24px; font-size:28px; font-weight:700;">📸 PromptSync Web Capture</h2>
+  <div class="wrap">
+    <main class="card pad-lg">
+      <h2 class="section-title-lg font-28 mb-lg">📸 PromptSync Web Capture</h2>
       
-      <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:32px; margin-bottom:40px; text-align:center;">
-        <h3 style="margin:0 0 12px; font-size:20px; font-weight:600;">Capture Any Webpage as Markdown</h3>
-        <p style="margin:0 0 24px; color:var(--muted); font-size:15px; line-height:1.6;">
+      <div class="hero-panel">
+        <h3 class="hero-title">Capture Any Webpage as Markdown</h3>
+        <p class="hero-desc">
           A browser extension that converts any webpage to clean Markdown and syncs it directly to your GitHub repository.
         </p>
-        <button id="downloadExtensionBtn" class="btn primary" style="padding:16px 32px; font-size:16px; font-weight:600; cursor:pointer;">
+        <button id="downloadExtensionBtn" class="btn primary xl fw-600">
           ⬇️ Download Extension
         </button>
-        <p style="margin:8px 0 0; color:var(--muted); font-size:13px;">Compatible with Chrome, Edge, Brave, and other Chromium browsers</p>
+        <p class="hero-note">Compatible with Chrome, Edge, Brave, and other Chromium browsers</p>
       </div>
 
       <!-- Features -->
-      <div style="margin-bottom:40px;">
-        <h3 style="margin:0 0 20px; font-size:18px; font-weight:600;">✨ Features</h3>
-        <div style="display:grid; gap:16px;">
-          <div style="display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
-            <div style="font-size:24px; flex-shrink:0;">💾</div>
-            <div>
-              <div style="font-weight:600; margin-bottom:4px;">One-Click Capture</div>
-              <div style="color:var(--muted); font-size:14px;">Click the extension icon to save any webpage instantly</div>
+      <div class="section-mb">
+        <h3 class="section-heading">✨ Features</h3>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-icon">💾</div>
+            <div class="feature-content">
+              <div class="feature-title">One-Click Capture</div>
+              <div class="feature-desc">Click the extension icon to save any webpage instantly</div>
             </div>
           </div>
-          <div style="display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
-            <div style="font-size:24px; flex-shrink:0;">📝</div>
-            <div>
-              <div style="font-weight:600; margin-bottom:4px;">Markdown Conversion</div>
-              <div style="color:var(--muted); font-size:14px;">Automatically converts HTML to clean, readable Markdown</div>
+          <div class="feature-card">
+            <div class="feature-icon">📝</div>
+            <div class="feature-content">
+              <div class="feature-title">Markdown Conversion</div>
+              <div class="feature-desc">Automatically converts HTML to clean, readable Markdown</div>
             </div>
           </div>
-          <div style="display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
-            <div style="font-size:24px; flex-shrink:0;">☁️</div>
-            <div>
-              <div style="font-weight:600; margin-bottom:4px;">GitHub Sync</div>
-              <div style="color:var(--muted); font-size:14px;">Automatically sync captures to your GitHub repository</div>
+          <div class="feature-card">
+            <div class="feature-icon">☁️</div>
+            <div class="feature-content">
+              <div class="feature-title">GitHub Sync</div>
+              <div class="feature-desc">Automatically sync captures to your GitHub repository</div>
             </div>
           </div>
-          <div style="display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
-            <div style="font-size:24px; flex-shrink:0;">🔐</div>
-            <div>
-              <div style="font-weight:600; margin-bottom:4px;">Secure OAuth</div>
-              <div style="color:var(--muted); font-size:14px;">Connect via GitHub OAuth - no personal access tokens needed</div>
+          <div class="feature-card">
+            <div class="feature-icon">🔐</div>
+            <div class="feature-content">
+              <div class="feature-title">Secure OAuth</div>
+              <div class="feature-desc">Connect via GitHub OAuth - no personal access tokens needed</div>
             </div>
           </div>
-          <div style="display:flex; gap:12px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px;">
-            <div style="font-size:24px; flex-shrink:0;">📊</div>
-            <div>
-              <div style="font-weight:600; margin-bottom:4px;">Smart Extraction</div>
-              <div style="color:var(--muted); font-size:14px;">Removes navigation, ads, and clutter - keeps only the content</div>
+          <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <div class="feature-content">
+              <div class="feature-title">Smart Extraction</div>
+              <div class="feature-desc">Removes navigation, ads, and clutter - keeps only the content</div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Installation Instructions -->
-      <div style="margin-bottom:40px;">
-        <h3 style="margin:0 0 20px; font-size:18px; font-weight:600;">📦 Installation Instructions</h3>
+      <div class="section-mb">
+        <h3 class="section-heading">📦 Installation Instructions</h3>
         
-        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:24px;">
-          <h4 style="margin:0 0 16px; font-size:16px; font-weight:600;">Chrome / Edge / Brave</h4>
+        <div class="instruction-panel">
+          <h4 class="section-subheading">Chrome / Edge / Brave</h4>
           
-          <ol style="margin:0; padding-left:24px; line-height:1.8; color:var(--muted);">
-            <li style="margin-bottom:12px;">
-              <strong style="color:var(--text);">Download the extension</strong><br/>
+          <ol class="instruction-list">
+            <li class="instruction-item">
+              <strong class="instruction-strong">Download the extension</strong><br/>
               Click the "Download Extension" button above to download the extension files
             </li>
-            <li style="margin-bottom:12px;">
-              <strong style="color:var(--text);">Extract the files</strong><br/>
+            <li class="instruction-item">
+              <strong class="instruction-strong">Extract the files</strong><br/>
               Unzip the downloaded file to a location on your computer (e.g., Documents/PromptSync-Extension)
             </li>
-            <li style="margin-bottom:12px;">
-              <strong style="color:var(--text);">Open Extensions Page</strong><br/>
-              Navigate to <code style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; font-family:monospace;">chrome://extensions/</code> (Chrome) or <code style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; font-family:monospace;">edge://extensions/</code> (Edge) or <code style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; font-family:monospace;">brave://extensions/</code> (Brave)
+            <li class="instruction-item">
+              <strong class="instruction-strong">Open Extensions Page</strong><br/>
+              Navigate to <code class="code-inline">chrome://extensions/</code> (Chrome) or <code class="code-inline">edge://extensions/</code> (Edge) or <code class="code-inline">brave://extensions/</code> (Brave)
             </li>
-            <li style="margin-bottom:12px;">
-              <strong style="color:var(--text);">Enable Developer Mode</strong><br/>
+            <li class="instruction-item">
+              <strong class="instruction-strong">Enable Developer Mode</strong><br/>
               Toggle the "Developer mode" switch in the top-right corner
             </li>
-            <li style="margin-bottom:12px;">
-              <strong style="color:var(--text);">Load the Extension</strong><br/>
+            <li class="instruction-item">
+              <strong class="instruction-strong">Load the Extension</strong><br/>
               Click "Load unpacked", navigate to the extracted folder, and select it
             </li>
-            <li style="margin-bottom:0;">
-              <strong style="color:var(--text);">Pin the Extension</strong> (optional)<br/>
+            <li class="instruction-item">
+              <strong class="instruction-strong">Pin the Extension</strong> (optional)<br/>
               Click the puzzle piece icon in your browser toolbar, find "PromptSync Web Capture", and click the pin icon
             </li>
           </ol>
@@ -108,50 +108,50 @@
       </div>
 
       <!-- How to Use -->
-      <div style="margin-bottom:40px;">
-        <h3 style="margin:0 0 20px; font-size:18px; font-weight:600;">🚀 How to Use</h3>
+      <div class="section-mb">
+        <h3 class="section-heading">🚀 How to Use</h3>
         
-        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:24px;">
-          <ol style="margin:0; padding-left:24px; line-height:1.8; color:var(--muted);">
-            <li style="margin-bottom:12px;">
-              <strong style="color:var(--text);">Navigate to any webpage</strong> you want to capture
+        <div class="instruction-panel">
+          <ol class="instruction-list">
+            <li class="instruction-item">
+              <strong class="instruction-strong">Navigate to any webpage</strong> you want to capture
             </li>
-            <li style="margin-bottom:12px;">
-              <strong style="color:var(--text);">Click the extension icon</strong> in your browser toolbar
+            <li class="instruction-item">
+              <strong class="instruction-strong">Click the extension icon</strong> in your browser toolbar
             </li>
-            <li style="margin-bottom:12px;">
-              <strong style="color:var(--text);">Choose your action:</strong>
-              <ul style="margin:8px 0 0; padding-left:24px;">
+            <li class="instruction-item">
+              <strong class="instruction-strong">Choose your action:</strong>
+              <ul class="instruction-sublist">
                 <li>Click "📸 Capture Page" to convert to Markdown and download locally</li>
                 <li>Click "☁️ Sync to GitHub" to save directly to your repository (requires authentication)</li>
               </ul>
             </li>
-            <li style="margin-bottom:0;">
-              <strong style="color:var(--text);">View your captures</strong> in the <code style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; font-family:monospace;">webclips/</code> folder of your repository
+            <li class="instruction-item">
+              <strong class="instruction-strong">View your captures</strong> in the <code class="code-inline">webclips/</code> folder of your repository
             </li>
           </ol>
         </div>
       </div>
 
       <!-- GitHub Setup -->
-      <div style="margin-bottom:40px;">
-        <h3 style="margin:0 0 20px; font-size:18px; font-weight:600;">🔗 GitHub Setup</h3>
+      <div class="section-mb">
+        <h3 class="section-heading">🔗 GitHub Setup</h3>
         
-        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:24px;">
-          <p style="margin:0 0 16px; color:var(--muted); line-height:1.6;">
+        <div class="instruction-panel">
+          <p class="muted-text lh-16 mb-md">
             To sync captures directly to GitHub, you'll need to authenticate the extension with your GitHub account:
           </p>
-          <ol style="margin:0; padding-left:24px; line-height:1.8; color:var(--muted);">
-            <li style="margin-bottom:12px;">
+          <ol class="instruction-list">
+            <li class="instruction-item">
               Open the extension popup (click the extension icon)
             </li>
-            <li style="margin-bottom:12px;">
+            <li class="instruction-item">
               Click "🔐 Connect to GitHub"
             </li>
-            <li style="margin-bottom:12px;">
+            <li class="instruction-item">
               Authorize the PromptSync app on GitHub
             </li>
-            <li style="margin-bottom:0;">
+            <li class="instruction-item">
               You're all set! The extension will now sync captures to your repository automatically
             </li>
           </ol>
@@ -160,24 +160,24 @@
 
       <!-- Troubleshooting -->
       <div>
-        <h3 style="margin:0 0 20px; font-size:18px; font-weight:600;">🔧 Troubleshooting</h3>
+        <h3 class="section-heading">🔧 Troubleshooting</h3>
         
-        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:24px;">
-          <div style="margin-bottom:16px;">
-            <strong style="color:var(--text);">Extension not appearing after installation?</strong>
-            <p style="margin:4px 0 0; color:var(--muted); font-size:14px;">
+        <div class="instruction-panel">
+          <div class="mb-md">
+            <strong class="instruction-strong">Extension not appearing after installation?</strong>
+            <p class="muted-text small-text" style="margin:4px 0 0;">
               Make sure Developer Mode is enabled and you selected the correct folder. The folder should contain the manifest.json file.
             </p>
           </div>
-          <div style="margin-bottom:16px;">
-            <strong style="color:var(--text);">GitHub sync not working?</strong>
-            <p style="margin:4px 0 0; color:var(--muted); font-size:14px;">
+          <div class="mb-md">
+            <strong class="instruction-strong">GitHub sync not working?</strong>
+            <p class="muted-text small-text" style="margin:4px 0 0;">
               Check that you're authenticated by opening the extension popup and verifying your GitHub username is displayed.
             </p>
           </div>
-          <div style="margin-bottom:0;">
-            <strong style="color:var(--text);">Capture quality issues?</strong>
-            <p style="margin:4px 0 0; color:var(--muted); font-size:14px;">
+          <div>
+            <strong class="instruction-strong">Capture quality issues?</strong>
+            <p class="muted-text small-text" style="margin:4px 0 0;">
               Some websites with complex layouts may not convert perfectly. Try refreshing the page before capturing or report issues on GitHub.
             </p>
           </div>
@@ -188,11 +188,11 @@
   </div>
 
   <!-- Status Bar -->
-  <div id="statusBar" style="display:none;" aria-live="polite">
+  <div id="statusBar" class="hidden" aria-live="polite">
     <div class="status-inner">
       <div class="status-msg" style="flex:1;">Ready</div>
-      <div class="status-progress" style="display:none; margin-left:12px; color:var(--muted); font-size:13px;"></div>
-      <button class="status-action btn" style="display:none; margin-left:12px; padding:6px 10px;">Action</button>
+      <div class="status-progress hidden" style="margin-left:12px;"></div>
+      <button class="status-action btn hidden" style="margin-left:12px; padding:6px 10px;">Action</button>
     </div>
   </div>
 
