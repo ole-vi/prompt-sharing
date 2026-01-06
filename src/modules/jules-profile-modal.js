@@ -295,7 +295,6 @@ export function hideUserProfileModal() {
 
 export function showJulesSessionsHistoryModal() {
   const modal = document.getElementById('julesSessionsHistoryModal');
-  const allSessionsList = document.getElementById('allSessionsList');
   const searchInput = document.getElementById('sessionSearchInput');
   
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');

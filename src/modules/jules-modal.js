@@ -261,7 +261,6 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
             if (sessionUrl) {
               window.open(sessionUrl, '_blank', 'noopener,noreferrer');
             }
-            submitted = true;
           } catch (finalError) {
             alert('Failed to submit task after multiple retries. Please try again later.');
           }

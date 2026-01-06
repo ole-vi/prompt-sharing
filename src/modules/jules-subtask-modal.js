@@ -283,7 +283,6 @@ async function submitSubtasks(subtasks) {
                   window.open(sessionUrl, '_blank', 'noopener,noreferrer');
                 }
               }
-              submitted = true;
             } catch (finalError) {
               alert('Failed to submit task after multiple retries. Please try again later.');
             }
@@ -328,8 +327,6 @@ async function submitSubtasks(subtasks) {
   
   for (let i = 0; i < sequenced.length; i++) {
     const subtask = sequenced[i];
-    const status = `(${subtask.sequenceInfo.current}/${subtask.sequenceInfo.total})`;
-    
     
     let retryCount = 0;
     let maxRetries = 3;

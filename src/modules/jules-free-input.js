@@ -3,7 +3,7 @@
 
 import { getCurrentUser } from './auth.js';
 import { checkJulesKey } from './jules-keys.js';
-import { showJulesKeyModal, showSubtaskErrorModal, lastSelectedSourceId, lastSelectedBranch } from './jules-modal.js';
+import { showJulesKeyModal, showSubtaskErrorModal } from './jules-modal.js';
 import { addToJulesQueue } from './jules-queue.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 
@@ -201,7 +201,6 @@ export function showFreeInputForm() {
                 if (sessionUrl) {
                   window.open(sessionUrl, '_blank', 'noopener,noreferrer');
                 }
-                submitted = true;
               } catch (finalError) {
                 alert('Failed to submit task after multiple retries. Please try again later.');
               }
