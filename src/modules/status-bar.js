@@ -19,6 +19,9 @@ class StatusBar {
     this.msgElement = this.element.querySelector('.status-msg');
     this.progressElement = this.element.querySelector('.status-progress');
     this.actionElement = this.element.querySelector('.status-action');
+    
+    // Ensure status bar is hidden initially
+    this.element.classList.remove('status-visible');
   }
 
   showMessage(message, options = {}) {

@@ -1701,6 +1701,7 @@ export function showFreeInputForm() {
 
   const handleSplit = async () => {
     const promptText = textarea.value.trim();
+    console.log('handleSplit called, promptText:', promptText);
     if (!promptText) {
       alert('Please enter a prompt.');
       return;
@@ -1718,11 +1719,13 @@ export function showFreeInputForm() {
       return;
     }
 
-    hideFreeInputForm();
+    console.log('About to show modal, repo:', lastSelectedSourceId, 'branch:', lastSelectedBranch);
     
     try {
       showSubtaskSplitModal(promptText);
+      console.log('Modal should be visible now');
     } catch (error) {
+      console.error('Error showing modal:', error);
       alert('Failed to process prompt: ' + error.message);
     }
   };
@@ -1922,17 +1925,22 @@ let currentFullPrompt = '';
 let currentSubtasks = [];
 
 export function showSubtaskSplitModal(promptText) {
+  console.log('showSubtaskSplitModal called with promptText:', promptText);
   currentFullPrompt = promptText;
   
   const modal = document.getElementById('subtaskSplitModal');
+  console.log('Modal element:', modal);
   const confirmBtn = document.getElementById('splitConfirmBtn');
   const queueBtn = document.getElementById('splitQueueBtn');
   const cancelBtn = document.getElementById('splitCancelBtn');
 
   const analysis = analyzePromptStructure(promptText);
+  console.log('Analysis result:', analysis);
   currentSubtasks = analysis.subtasks;
   
-  modal.classList.remove('hidden');
+  console.log('Setting modal display to flex');
+  modal.classList.add('show');
+  console.log('Modal should now be visible');
 
   renderSplitEdit(currentSubtasks, promptText);
 
@@ -1956,13 +1964,11 @@ export function showSubtaskSplitModal(promptText) {
 
     const subtasksToSubmit = [...currentSubtasks];
     hideSubtaskSplitModal();
-    showFreeInputForm();
     await submitSubtasks(subtasksToSubmit);
   };
 
   cancelBtn.onclick = () => {
     hideSubtaskSplitModal();
-    showFreeInputForm();
   };
 
   queueBtn.onclick = async () => {
@@ -2095,22 +2101,22 @@ function showSubtaskPreview(subtask, partNumber) {
   title.textContent = `Part ${partNumber}: ${subtask.title || `Part ${partNumber}`}`;
   content.textContent = subtask.fullContent || subtask.content || '';
   
-  modal.classList.remove('hidden');
+  modal.classList.add('show');
   
   closeBtn.onclick = () => {
-    modal.classList.add('hidden');
+    modal.classList.remove('show');
   };
   
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
-      modal.classList.add('hidden');
+      modal.classList.remove('show');
     }
   });
 }
 
 export function hideSubtaskSplitModal() {
   const modal = document.getElementById('subtaskSplitModal');
-  modal.classList.add('hidden');
+  modal.classList.remove('show');
   currentSubtasks = [];
 }
 
@@ -2260,7 +2266,10 @@ async function submitSubtasks(subtasks) {
           }
           statusBar.clearProgress();
           statusBar.clearAction();
-          await loadQueuePage();
+          // Only reload queue page if we're actually on that page
+          if (document.getElementById('allQueueList')) {
+            await loadQueuePage();
+          }
           return;
         }
       } catch (error) {
