@@ -3,6 +3,9 @@
 
 export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error, options = {}) {
   return new Promise((resolve) => {
+    const allowQueue =
+      typeof options.allowQueue === 'boolean' ? options.allowQueue : options.hideQueueButton ? false : true;
+
     const modal = document.getElementById('subtaskErrorModal');
     const subtaskNumDiv = document.getElementById('errorSubtaskNumber');
     const messageDiv = document.getElementById('errorMessage');
@@ -18,34 +21,37 @@ export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error, optio
       return;
     }
 
-    subtaskNumDiv.textContent = `Subtask ${subtaskNumber} of ${totalSubtasks}`;
-    messageDiv.textContent = error.message || String(error);
-    detailsDiv.textContent = error.toString();
+    if (subtaskNumDiv) subtaskNumDiv.textContent = `Subtask ${subtaskNumber} of ${totalSubtasks}`;
+    if (messageDiv) messageDiv.textContent = error?.message || String(error);
+    if (detailsDiv) detailsDiv.textContent = error?.toString?.() || String(error);
 
-    // Hide queue button if requested
     if (queueBtn) {
-      queueBtn.style.display = options.hideQueueButton ? 'none' : '';
+      if (!allowQueue) {
+        queueBtn.style.display = 'none';
+      } else {
+        queueBtn.style.removeProperty('display');
+      }
     }
 
     modal.style.removeProperty('display');
     modal.style.setProperty('display', 'flex', 'important');
 
     const handleAction = (action) => {
-      retryBtn.onclick = null;
-      skipBtn.onclick = null;
-      cancelBtn.onclick = null;
+      if (retryBtn) retryBtn.onclick = null;
+      if (skipBtn) skipBtn.onclick = null;
+      if (cancelBtn) cancelBtn.onclick = null;
       if (queueBtn) queueBtn.onclick = null;
 
       hideSubtaskErrorModal();
 
-      const shouldDelay = action === 'retry' ? retryDelayCheckbox.checked : false;
+      const shouldDelay = action === 'retry' ? !!retryDelayCheckbox?.checked : false;
       resolve({ action, shouldDelay });
     };
 
-    retryBtn.onclick = () => handleAction('retry');
-    skipBtn.onclick = () => handleAction('skip');
-    cancelBtn.onclick = () => handleAction('cancel');
-    if (queueBtn) queueBtn.onclick = () => handleAction('queue');
+    if (retryBtn) retryBtn.onclick = () => handleAction('retry');
+    if (skipBtn) skipBtn.onclick = () => handleAction('skip');
+    if (cancelBtn) cancelBtn.onclick = () => handleAction('cancel');
+    if (queueBtn && allowQueue) queueBtn.onclick = () => handleAction('queue');
   });
 }
 

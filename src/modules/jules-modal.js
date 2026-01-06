@@ -22,7 +22,6 @@ import {
 import {
   addToJulesQueue,
   showJulesQueueModal,
-  hideJulesQueueModal,
   loadQueuePage
 } from './jules-queue.js';
 import { showSubtaskErrorModal, hideSubtaskErrorModal } from './error-modal.js';
@@ -272,7 +271,11 @@ export async function showJulesEnvModal(promptText) {
     
     const user = window.auth?.currentUser;
     if (!user) {
+<<<<<<< HEAD
       statusBar.showMessage('Please sign in to queue prompts.', { timeout: 4000 });
+=======
+      alert('Please sign in to queue prompts.');
+>>>>>>> e1662df (cleanup)
       return;
     }
     
@@ -285,10 +288,17 @@ export async function showJulesEnvModal(promptText) {
         branch: selectedBranch,
         note: 'Queued from Try in Jules modal'
       });
+<<<<<<< HEAD
       statusBar.showMessage('Prompt queued successfully!', { timeout: 4000 });
       hideJulesEnvModal();
     } catch (err) {
       statusBar.showMessage('Failed to queue prompt: ' + err.message, { timeout: 5000 });
+=======
+      alert('Prompt queued successfully!');
+      hideJulesEnvModal();
+    } catch (err) {
+      alert('Failed to queue prompt: ' + err.message);
+>>>>>>> e1662df (cleanup)
     }
   };
   
@@ -331,14 +341,21 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
         const result = await showSubtaskErrorModal(1, 1, error);
 
         if (result.action === 'cancel') {
+<<<<<<< HEAD
           statusBar.showMessage('Cancelled', { timeout: 3000 });
+=======
+>>>>>>> e1662df (cleanup)
           return;
         } else if (result.action === 'skip') {
           return;
         } else if (result.action === 'queue') {
           const user = window.auth?.currentUser;
           if (!user) {
+<<<<<<< HEAD
             statusBar.showMessage('Please sign in to queue prompts.', { timeout: 4000 });
+=======
+            alert('Please sign in to queue prompts.');
+>>>>>>> e1662df (cleanup)
             return;
           }
           try {
@@ -349,14 +366,23 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
               branch: lastSelectedBranch,
               note: 'Queued from Try in Jules flow (partial retries)'
             });
+<<<<<<< HEAD
             statusBar.showMessage('Prompt queued. You can restart it later from your Jules queue.', { timeout: 4000 });
           } catch (err) {
             statusBar.showMessage('Failed to queue prompt: ' + err.message, { timeout: 5000 });
+=======
+            alert('Prompt queued. You can restart it later from your Jules queue.');
+          } catch (err) {
+            alert('Failed to queue prompt: ' + err.message);
+>>>>>>> e1662df (cleanup)
           }
           return;
         } else if (result.action === 'retry') {
           if (result.shouldDelay) {
+<<<<<<< HEAD
             statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
+=======
+>>>>>>> e1662df (cleanup)
             await new Promise(resolve => setTimeout(resolve, 5000));
           }
         }
@@ -366,7 +392,11 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
         if (result.action === 'queue') {
           const user = window.auth?.currentUser;
           if (!user) {
+<<<<<<< HEAD
             statusBar.showMessage('Please sign in to queue prompts.', { timeout: 4000 });
+=======
+            alert('Please sign in to queue prompts.');
+>>>>>>> e1662df (cleanup)
             return;
           }
           try {
@@ -377,16 +407,25 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
               branch: lastSelectedBranch,
               note: 'Queued from Try in Jules flow (final failure)'
             });
+<<<<<<< HEAD
             statusBar.showMessage('Prompt queued. You can restart it later from your Jules queue.', { timeout: 4000 });
           } catch (err) {
             statusBar.showMessage('Failed to queue prompt: ' + err.message, { timeout: 5000 });
+=======
+            alert('Prompt queued. You can restart it later from your Jules queue.');
+          } catch (err) {
+            alert('Failed to queue prompt: ' + err.message);
+>>>>>>> e1662df (cleanup)
           }
           return;
         }
         
         if (result.action === 'retry') {
           if (result.shouldDelay) {
+<<<<<<< HEAD
             statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
+=======
+>>>>>>> e1662df (cleanup)
             await new Promise(resolve => setTimeout(resolve, 5000));
           }
           try {
@@ -1090,14 +1129,21 @@ export function showFreeInputForm() {
             const result = await showSubtaskErrorModal(1, 1, error);
 
             if (result.action === 'cancel') {
+<<<<<<< HEAD
               statusBar.showMessage('Cancelled', { timeout: 3000 });
+=======
+>>>>>>> e1662df (cleanup)
               return;
             } else if (result.action === 'skip') {
               return;
             } else if (result.action === 'queue') {
               const user = window.auth?.currentUser;
               if (!user) {
+<<<<<<< HEAD
                 statusBar.showMessage('Please sign in to queue prompts.', { timeout: 4000 });
+=======
+                alert('Please sign in to queue prompts.');
+>>>>>>> e1662df (cleanup)
                 return;
               }
               try {
@@ -1108,14 +1154,23 @@ export function showFreeInputForm() {
                   branch: lastSelectedBranch,
                   note: 'Queued from Free Input flow'
                 });
+<<<<<<< HEAD
                 statusBar.showMessage('Prompt queued. You can restart it later from your Jules queue.', { timeout: 4000 });
               } catch (err) {
                 statusBar.showMessage('Failed to queue prompt: ' + err.message, { timeout: 5000 });
+=======
+                alert('Prompt queued. You can restart it later from your Jules queue.');
+              } catch (err) {
+                alert('Failed to queue prompt: ' + err.message);
+>>>>>>> e1662df (cleanup)
               }
               return;
             } else if (result.action === 'retry') {
               if (result.shouldDelay) {
+<<<<<<< HEAD
                 statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
+=======
+>>>>>>> e1662df (cleanup)
                 await new Promise(resolve => setTimeout(resolve, 5000));
               }
             }
@@ -1125,7 +1180,11 @@ export function showFreeInputForm() {
             if (result.action === 'queue') {
               const user = window.auth?.currentUser;
               if (!user) {
+<<<<<<< HEAD
                 statusBar.showMessage('Please sign in to queue prompts.', { timeout: 4000 });
+=======
+                alert('Please sign in to queue prompts.');
+>>>>>>> e1662df (cleanup)
                 return;
               }
               try {
@@ -1136,16 +1195,25 @@ export function showFreeInputForm() {
                   branch: lastSelectedBranch,
                   note: 'Queued from Free Input flow (final failure)'
                 });
+<<<<<<< HEAD
                 statusBar.showMessage('Prompt queued. You can restart it later from your Jules queue.', { timeout: 4000 });
               } catch (err) {
                 statusBar.showMessage('Failed to queue prompt: ' + err.message, { timeout: 5000 });
+=======
+                alert('Prompt queued. You can restart it later from your Jules queue.');
+              } catch (err) {
+                alert('Failed to queue prompt: ' + err.message);
+>>>>>>> e1662df (cleanup)
               }
               return;
             }
 
             if (result.action === 'retry') {
               if (result.shouldDelay) {
+<<<<<<< HEAD
                 statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
+=======
+>>>>>>> e1662df (cleanup)
                 await new Promise(resolve => setTimeout(resolve, 5000));
               }
               try {
@@ -1266,7 +1334,11 @@ export function showFreeInputForm() {
 
     const user = window.auth?.currentUser;
     if (!user) {
+<<<<<<< HEAD
       statusBar.showMessage('Please sign in to queue prompts.', { timeout: 4000 });
+=======
+      alert('Please sign in to queue prompts.');
+>>>>>>> e1662df (cleanup)
       return;
     }
 
@@ -1278,10 +1350,17 @@ export function showFreeInputForm() {
         branch: lastSelectedBranch,
         note: 'Queued from Free Input'
       });
+<<<<<<< HEAD
       statusBar.showMessage('Prompt queued successfully!', { timeout: 4000 });
       hideFreeInputForm();
     } catch (err) {
       statusBar.showMessage('Failed to queue prompt: ' + err.message, { timeout: 5000 });
+=======
+      alert('Prompt queued successfully!');
+      hideFreeInputForm();
+    } catch (err) {
+      alert('Failed to queue prompt: ' + err.message);
+>>>>>>> e1662df (cleanup)
     }
   };
 
@@ -1450,17 +1529,29 @@ export function showSubtaskSplitModal(promptText) {
   queueBtn.onclick = async () => {
     const user = window.auth?.currentUser;
     if (!user) {
+<<<<<<< HEAD
       statusBar.showMessage('Please sign in to queue subtasks.', { timeout: 4000 });
+=======
+      alert('Please sign in to queue subtasks.');
+>>>>>>> e1662df (cleanup)
       return;
     }
 
     if (!lastSelectedSourceId) {
+<<<<<<< HEAD
       statusBar.showMessage('Please select a repository first.', { timeout: 4000 });
+=======
+      alert('Please select a repository first.');
+>>>>>>> e1662df (cleanup)
       return;
     }
 
     if (!lastSelectedBranch) {
+<<<<<<< HEAD
       statusBar.showMessage('Please select a branch first.', { timeout: 4000 });
+=======
+      alert('Please select a branch first.');
+>>>>>>> e1662df (cleanup)
       return;
     }
 
@@ -1473,10 +1564,17 @@ export function showSubtaskSplitModal(promptText) {
           branch: lastSelectedBranch,
           note: 'Queued from Split Dialog (no subtasks)'
         });
+<<<<<<< HEAD
         statusBar.showMessage('Prompt queued successfully!', { timeout: 4000 });
         hideSubtaskSplitModal();
       } catch (err) {
         statusBar.showMessage('Failed to queue prompt: ' + err.message, { timeout: 5000 });
+=======
+        alert('Prompt queued successfully!');
+        hideSubtaskSplitModal();
+      } catch (err) {
+        alert('Failed to queue prompt: ' + err.message);
+>>>>>>> e1662df (cleanup)
       }
       return;
     }
@@ -1508,9 +1606,15 @@ export function showSubtaskSplitModal(promptText) {
 
       hideSubtaskSplitModal();
       showFreeInputForm();
+<<<<<<< HEAD
       statusBar.showMessage(`${remaining.length} subtask(s) queued successfully!`, { timeout: 4000 });
     } catch (err) {
       statusBar.showMessage('Failed to queue subtasks: ' + err.message, { timeout: 5000 });
+=======
+      alert(`${remaining.length} subtask(s) queued successfully!`);
+    } catch (err) {
+      alert('Failed to queue subtasks: ' + err.message);
+>>>>>>> e1662df (cleanup)
     }
   };
 }
@@ -1622,13 +1726,19 @@ async function submitSubtasks(subtasks) {
         if (retryCount < maxRetries) {
           const result = await showSubtaskErrorModal(1, 1, error);
           if (result.action === 'cancel') {
+<<<<<<< HEAD
             statusBar.showMessage('Cancelled', { timeout: 3000 });
+=======
+>>>>>>> e1662df (cleanup)
             return;
           } else if (result.action === 'skip') {
             return;
           } else if (result.action === 'retry') {
             if (result.shouldDelay) {
+<<<<<<< HEAD
               statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
+=======
+>>>>>>> e1662df (cleanup)
               await new Promise(resolve => setTimeout(resolve, 5000));
             }
           }
@@ -1636,7 +1746,10 @@ async function submitSubtasks(subtasks) {
           const result = await showSubtaskErrorModal(1, 1, error);
           if (result.action === 'retry') {
             if (result.shouldDelay) {
+<<<<<<< HEAD
               statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
+=======
+>>>>>>> e1662df (cleanup)
               await new Promise(resolve => setTimeout(resolve, 5000));
             }
             try {
@@ -1764,7 +1877,11 @@ async function submitSubtasks(subtasks) {
           if (result.action === 'cancel') {
             statusBar.clearProgress();
             statusBar.clearAction();
+<<<<<<< HEAD
             statusBar.showMessage(`Cancelled. Submitted ${successCount} of ${totalCount} subtasks.`, { timeout: 5000 });
+=======
+            alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
+>>>>>>> e1662df (cleanup)
             return;
           } else if (result.action === 'skip') {
             skippedCount++;
@@ -1774,7 +1891,11 @@ async function submitSubtasks(subtasks) {
             if (!user) {
               statusBar.clearProgress();
               statusBar.clearAction();
+<<<<<<< HEAD
               statusBar.showMessage('Please sign in to queue subtasks.', { timeout: 4000 });
+=======
+              alert('Please sign in to queue subtasks.');
+>>>>>>> e1662df (cleanup)
               return;
             }
             const remaining = sequenced.slice(i).map(s => ({ fullContent: s.fullContent, sequenceInfo: s.sequenceInfo }));
@@ -1790,16 +1911,27 @@ async function submitSubtasks(subtasks) {
               });
               statusBar.clearProgress();
               statusBar.clearAction();
+<<<<<<< HEAD
               statusBar.showMessage(`Queued ${remaining.length} remaining subtasks to your account.`, { timeout: 4000 });
             } catch (err) {
               statusBar.clearProgress();
               statusBar.clearAction();
               statusBar.showMessage('Failed to queue subtasks: ' + err.message, { timeout: 5000 });
+=======
+              alert(`Queued ${remaining.length} remaining subtasks to your account.`);
+            } catch (err) {
+              statusBar.clearProgress();
+              statusBar.clearAction();
+              alert('Failed to queue subtasks: ' + err.message);
+>>>>>>> e1662df (cleanup)
             }
             return;
           } else if (result.action === 'retry') {
             if (result.shouldDelay) {
+<<<<<<< HEAD
               statusBar.showMessage('Waiting 5 seconds before retry...', { timeout: 5000 });
+=======
+>>>>>>> e1662df (cleanup)
               await new Promise(resolve => setTimeout(resolve, 5000));
             }
           }
@@ -1813,7 +1945,11 @@ async function submitSubtasks(subtasks) {
           if (result.action === 'cancel') {
             statusBar.clearProgress();
             statusBar.clearAction();
+<<<<<<< HEAD
             statusBar.showMessage(`Cancelled. Submitted ${successCount} of ${totalCount} subtasks.`, { timeout: 5000 });
+=======
+            alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
+>>>>>>> e1662df (cleanup)
             return;
           } else {
             if (result.action === 'queue') {
@@ -1821,7 +1957,11 @@ async function submitSubtasks(subtasks) {
               if (!user) {
                 statusBar.clearProgress();
                 statusBar.clearAction();
+<<<<<<< HEAD
                 statusBar.showMessage('Please sign in to queue subtasks.', { timeout: 4000 });
+=======
+                alert('Please sign in to queue subtasks.');
+>>>>>>> e1662df (cleanup)
                 return;
               }
               const remaining = sequenced.slice(i).map(s => ({ fullContent: s.fullContent, sequenceInfo: s.sequenceInfo }));
@@ -1837,11 +1977,19 @@ async function submitSubtasks(subtasks) {
                 });
                 statusBar.clearProgress();
                 statusBar.clearAction();
+<<<<<<< HEAD
                 statusBar.showMessage(`Queued ${remaining.length} remaining subtasks to your account.`, { timeout: 4000 });
               } catch (err) {
                 statusBar.clearProgress();
                 statusBar.clearAction();
                 statusBar.showMessage('Failed to queue subtasks: ' + err.message, { timeout: 5000 });
+=======
+                alert(`Queued ${remaining.length} remaining subtasks to your account.`);
+              } catch (err) {
+                statusBar.clearProgress();
+                statusBar.clearAction();
+                alert('Failed to queue subtasks: ' + err.message);
+>>>>>>> e1662df (cleanup)
               }
               return;
             }
