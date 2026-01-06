@@ -1930,7 +1930,7 @@ export function showSubtaskSplitModal(promptText) {
   const analysis = analyzePromptStructure(promptText);
   currentSubtasks = analysis.subtasks;
   
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.classList.remove('hidden');
 
   renderSplitEdit(currentSubtasks, promptText);
 
@@ -2093,22 +2093,22 @@ function showSubtaskPreview(subtask, partNumber) {
   title.textContent = `Part ${partNumber}: ${subtask.title || `Part ${partNumber}`}`;
   content.textContent = subtask.fullContent || subtask.content || '';
   
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center;');
+  modal.classList.remove('hidden');
   
   closeBtn.onclick = () => {
-    modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center;');
+    modal.classList.add('hidden');
   };
   
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
-      modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center;');
+      modal.classList.add('hidden');
     }
   });
 }
 
 export function hideSubtaskSplitModal() {
   const modal = document.getElementById('subtaskSplitModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.classList.add('hidden');
   currentSubtasks = [];
 }
 
