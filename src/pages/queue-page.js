@@ -4,7 +4,7 @@
  */
 
 import { setupMutualExclusivity } from '../utils/checkbox-helpers.js';
-import { attachQueueHandlers } from '../modules/jules.js';
+import { attachQueueHandlers } from '../modules/jules-queue.js';
 
 // Initialize checkbox mutual exclusivity
 setupMutualExclusivity('queueSuppressPopupsCheckbox', 'queueOpenInBackgroundCheckbox');

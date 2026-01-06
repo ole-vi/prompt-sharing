@@ -2,7 +2,8 @@
 
 import { OWNER, REPO, BRANCH, STORAGE_KEYS } from './utils/constants.js';
 import { parseParams, getHashParam } from './utils/url-params.js';
-import { initJulesKeyModalListeners, handleTryInJules } from './modules/jules.js';
+import { initJulesKeyModalListeners } from './modules/jules-modal.js';
+import { handleTryInJules } from './modules/jules-api.js';
 import statusBar from './modules/status-bar.js';
 import { initPromptList, loadList, loadExpandedState, renderList, setSelectFileCallback, setRepoContext } from './modules/prompt-list.js';
 import { initPromptRenderer, selectBySlug, selectFile, setHandleTryInJulesCallback } from './modules/prompt-renderer.js';
