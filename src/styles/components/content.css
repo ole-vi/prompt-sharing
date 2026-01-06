@@ -10,6 +10,7 @@ a:hover { text-decoration: underline; }
 .section-title { margin: 0 0 12px; font-size: 20px; }
 .muted-text { color: var(--muted); }
 .small-text { font-size: 13px; }
+.section-label { font-size:14px; font-weight:600; color:var(--muted); margin-bottom:10px; }
 .panel { margin: 16px 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.02); }
 .panel-tight { margin: 0; }
 .form-row { display: flex; gap: 12px; align-items: start; }
@@ -31,6 +32,7 @@ a:hover { text-decoration: underline; }
 .scroll-box-sm { max-height: 150px; }
 /* Simple overflow utility without pre-wrap for lists */
 .y-scroll { overflow-y: auto; }
+.max-h-300 { max-height:300px; }
 
 /* Vertical list container */
 .vlist { display:flex; flex-direction:column; gap:8px; }
