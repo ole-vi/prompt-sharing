@@ -127,6 +127,9 @@ export class RepoSelector {
             this.branchSelector.initialize(fav.id, currentBranch);
           }
         } else {
+          if (this.branchSelector) {
+            this.branchSelector.initialize(fav.id, currentBranch);
+          }
           this.verifyDefaultBranch(fav, true).catch((error) => {
             console.error('Failed to verify default branch in background:', error);
           });
