@@ -424,34 +424,32 @@ export function updateActiveItem() {
 
 export function renderList(items, owner, repo, branch) {
   loadExpandedState(owner, repo, branch);
-  const q = searchEl && searchEl.value ? searchEl.value.trim().toLowerCase() : '';
+  const q = searchEl && searchEl.value ? searchEl.value.trim() : '';
   const searchActive = Boolean(q);
-  const filtered = !q
-    ? items.slice()
-    : items.filter(f => {
-        const name = f.name?.toLowerCase?.() || '';
-        const path = f.path?.toLowerCase?.() || '';
-        
-        // Check if name or path matches
-        if (name.includes(q) || path.includes(q)) return true;
-        
-        // Check if any tag matches
-        for (const { label, keywords } of Object.values(TAG_DEFINITIONS)) {
-          // Match tag label (e.g., "review", "bug")
-          if (label.toLowerCase().includes(q)) {
-            // Check if this file actually has this tag
-            if (keywords.some(kw => new RegExp(kw, 'i').test(name))) {
-              return true;
-            }
-          }
-          // Match tag keywords directly in search (e.g., searching "fix" should find "bug" tagged items)
-          if (keywords.some(kw => new RegExp(kw, 'i').test(name)) && keywords.some(kw => kw.toLowerCase().includes(q))) {
-            return true;
-          }
+
+  let filtered = [];
+  if (!q) {
+    filtered = items.slice();
+  } else {
+    // Create a new data structure for Fuse.js that includes tags.
+    const itemsWithTags = items.map(item => {
+      const tags = [];
+      for (const tagKey in TAG_DEFINITIONS) {
+        const tag = TAG_DEFINITIONS[tagKey];
+        if (tag.keywords.some(kw => new RegExp(kw, 'i').test(item.name))) {
+          tags.push(tag.label);
         }
-        
-        return false;
-      });
+      }
+      return { ...item, tags };
+    });
+
+    const fuse = new Fuse(itemsWithTags, {
+      keys: ['name', 'path', 'tags'],
+      includeScore: true,
+      threshold: 0.4,
+    });
+    filtered = fuse.search(q).map(result => result.item);
+  }
 
   if (!filtered.length) {
     clearElement(listEl);
