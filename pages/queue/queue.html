@@ -34,20 +34,6 @@
           <div class="toolbar-actions">
             <label class="form-label small-text"><input id="queueSuppressPopupsCheckbox" type="checkbox" /> Suppress Popups</label>
             <label class="form-label small-text"><input id="queueOpenInBackgroundCheckbox" type="checkbox" /> Open in Background</label>
-            <script>
-              (function() {
-                const suppressCheckbox = document.getElementById('queueSuppressPopupsCheckbox');
-                const backgroundCheckbox = document.getElementById('queueOpenInBackgroundCheckbox');
-                if (suppressCheckbox && backgroundCheckbox) {
-                  suppressCheckbox.addEventListener('change', () => {
-                    if (suppressCheckbox.checked) backgroundCheckbox.checked = false;
-                  });
-                  backgroundCheckbox.addEventListener('change', () => {
-                    if (backgroundCheckbox.checked) suppressCheckbox.checked = false;
-                  });
-                }
-              })();
-            </script>
             <button id="queuePauseBtn" class="btn">Pause</button>
             <button id="queueRunBtn" class="btn primary">Run Selected</button>
             <button id="queueDeleteBtn" class="btn danger">Delete Selected</button>
@@ -90,82 +76,7 @@
   </div>
 
   <script type="module" src="../../src/shared-init.js"></script>
-  <script type="module">
-    import { attachQueueHandlers } from '../../src/modules/jules-queue.js';
-
-    function waitForComponents() {
-      if (document.querySelector('header')) {
-        initApp();
-      } else {
-        setTimeout(waitForComponents, 50);
-      }
-    }
-
-    function initApp() {
-      // Initialize queue functionality
-      attachQueueHandlers();
-      
-      const user = window.auth?.currentUser;
-      if (user) {
-        document.getElementById('queueControls').classList.remove('hidden');
-        document.getElementById('queueNotSignedIn').classList.add('hidden');
-        loadQueue();
-      } else {
-        document.getElementById('queueControls').classList.add('hidden');
-        document.getElementById('queueNotSignedIn').classList.remove('hidden');
-      }
-      
-      // Listen for auth state changes
-      window.auth.onAuthStateChanged((user) => {
-        if (user) {
-          document.getElementById('queueControls').classList.remove('hidden');
-          document.getElementById('queueNotSignedIn').classList.add('hidden');
-          loadQueue();
-        } else {
-          document.getElementById('queueControls').classList.add('hidden');
-          document.getElementById('queueNotSignedIn').classList.remove('hidden');
-        }
-      });
-    }
-
-    async function loadQueue() {
-      const user = window.auth?.currentUser;
-      const listDiv = document.getElementById('allQueueList');
-      
-      if (!listDiv) {
-        console.error('Queue list element not found');
-        return;
-      }
-      
-      if (!user) {
-        listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Please sign in to view your queue.</div>';
-        return;
-      }
-
-      try {
-        listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Loading queue...</div>';
-        
-        // Import the jules module to access queue functions
-        const julesModule = await import('../../src/modules/jules-queue.js');
-        
-        // Get the queue items
-        const items = await julesModule.listJulesQueue(user.uid);
-        
-        // Render the queue directly on the page
-        julesModule.renderQueueListDirectly(items);
-        julesModule.attachQueueHandlers();
-      } catch (err) {
-        console.error('Queue loading error:', err);
-        listDiv.innerHTML = `<div class="panel text-center pad-xl">Failed to load queue: ${err.message}</div>`;
-      }
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', waitForComponents);
-    } else {
-      waitForComponents();
-    }
-  </script>
+  <script type="module" src="../../src/pages/queue-page.js"></script>
 
   <!-- Status Bar -->
   <div id="statusBar" class="hidden" aria-live="polite">
