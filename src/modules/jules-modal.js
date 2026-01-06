@@ -1,657 +1,45 @@
-import { getCurrentUser } from './auth.js';
+// ===== Jules Modal & UI Module =====
+// Handles all modal interactions and UI rendering for Jules features
+
+import { getCurrentUser, signInWithGitHub } from './auth.js';
 import { 
   analyzePromptStructure, 
   buildSubtaskSequence, 
-  generateSplitSummary, 
   validateSubtasks 
 } from './subtask-manager.js';
-import { loadJulesProfileInfo, listJulesSessions } from './jules-api.js';
+import {
+  loadJulesProfileInfo,
+  listJulesSessions,
+  callRunJulesFunction,
+  openUrlInBackground,
+  getDecryptedJulesKey
+} from './jules-api.js';
+import {
+  checkJulesKey,
+  encryptAndStoreKey,
+  deleteStoredJulesKey
+} from './jules-keys.js';
+import {
+  addToJulesQueue,
+  showJulesQueueModal,
+  hideJulesQueueModal,
+  loadQueuePage
+} from './jules-queue.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
-import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
+import { CACHE_KEYS, getCache, setCache } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 
 let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
 let lastSelectedBranch = 'master';
 
-function openUrlInBackground(url) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  
-  const evt = new MouseEvent('click', {
-    view: window,
-    bubbles: true,
-    cancelable: true,
-    ctrlKey: true,
-    metaKey: true
-  });
-  
-  a.dispatchEvent(evt);
-  
-  setTimeout(() => {
-    document.body.removeChild(a);
-  }, 100);
-}
-
-export async function checkJulesKey(uid) {
-  try {
-    if (!window.db) {
-      return false;
-    }
-    const doc = await window.db.collection('julesKeys').doc(uid).get();
-    return doc.exists;
-  } catch (error) {
-    return false;
-  }
-}
-
-export async function deleteStoredJulesKey(uid) {
-  try {
-    if (!window.db) return false;
-    await window.db.collection('julesKeys').doc(uid).delete();
-    return true;
-  } catch (error) {
-    return false;
-  }
-}
-
-export async function encryptAndStoreKey(plaintext, uid) {
-  try {
-    const paddedUid = (uid + '\0'.repeat(32)).slice(0, 32);
-    const keyData = new TextEncoder().encode(paddedUid);
-    const key = await window.crypto.subtle.importKey('raw', keyData, { name: 'AES-GCM' }, false, ['encrypt']);
-
-    const ivString = uid.slice(0, 12).padEnd(12, '0');
-    const iv = new TextEncoder().encode(ivString).slice(0, 12);
-    const plaintextData = new TextEncoder().encode(plaintext);
-    const ciphertext = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintextData);
-    const encrypted = btoa(String.fromCharCode(...new Uint8Array(ciphertext)));
-
-    if (!window.db) throw new Error('Firestore not initialized');
-    await window.db.collection('julesKeys').doc(uid).set({
-      key: encrypted,
-      storedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    return true;
-  } catch (error) {
-    throw error;
-  }
-}
-
-export async function addToJulesQueue(uid, queueItem) {
-  if (!window.db) throw new Error('Firestore not initialized');
-  try {
-    const collectionRef = window.db.collection('julesQueues').doc(uid).collection('items');
-    const docRef = await collectionRef.add({
-      ...queueItem,
-      autoOpen: queueItem.autoOpen !== false,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      status: 'pending'
-    });
-    // Clear cache so next load fetches fresh data
-    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
-    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
-    return docRef.id;
-  } catch (err) {
-    console.error('Failed to add to queue', err);
-    throw err;
-  }
-}
-
-export async function updateJulesQueueItem(uid, docId, updates) {
-  if (!window.db) throw new Error('Firestore not initialized');
-  try {
-    const docRef = window.db.collection('julesQueues').doc(uid).collection('items').doc(docId);
-    await docRef.update(updates);
-    // Clear cache so next load fetches fresh data
-    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
-    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
-    return true;
-  } catch (err) {
-    console.error('Failed to update queue item', err);
-    throw err;
-  }
-}
-
-export async function deleteFromJulesQueue(uid, docId) {
-  if (!window.db) throw new Error('Firestore not initialized');
-  try {
-    await window.db.collection('julesQueues').doc(uid).collection('items').doc(docId).delete();
-    // Clear cache so next load fetches fresh data
-    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
-    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
-    return true;
-  } catch (err) {
-    console.error('Failed to delete queue item', err);
-    throw err;
-  }
-}
-
-export async function listJulesQueue(uid) {
-  if (!window.db) throw new Error('Firestore not initialized');
-  try {
-    const snapshot = await window.db.collection('julesQueues').doc(uid).collection('items').orderBy('createdAt', 'desc').get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch (err) {
-    console.error('Failed to list queue', err);
-    throw err;
-  }
-}
-
-export function showJulesQueueModal() {
-  const modal = document.getElementById('julesQueueModal');
-  if (!modal) {
-    console.error('julesQueueModal element not found!');
-    return;
-  }
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1003; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
-  
-  // Close modal when clicking on backdrop
-  modal.onclick = (e) => {
-    if (e.target === modal) {
-      hideJulesQueueModal();
-    }
-  };
-  
-  loadQueuePage();
-}
-
-export function hideJulesQueueModal() {
-  const modal = document.getElementById('julesQueueModal');
-  if (modal) modal.setAttribute('style', 'display:none !important;');
-}
-
-let queueCache = [];
-
-export function renderQueueListDirectly(items) {
-  queueCache = items;
-  renderQueueList(items);
-}
-
-export function attachQueueHandlers() {
-  attachQueueModalHandlers();
-}
-
-async function loadQueuePage() {
-  const user = window.auth?.currentUser;
-  const listDiv = document.getElementById('allQueueList');
-  if (!user) {
-    listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Please sign in to view your queue.</div>';
-    return;
-  }
-
-  try {
-    // Check cache first
-    let items = getCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
-    
-    if (!items) {
-      listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Loading queue...</div>';
-      items = await listJulesQueue(user.uid);
-      setCache(CACHE_KEYS.QUEUE_ITEMS, items, user.uid);
-    }
-    
-    queueCache = items;
-    renderQueueList(items);
-    attachQueueModalHandlers();
-  } catch (err) {
-    listDiv.innerHTML = `<div class="panel text-center pad-xl">Failed to load queue: ${err.message}</div>`;
-  }
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-function renderQueueList(items) {
-  const listDiv = document.getElementById('allQueueList');
-  if (!listDiv) return;
-  if (!items || items.length === 0) {
-    listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">No queued items.</div>';
-    return;
-  }
-
-  listDiv.innerHTML = items.map(item => {
-    const created = item.createdAt ? new Date(item.createdAt.seconds ? item.createdAt.seconds * 1000 : item.createdAt).toLocaleString() : 'Unknown';
-    const status = item.status || 'pending';
-    const remainingCount = Array.isArray(item.remaining) ? item.remaining.length : 0;
-    
-    if (item.type === 'subtasks' && Array.isArray(item.remaining) && item.remaining.length > 0) {
-      const subtasksHtml = item.remaining.map((subtask, index) => {
-        const preview = (subtask.fullContent || '').substring(0, 150);
-        return `
-          <div class="queue-subtask">
-            <div class="queue-subtask-index">
-              <input class="subtask-checkbox" type="checkbox" data-docid="${item.id}" data-index="${index}" />
-            </div>
-            <div class="queue-subtask-content">
-              <div class="queue-subtask-meta">Subtask ${index + 1} of ${item.remaining.length}</div>
-              <div class="queue-subtask-text">${escapeHtml(preview)}${preview.length >= 150 ? '...' : ''}</div>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      const repoDisplay = item.sourceId ? `<div class="queue-repo">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
-      
-      return `
-        <div class="queue-card queue-item" data-docid="${item.id}">
-          <div class="queue-row">
-            <div class="queue-checkbox-col">
-              <input class="queue-checkbox" type="checkbox" data-docid="${item.id}" />
-            </div>
-            <div class="queue-content">
-              <div class="queue-title">
-                Subtasks Batch <span class="queue-status">${status}</span>
-                <span class="queue-status">(${remainingCount} remaining)</span>
-              </div>
-              <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
-              ${repoDisplay}
-            </div>
-          </div>
-          <div class="queue-subtasks">
-            ${subtasksHtml}
-          </div>
-        </div>
-      `;
-    }
-
-    const promptPreview = (item.prompt || '').substring(0, 200);
-    const repoDisplay = item.sourceId ? `<div class="queue-repo">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
-    
-    return `
-      <div class="queue-card queue-item" data-docid="${item.id}">
-        <div class="queue-row">
-          <div class="queue-checkbox-col">
-            <input class="queue-checkbox" type="checkbox" data-docid="${item.id}" />
-          </div>
-          <div class="queue-content">
-            <div class="queue-title">
-              Single Prompt <span class="queue-status">${status}</span>
-            </div>
-            <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
-            ${repoDisplay}
-            <div class="queue-prompt">${escapeHtml(promptPreview)}${promptPreview.length >= 200 ? '...' : ''}</div>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-async function deleteSelectedSubtasks(docId, indices) {
-  const user = window.auth?.currentUser;
-  if (!user) return;
-
-  const item = queueCache.find(i => i.id === docId);
-  if (!item || !Array.isArray(item.remaining)) return;
-
-  const sortedIndices = indices.sort((a, b) => b - a);
-  const newRemaining = item.remaining.slice();
-  
-  for (const index of sortedIndices) {
-    if (index >= 0 && index < newRemaining.length) {
-      newRemaining.splice(index, 1);
-    }
-  }
-
-  if (newRemaining.length === 0) {
-    await deleteFromJulesQueue(user.uid, docId);
-  } else {
-    await updateJulesQueueItem(user.uid, docId, {
-      remaining: newRemaining,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  }
-}
-
-async function runSelectedSubtasks(docId, indices, suppressPopups = false, openInBackground = false) {
-  const user = window.auth?.currentUser;
-  if (!user) return;
-
-  const item = queueCache.find(i => i.id === docId);
-  if (!item || !Array.isArray(item.remaining)) return;
-
-  const sortedIndices = indices.sort((a, b) => a - b);
-  const toRun = sortedIndices.map(i => item.remaining[i]).filter(Boolean);
-
-  for (const subtask of toRun) {
-    try {
-      const title = extractTitleFromPrompt(subtask.fullContent);
-      const sessionUrl = await callRunJulesFunction(subtask.fullContent, item.sourceId, item.branch || 'master', title);
-      if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
-        if (openInBackground) {
-          openUrlInBackground(sessionUrl);
-        } else {
-          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-        }
-      }
-      await new Promise(r => setTimeout(r, 800));
-    } catch (err) {
-      statusBar.showMessage(`Error running subtask: ${err.message}`, { timeout: 6000 });
-      throw err;
-    }
-  }
-
-  await deleteSelectedSubtasks(docId, indices);
-}
-
-function attachQueueModalHandlers() {
-  const selectAll = document.getElementById('queueSelectAll');
-  const runBtn = document.getElementById('queueRunBtn');
-  const deleteBtn = document.getElementById('queueDeleteBtn');
-  const closeBtn = document.getElementById('closeQueueBtn');
-
-  if (selectAll) {
-    selectAll.onclick = () => {
-      const checked = selectAll.checked;
-      document.querySelectorAll('.queue-checkbox').forEach(cb => cb.checked = checked);
-      document.querySelectorAll('.subtask-checkbox').forEach(cb => cb.checked = checked);
-    };
-  }
-
-  document.querySelectorAll('.queue-checkbox').forEach(queueCb => {
-    queueCb.onclick = (e) => {
-      e.stopPropagation();
-      const docId = queueCb.dataset.docid;
-      const checked = queueCb.checked;
-      document.querySelectorAll(`.subtask-checkbox[data-docid="${docId}"]`).forEach(subtaskCb => {
-        subtaskCb.checked = checked;
-      });
-    };
-  });
-
-  const runHandler = async () => { await runSelectedQueueItems(); };
-  const deleteHandler = async () => { await deleteSelectedQueueItems(); };
-
-  if (runBtn) runBtn.onclick = runHandler;
-  if (deleteBtn) deleteBtn.onclick = deleteHandler;
-  if (closeBtn) closeBtn.onclick = hideJulesQueueModal;
-}
-
-function getSelectedQueueIds() {
-  const queueSelections = [];
-  const subtaskSelections = {};
-  
-  document.querySelectorAll('.queue-checkbox:checked').forEach(cb => {
-    queueSelections.push(cb.dataset.docid);
-  });
-  
-  document.querySelectorAll('.subtask-checkbox:checked').forEach(cb => {
-    const docId = cb.dataset.docid;
-    const index = parseInt(cb.dataset.index);
-    if (!subtaskSelections[docId]) {
-      subtaskSelections[docId] = [];
-    }
-    subtaskSelections[docId].push(index);
-  });
-  
-  return { queueSelections, subtaskSelections };
-}
-
-async function deleteSelectedQueueItems() {
-  const user = window.auth?.currentUser;
-  if (!user) { alert('Not signed in'); return; }
-  
-  const { queueSelections, subtaskSelections } = getSelectedQueueIds();
-  
-  if (queueSelections.length === 0 && Object.keys(subtaskSelections).length === 0) {
-    alert('No items selected');
-    return;
-  }
-  
-  const totalCount = queueSelections.length + Object.values(subtaskSelections).reduce((sum, arr) => sum + arr.length, 0);
-  if (!confirm(`Delete ${totalCount} selected item(s)?`)) return;
-  
-  try {
-    for (const id of queueSelections) {
-      await deleteFromJulesQueue(user.uid, id);
-    }
-    
-    for (const [docId, indices] of Object.entries(subtaskSelections)) {
-      if (queueSelections.includes(docId)) continue;
-      
-      await deleteSelectedSubtasks(docId, indices);
-    }
-    
-    alert('Deleted selected items');
-    await loadQueuePage();
-  } catch (err) {
-    alert('Failed to delete selected items: ' + err.message);
-  }
-}
-
-function sortByCreatedAt(ids) {
-  return ids.slice().sort((a, b) => {
-    const itemA = queueCache.find(i => i.id === a);
-    const itemB = queueCache.find(i => i.id === b);
-    return (itemA?.createdAt?.seconds || 0) - (itemB?.createdAt?.seconds || 0);
-  });
-}
-
-async function runSelectedQueueItems() {
-  const user = window.auth?.currentUser;
-  if (!user) { alert('Not signed in'); return; }
-  
-  const { queueSelections, subtaskSelections } = getSelectedQueueIds();
-  
-  if (queueSelections.length === 0 && Object.keys(subtaskSelections).length === 0) {
-    alert('No items selected');
-    return;
-  }
-
-  const suppressPopups = document.getElementById('queueSuppressPopupsCheckbox')?.checked || false;
-  const openInBackground = document.getElementById('queueOpenInBackgroundCheckbox')?.checked || false;
-  const pauseBtn = document.getElementById('queuePauseBtn');
-  let paused = false;
-  if (pauseBtn) {
-    pauseBtn.disabled = false;
-    pauseBtn.onclick = () => {
-      paused = true;
-      pauseBtn.disabled = true;
-      statusBar.showMessage('Pausing queue processing after the current subtask', { timeout: 4000 });
-    };
-  }
-
-  statusBar.showMessage('Processing queue...', { timeout: 0 });
-  statusBar.setAction('Pause', () => {
-    paused = true;
-    statusBar.showMessage('Pausing after current subtask', { timeout: 3000 });
-    statusBar.clearAction();
-    if (pauseBtn) pauseBtn.disabled = true;
-  });
-
-  const sortedSubtaskEntries = Object.entries(subtaskSelections).sort(([a], [b]) => 
-    (queueCache.find(i => i.id === a)?.createdAt?.seconds || 0) - (queueCache.find(i => i.id === b)?.createdAt?.seconds || 0)
-  );
-
-  for (const [docId, indices] of sortedSubtaskEntries) {
-    if (paused) break;
-    if (queueSelections.includes(docId)) continue;
-    
-    await runSelectedSubtasks(docId, indices.slice().sort((a, b) => a - b), suppressPopups, openInBackground);
-  }
-  
-  for (const id of sortByCreatedAt(queueSelections)) {
-    if (paused) break;
-    const item = queueCache.find(i => i.id === id);
-    if (!item) continue;
-
-    try {
-      if (item.type === 'single') {
-        const title = extractTitleFromPrompt(item.prompt || '');
-        const sessionUrl = await callRunJulesFunction(item.prompt || '', item.sourceId, item.branch || 'master', title);
-        if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
-          if (openInBackground) {
-            openUrlInBackground(sessionUrl);
-          } else {
-            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-          }
-        }
-        await deleteFromJulesQueue(user.uid, id);
-      } else if (item.type === 'subtasks') {
-        let remaining = Array.isArray(item.remaining) ? item.remaining.slice() : [];
-
-        const initialCount = remaining.length;
-        while (remaining.length > 0) {
-          if (paused) {
-            try {
-              await updateJulesQueueItem(user.uid, id, {
-                remaining,
-                status: 'paused',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
-            } catch (e) {
-              console.warn('Failed to persist paused state for queue item', id, e.message || e);
-            }
-            statusBar.showMessage('Paused — progress saved', { timeout: 3000 });
-            statusBar.clearProgress();
-            statusBar.clearAction();
-            await loadQueuePage();
-            return;
-          }
-
-          const s = remaining[0];
-          try {
-            const title = extractTitleFromPrompt(s.fullContent);
-            const sessionUrl = await callRunJulesFunction(s.fullContent, item.sourceId, item.branch || 'master', title);
-            if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
-              if (openInBackground) {
-                openUrlInBackground(sessionUrl);
-              } else {
-                window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-              }
-            }
-
-            // remove the completed subtask from remaining
-            remaining.shift();
-
-            // persist progress after each successful subtask
-            try {
-              await updateJulesQueueItem(user.uid, id, {
-                remaining,
-                status: remaining.length === 0 ? 'done' : 'in-progress',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
-            } catch (e) {
-              console.warn('Failed to persist progress for queue item', id, e.message || e);
-            }
-
-            // update status bar progress
-            try {
-              const done = initialCount - remaining.length;
-              const percent = initialCount > 0 ? Math.round((done / initialCount) * 100) : 100;
-              statusBar.setProgress(`${done}/${initialCount}`, percent);
-              statusBar.showMessage(`Processing subtask ${done}/${initialCount}`, { timeout: 0 });
-            } catch (e) {}
-
-            // slight delay between subtasks
-            await new Promise(r => setTimeout(r, 800));
-          } catch (err) {
-            // If a subtask fails, persist remaining and stop processing this queued item
-            statusBar.showMessage(`Error running queued subtask: ${err.message}`, { timeout: 6000 });
-            try {
-              await updateJulesQueueItem(user.uid, id, {
-                remaining,
-                status: 'error',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
-            } catch (e) {
-              console.warn('Failed to persist error state for queue item', id, e.message || e);
-            }
-            throw err;
-          }
-        }
-
-        // all subtasks succeeded
-        await deleteFromJulesQueue(user.uid, id);
-      } else {
-        console.warn('Unknown queue item type', item.type);
-      }
-    } catch (err) {
-      // stop processing further items to avoid fast repeated failures
-      console.error('Failed running queue item', id, err);
-      await loadQueuePage();
-      return;
-    }
-  }
-
-  statusBar.showMessage('Completed running selected items', { timeout: 4000 });
-  statusBar.clearProgress();
-  statusBar.clearAction();
-  await loadQueuePage();
-}
-
-export async function callRunJulesFunction(promptText, sourceId, branch = 'master', title = '') {
-  const user = window.auth ? window.auth.currentUser : null;
-  if (!user) {
-    alert('Not logged in.');
-    return null;
-  }
-
-  if (!sourceId) {
-    throw new Error('No repository selected');
-  }
-
-  const julesBtn = document.getElementById('julesBtn');
-  const originalText = julesBtn?.textContent;
-  if (julesBtn) {
-    julesBtn.textContent = 'Running...';
-    julesBtn.disabled = true;
-  }
-
-  try {
-    const sessionUrl = await runJulesAPI(promptText, sourceId, branch, title, user);
-    
-    if (julesBtn) {
-      julesBtn.textContent = originalText;
-      julesBtn.disabled = false;
-    }
-
-    return sessionUrl;
-  } catch (error) {
-    if (julesBtn) {
-      julesBtn.textContent = '⚡ Try in Jules';
-      julesBtn.disabled = false;
-    }
-    throw error;
-  }
-}
-
-async function runJulesAPI(promptText, sourceId, branch, title, user) {
-  const token = await user.getIdToken(true);
-  const functionUrl = 'https://runjuleshttp-n7gaasoeoq-uc.a.run.app';
-
-  const payload = { promptText: promptText || '', sourceId: sourceId, branch: branch, title: title };
-  
-  const response = await fetch(functionUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(payload)
-  });
-
-  const result = await response.json();
-  if (!response.ok) {
-    throw new Error(result.error || `HTTP ${response.status}`);
-  }
-
-  return result.sessionUrl || null;
-}
+// --- Try in Jules Handlers ---
 
 export async function handleTryInJules(promptText) {
   try {
     const user = window.auth ? window.auth.currentUser : null;
     if (!user) {
       try {
-        const { signInWithGitHub } = await import('./auth.js');
         await signInWithGitHub();
         setTimeout(() => handleTryInJulesAfterAuth(promptText), 500);
       } catch (error) {
@@ -686,6 +74,8 @@ export async function handleTryInJulesAfterAuth(promptText) {
     alert('An error occurred. Please try again.');
   }
 }
+
+// --- Key Modal ---
 
 export function showJulesKeyModal(onSave) {
   const modal = document.getElementById('julesKeyModal');
@@ -743,6 +133,86 @@ export function hideJulesKeyModal() {
   const modal = document.getElementById('julesKeyModal');
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 }
+
+export function initJulesKeyModalListeners() {
+  const keyModal = document.getElementById('julesKeyModal');
+  const envModal = document.getElementById('julesEnvModal');
+  const profileModal = document.getElementById('userProfileModal');
+  const sessionsHistoryModal = document.getElementById('julesSessionsHistoryModal');
+  const errorModal = document.getElementById('subtaskErrorModal');
+  const keyInput = document.getElementById('julesKeyInput');
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (keyModal && keyModal.style.display === 'flex') {
+        hideJulesKeyModal();
+      }
+      if (envModal && envModal.style.display === 'flex') {
+        hideJulesEnvModal();
+      }
+      const freeInputSection = document.getElementById('freeInputSection');
+      if (freeInputSection && !freeInputSection.classList.contains('hidden')) {
+        hideFreeInputForm();
+      }
+      if (profileModal && profileModal.style.display === 'flex') {
+        hideUserProfileModal();
+      }
+      if (sessionsHistoryModal && sessionsHistoryModal.style.display === 'flex') {
+        hideJulesSessionsHistoryModal();
+      }
+    }
+  });
+
+  if (keyModal) {
+    keyModal.addEventListener('click', (e) => {
+      if (e.target === keyModal) {
+        hideJulesKeyModal();
+      }
+    });
+  }
+
+  if (envModal) {
+    envModal.addEventListener('click', (e) => {
+      if (e.target === envModal) {
+        hideJulesEnvModal();
+      }
+    });
+  }
+
+  if (profileModal) {
+    profileModal.addEventListener('click', (e) => {
+      if (e.target === profileModal) {
+        hideUserProfileModal();
+      }
+    });
+  }
+
+  if (sessionsHistoryModal) {
+    sessionsHistoryModal.addEventListener('click', (e) => {
+      if (e.target === sessionsHistoryModal) {
+        hideJulesSessionsHistoryModal();
+      }
+    });
+  }
+
+  if (errorModal) {
+    errorModal.addEventListener('click', (e) => {
+      if (e.target === errorModal) {
+        e.preventDefault();
+      }
+    });
+  }
+
+  if (keyInput) {
+    keyInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('julesSaveBtn').click();
+      }
+    });
+  }
+}
+
+// --- Environment Modal ---
 
 export async function showJulesEnvModal(promptText) {
   const modal = document.getElementById('julesEnvModal');
@@ -824,6 +294,11 @@ export async function showJulesEnvModal(promptText) {
   cancelBtn.onclick = () => {
     hideJulesEnvModal();
   };
+}
+
+export function hideJulesEnvModal() {
+  const modal = document.getElementById('julesEnvModal');
+  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 }
 
 async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = false, openInBackground = false) {
@@ -930,11 +405,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
   }
 }
 
-export function hideJulesEnvModal() {
-  const modal = document.getElementById('julesEnvModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
-}
-
+// --- Subtask Error Modal ---
 
 export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
   return new Promise((resolve) => {
@@ -986,83 +457,7 @@ export function hideSubtaskErrorModal() {
   }
 }
 
-export function initJulesKeyModalListeners() {
-  const keyModal = document.getElementById('julesKeyModal');
-  const envModal = document.getElementById('julesEnvModal');
-  const profileModal = document.getElementById('userProfileModal');
-  const sessionsHistoryModal = document.getElementById('julesSessionsHistoryModal');
-  const errorModal = document.getElementById('subtaskErrorModal');
-  const keyInput = document.getElementById('julesKeyInput');
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      if (keyModal && keyModal.style.display === 'flex') {
-        hideJulesKeyModal();
-      }
-      if (envModal && envModal.style.display === 'flex') {
-        hideJulesEnvModal();
-      }
-      const freeInputSection = document.getElementById('freeInputSection');
-      if (freeInputSection && !freeInputSection.classList.contains('hidden')) {
-        hideFreeInputForm();
-      }
-      if (profileModal && profileModal.style.display === 'flex') {
-        hideUserProfileModal();
-      }
-      if (sessionsHistoryModal && sessionsHistoryModal.style.display === 'flex') {
-        hideJulesSessionsHistoryModal();
-      }
-    }
-  });
-
-  if (keyModal) {
-    keyModal.addEventListener('click', (e) => {
-      if (e.target === keyModal) {
-        hideJulesKeyModal();
-      }
-    });
-  }
-
-  if (envModal) {
-    envModal.addEventListener('click', (e) => {
-      if (e.target === envModal) {
-        hideJulesEnvModal();
-      }
-    });
-  }
-
-  if (profileModal) {
-    profileModal.addEventListener('click', (e) => {
-      if (e.target === profileModal) {
-        hideUserProfileModal();
-      }
-    });
-  }
-  
-  if (sessionsHistoryModal) {
-    sessionsHistoryModal.addEventListener('click', (e) => {
-      if (e.target === sessionsHistoryModal) {
-        hideJulesSessionsHistoryModal();
-      }
-    });
-  }
-
-  if (errorModal) {
-    errorModal.addEventListener('click', (e) => {
-      if (e.target === errorModal) {
-        e.preventDefault();
-      }
-    });
-  }
-
-  if (keyInput) {
-    keyInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('julesSaveBtn').click();
-      }
-    });
-  }
-}
+// --- User Profile Modal ---
 
 export function showUserProfileModal() {
   const modal = document.getElementById('userProfileModal');
@@ -1189,6 +584,11 @@ export function showUserProfileModal() {
       renderAllSessions(allSessionsCache);
     });
   }
+}
+
+export function hideUserProfileModal() {
+  const modal = document.getElementById('userProfileModal');
+  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
 }
 
 function attachViewAllSessionsHandler() {
@@ -1342,18 +742,131 @@ async function loadAndDisplayJulesProfile(uid) {
   }
 }
 
-export function hideUserProfileModal() {
-  const modal = document.getElementById('userProfileModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+export async function loadProfileDirectly(user) {
+  const profileUserName = document.getElementById('profileUserName');
+  const julesKeyStatus = document.getElementById('julesKeyStatus');
+  const addBtn = document.getElementById('addJulesKeyBtn');
+  const resetBtn = document.getElementById('resetJulesKeyBtn');
+  const dangerZoneSection = document.getElementById('dangerZoneSection');
+  const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
+  const julesProfileInfoSection = document.getElementById('julesProfileInfoSection');
+
+  if (profileUserName) {
+    profileUserName.textContent = user.displayName || user.email || 'Unknown User';
+  }
+
+  const hasKey = await checkJulesKey(user.uid);
+
+  if (julesKeyStatus) {
+    julesKeyStatus.textContent = hasKey ? '✓ Saved' : '✗ Not saved';
+    julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+  }
+
+  if (hasKey) {
+    if (addBtn) addBtn.style.display = 'none';
+    if (dangerZoneSection) dangerZoneSection.style.display = 'block';
+    if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'block';
+
+    await loadAndDisplayJulesProfile(user.uid);
+  } else {
+    if (addBtn) addBtn.style.display = 'block';
+    if (dangerZoneSection) dangerZoneSection.style.display = 'none';
+    if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+  }
+
+  // Attach event handlers
+  if (addBtn) {
+    addBtn.onclick = () => {
+      showJulesKeyModal(() => {
+        setTimeout(() => loadProfileDirectly(user), 500);
+      });
+    };
+  }
+
+  if (resetBtn) {
+    resetBtn.onclick = async () => {
+      if (!confirm('This will delete your stored Jules API key. You\'ll need to enter a new one next time.')) {
+        return;
+      }
+      try {
+        resetBtn.disabled = true;
+        resetBtn.textContent = 'Deleting...';
+        const deleted = await deleteStoredJulesKey(user.uid);
+        if (deleted) {
+          if (julesKeyStatus) {
+            julesKeyStatus.textContent = '✗ Not saved';
+            julesKeyStatus.style.color = 'var(--muted)';
+          }
+          resetBtn.textContent = '🗑️ Delete Jules API Key';
+          resetBtn.disabled = false;
+
+          if (addBtn) addBtn.style.display = 'block';
+          if (dangerZoneSection) dangerZoneSection.style.display = 'none';
+          if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+
+          alert('Jules API key has been deleted. You can enter a new one next time.');
+        } else {
+          throw new Error('Failed to delete key');
+        }
+      } catch (error) {
+        alert('Failed to reset API key: ' + error.message);
+        resetBtn.textContent = '🗑️ Delete Jules API Key';
+        resetBtn.disabled = false;
+      }
+    };
+  }
+
+  if (loadJulesInfoBtn) {
+    loadJulesInfoBtn.onclick = async () => {
+      await loadAndDisplayJulesProfile(user.uid);
+      attachViewAllSessionsHandler();
+      attachViewQueueHandler();
+    };
+  }
+
+  attachViewAllSessionsHandler();
+  attachViewQueueHandler();
 }
+
+export async function loadJulesAccountInfo(user) {
+  const julesProfileInfoSection = document.getElementById('julesProfileInfoSection');
+  const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
+
+  // Check if user has Jules API key
+  const hasKey = await checkJulesKey(user.uid);
+
+  if (!hasKey) {
+    if (julesProfileInfoSection) {
+      julesProfileInfoSection.style.display = 'none';
+    }
+    return;
+  }
+
+  if (julesProfileInfoSection) {
+    julesProfileInfoSection.style.display = 'block';
+  }
+
+  await loadAndDisplayJulesProfile(user.uid);
+
+  if (loadJulesInfoBtn) {
+    loadJulesInfoBtn.onclick = async () => {
+      await loadAndDisplayJulesProfile(user.uid);
+      attachViewAllSessionsHandler();
+      attachViewQueueHandler();
+    };
+  }
+
+  attachViewAllSessionsHandler();
+  attachViewQueueHandler();
+}
+
+// --- Sessions History Modal ---
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
 
 export function showJulesSessionsHistoryModal() {
   const modal = document.getElementById('julesSessionsHistoryModal');
-  const allSessionsList = document.getElementById('allSessionsList');
-  const loadMoreSection = document.getElementById('sessionsLoadMore');
   const searchInput = document.getElementById('sessionSearchInput');
   
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
@@ -1382,7 +895,6 @@ async function loadSessionsPage() {
     loadMoreBtn.disabled = true;
     loadMoreBtn.textContent = 'Loading...';
     
-    const { getDecryptedJulesKey } = await import('./jules-api.js');
     const apiKey = await getDecryptedJulesKey(user.uid);
     if (!apiKey) {
       throw new Error('Jules API key not found');
@@ -1495,12 +1007,13 @@ function renderAllSessions(sessions) {
   }).filter(html => html).join('');
 }
 
+// --- Free Input Modal ---
+
 export function showFreeInputModal() {
   const user = window.auth ? window.auth.currentUser : null;
   if (!user) {
     (async () => {
       try {
-        const { signInWithGitHub } = await import('./auth.js');
         await signInWithGitHub();
         setTimeout(() => showFreeInputModal(), 500);
       } catch (error) {
@@ -1858,7 +1371,7 @@ export function hideFreeInputForm() {
   empty.classList.remove('hidden');
 }
 
-async function populateFreeInputRepoSelection() {
+export async function populateFreeInputRepoSelection() {
   // Clear selections
   lastSelectedSourceId = null;
   lastSelectedBranch = null;
@@ -1912,14 +1425,18 @@ async function populateFreeInputRepoSelection() {
   await repoSelector.initialize();
   branchSelector.initialize(null, null);
 }
-window.populateFreeInputRepoSelection = populateFreeInputRepoSelection;
 
 // Branch selection is now handled by BranchSelector class in populateFreeInputRepoSelection
-async function populateFreeInputBranchSelection() {
+export async function populateFreeInputBranchSelection() {
   // This function is deprecated - BranchSelector is initialized in populateFreeInputRepoSelection
   // Keeping as stub for backward compatibility
 }
+
+// Make globally available for inline onclicks if any
+window.populateFreeInputRepoSelection = populateFreeInputRepoSelection;
 window.populateFreeInputBranchSelection = populateFreeInputBranchSelection;
+
+// --- Subtask Split Modal ---
 
 let currentFullPrompt = '';
 let currentSubtasks = [];
@@ -2385,122 +1902,4 @@ async function submitSubtasks(subtasks) {
     `Successful: ${successCount}/${totalCount}\n` +
     `Skipped: ${skippedCount}/${totalCount}`;
   alert(summary);
-}
-
-export async function loadProfileDirectly(user) {
-  const profileUserName = document.getElementById('profileUserName');
-  const julesKeyStatus = document.getElementById('julesKeyStatus');
-  const addBtn = document.getElementById('addJulesKeyBtn');
-  const resetBtn = document.getElementById('resetJulesKeyBtn');
-  const dangerZoneSection = document.getElementById('dangerZoneSection');
-  const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
-  const julesProfileInfoSection = document.getElementById('julesProfileInfoSection');
-
-  if (profileUserName) {
-    profileUserName.textContent = user.displayName || user.email || 'Unknown User';
-  }
-
-  const hasKey = await checkJulesKey(user.uid);
-  
-  if (julesKeyStatus) {
-    julesKeyStatus.textContent = hasKey ? '✓ Saved' : '✗ Not saved';
-    julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
-  }
-  
-  if (hasKey) {
-    if (addBtn) addBtn.style.display = 'none';
-    if (dangerZoneSection) dangerZoneSection.style.display = 'block';
-    if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'block';
-    
-    await loadAndDisplayJulesProfile(user.uid);
-  } else {
-    if (addBtn) addBtn.style.display = 'block';
-    if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-    if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
-  }
-
-  // Attach event handlers
-  if (addBtn) {
-    addBtn.onclick = () => {
-      showJulesKeyModal(() => {
-        setTimeout(() => loadProfileDirectly(user), 500);
-      });
-    };
-  }
-
-  if (resetBtn) {
-    resetBtn.onclick = async () => {
-      if (!confirm('This will delete your stored Jules API key. You\'ll need to enter a new one next time.')) {
-        return;
-      }
-      try {
-        resetBtn.disabled = true;
-        resetBtn.textContent = 'Deleting...';
-        const deleted = await deleteStoredJulesKey(user.uid);
-        if (deleted) {
-          if (julesKeyStatus) {
-            julesKeyStatus.textContent = '✗ Not saved';
-            julesKeyStatus.style.color = 'var(--muted)';
-          }
-          resetBtn.textContent = '🗑️ Delete Jules API Key';
-          resetBtn.disabled = false;
-          
-          if (addBtn) addBtn.style.display = 'block';
-          if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-          if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
-          
-          alert('Jules API key has been deleted. You can enter a new one next time.');
-        } else {
-          throw new Error('Failed to delete key');
-        }
-      } catch (error) {
-        alert('Failed to reset API key: ' + error.message);
-        resetBtn.textContent = '🗑️ Delete Jules API Key';
-        resetBtn.disabled = false;
-      }
-    };
-  }
-
-  if (loadJulesInfoBtn) {
-    loadJulesInfoBtn.onclick = async () => {
-      await loadAndDisplayJulesProfile(user.uid);
-      attachViewAllSessionsHandler();
-      attachViewQueueHandler();
-    };
-  }
-
-  attachViewAllSessionsHandler();
-  attachViewQueueHandler();
-}
-
-export async function loadJulesAccountInfo(user) {
-  const julesProfileInfoSection = document.getElementById('julesProfileInfoSection');
-  const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
-
-  // Check if user has Jules API key
-  const hasKey = await checkJulesKey(user.uid);
-  
-  if (!hasKey) {
-    if (julesProfileInfoSection) {
-      julesProfileInfoSection.style.display = 'none';
-    }
-    return;
-  }
-
-  if (julesProfileInfoSection) {
-    julesProfileInfoSection.style.display = 'block';
-  }
-
-  await loadAndDisplayJulesProfile(user.uid);
-
-  if (loadJulesInfoBtn) {
-    loadJulesInfoBtn.onclick = async () => {
-      await loadAndDisplayJulesProfile(user.uid);
-      attachViewAllSessionsHandler();
-      attachViewQueueHandler();
-    };
-  }
-
-  attachViewAllSessionsHandler();
-  attachViewQueueHandler();
 }

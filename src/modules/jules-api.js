@@ -2,36 +2,31 @@
 // Provides access to the Jules API for managing sources, sessions, and activities
 
 import { JULES_API_BASE, ERRORS } from '../utils/constants.js';
+import { getDecryptedJulesKey } from './jules-keys.js';
 
-export async function getDecryptedJulesKey(uid) {
-  try {
-    if (!window.db) {
-      return null;
-    }
+export { getDecryptedJulesKey }; // Re-export for convenience/backward compatibility if needed, but mainly used internally here or by others
 
-    const doc = await window.db.collection('julesKeys').doc(uid).get();
-    if (!doc.exists) {
-      return null;
-    }
+export function openUrlInBackground(url) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  a.style.display = 'none';
+  document.body.appendChild(a);
 
-    const { key: encrypted } = doc.data();
-    if (!encrypted) return null;
+  const evt = new MouseEvent('click', {
+    view: window,
+    bubbles: true,
+    cancelable: true,
+    ctrlKey: true,
+    metaKey: true
+  });
 
-    // Decrypt using same method as encryption
-    const paddedUid = (uid + '\0'.repeat(32)).slice(0, 32);
-    const keyData = new TextEncoder().encode(paddedUid);
-    const key = await window.crypto.subtle.importKey('raw', keyData, { name: 'AES-GCM' }, false, ['decrypt']);
+  a.dispatchEvent(evt);
 
-    const ivString = uid.slice(0, 12).padEnd(12, '0');
-    const iv = new TextEncoder().encode(ivString).slice(0, 12);
-
-    const ciphertextData = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
-    const plaintext = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertextData);
-
-    return new TextDecoder().decode(plaintext);
-  } catch (error) {
-    return null;
-  }
+  setTimeout(() => {
+    document.body.removeChild(a);
+  }, 100);
 }
 
 function createJulesHeaders(apiKey) {
@@ -231,4 +226,63 @@ export async function loadJulesProfileInfo(uid) {
   } catch (error) {
     throw error;
   }
+}
+
+export async function callRunJulesFunction(promptText, sourceId, branch = 'master', title = '') {
+  const user = window.auth ? window.auth.currentUser : null;
+  if (!user) {
+    alert('Not logged in.');
+    return null;
+  }
+
+  if (!sourceId) {
+    throw new Error('No repository selected');
+  }
+
+  const julesBtn = document.getElementById('julesBtn');
+  const originalText = julesBtn?.textContent;
+  if (julesBtn) {
+    julesBtn.textContent = 'Running...';
+    julesBtn.disabled = true;
+  }
+
+  try {
+    const sessionUrl = await runJulesAPI(promptText, sourceId, branch, title, user);
+
+    if (julesBtn) {
+      julesBtn.textContent = originalText;
+      julesBtn.disabled = false;
+    }
+
+    return sessionUrl;
+  } catch (error) {
+    if (julesBtn) {
+      julesBtn.textContent = '⚡ Try in Jules';
+      julesBtn.disabled = false;
+    }
+    throw error;
+  }
+}
+
+export async function runJulesAPI(promptText, sourceId, branch, title, user) {
+  const token = await user.getIdToken(true);
+  const functionUrl = 'https://runjuleshttp-n7gaasoeoq-uc.a.run.app';
+
+  const payload = { promptText: promptText || '', sourceId: sourceId, branch: branch, title: title };
+
+  const response = await fetch(functionUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.error || `HTTP ${response.status}`);
+  }
+
+  return result.sessionUrl || null;
 }
