@@ -1,11 +1,12 @@
 /* Jules Profile Info Styles */
 #julesProfileInfoSection { animation: fadeIn 0.3s ease-in; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-#julesSourcesList::-webkit-scrollbar, #julesSessionsList::-webkit-scrollbar { width: 6px; }
-#julesSourcesList::-webkit-scrollbar-track, #julesSessionsList::-webkit-scrollbar-track { background: transparent; }
-#julesSourcesList::-webkit-scrollbar-thumb, #julesSessionsList::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-#julesSourcesList::-webkit-scrollbar-thumb:hover, #julesSessionsList::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-#julesSourcesList a, #julesSessionsList a { color: var(--accent); text-decoration: none; transition: opacity 0.2s ease; }
-#julesSourcesList a:hover, #julesSessionsList a:hover { opacity: 0.8; text-decoration: underline; }
+.jules-list::-webkit-scrollbar { width: 6px; }
+.jules-list::-webkit-scrollbar-track { background: transparent; }
+.jules-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.jules-list::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+.jules-list a { color: var(--accent); text-decoration: none; transition: opacity 0.2s ease; }
+.jules-list a:hover { opacity: 0.8; text-decoration: underline; }
+#julesSourcesList, #julesSessionsList { }
 #loadJulesInfoBtn:hover { background: rgba(77, 217, 255, 0.1); border-color: var(--accent); }
 #loadJulesInfoBtn:disabled { opacity: 0.5; cursor: not-allowed; }
