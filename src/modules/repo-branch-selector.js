@@ -118,15 +118,18 @@ export class RepoSelector {
         let currentBranch = fav.branch;
         
         if (!currentBranch) {
-          // No stored branch - verify synchronously
           if (this.branchSelector) {
             this.branchSelector.dropdownText.textContent = 'Detecting branch...';
             this.branchSelector.dropdownBtn.disabled = true;
           }
           currentBranch = await this.verifyDefaultBranch(fav);
+          if (this.branchSelector) {
+            this.branchSelector.initialize(fav.id, currentBranch);
+          }
         } else {
-          // Branch already stored - use it and verify in background
-          this.verifyDefaultBranch(fav, true);
+          this.verifyDefaultBranch(fav, true).catch((error) => {
+            console.error('Failed to verify default branch in background:', error);
+          });
         }
         
         if (this.onSelect) {
@@ -295,7 +298,7 @@ export class RepoSelector {
         this.favorites = updatedFavorites;
         
         if (updateUI && this.selectedSourceId === favorite.id) {
-          if (this.branchSelector) {
+          if (this.branchSelector && !this.branchSelector.dropdownBtn.disabled) {
             this.branchSelector.initialize(favorite.id, defaultBranch);
           }
           if (this.onSelect) {
