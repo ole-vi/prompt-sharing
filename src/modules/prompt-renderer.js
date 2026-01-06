@@ -84,7 +84,7 @@ export function initPromptRenderer() {
   }
   if (freeInputBtn) {
     freeInputBtn.addEventListener('click', async () => {
-      const { showFreeInputModal } = await import('./jules.js');
+      const { showFreeInputModal } = await import('./jules-free-input.js');
       showFreeInputModal();
     });
   }
@@ -151,7 +151,7 @@ export function initPromptRenderer() {
     currentPromptText = null;
     updateActiveItem();
     
-    const { showFreeInputForm } = await import('./jules.js');
+    const { showFreeInputForm } = await import('./jules-free-input.js');
     showFreeInputForm();
   });
 }

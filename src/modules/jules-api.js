@@ -232,3 +232,106 @@ export async function loadJulesProfileInfo(uid) {
     throw error;
   }
 }
+
+export async function callRunJulesFunction(promptText, sourceId, branch = 'master', title = '') {
+  const user = window.auth ? window.auth.currentUser : null;
+  if (!user) {
+    alert('Not logged in.');
+    return null;
+  }
+
+  if (!sourceId) {
+    throw new Error('No repository selected');
+  }
+
+  const julesBtn = document.getElementById('julesBtn');
+  const originalText = julesBtn?.textContent;
+  if (julesBtn) {
+    julesBtn.textContent = 'Running...';
+    julesBtn.disabled = true;
+  }
+
+  try {
+    const sessionUrl = await runJulesAPI(promptText, sourceId, branch, title, user);
+    
+    if (julesBtn) {
+      julesBtn.textContent = originalText;
+      julesBtn.disabled = false;
+    }
+
+    return sessionUrl;
+  } catch (error) {
+    if (julesBtn) {
+      julesBtn.textContent = '⚡ Try in Jules';
+      julesBtn.disabled = false;
+    }
+    throw error;
+  }
+}
+
+async function runJulesAPI(promptText, sourceId, branch, title, user) {
+  const token = await user.getIdToken(true);
+  const functionUrl = 'https://runjuleshttp-n7gaasoeoq-uc.a.run.app';
+
+  const payload = { promptText: promptText || '', sourceId: sourceId, branch: branch, title: title };
+  
+  const response = await fetch(functionUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.error || `HTTP ${response.status}`);
+  }
+
+  return result.sessionUrl || null;
+}
+
+export async function handleTryInJules(promptText) {
+  try {
+    const user = window.auth ? window.auth.currentUser : null;
+    if (!user) {
+      try {
+        const { signInWithGitHub } = await import('./auth.js');
+        await signInWithGitHub();
+        setTimeout(() => handleTryInJulesAfterAuth(promptText), 500);
+      } catch (error) {
+        alert('Login required to use Jules.');
+      }
+      return;
+    }
+    await handleTryInJulesAfterAuth(promptText);
+  } catch (error) {
+    alert('An error occurred: ' + error.message);
+  }
+}
+
+export async function handleTryInJulesAfterAuth(promptText) {
+  const user = window.auth ? window.auth.currentUser : null;
+  if (!user) {
+    alert('Not logged in.');
+    return;
+  }
+
+  try {
+    const { checkJulesKey } = await import('./jules-keys.js');
+    const { showJulesKeyModal, showJulesEnvModal } = await import('./jules-modal.js');
+    
+    const hasKey = await checkJulesKey(user.uid);
+    
+    if (!hasKey) {
+      showJulesKeyModal(() => {
+        showJulesEnvModal(promptText);
+      });
+    } else {
+      showJulesEnvModal(promptText);
+    }
+  } catch (error) {
+    alert('An error occurred. Please try again.');
+  }
+}

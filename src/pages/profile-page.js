@@ -4,7 +4,7 @@
  */
 
 import { waitForFirebase } from '../shared-init.js';
-import { loadProfileDirectly } from '../modules/jules.js';
+import { loadProfileDirectly } from '../modules/jules-profile-modal.js';
 
 function waitForComponents() {
   if (document.querySelector('header')) {

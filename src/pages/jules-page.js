@@ -4,7 +4,9 @@
  */
 
 import { waitForFirebase } from '../shared-init.js';
-import { loadJulesAccountInfo, showJulesKeyModal, deleteStoredJulesKey, checkJulesKey } from '../modules/jules.js';
+import { loadJulesAccountInfo } from '../modules/jules-profile-modal.js';
+import { showJulesKeyModal } from '../modules/jules-modal.js';
+import { deleteStoredJulesKey, checkJulesKey } from '../modules/jules-keys.js';
 
 function waitForComponents() {
   if (document.querySelector('header')) {

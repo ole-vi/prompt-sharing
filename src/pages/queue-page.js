@@ -4,7 +4,7 @@
  */
 
 import { setupMutualExclusivity } from '../utils/checkbox-helpers.js';
-import { attachQueueHandlers } from '../modules/jules.js';
+import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly } from '../modules/jules-queue.js';
 
 // Initialize checkbox mutual exclusivity
 setupMutualExclusivity('queueSuppressPopupsCheckbox', 'queueOpenInBackgroundCheckbox');
@@ -60,16 +60,10 @@ async function loadQueue() {
 
   try {
     listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Loading queue...</div>';
-    
-    // Import the jules module to access queue functions
-    const julesModule = await import('../modules/jules.js');
-    
-    // Get the queue items
-    const items = await julesModule.listJulesQueue(user.uid);
-    
-    // Render the queue directly on the page
-    julesModule.renderQueueListDirectly(items);
-    julesModule.attachQueueHandlers();
+
+    const items = await listJulesQueue(user.uid);
+    renderQueueListDirectly(items);
+    attachQueueHandlers();
   } catch (err) {
     console.error('Queue loading error:', err);
     listDiv.innerHTML = `<div class="panel text-center pad-xl">Failed to load queue: ${err.message}</div>`;
