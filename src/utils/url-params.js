@@ -20,7 +20,8 @@ export function parseParams() {
     const p = new URLSearchParams(src);
     for (const [k, v] of p.entries()) {
       const key = k.toLowerCase();
-      const value = decodeURIComponent(v);
+      // URLSearchParams values are already decoded.
+      const value = v;
 
       const validator = validationMap[key];
       if (validator) {

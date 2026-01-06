@@ -17,8 +17,8 @@ export function validateRepo(repo) {
     return false;
   }
   // Alphanumeric characters, hyphens, underscores, and periods
-  // Cannot be '.' or '..', cannot end with '.git'
-  const validRepoRegex = /^(?!^\.$)(?!^\.\.$)(?!.*\.git$)[a-zA-Z0-9_.-]+$/;
+  // Cannot be '.' or '..'
+  const validRepoRegex = /^(?!^\.$)(?!^\.\.$)[a-zA-Z0-9_.-]+$/;
   return validRepoRegex.test(repo);
 }
 

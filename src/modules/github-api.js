@@ -19,8 +19,16 @@ export async function fetchJSON(url) {
   }
 }
 
+function encodePathPreservingSlashes(path) {
+  return String(path)
+    .split('/')
+    .map(segment => encodeURIComponent(segment))
+    .join('/');
+}
+
 export async function listPromptsViaContents(owner, repo, branch, path = 'prompts') {
-  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${path}?ref=${encodeURIComponent(branch)}&ts=${Date.now()}`;
+  const encodedPath = encodePathPreservingSlashes(path);
+  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}&ts=${Date.now()}`;
   const entries = await fetchJSON(url);
   if (!Array.isArray(entries)) return [];
 
@@ -56,7 +64,8 @@ export async function listPromptsViaTrees(owner, repo, branch, path = 'prompts')
 }
 
 export async function fetchRawFile(owner, repo, branch, path) {
-  const url = `https://raw.githubusercontent.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${encodeURIComponent(branch)}/${path}?ts=${Date.now()}`;
+  const encodedPath = encodePathPreservingSlashes(path);
+  const url = `https://raw.githubusercontent.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${encodeURIComponent(branch)}/${encodedPath}?ts=${Date.now()}`;
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
   return res.text();
