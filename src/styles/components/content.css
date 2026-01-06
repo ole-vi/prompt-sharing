@@ -115,7 +115,6 @@ a:hover { text-decoration: underline; }
 .min-h-400 { min-height:400px; }
 
 /* Display utilities */
-.hidden { display:none !important; }
 .flex-1 { flex:1; }
 
 /* Layout overrides for single-column pages */
