@@ -164,25 +164,25 @@ async function openEditQueueModal(docId) {
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label">Type:</label>
+            <label class="form-section-label">Type:</label>
             <div id="editQueueType" class="form-text"></div>
           </div>
           <div class="form-group" id="editPromptGroup">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <label class="form-label" style="margin-bottom: 0;">Prompt:</label>
+              <label class="form-section-label" style="margin-bottom: 0;">Prompt:</label>
               <button type="button" id="convertToSubtasksBtn" class="btn btn-secondary" style="font-size: 12px; padding: 4px 12px;">Split into Subtasks</button>
             </div>
             <textarea id="editQueuePrompt" class="form-control" rows="10" style="font-family: monospace; font-size: 13px;"></textarea>
           </div>
           <div class="form-group" id="editSubtasksGroup" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <label class="form-label" style="margin-bottom: 0;">Subtasks:</label>
+              <label class="form-section-label" style="margin-bottom: 0;">Subtasks:</label>
               <button type="button" id="convertToSingleBtn" class="btn btn-secondary" style="font-size: 12px; padding: 4px 12px; display: none;">Convert to Single Prompt</button>
             </div>
             <div id="editQueueSubtasksList"></div>
           </div>
           <div class="form-group">
-            <label class="form-label">Repository:</label>
+            <label class="form-section-label">Repository:</label>
             <div id="editQueueRepoDropdown" class="custom-dropdown">
               <button id="editQueueRepoDropdownBtn" class="custom-dropdown-btn w-full" type="button">
                 <span id="editQueueRepoDropdownText">Loading...</span>
@@ -192,7 +192,7 @@ async function openEditQueueModal(docId) {
             </div>
           </div>
           <div class="form-group space-below">
-            <label class="form-label">Branch:</label>
+            <label class="form-section-label">Branch:</label>
             <div id="editQueueBranchDropdown" class="custom-dropdown">
               <button id="editQueueBranchDropdownBtn" class="custom-dropdown-btn w-full" type="button">
                 <span id="editQueueBranchDropdownText">Loading branches...</span>

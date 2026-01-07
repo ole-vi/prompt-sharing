@@ -44,7 +44,9 @@
 /* Form elements in modals */
 .form-group { margin-bottom: 16px; }
 .form-group.space-below { margin-bottom: 24px; }
+.form-section-label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600; color: var(--text); text-transform: uppercase; letter-spacing: 0.5px; }
 .form-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: var(--text); }
+.subtask-item-header .form-label { font-size: 12px; font-weight: 400; color: var(--muted); }
 .form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: #12162a; color: var(--text); outline: none; box-sizing: border-box; font-size: 14px; font-family: inherit; }
 .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(77, 217, 255, 0.1); }
 .form-control:read-only { background: #0a0d1a; color: var(--muted); cursor: not-allowed; }
