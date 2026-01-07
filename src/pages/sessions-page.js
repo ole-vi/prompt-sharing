@@ -19,7 +19,7 @@ function waitForComponents() {
 }
 
 async function loadSessionsPage() {
-  const user = window.auth?.currentUser;
+  const user = window.promptSync.firebase.auth?.currentUser;
   if (!user) return;
   
   const allSessionsList = document.getElementById('allSessionsList');
@@ -134,7 +134,7 @@ function renderAllSessions(sessions) {
 
 async function loadSessions() {
   if (isSessionsLoading) return;
-  const user = window.auth?.currentUser;
+  const user = window.promptSync.firebase.auth?.currentUser;
   
   const loadingDiv = document.getElementById('sessionsLoading');
   const notSignedInDiv = document.getElementById('sessionsNotSignedIn');
@@ -202,8 +202,8 @@ async function initApp() {
     }
 
     // Refresh sessions when auth state changes (e.g., after sign-in)
-    if (window.auth && typeof window.auth.onAuthStateChanged === 'function') {
-      window.auth.onAuthStateChanged(() => {
+    if (window.promptSync.firebase.auth && typeof window.promptSync.firebase.auth.onAuthStateChanged === 'function') {
+      window.promptSync.firebase.auth.onAuthStateChanged(() => {
         loadSessions();
       });
     }

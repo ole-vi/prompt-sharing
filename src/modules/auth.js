@@ -3,8 +3,8 @@
 let currentUser = null;
 
 export function getCurrentUser() {
-  if (window.auth?.currentUser && window.auth.currentUser !== currentUser) {
-    currentUser = window.auth.currentUser;
+  if (window.promptSync.firebase.auth?.currentUser && window.promptSync.firebase.auth.currentUser !== currentUser) {
+    currentUser = window.promptSync.firebase.auth.currentUser;
   }
   return currentUser;
 }
@@ -15,12 +15,12 @@ export function setCurrentUser(user) {
 
 export async function signInWithGitHub() {
   try {
-    if (!window.auth) {
+    if (!window.promptSync.firebase.auth) {
       alert('Authentication not ready. Please refresh the page.');
       return;
     }
     const provider = new firebase.auth.GithubAuthProvider();
-    await window.auth.signInWithPopup(provider);
+    await window.promptSync.firebase.auth.signInWithPopup(provider);
   } catch (error) {
     console.error('Sign-in failed:', error);
     alert('Failed to sign in. Please try again.');
@@ -29,8 +29,8 @@ export async function signInWithGitHub() {
 
 export async function signOutUser() {
   try {
-    if (window.auth) {
-      await window.auth.signOut();
+    if (window.promptSync.firebase.auth) {
+      await window.promptSync.firebase.auth.signOut();
     }
   } catch (error) {
     console.error('Sign-out failed:', error);
@@ -50,8 +50,9 @@ export async function updateAuthUI(user) {
 
   setCurrentUser(user);
   try {
-    if (window.populateFreeInputRepoSelection) await window.populateFreeInputRepoSelection();
-    if (window.populateFreeInputBranchSelection) await window.populateFreeInputBranchSelection();
+    if (window.promptSync && window.promptSync.utils && window.promptSync.utils.populateFreeInputRepoSelection) {
+      await window.promptSync.utils.populateFreeInputRepoSelection();
+    }
   } catch (error) {
     console.error('Failed to refresh dropdowns:', error);
   }
@@ -122,11 +123,11 @@ export async function updateAuthUI(user) {
 
 export function initAuthStateListener() {
   try {
-    if (!window.auth) {
+    if (!window.promptSync.firebase.auth) {
       console.error('Auth not initialized yet');
       return;
     }
-    window.auth.onAuthStateChanged((user) => {
+    window.promptSync.firebase.auth.onAuthStateChanged((user) => {
       updateAuthUI(user);
     });
   } catch (error) {

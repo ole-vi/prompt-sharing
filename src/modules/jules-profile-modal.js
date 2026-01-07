@@ -12,7 +12,7 @@ let sessionNextPageToken = null;
 
 export function showUserProfileModal() {
   const modal = document.getElementById('userProfileModal');
-  const user = window.auth?.currentUser;
+  const user = window.promptSync.firebase.auth?.currentUser;
 
   if (!user) {
     alert('Not logged in.');
@@ -130,7 +130,7 @@ export function showUserProfileModal() {
   
   if (sessionSearchInput) {
     sessionSearchInput.addEventListener('input', () => {
-      const user = window.auth?.currentUser;
+      const user = window.promptSync.firebase.auth?.currentUser;
       if (!user) return;
       renderAllSessions(allSessionsCache);
     });
@@ -312,7 +312,7 @@ export function hideJulesSessionsHistoryModal() {
 }
 
 async function loadSessionsPage() {
-  const user = window.auth?.currentUser;
+  const user = window.promptSync.firebase.auth?.currentUser;
   if (!user) return;
   
   const allSessionsList = document.getElementById('allSessionsList');

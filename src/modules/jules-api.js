@@ -5,11 +5,11 @@ import { JULES_API_BASE, ERRORS } from '../utils/constants.js';
 
 export async function getDecryptedJulesKey(uid) {
   try {
-    if (!window.db) {
+    if (!window.promptSync.firebase.db) {
       return null;
     }
 
-    const doc = await window.db.collection('julesKeys').doc(uid).get();
+    const doc = await window.promptSync.firebase.db.collection('julesKeys').doc(uid).get();
     if (!doc.exists) {
       return null;
     }
@@ -234,7 +234,7 @@ export async function loadJulesProfileInfo(uid) {
 }
 
 export async function callRunJulesFunction(promptText, sourceId, branch = 'master', title = '') {
-  const user = window.auth ? window.auth.currentUser : null;
+  const user = window.promptSync.firebase.auth ? window.promptSync.firebase.auth.currentUser : null;
   if (!user) {
     alert('Not logged in.');
     return null;
@@ -294,7 +294,7 @@ async function runJulesAPI(promptText, sourceId, branch, title, user) {
 
 export async function handleTryInJules(promptText) {
   try {
-    const user = window.auth ? window.auth.currentUser : null;
+    const user = window.promptSync.firebase.auth ? window.promptSync.firebase.auth.currentUser : null;
     if (!user) {
       try {
         const { signInWithGitHub } = await import('./auth.js');
@@ -312,7 +312,7 @@ export async function handleTryInJules(promptText) {
 }
 
 export async function handleTryInJulesAfterAuth(promptText) {
-  const user = window.auth ? window.auth.currentUser : null;
+  const user = window.promptSync.firebase.auth ? window.promptSync.firebase.auth.currentUser : null;
   if (!user) {
     alert('Not logged in.');
     return;

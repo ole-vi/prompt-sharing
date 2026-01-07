@@ -8,9 +8,9 @@ import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 let queueCache = [];
 
 export async function addToJulesQueue(uid, queueItem) {
-  if (!window.db) throw new Error('Firestore not initialized');
+  if (!window.promptSync.firebase.db) throw new Error('Firestore not initialized');
   try {
-    const collectionRef = window.db.collection('julesQueues').doc(uid).collection('items');
+    const collectionRef = window.promptSync.firebase.db.collection('julesQueues').doc(uid).collection('items');
     const docRef = await collectionRef.add({
       ...queueItem,
       autoOpen: queueItem.autoOpen !== false,
@@ -28,9 +28,9 @@ export async function addToJulesQueue(uid, queueItem) {
 }
 
 export async function updateJulesQueueItem(uid, docId, updates) {
-  if (!window.db) throw new Error('Firestore not initialized');
+  if (!window.promptSync.firebase.db) throw new Error('Firestore not initialized');
   try {
-    const docRef = window.db.collection('julesQueues').doc(uid).collection('items').doc(docId);
+    const docRef = window.promptSync.firebase.db.collection('julesQueues').doc(uid).collection('items').doc(docId);
     await docRef.update(updates);
     // Clear cache so next load fetches fresh data
     const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
@@ -43,9 +43,9 @@ export async function updateJulesQueueItem(uid, docId, updates) {
 }
 
 export async function deleteFromJulesQueue(uid, docId) {
-  if (!window.db) throw new Error('Firestore not initialized');
+  if (!window.promptSync.firebase.db) throw new Error('Firestore not initialized');
   try {
-    await window.db.collection('julesQueues').doc(uid).collection('items').doc(docId).delete();
+    await window.promptSync.firebase.db.collection('julesQueues').doc(uid).collection('items').doc(docId).delete();
     // Clear cache so next load fetches fresh data
     const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
     clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
@@ -57,9 +57,9 @@ export async function deleteFromJulesQueue(uid, docId) {
 }
 
 export async function listJulesQueue(uid) {
-  if (!window.db) throw new Error('Firestore not initialized');
+  if (!window.promptSync.firebase.db) throw new Error('Firestore not initialized');
   try {
-    const snapshot = await window.db.collection('julesQueues').doc(uid).collection('items').orderBy('createdAt', 'desc').get();
+    const snapshot = await window.promptSync.firebase.db.collection('julesQueues').doc(uid).collection('items').orderBy('createdAt', 'desc').get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (err) {
     console.error('Failed to list queue', err);
@@ -100,7 +100,7 @@ export function attachQueueHandlers() {
 }
 
 async function loadQueuePage() {
-  const user = window.auth?.currentUser;
+  const user = window.promptSync.firebase.auth?.currentUser;
   const listDiv = document.getElementById('allQueueList');
   if (!user) {
     listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Please sign in to view your queue.</div>';
@@ -208,7 +208,7 @@ function renderQueueList(items) {
 }
 
 async function deleteSelectedSubtasks(docId, indices) {
-  const user = window.auth?.currentUser;
+  const user = window.promptSync.firebase.auth?.currentUser;
   if (!user) return;
 
   const item = queueCache.find(i => i.id === docId);
@@ -234,7 +234,7 @@ async function deleteSelectedSubtasks(docId, indices) {
 }
 
 async function runSelectedSubtasks(docId, indices, suppressPopups = false, openInBackground = false) {
-  const user = window.auth?.currentUser;
+  const user = window.promptSync.firebase.auth?.currentUser;
   if (!user) return;
 
   const item = queueCache.find(i => i.id === docId);
@@ -322,7 +322,7 @@ function getSelectedQueueIds() {
 }
 
 async function deleteSelectedQueueItems() {
-  const user = window.auth?.currentUser;
+  const user = window.promptSync.firebase.auth?.currentUser;
   if (!user) { alert('Not signed in'); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
@@ -362,7 +362,7 @@ function sortByCreatedAt(ids) {
 }
 
 async function runSelectedQueueItems() {
-  const user = window.auth?.currentUser;
+  const user = window.promptSync.firebase.auth?.currentUser;
   if (!user) { alert('Not signed in'); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();

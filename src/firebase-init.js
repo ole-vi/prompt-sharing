@@ -1,9 +1,15 @@
 // Firebase initialization wrapper for browser environment
 // This file initializes Firebase using the modular SDK
 
-// Check if we're in a browser and Firebase can be loaded
-window.firebaseReady = false;
-window.firebaseError = null;
+// Create a global namespace for the application
+window.promptSync = window.promptSync || {};
+window.promptSync.firebase = {
+  ready: false,
+  error: null,
+  auth: null,
+  db: null,
+  functions: null
+};
 
 // Firebase configuration
 const firebaseConfig = {
@@ -25,18 +31,18 @@ function initFirebaseWhenReady() {
       const app = firebase.initializeApp(firebaseConfig);
       
       // Get services - compat API doesn't require app parameter
-      window.auth = firebase.auth();
-      window.db = firebase.firestore();
-      window.functions = firebase.functions();
+      window.promptSync.firebase.auth = firebase.auth();
+      window.promptSync.firebase.db = firebase.firestore();
+      window.promptSync.firebase.functions = firebase.functions();
       
       // For local development, allow localhost
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        if (window.auth.settings) {
-          window.auth.settings.appVerificationDisabledForTesting = true;
+        if (window.promptSync.firebase.auth.settings) {
+          window.promptSync.firebase.auth.settings.appVerificationDisabledForTesting = true;
         }
       }
       
-      window.firebaseReady = true;
+      window.promptSync.firebase.ready = true;
       
       return true;
     } else {
@@ -44,7 +50,7 @@ function initFirebaseWhenReady() {
     }
   } catch (error) {
     console.error('Firebase initialization error:', error);
-    window.firebaseError = error;
+    window.promptSync.firebase.error = error;
     return false;
   }
 }
@@ -60,13 +66,13 @@ if (!initFirebaseWhenReady()) {
       clearInterval(retryInterval);
       if (attempts >= maxAttempts) {
         console.error('Failed to initialize Firebase after 30 seconds');
-        window.firebaseError = 'Timeout waiting for Firebase SDK';
+        window.promptSync.firebase.error = 'Timeout waiting for Firebase SDK';
       }
     }
   }, 100);
 }
 
 // Also expose a manual check function
-window.checkFirebaseReady = function() {
-  return window.firebaseReady;
+window.promptSync.firebase.isReady = function() {
+  return window.promptSync.firebase.ready;
 };

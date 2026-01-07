@@ -10,7 +10,7 @@ import statusBar from './modules/status-bar.js';
 let isInitialized = false;
 
 function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
-  if (window.firebaseReady) {
+  if (window.promptSync && window.promptSync.firebase && window.promptSync.firebase.ready) {
     callback();
   } else if (attempts < maxAttempts) {
     setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), 100);

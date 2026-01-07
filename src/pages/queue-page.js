@@ -21,7 +21,7 @@ function initApp() {
   // Initialize queue functionality
   attachQueueHandlers();
   
-  const user = window.auth?.currentUser;
+  const user = window.promptSync.firebase.auth?.currentUser;
   if (user) {
     document.getElementById('queueControls').classList.remove('hidden');
     document.getElementById('queueNotSignedIn').classList.add('hidden');
@@ -32,7 +32,7 @@ function initApp() {
   }
   
   // Listen for auth state changes
-  window.auth.onAuthStateChanged((user) => {
+  window.promptSync.firebase.auth.onAuthStateChanged((user) => {
     if (user) {
       document.getElementById('queueControls').classList.remove('hidden');
       document.getElementById('queueNotSignedIn').classList.add('hidden');
@@ -45,7 +45,7 @@ function initApp() {
 }
 
 async function loadQueue() {
-  const user = window.auth?.currentUser;
+  const user = window.promptSync.firebase.auth?.currentUser;
   const listDiv = document.getElementById('allQueueList');
   
   if (!listDiv) {

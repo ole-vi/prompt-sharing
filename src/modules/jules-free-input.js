@@ -1,6 +1,14 @@
 // ===== Jules Free Input Module =====
 // Free input form functionality
 
+// Ensure the global namespace and utils object exist
+if (typeof window.promptSync === 'undefined') {
+  window.promptSync = {};
+}
+if (typeof window.promptSync.utils === 'undefined') {
+  window.promptSync.utils = {};
+}
+
 import { getCurrentUser } from './auth.js';
 import { checkJulesKey } from './jules-keys.js';
 import { showJulesKeyModal, showSubtaskErrorModal } from './jules-modal.js';
@@ -16,7 +24,7 @@ export function getLastSelectedSource() {
 }
 
 export function showFreeInputModal() {
-  const user = window.auth ? window.auth.currentUser : null;
+  const user = window.promptSync.firebase.auth ? window.promptSync.firebase.auth.currentUser : null;
   if (!user) {
     (async () => {
       try {
@@ -34,7 +42,7 @@ export function showFreeInputModal() {
 }
 
 export async function handleFreeInputAfterAuth() {
-  const user = window.auth ? window.auth.currentUser : null;
+  const user = window.promptSync.firebase.auth ? window.promptSync.firebase.auth.currentUser : null;
   if (!user) {
     alert('Not logged in.');
     return;
@@ -145,7 +153,7 @@ export function showFreeInputForm() {
             } else if (result.action === 'skip') {
               return;
             } else if (result.action === 'queue') {
-              const user = window.auth?.currentUser;
+              const user = window.promptSync.firebase.auth?.currentUser;
               if (!user) {
                 alert('Please sign in to queue prompts.');
                 return;
@@ -172,7 +180,7 @@ export function showFreeInputForm() {
             const result = await showSubtaskErrorModal(1, 1, error);
 
             if (result.action === 'queue') {
-              const user = window.auth?.currentUser;
+              const user = window.promptSync.firebase.auth?.currentUser;
               if (!user) {
                 alert('Please sign in to queue prompts.');
                 return;
@@ -304,7 +312,7 @@ export function showFreeInputForm() {
       return;
     }
 
-    const user = window.auth?.currentUser;
+    const user = window.promptSync.firebase.auth?.currentUser;
     if (!user) {
       alert('Please sign in to queue prompts.');
       return;
@@ -419,4 +427,4 @@ async function populateFreeInputRepoSelection() {
   branchSelector.initialize(null, null);
 }
 
-window.populateFreeInputRepoSelection = populateFreeInputRepoSelection;
+window.promptSync.utils.populateFreeInputRepoSelection = populateFreeInputRepoSelection;

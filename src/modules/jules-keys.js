@@ -3,10 +3,10 @@
 
 export async function checkJulesKey(uid) {
   try {
-    if (!window.db) {
+    if (!window.promptSync.firebase.db) {
       return false;
     }
-    const doc = await window.db.collection('julesKeys').doc(uid).get();
+    const doc = await window.promptSync.firebase.db.collection('julesKeys').doc(uid).get();
     return doc.exists;
   } catch (error) {
     return false;
@@ -15,8 +15,8 @@ export async function checkJulesKey(uid) {
 
 export async function deleteStoredJulesKey(uid) {
   try {
-    if (!window.db) return false;
-    await window.db.collection('julesKeys').doc(uid).delete();
+    if (!window.promptSync.firebase.db) return false;
+    await window.promptSync.firebase.db.collection('julesKeys').doc(uid).delete();
     return true;
   } catch (error) {
     return false;
@@ -35,8 +35,8 @@ export async function encryptAndStoreKey(plaintext, uid) {
     const ciphertext = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintextData);
     const encrypted = btoa(String.fromCharCode(...new Uint8Array(ciphertext)));
 
-    if (!window.db) throw new Error('Firestore not initialized');
-    await window.db.collection('julesKeys').doc(uid).set({
+    if (!window.promptSync.firebase.db) throw new Error('Firestore not initialized');
+    await window.promptSync.firebase.db.collection('julesKeys').doc(uid).set({
       key: encrypted,
       storedAt: firebase.firestore.FieldValue.serverTimestamp()
     });

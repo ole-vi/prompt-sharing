@@ -67,7 +67,7 @@ export function showSubtaskSplitModal(promptText) {
   };
 
   queueBtn.onclick = async () => {
-    const user = window.auth?.currentUser;
+    const user = window.promptSync.firebase.auth?.currentUser;
     if (!user) {
       alert('Please sign in to queue subtasks.');
       return;
@@ -316,7 +316,7 @@ async function submitSubtasks(subtasks) {
   let skippedCount = 0;
   let successCount = 0;
   let paused = false;
-  const user = window.auth ? window.auth.currentUser : null;
+  const user = window.promptSync.firebase.auth ? window.promptSync.firebase.auth.currentUser : null;
 
   statusBar?.showMessage?.(`Processing ${totalCount} subtasks...`, { timeout: 0 });
   statusBar?.setAction?.('Pause', () => {
@@ -402,7 +402,7 @@ async function submitSubtasks(subtasks) {
             skippedCount++;
             submitted = true;
           } else if (result.action === 'queue') {
-            const user = window.auth?.currentUser;
+            const user = window.promptSync.firebase.auth?.currentUser;
             if (!user) {
               statusBar?.clearProgress?.();
               statusBar?.clearAction?.();
@@ -448,7 +448,7 @@ async function submitSubtasks(subtasks) {
             return;
           } else {
             if (result.action === 'queue') {
-              const user = window.auth?.currentUser;
+              const user = window.promptSync.firebase.auth?.currentUser;
               if (!user) {
                 statusBar?.clearProgress?.();
                 statusBar?.clearAction?.();

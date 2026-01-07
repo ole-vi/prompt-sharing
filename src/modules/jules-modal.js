@@ -54,7 +54,7 @@ export function showJulesKeyModal(onSave) {
       saveBtn.textContent = 'Saving...';
       saveBtn.disabled = true;
 
-      const user = window.auth ? window.auth.currentUser : null;
+      const user = window.promptSync.firebase.auth ? window.promptSync.firebase.auth.currentUser : null;
       if (!user) {
         alert('Not logged in.');
         saveBtn.textContent = 'Save & Continue';
@@ -144,7 +144,7 @@ export async function showJulesEnvModal(promptText) {
   queueBtn.onclick = async () => {
     if (!selectedSourceId || !selectedBranch) return;
     
-    const user = window.auth?.currentUser;
+    const user = window.promptSync.firebase.auth?.currentUser;
     if (!user) {
       alert('Please sign in to queue prompts.');
       return;
@@ -205,7 +205,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
         } else if (result.action === 'skip') {
           return;
         } else if (result.action === 'queue') {
-          const user = window.auth?.currentUser;
+          const user = window.promptSync.firebase.auth?.currentUser;
           if (!user) {
             alert('Please sign in to queue prompts.');
             return;
@@ -232,7 +232,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
         const result = await showSubtaskErrorModal(1, 1, error);
 
         if (result.action === 'queue') {
-          const user = window.auth?.currentUser;
+          const user = window.promptSync.firebase.auth?.currentUser;
           if (!user) {
             alert('Please sign in to queue prompts.');
             return;

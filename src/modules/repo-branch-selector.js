@@ -72,8 +72,8 @@ export class RepoSelector {
     
     this.favorites = DEFAULT_FAVORITE_REPOS;
     try {
-      if (window.db) {
-        const doc = await window.db.collection('users').doc(user.uid).get();
+      if (window.promptSync.firebase.db) {
+        const doc = await window.promptSync.firebase.db.collection('users').doc(user.uid).get();
         if (doc.exists && doc.data().favoriteRepos) {
           this.favorites = doc.data().favoriteRepos;
         }
@@ -389,8 +389,8 @@ export class RepoSelector {
   async saveFavorites(newFavorites) {
     const user = getCurrentUser();
     try {
-      if (window.db) {
-        await window.db.collection('users').doc(user.uid).set({
+      if (window.promptSync.firebase.db) {
+        await window.promptSync.firebase.db.collection('users').doc(user.uid).set({
           favoriteRepos: newFavorites
         }, { merge: true });
         this.favorites = newFavorites;
@@ -405,8 +405,8 @@ export class RepoSelector {
     const newFavorite = { id: sourceId, name, branch };
     
     try {
-      if (window.db) {
-        await window.db.collection('users').doc(user.uid).set({
+      if (window.promptSync.firebase.db) {
+        await window.promptSync.firebase.db.collection('users').doc(user.uid).set({
           favoriteRepos: window.firebase.firestore.FieldValue.arrayUnion(newFavorite)
         }, { merge: true });
         this.favorites = [...this.favorites, newFavorite];
@@ -423,8 +423,8 @@ export class RepoSelector {
     if (!favoriteToRemove) return;
     
     try {
-      if (window.db) {
-        await window.db.collection('users').doc(user.uid).set({
+      if (window.promptSync.firebase.db) {
+        await window.promptSync.firebase.db.collection('users').doc(user.uid).set({
           favoriteRepos: window.firebase.firestore.FieldValue.arrayRemove(favoriteToRemove)
         }, { merge: true });
         this.favorites = this.favorites.filter(f => f.id !== sourceId);

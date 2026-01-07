@@ -15,7 +15,7 @@ function waitForComponents() {
 }
 
 async function loadProfile() {
-  const user = window.auth?.currentUser;
+  const user = window.promptSync.firebase.auth?.currentUser;
   
   if (!user) {
     const profileUserName = document.getElementById('profileUserName');
@@ -34,7 +34,7 @@ async function loadProfile() {
 
 function initApp() {
   waitForFirebase(() => {
-    window.auth.onAuthStateChanged((user) => {
+    window.promptSync.firebase.auth.onAuthStateChanged((user) => {
       if (user) {
         loadProfile();
       } else {

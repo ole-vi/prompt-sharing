@@ -17,7 +17,7 @@ function waitForComponents() {
 }
 
 async function loadJulesInfo() {
-  const user = window.auth?.currentUser;
+  const user = window.promptSync.firebase.auth?.currentUser;
   
   const loadingDiv = document.getElementById('julesLoading');
   const notSignedInDiv = document.getElementById('julesNotSignedIn');
@@ -76,7 +76,7 @@ function initApp() {
   const addKeyHandler = () => {
     showJulesKeyModal(() => {
       // Reload Jules info after saving key
-      const user = window.auth?.currentUser;
+      const user = window.promptSync.firebase.auth?.currentUser;
       if (user) {
         loadJulesInfo();
       }
@@ -93,7 +93,7 @@ function initApp() {
         return;
       }
       try {
-        const user = window.auth?.currentUser;
+        const user = window.promptSync.firebase.auth?.currentUser;
         if (!user) return;
         
         resetJulesKeyBtn.disabled = true;
@@ -133,7 +133,7 @@ function initApp() {
   const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
   if (loadJulesInfoBtn) {
     loadJulesInfoBtn.onclick = () => {
-      const user = window.auth?.currentUser;
+      const user = window.promptSync.firebase.auth?.currentUser;
       if (user) {
         loadJulesInfo();
       }
@@ -141,7 +141,7 @@ function initApp() {
   }
 
   waitForFirebase(() => {
-    window.auth.onAuthStateChanged((user) => {
+    window.promptSync.firebase.auth.onAuthStateChanged((user) => {
       if (user) {
         loadJulesInfo();
       } else {
