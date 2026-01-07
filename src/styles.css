@@ -22,6 +22,7 @@
 @import url('./styles/components/status-bar.css');
 @import url('./styles/components/tags.css');
 @import url('./styles/components/jules-profile.css');
+@import url('./styles/components/update-banner.css');
 
 /* Page-specific overrides */
 @import url('./styles/pages/home.css');
