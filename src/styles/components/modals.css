@@ -55,3 +55,12 @@
 /* Close button */
 .close-modal { background: transparent; border: none; font-size: 20px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; padding: 4px 8px; color: var(--text); }
 .close-modal:hover { opacity: 1; }
+
+/* Subtask editing */
+.subtask-item { margin-bottom: 16px; position: relative; }
+.subtask-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.subtask-item-header .form-label { margin-bottom: 0; }
+.remove-subtask-btn { background: none; border: none; cursor: pointer; color: var(--warn); font-size: 18px; padding: 4px 8px; transition: color 0.2s; }
+.remove-subtask-btn:hover { color: var(--error); }
+.edit-subtask-content { font-family: monospace; font-size: 12px; }
+.add-subtask-btn { margin-top: 8px; width: 100%; }

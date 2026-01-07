@@ -243,12 +243,7 @@ async function openEditQueueModal(docId) {
     subtasksGroup.style.display = 'block';
     
     const subtasks = item.remaining || [];
-    subtasksList.innerHTML = subtasks.map((subtask, index) => `
-      <div class="form-group" style="margin-bottom: 16px;">
-        <label class="form-label">Subtask ${index + 1}:</label>
-        <textarea class="form-control edit-subtask-content" rows="5" style="font-family: monospace; font-size: 12px;">${escapeHtml(subtask.fullContent || '')}</textarea>
-      </div>
-    `).join('');
+    renderSubtasksList(subtasks);
     
     editModalState.originalData = { 
       subtasks: subtasks.map(s => s.fullContent || '') 
@@ -273,9 +268,97 @@ async function openEditQueueModal(docId) {
     promptTextarea.oninput = trackChanges;
   }
   
-  document.querySelectorAll('.edit-subtask-content').forEach(textarea => {
-    textarea.oninput = trackChanges;
+  // Note: subtask textarea change tracking is now handled in renderSubtasksList()
+}
+
+/**
+ * Render subtasks list with add/remove buttons
+ */
+function renderSubtasksList(subtasks) {
+  const subtasksList = document.getElementById('editQueueSubtasksList');
+  if (!subtasksList) {
+    console.error('editQueueSubtasksList element not found');
+    return;
+  }
+  
+  subtasksList.innerHTML = subtasks.map((subtask, index) => `
+    <div class="form-group subtask-item" data-index="${index}">
+      <div class="subtask-item-header">
+        <label class="form-label">Subtask ${index + 1}:</label>
+        <button type="button" class="remove-subtask-btn" data-index="${index}" title="Remove this subtask">✕</button>
+      </div>
+      <textarea class="form-control edit-subtask-content" rows="5">${escapeHtml(subtask.fullContent || '')}</textarea>
+    </div>
+  `).join('');
+  
+  // Add "Add Subtask" button at the end
+  const addButton = document.createElement('button');
+  addButton.type = 'button';
+  addButton.className = 'btn btn-secondary add-subtask-btn';
+  addButton.textContent = '+ Add Subtask';
+  addButton.onclick = addNewSubtask;
+  subtasksList.appendChild(addButton);
+  
+  // Attach remove handlers
+  document.querySelectorAll('.remove-subtask-btn').forEach(btn => {
+    btn.onclick = () => removeSubtask(parseInt(btn.dataset.index));
   });
+  
+  // Attach change tracking to all textareas
+  document.querySelectorAll('.edit-subtask-content').forEach(textarea => {
+    textarea.oninput = () => {
+      editModalState.hasUnsavedChanges = true;
+    };
+  });
+}
+
+/**
+ * Add a new empty subtask
+ */
+function addNewSubtask() {
+  const subtasksList = document.getElementById('editQueueSubtasksList');
+  const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => ({
+    fullContent: textarea.value
+  }));
+  
+  // Add new empty subtask
+  currentSubtasks.push({ fullContent: '' });
+  
+  // Re-render
+  renderSubtasksList(currentSubtasks);
+  
+  // Mark as changed
+  editModalState.hasUnsavedChanges = true;
+  
+  // Focus the new textarea
+  const textareas = document.querySelectorAll('.edit-subtask-content');
+  if (textareas.length > 0) {
+    textareas[textareas.length - 1].focus();
+  }
+}
+
+/**
+ * Remove a subtask by index
+ */
+function removeSubtask(index) {
+  const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => ({
+    fullContent: textarea.value
+  }));
+  
+  if (currentSubtasks.length <= 1) {
+    if (!confirm('This is the last subtask. Removing it will leave no subtasks. Continue?')) {
+      return;
+    }
+  }
+  
+  // Remove the subtask at the specified index
+  currentSubtasks.splice(index, 1);
+  
+  // Re-render
+  renderSubtasksList(currentSubtasks);
+  
+  // Mark as changed
+  editModalState.hasUnsavedChanges = true;
 }
 
 // Close modal handler function (defined outside so it can be referenced in event handlers)
