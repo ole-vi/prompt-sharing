@@ -36,7 +36,7 @@ export function showJulesKeyModal(onSave) {
   const modal = document.getElementById('julesKeyModal');
   const input = document.getElementById('julesKeyInput');
   
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.classList.add('modal--visible');
   input.value = '';
   input.focus();
 
@@ -86,12 +86,12 @@ export function showJulesKeyModal(onSave) {
 
 export function hideJulesKeyModal() {
   const modal = document.getElementById('julesKeyModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.classList.remove('modal--visible');
 }
 
 export async function showJulesEnvModal(promptText) {
   const modal = document.getElementById('julesEnvModal');
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.classList.add('modal--visible');
 
   const submitBtn = document.getElementById('julesEnvSubmitBtn');
   const queueBtn = document.getElementById('julesEnvQueueBtn');
@@ -277,7 +277,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
 
 export function hideJulesEnvModal() {
   const modal = document.getElementById('julesEnvModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.classList.remove('modal--visible');
 }
 
 export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
@@ -301,8 +301,7 @@ export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
     messageDiv.textContent = error.message || String(error);
     detailsDiv.textContent = error.toString();
 
-    modal.style.removeProperty('display');
-    modal.style.setProperty('display', 'flex', 'important');
+    modal.classList.add('modal--visible');
 
     const handleAction = (action) => {
       retryBtn.onclick = null;
@@ -326,7 +325,7 @@ export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
 export function hideSubtaskErrorModal() {
   const modal = document.getElementById('subtaskErrorModal');
   if (modal) {
-    modal.style.removeProperty('display');
+    modal.classList.remove('modal--visible');
   }
 }
 
@@ -340,10 +339,10 @@ export function initJulesKeyModalListeners() {
 
   document.addEventListener('keydown', async (e) => {
     if (e.key === 'Escape') {
-      if (keyModal && keyModal.style.display === 'flex') {
+      if (keyModal && keyModal.classList.contains('modal--visible')) {
         hideJulesKeyModal();
       }
-      if (envModal && envModal.style.display === 'flex') {
+      if (envModal && envModal.classList.contains('modal--visible')) {
         hideJulesEnvModal();
       }
       const freeInputSection = document.getElementById('freeInputSection');
@@ -351,11 +350,11 @@ export function initJulesKeyModalListeners() {
         const { hideFreeInputForm } = await import('./jules-free-input.js');
         hideFreeInputForm();
       }
-      if (profileModal && profileModal.style.display === 'flex') {
+      if (profileModal && profileModal.classList.contains('modal--visible')) {
         const { hideUserProfileModal } = await import('./jules-profile-modal.js');
         hideUserProfileModal();
       }
-      if (sessionsHistoryModal && sessionsHistoryModal.style.display === 'flex') {
+      if (sessionsHistoryModal && sessionsHistoryModal.classList.contains('modal--visible')) {
         const { hideJulesSessionsHistoryModal } = await import('./jules-profile-modal.js');
         hideJulesSessionsHistoryModal();
       }

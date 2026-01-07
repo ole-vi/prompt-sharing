@@ -19,7 +19,7 @@ export function showUserProfileModal() {
     return;
   }
 
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  modal.classList.add('modal--visible');
 
   const profileUserName = document.getElementById('profileUserName');
   const julesKeyStatus = document.getElementById('julesKeyStatus');
@@ -290,14 +290,14 @@ async function loadAndDisplayJulesProfile(uid) {
 
 export function hideUserProfileModal() {
   const modal = document.getElementById('userProfileModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  modal.classList.remove('modal--visible');
 }
 
 export function showJulesSessionsHistoryModal() {
   const modal = document.getElementById('julesSessionsHistoryModal');
   const searchInput = document.getElementById('sessionSearchInput');
   
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  modal.classList.add('modal--visible');
   
   allSessionsCache = [];
   sessionNextPageToken = null;
@@ -308,7 +308,7 @@ export function showJulesSessionsHistoryModal() {
 
 export function hideJulesSessionsHistoryModal() {
   const modal = document.getElementById('julesSessionsHistoryModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  modal.classList.remove('modal--visible');
 }
 
 async function loadSessionsPage() {

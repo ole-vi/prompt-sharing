@@ -34,7 +34,7 @@ export function showSubtaskSplitModal(promptText) {
   currentSubtasks = analysis.subtasks;
   
   console.log('Setting modal display to flex');
-  modal.classList.add('show');
+  modal.classList.add('modal--visible');
   console.log('Modal should now be visible');
 
   renderSplitEdit(currentSubtasks, promptText);
@@ -140,7 +140,7 @@ export function showSubtaskSplitModal(promptText) {
  */
 export function hideSubtaskSplitModal() {
   const modal = document.getElementById('subtaskSplitModal');
-  modal.classList.remove('show');
+  modal.classList.remove('modal--visible');
   currentSubtasks = [];
 }
 
@@ -216,15 +216,15 @@ function showSubtaskPreview(subtask, partNumber) {
   title.textContent = `Part ${partNumber}: ${subtask.title || `Part ${partNumber}`}`;
   content.textContent = subtask.fullContent || subtask.content || '';
   
-  modal.classList.add('show');
+  modal.classList.add('modal--visible');
   
   closeBtn.onclick = () => {
-    modal.classList.remove('show');
+    modal.classList.remove('modal--visible');
   };
   
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
-      modal.classList.remove('show');
+      modal.classList.remove('modal--visible');
     }
   });
 }
