@@ -1,6 +1,7 @@
 // ===== Jules Profile Modal Module =====
 // Profile modal and sessions history functionality
 
+import { showToast } from './toast.js';
 import { checkJulesKey, deleteStoredJulesKey } from './jules-keys.js';
 import { showJulesKeyModal } from './jules-modal.js';
 import { showJulesQueueModal } from './jules-queue.js';
@@ -15,7 +16,7 @@ export function showUserProfileModal() {
   const user = window.auth?.currentUser;
 
   if (!user) {
-    alert('Not logged in.');
+    showToast('Not logged in.', 'error');
     return;
   }
 
@@ -83,12 +84,12 @@ export function showUserProfileModal() {
           if (dangerZoneSection) dangerZoneSection.style.display = 'none';
           if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
           
-          alert('Jules API key has been deleted. You can enter a new one next time.');
+          showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
         } else {
           throw new Error('Failed to delete key');
         }
       } catch (error) {
-        alert('Failed to reset API key: ' + error.message);
+        showToast(`Failed to reset API key: ${error.message}`, 'error');
         resetBtn.textContent = '🔄 Reset Jules API Key';
         resetBtn.disabled = false;
       }
@@ -497,12 +498,12 @@ export async function loadProfileDirectly(user) {
           if (dangerZoneSection) dangerZoneSection.style.display = 'none';
           if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
           
-          alert('Jules API key has been deleted. You can enter a new one next time.');
+          showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
         } else {
           throw new Error('Failed to delete key');
         }
       } catch (error) {
-        alert('Failed to reset API key: ' + error.message);
+        showToast(`Failed to reset API key: ${error.message}`, 'error');
         resetBtn.textContent = '🗑️ Delete Jules API Key';
         resetBtn.disabled = false;
       }

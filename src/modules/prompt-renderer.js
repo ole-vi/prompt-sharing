@@ -1,5 +1,6 @@
 // ===== Prompt Renderer Module =====
 
+import { showToast } from './toast.js';
 import { slugify } from '../utils/slug.js';
 import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './github-api.js';
 import { CODEX_URL_REGEX } from '../utils/constants.js';
@@ -398,7 +399,7 @@ async function handleCopyPrompt() {
     copyBtn.textContent = 'Copied';
     setTimeout(() => (copyBtn.textContent = buttonText), 1000);
   } catch {
-    alert('Clipboard blocked. Select and copy manually.');
+    showToast('Clipboard blocked. Select and copy manually.', 'error');
   }
 }
 
@@ -406,7 +407,7 @@ async function handleCopenPrompt(target) {
   try {
     const promptText = getCurrentPromptText();
     if (!promptText) {
-      alert('No prompt available.');
+      showToast('No prompt available.', 'info');
       return;
     }
 
@@ -437,7 +438,7 @@ async function handleCopenPrompt(target) {
     }
     window.open(url, '_blank', 'noopener,noreferrer');
   } catch {
-    alert('Clipboard blocked. Could not copy prompt.');
+    showToast('Clipboard blocked. Could not copy prompt.', 'error');
   }
 }
 
@@ -446,7 +447,7 @@ async function handleShareLink() {
     await navigator.clipboard.writeText(location.href);
     shareBtn.textContent = 'Link copied';
   } catch {
-    alert('Could not copy link.');
+    showToast('Could not copy link.', 'error');
   } finally {
     const originalText = '🔗 Copy link';
     setTimeout(() => (shareBtn.textContent = originalText), 1000);

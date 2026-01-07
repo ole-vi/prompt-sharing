@@ -1,6 +1,7 @@
 // ===== Jules Queue Module =====
 // Manages Jules queue operations and UI rendering
 
+import { showToast } from './toast.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
@@ -323,12 +324,15 @@ function getSelectedQueueIds() {
 
 async function deleteSelectedQueueItems() {
   const user = window.auth?.currentUser;
-  if (!user) { alert('Not signed in'); return; }
+  if (!user) {
+    showToast('Not signed in', 'error');
+    return;
+  }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0 && Object.keys(subtaskSelections).length === 0) {
-    alert('No items selected');
+    showToast('No items selected', 'info');
     return;
   }
   
@@ -346,10 +350,10 @@ async function deleteSelectedQueueItems() {
       await deleteSelectedSubtasks(docId, indices);
     }
     
-    alert('Deleted selected items');
+    showToast('Deleted selected items', 'success');
     await loadQueuePage();
   } catch (err) {
-    alert('Failed to delete selected items: ' + err.message);
+    showToast(`Failed to delete selected items: ${err.message}`, 'error');
   }
 }
 
@@ -363,12 +367,15 @@ function sortByCreatedAt(ids) {
 
 async function runSelectedQueueItems() {
   const user = window.auth?.currentUser;
-  if (!user) { alert('Not signed in'); return; }
+  if (!user) {
+    showToast('Not signed in', 'error');
+    return;
+  }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0 && Object.keys(subtaskSelections).length === 0) {
-    alert('No items selected');
+    showToast('No items selected', 'info');
     return;
   }
 
