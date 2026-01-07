@@ -31,13 +31,15 @@
 #subtaskPreviewModal { z-index: 1002; }
 
 /* Modal overlay and dialog structure */
-.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1001; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; overflow-x: visible; }
-.modal-dialog { background: var(--card); border: 1px solid var(--border); border-radius: 14px; max-width: 600px; width: 100%; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); max-height: 90vh; display: flex; flex-direction: column; overflow: visible; }
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1001; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+.modal-dialog { background: var(--card); border: 1px solid var(--border); border-radius: 14px; max-width: 600px; width: 100%; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
 .modal-header { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
 .modal-title { margin: 0; font-size: 18px; font-weight: 600; }
-.modal-body { padding: 20px; flex: 1; overflow-y: auto; overflow-x: visible; }
+.modal-body { padding: 20px; flex: 1; overflow-y: auto; }
 .modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
-.modal-body .custom-dropdown-menu {position: fixed;}
+
+/* Dropdown menus inside modals need fixed positioning to avoid overflow clipping */
+.modal-body .custom-dropdown-menu { position: fixed; }
 
 /* Form elements in modals */
 .form-group { margin-bottom: 16px; }

@@ -137,139 +137,6 @@ async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, re
   await repoSelector.initialize(sourceId, branch);
 }
 
-async function fetchAndPopulateBranches(sourceId, currentBranch, branchDropdownBtn, branchDropdownText, branchDropdownMenu) {
-  // Setup dropdown toggle (do this first so it always works)
-  branchDropdownBtn.onclick = (e) => {
-    e.stopPropagation();
-    const isOpen = branchDropdownMenu.style.display === 'block';
-    branchDropdownMenu.style.display = isOpen ? 'none' : 'block';
-  };
-  
-  // Close on click outside
-  const closeHandler = (e) => {
-    if (!branchDropdownBtn.contains(e.target) && !branchDropdownMenu.contains(e.target)) {
-      branchDropdownMenu.style.display = 'none';
-    }
-  };
-  document.addEventListener('click', closeHandler);
-  
-  if (!sourceId) {
-    branchDropdownText.textContent = currentBranch || 'master';
-    branchDropdownBtn.disabled = false;
-    
-    // Add single item to menu
-    branchDropdownMenu.innerHTML = '';
-    const currentItem = document.createElement('div');
-    currentItem.className = 'custom-dropdown-item selected';
-    currentItem.textContent = currentBranch || 'master';
-    currentItem.onclick = () => {
-      branchDropdownMenu.style.display = 'none';
-    };
-    branchDropdownMenu.appendChild(currentItem);
-    return;
-  }
-
-  // Parse owner and repo from sourceId (format: sources/github.com/owner/repo)
-  const pathParts = sourceId.split('/');
-  
-  if (pathParts.length < 4 || (pathParts[1] !== 'github.com' && pathParts[1] !== 'github')) {
-    // Not a GitHub repo, just use the current branch
-    branchDropdownText.textContent = currentBranch || 'master';
-    branchDropdownBtn.disabled = false;
-    
-    // Add single item to menu
-    branchDropdownMenu.innerHTML = '';
-    const currentItem = document.createElement('div');
-    currentItem.className = 'custom-dropdown-item selected';
-    currentItem.textContent = currentBranch || 'master';
-    currentItem.onclick = () => {
-      branchDropdownMenu.style.display = 'none';
-    };
-    branchDropdownMenu.appendChild(currentItem);
-    return;
-  }
-
-  const owner = pathParts[pathParts.length - 2];
-  const repo = pathParts[pathParts.length - 1];
-
-  // Show loading state
-  branchDropdownText.textContent = 'Loading branches...';
-  branchDropdownBtn.disabled = true;
-
-  try {
-    const { getBranches } = await import('./github-api.js');
-    const branches = await getBranches(owner, repo);
-
-    if (!branches || branches.length === 0) {
-      branchDropdownText.textContent = currentBranch || 'master';
-      branchDropdownBtn.disabled = false;
-      
-      // Add single item to menu
-      branchDropdownMenu.innerHTML = '';
-      const currentItem = document.createElement('div');
-      currentItem.className = 'custom-dropdown-item selected';
-      currentItem.textContent = currentBranch || 'master';
-      currentItem.onclick = () => {
-        branchDropdownMenu.style.display = 'none';
-      };
-      branchDropdownMenu.appendChild(currentItem);
-      return;
-    }
-
-    // Set current branch
-    branchDropdownText.textContent = currentBranch || 'master';
-    branchDropdownBtn.disabled = false;
-    
-    // Populate dropdown menu
-    branchDropdownMenu.innerHTML = '';
-    
-    // Add current branch first (selected)
-    const currentItem = document.createElement('div');
-    currentItem.className = 'custom-dropdown-item selected';
-    currentItem.textContent = currentBranch || 'master';
-    currentItem.onclick = () => {
-      branchDropdownMenu.style.display = 'none';
-    };
-    branchDropdownMenu.appendChild(currentItem);
-    
-    // Add other branches
-    branches.forEach(branch => {
-      if (branch.name === currentBranch) return;
-      
-      const item = document.createElement('div');
-      item.className = 'custom-dropdown-item';
-      item.textContent = branch.name;
-      item.onclick = () => {
-        branchDropdownText.textContent = branch.name;
-        branchDropdownMenu.style.display = 'none';
-        editModalState.hasUnsavedChanges = true;
-        
-        // Update selected state
-        branchDropdownMenu.querySelectorAll('.custom-dropdown-item').forEach(i => i.classList.remove('selected'));
-        item.classList.add('selected');
-      };
-      branchDropdownMenu.appendChild(item);
-    });
-
-  } catch (error) {
-    console.error('Failed to fetch branches:', error);
-    branchDropdownText.textContent = currentBranch || 'master';
-    branchDropdownBtn.disabled = false;
-    
-    // Add single item to menu
-    branchDropdownMenu.innerHTML = '';
-    const currentItem = document.createElement('div');
-    currentItem.className = 'custom-dropdown-item selected';
-    currentItem.textContent = currentBranch || 'master';
-    currentItem.onclick = () => {
-      branchDropdownMenu.style.display = 'none';
-    };
-    branchDropdownMenu.appendChild(currentItem);
-    
-    statusBar.showMessage('Failed to fetch branches. Using current branch.', { timeout: 3000 });
-  }
-}
-
 async function openEditQueueModal(docId) {
   const item = queueCache.find(i => i.id === docId);
   if (!item) {
@@ -333,6 +200,22 @@ async function openEditQueueModal(docId) {
       </div>
     `;
     document.body.appendChild(modal);
+    
+    // Set up event handlers only once when modal is created
+    document.getElementById('closeEditQueueModal').onclick = () => closeEditModal();
+    document.getElementById('cancelEditQueue').onclick = () => closeEditModal();
+    
+    // Click outside to close
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        closeEditModal();
+      }
+    };
+    
+    // Save handler
+    document.getElementById('saveEditQueue').onclick = async () => {
+      await saveQueueItemEdit(editModalState.currentDocId, closeEditModal);
+    };
   }
 
   // Populate the form
@@ -363,7 +246,7 @@ async function openEditQueueModal(docId) {
     subtasksList.innerHTML = subtasks.map((subtask, index) => `
       <div class="form-group" style="margin-bottom: 16px;">
         <label class="form-label">Subtask ${index + 1}:</label>
-        <textarea class="form-control edit-subtask-content" data-index="${index}" rows="5" style="font-family: monospace; font-size: 12px;">${escapeHtml(subtask.fullContent || '')}</textarea>
+        <textarea class="form-control edit-subtask-content" rows="5" style="font-family: monospace; font-size: 12px;">${escapeHtml(subtask.fullContent || '')}</textarea>
       </div>
     `).join('');
     
@@ -393,37 +276,33 @@ async function openEditQueueModal(docId) {
   document.querySelectorAll('.edit-subtask-content').forEach(textarea => {
     textarea.oninput = trackChanges;
   });
-
-  // Close modal handlers
-  const closeModal = (force = false) => {
-    if (!force && editModalState.hasUnsavedChanges) {
-      if (!confirm('You have unsaved changes. Are you sure you want to close?')) {
-        return;
-      }
-    }
-    modal.style.display = 'none';
-    editModalState.hasUnsavedChanges = false;
-    editModalState.originalData = null;
-    editModalState.currentDocId = null;
-  };
-
-  document.getElementById('closeEditQueueModal').onclick = () => closeModal();
-  document.getElementById('cancelEditQueue').onclick = () => closeModal();
-
-  // Click outside to close
-  modal.onclick = (e) => {
-    if (e.target === modal) {
-      closeModal();
-    }
-  };
-
-  // Save handler
-  document.getElementById('saveEditQueue').onclick = async () => {
-    await saveQueueItemEdit(item, closeModal);
-  };
 }
 
-async function saveQueueItemEdit(item, closeModalCallback) {
+// Close modal handler function (defined outside so it can be referenced in event handlers)
+function closeEditModal(force = false) {
+  const modal = document.getElementById('editQueueItemModal');
+  if (!modal) return;
+  
+  if (!force && editModalState.hasUnsavedChanges) {
+    if (!confirm('You have unsaved changes. Are you sure you want to close?')) {
+      return;
+    }
+  }
+  modal.style.display = 'none';
+  editModalState.hasUnsavedChanges = false;
+  editModalState.originalData = null;
+  editModalState.currentDocId = null;
+  editModalState.repoSelector = null;
+  editModalState.branchSelector = null;
+}
+
+async function saveQueueItemEdit(docId, closeModalCallback) {
+  const item = queueCache.find(i => i.id === docId);
+  if (!item) {
+    alert('Queue item not found');
+    return;
+  }
+  
   const user = window.auth?.currentUser;
   if (!user) {
     alert('Not signed in');
