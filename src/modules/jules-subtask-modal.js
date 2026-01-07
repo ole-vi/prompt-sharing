@@ -5,7 +5,7 @@
 
 import { analyzePromptStructure, buildSubtaskSequence, validateSubtasks } from './subtask-manager.js';
 import { showSubtaskErrorModal, openUrlInBackground } from './jules-modal.js';
-import { lastSelectedSourceId, lastSelectedBranch } from './jules-modal.js';
+import { getLastSelectedSource } from './jules-free-input.js';
 import { addToJulesQueue } from './jules-queue.js';
 import { callRunJulesFunction } from './jules-api.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
@@ -73,12 +73,13 @@ export function showSubtaskSplitModal(promptText) {
       return;
     }
 
-    if (!lastSelectedSourceId) {
+    const { sourceId, branch } = getLastSelectedSource();
+    if (!sourceId) {
       alert('Please select a repository first.');
       return;
     }
 
-    if (!lastSelectedBranch) {
+    if (!branch) {
       alert('Please select a branch first.');
       return;
     }
@@ -88,8 +89,8 @@ export function showSubtaskSplitModal(promptText) {
         await addToJulesQueue(user.uid, {
           type: 'single',
           prompt: currentFullPrompt,
-          sourceId: lastSelectedSourceId,
-          branch: lastSelectedBranch,
+          sourceId: sourceId,
+          branch: branch,
           note: 'Queued from Split Dialog (no subtasks)'
         });
         alert('Prompt queued successfully!');
@@ -118,8 +119,8 @@ export function showSubtaskSplitModal(promptText) {
       await addToJulesQueue(user.uid, {
         type: 'subtasks',
         prompt: currentFullPrompt,
-        sourceId: lastSelectedSourceId,
-        branch: lastSelectedBranch,
+        sourceId: sourceId,
+        branch: branch,
         remaining,
         totalCount: remaining.length,
         note: 'Queued from Split Dialog'
@@ -236,6 +237,7 @@ function showSubtaskPreview(subtask, partNumber) {
 async function submitSubtasks(subtasks) {
   const suppressPopups = document.getElementById('splitSuppressPopupsCheckbox')?.checked || false;
   const openInBackground = document.getElementById('splitOpenInBackgroundCheckbox')?.checked || false;
+  const { sourceId, branch } = getLastSelectedSource();
   
   if (!subtasks || subtasks.length === 0) {
     let retryCount = 0;
@@ -245,7 +247,7 @@ async function submitSubtasks(subtasks) {
     while (retryCount < maxRetries && !submitted) {
       try {
         const title = extractTitleFromPrompt(currentFullPrompt);
-        const sessionUrl = await callRunJulesFunction(currentFullPrompt, lastSelectedSourceId, lastSelectedBranch, title);
+        const sessionUrl = await callRunJulesFunction(currentFullPrompt, sourceId, branch, title);
         if (sessionUrl && !suppressPopups) {
           if (openInBackground) {
             openUrlInBackground(sessionUrl);
@@ -275,7 +277,7 @@ async function submitSubtasks(subtasks) {
             }
             try {
               const title = extractTitleFromPrompt(currentFullPrompt);
-              const sessionUrl = await callRunJulesFunction(currentFullPrompt, lastSelectedSourceId, lastSelectedBranch, title);
+              const sessionUrl = await callRunJulesFunction(currentFullPrompt, sourceId, branch, title);
               if (sessionUrl) {
                 if (openInBackground) {
                   openUrlInBackground(sessionUrl);
@@ -335,7 +337,7 @@ async function submitSubtasks(subtasks) {
     while (retryCount < maxRetries && !submitted) {
       try {
         const title = extractTitleFromPrompt(subtask.fullContent) || subtask.title || '';
-        const sessionUrl = await callRunJulesFunction(subtask.fullContent, lastSelectedSourceId, lastSelectedBranch, title);
+        const sessionUrl = await callRunJulesFunction(subtask.fullContent, sourceId, branch, title);
         if (sessionUrl && !suppressPopups) {
           if (openInBackground) {
             openUrlInBackground(sessionUrl);
@@ -360,8 +362,8 @@ async function submitSubtasks(subtasks) {
               await addToJulesQueue(user.uid, {
                 type: 'subtasks',
                 prompt: currentFullPrompt,
-                sourceId: lastSelectedSourceId,
-                branch: lastSelectedBranch,
+                sourceId: sourceId,
+                branch: branch,
                 remaining,
                 totalCount,
                 note: 'Paused by user'
@@ -414,8 +416,8 @@ async function submitSubtasks(subtasks) {
               await addToJulesQueue(user.uid, {
                 type: 'subtasks',
                 prompt: currentFullPrompt,
-                sourceId: lastSelectedSourceId,
-                branch: lastSelectedBranch,
+                sourceId: sourceId,
+                branch: branch,
                 remaining,
                 totalCount,
                 note: 'Queued remaining subtasks'
@@ -460,8 +462,8 @@ async function submitSubtasks(subtasks) {
                 await addToJulesQueue(user.uid, {
                   type: 'subtasks',
                   prompt: currentFullPrompt,
-                  sourceId: lastSelectedSourceId,
-                  branch: lastSelectedBranch,
+                  sourceId: sourceId,
+                  branch: branch,
                   remaining,
                   totalCount,
                   note: 'Queued remaining subtasks (final failure)'
