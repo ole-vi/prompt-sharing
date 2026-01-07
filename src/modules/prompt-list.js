@@ -150,7 +150,8 @@ export function toggleDirectory(path, expand) {
 
 function closeAllSubmenus() {
   openSubmenus.forEach(submenu => {
-    submenu.style.display = 'none';
+    submenu.classList.remove('folder-submenu--visible');
+    submenu.style.visibility = ''; // Reset inline style
   });
   activeSubmenuHeaders.forEach(header => {
     header.classList.remove('submenu-open');
@@ -255,27 +256,15 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       addIcon.title = 'Create new file in this directory';
 
       const submenu = document.createElement('div');
-      submenu.style.position = 'absolute';
-      submenu.style.background = 'var(--card)';
-      submenu.style.border = '1px solid var(--border)';
-      submenu.style.borderRadius = '8px';
-      submenu.style.padding = '6px 0';
-      submenu.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
-      submenu.style.display = 'none';
-      submenu.style.zIndex = '10';
+      submenu.className = 'folder-submenu';
 
       const makeMenuItem = (label, emoji, onClick) => {
         const item = document.createElement('div');
+        item.className = 'folder-submenu-item';
         item.textContent = `${emoji} ${label}`;
-        item.style.padding = '6px 14px';
-        item.style.cursor = 'pointer';
-        item.style.fontSize = '13px';
-        item.style.color = 'var(--text)';
-        item.addEventListener('mouseenter', () => item.style.background = '#1a1f35');
-        item.addEventListener('mouseleave', () => item.style.background = 'transparent');
         item.addEventListener('click', (e) => {
           e.stopPropagation();
-          submenu.style.display = 'none';
+          closeAllSubmenus();
           onClick();
         });
         return item;
@@ -304,14 +293,16 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       addIcon.addEventListener('click', (ev) => {
         stopPropagation(ev);
 
-        const wasOpen = submenu.style.display === 'block';
+        const wasOpen = submenu.classList.contains('folder-submenu--visible');
         closeAllSubmenus();
 
         if (!wasOpen) {
           const rect = addIcon.getBoundingClientRect();
 
-          submenu.style.display = 'block';
+          // Render invisibly to measure
           submenu.style.visibility = 'hidden';
+          submenu.classList.add('folder-submenu--visible');
+
           const submenuRect = submenu.getBoundingClientRect();
 
           let left = rect.right;
@@ -325,17 +316,15 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
             top = rect.bottom - submenuRect.height;
           }
 
-          if (left < 10) {
-            left = 10;
-          }
+          if (left < 10) left = 10;
+          if (top < 10) top = 10;
 
-          if (top < 10) {
-            top = 10;
-          }
+          submenu.style.setProperty('--submenu-left', `${left}px`);
+          submenu.style.setProperty('--submenu-top', `${top}px`);
 
-          submenu.style.left = left + 'px';
-          submenu.style.top = top + 'px';
+          // Make visible now that it's positioned
           submenu.style.visibility = 'visible';
+
           openSubmenus.add(submenu);
           header.classList.add('submenu-open');
           activeSubmenuHeaders.add(header);
