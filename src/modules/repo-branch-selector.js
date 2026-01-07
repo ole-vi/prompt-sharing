@@ -10,7 +10,7 @@ function extractDefaultBranch(source) {
     : (defaultBranchObj?.displayName || 'main');
 }
 
-function setupClickOutsideClose(targetBtn, targetMenu) {
+function setupClickOutsideClose(targetBtn, targetMenu, dropdownClass) {
   // Remove any previously registered handler for this button, if present
   if (targetBtn._closeDropdownHandler) {
     document.removeEventListener('click', targetBtn._closeDropdownHandler);
@@ -18,7 +18,7 @@ function setupClickOutsideClose(targetBtn, targetMenu) {
   
   const closeDropdown = (e) => {
     if (!targetBtn.contains(e.target) && !targetMenu.contains(e.target)) {
-      targetMenu.style.display = 'none';
+      targetBtn.closest('.custom-dropdown').classList.remove(dropdownClass);
     }
   };
   
@@ -30,6 +30,7 @@ function setupClickOutsideClose(targetBtn, targetMenu) {
 export class RepoSelector {
   constructor(options) {
     this.dropdownBtn = options.dropdownBtn;
+    this.dropdown = this.dropdownBtn.closest('.custom-dropdown');
     this.dropdownText = options.dropdownText;
     this.dropdownMenu = options.dropdownMenu;
     this.onSelect = options.onSelect;
@@ -137,24 +138,25 @@ export class RepoSelector {
   setupDropdownToggle() {
     this.dropdownBtn.onclick = async (e) => {
       e.stopPropagation();
-      if (this.dropdownMenu.style.display === 'block') {
-        this.dropdownMenu.style.display = 'none';
+      const isOpen = this.dropdown.classList.contains('repo-dropdown--open');
+      if (isOpen) {
+        this.dropdown.classList.remove('repo-dropdown--open');
         return;
       }
       await this.populateDropdown();
     };
 
-    setupClickOutsideClose(this.dropdownBtn, this.dropdownMenu);
+    setupClickOutsideClose(this.dropdownBtn, this.dropdownMenu, 'repo-dropdown--open');
   }
 
   async populateDropdown() {
     this.dropdownMenu.innerHTML = '';
     
     const loadingIndicator = document.createElement('div');
-    loadingIndicator.style.cssText = 'padding:12px; text-align:center; color:var(--muted); font-size:13px;';
+    loadingIndicator.className = 'dropdown-loading-indicator';
     loadingIndicator.textContent = 'Loading...';
     this.dropdownMenu.appendChild(loadingIndicator);
-    this.dropdownMenu.style.display = 'block';
+    this.dropdown.classList.add('repo-dropdown--open');
     
     await new Promise(resolve => setTimeout(resolve, 0));
     
@@ -168,7 +170,7 @@ export class RepoSelector {
       this.renderAllRepos();
     }
     
-    this.dropdownMenu.style.display = 'block';
+    this.dropdown.classList.add('repo-dropdown--open');
   }
 
   async renderFavorites() {
@@ -176,7 +178,7 @@ export class RepoSelector {
       const item = this.createRepoItem(fav.name, fav.id, true, async () => {
         this.selectedSourceId = fav.id;
         this.dropdownText.textContent = fav.name;
-        this.dropdownMenu.style.display = 'none';
+        this.dropdown.classList.remove('repo-dropdown--open');
         
         // Save repo selection
         this.saveToStorage();
@@ -212,25 +214,26 @@ export class RepoSelector {
 
   addShowMoreButton() {
     const showMoreBtn = document.createElement('div');
-    showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
+    showMoreBtn.className = 'dropdown-show-more';
     showMoreBtn.textContent = '▼ Show more...';
     
     showMoreBtn.onclick = async () => {
       if (!this.allReposLoaded) {
         showMoreBtn.textContent = 'Loading...';
-        showMoreBtn.style.pointerEvents = 'none';
+        showMoreBtn.classList.add('loading');
         
         try {
           await this.loadAllRepos();
           this.allReposLoaded = true;
         } catch (error) {
           showMoreBtn.textContent = 'Failed to load - click to retry';
-          showMoreBtn.style.pointerEvents = 'auto';
+          showMoreBtn.classList.remove('loading');
+          showMoreBtn.classList.add('error');
           return;
         }
       }
       
-      showMoreBtn.style.display = 'none';
+      showMoreBtn.classList.add('hidden');
       this.renderAllRepos();
     };
     
@@ -265,7 +268,7 @@ export class RepoSelector {
   renderAllRepos() {
     if (!this.favorites || this.favorites.length === 0) {
       const helperDiv = document.createElement('div');
-      helperDiv.style.cssText = 'padding:12px; color:var(--muted); text-align:center; font-size:12px; border-bottom:1px solid var(--border);';
+      helperDiv.className = 'dropdown-helper-text';
       helperDiv.textContent = 'Click ★ next to any repository to add it to favorites';
       this.dropdownMenu.appendChild(helperDiv);
     }
@@ -281,7 +284,7 @@ export class RepoSelector {
       const item = this.createRepoItem(repoName, source.name || source.id, false, () => {
         this.selectedSourceId = source.name || source.id;
         this.dropdownText.textContent = repoName;
-        this.dropdownMenu.style.display = 'none';
+        this.dropdown.classList.remove('repo-dropdown--open');
         
         // Save repo selection
         this.saveToStorage();
@@ -298,7 +301,6 @@ export class RepoSelector {
   createRepoItem(name, id, isFavorite, onClickHandler) {
     const item = document.createElement('div');
     item.className = 'custom-dropdown-item';
-    item.style.cssText = 'display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer;';
     
     if (id === this.selectedSourceId) {
       item.classList.add('selected');
@@ -306,12 +308,12 @@ export class RepoSelector {
     
     const star = document.createElement('span');
     star.textContent = isFavorite ? '★' : '☆';
-    star.style.cssText = `font-size:18px; cursor:pointer; color:${isFavorite ? 'var(--accent)' : 'var(--muted)'}; flex-shrink:0;`;
+    star.className = isFavorite ? 'dropdown-item-star is-favorite' : 'dropdown-item-star not-favorite';
     star.onclick = async (e) => {
       e.stopPropagation();
       if (isFavorite) {
         await this.removeFavorite(id);
-        this.dropdownMenu.style.display = 'none';
+        this.dropdown.classList.remove('repo-dropdown--open');
         setTimeout(() => this.populateDropdown(), 0);
       } else {
         const defaultBranch = extractDefaultBranch(this.allSources.find(s => (s.name || s.id) === id));
@@ -322,7 +324,7 @@ export class RepoSelector {
     
     const nameSpan = document.createElement('span');
     nameSpan.textContent = name;
-    nameSpan.style.flex = '1';
+    nameSpan.className = 'dropdown-item-name';
     
     item.onclick = (e) => {
       if (e.target === star) return;
@@ -438,6 +440,7 @@ export class RepoSelector {
 export class BranchSelector {
   constructor(options) {
     this.dropdownBtn = options.dropdownBtn;
+    this.dropdown = this.dropdownBtn.closest('.custom-dropdown');
     this.dropdownText = options.dropdownText;
     this.dropdownMenu = options.dropdownMenu;
     this.onSelect = options.onSelect;
@@ -485,15 +488,11 @@ export class BranchSelector {
     if (!sourceId) {
       this.dropdownText.textContent = 'Select repository first';
       this.dropdownBtn.disabled = true;
-      this.dropdownBtn.style.opacity = '0.5';
-      this.dropdownBtn.style.cursor = 'not-allowed';
       return;
     }
     
     this.dropdownText.textContent = defaultBranch || 'Select a branch...';
     this.dropdownBtn.disabled = false;
-    this.dropdownBtn.style.opacity = '1';
-    this.dropdownBtn.style.cursor = 'pointer';
     
     // Save to storage
     this.saveToStorage();
@@ -504,14 +503,15 @@ export class BranchSelector {
   setupDropdownToggle() {
     this.dropdownBtn.onclick = (e) => {
       e.stopPropagation();
-      if (this.dropdownMenu.style.display === 'block') {
-        this.dropdownMenu.style.display = 'none';
+      const isOpen = this.dropdown.classList.contains('branch-dropdown--open');
+      if (isOpen) {
+        this.dropdown.classList.remove('branch-dropdown--open');
         return;
       }
       this.populateDropdown();
     };
 
-    setupClickOutsideClose(this.dropdownBtn, this.dropdownMenu);
+    setupClickOutsideClose(this.dropdownBtn, this.dropdownMenu, 'branch-dropdown--open');
   }
 
   populateDropdown() {
@@ -526,19 +526,19 @@ export class BranchSelector {
     currentItem.className = 'custom-dropdown-item selected';
     currentItem.textContent = this.selectedBranch;
     currentItem.onclick = () => {
-      this.dropdownMenu.style.display = 'none';
+      this.dropdown.classList.remove('branch-dropdown--open');
     };
     this.dropdownMenu.appendChild(currentItem);
     
     const showMoreBtn = document.createElement('div');
-    showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
+    showMoreBtn.className = 'dropdown-show-more';
     showMoreBtn.textContent = '▼ Show more branches...';
     
     showMoreBtn.onclick = async () => {
       if (this.allBranchesLoaded) return;
       
       showMoreBtn.textContent = 'Loading...';
-      showMoreBtn.style.pointerEvents = 'none';
+      showMoreBtn.classList.add('loading');
       
       try {
         const pathParts = this.sourceId.split('/');
@@ -550,13 +550,13 @@ export class BranchSelector {
 
         if (!allBranches || allBranches.length === 0) {
           showMoreBtn.textContent = allBranches === null ? 'GitHub API rate limited - try later' : 'No branches found';
-          showMoreBtn.style.color = 'var(--muted)';
-          showMoreBtn.style.pointerEvents = 'auto';
+          showMoreBtn.classList.remove('loading');
+          showMoreBtn.classList.add('error');
           return;
         }
 
         this.allBranchesLoaded = true;
-        showMoreBtn.style.display = 'none';
+        showMoreBtn.classList.add('hidden');
         
         allBranches.forEach(branch => {
           if (branch.name === this.selectedBranch) return;
@@ -567,7 +567,7 @@ export class BranchSelector {
           
           item.onclick = () => {
             this.setSelectedBranch(branch.name);
-            this.dropdownMenu.style.display = 'none';
+            this.dropdown.classList.remove('branch-dropdown--open');
           };
           
           this.dropdownMenu.appendChild(item);
@@ -575,14 +575,14 @@ export class BranchSelector {
       } catch (error) {
         console.error('Failed to load branches:', error);
         showMoreBtn.textContent = 'Failed to load - click to retry';
-        showMoreBtn.style.color = 'var(--muted)';
-        showMoreBtn.style.pointerEvents = 'auto';
+        showMoreBtn.classList.remove('loading');
+        showMoreBtn.classList.add('error');
       }
     };
     
     this.dropdownMenu.appendChild(showMoreBtn);
     
-    this.dropdownMenu.style.display = 'block';
+    this.dropdown.classList.add('branch-dropdown--open');
   }
 
   setSelectedBranch(branch) {
