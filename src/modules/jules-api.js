@@ -1,7 +1,7 @@
 // ===== Jules API Client Module =====
 // Provides access to the Jules API for managing sources, sessions, and activities
 
-import { JULES_API_BASE, ERRORS } from '../utils/constants.js';
+import { JULES_API_BASE, ERRORS, PAGE_SIZES } from '../utils/constants.js';
 
 export async function getDecryptedJulesKey(uid) {
   try {
@@ -81,10 +81,10 @@ export async function getJulesSourceDetails(apiKey, sourceId) {
   }
 }
 
-export async function listJulesSessions(apiKey, pageSize = 10, pageToken = null) {
+export async function listJulesSessions(apiKey, pageToken = null) {
   try {
     const url = new URL(`${JULES_API_BASE}/sessions`);
-    url.searchParams.set('pageSize', pageSize.toString());
+    url.searchParams.set('pageSize', PAGE_SIZES.julesSessions.toString());
     if (pageToken) {
       url.searchParams.set('pageToken', pageToken);
     }
@@ -200,7 +200,7 @@ export async function loadJulesProfileInfo(uid) {
     // Fetch sources and sessions in parallel
     const [sourcesData, sessionsData] = await Promise.all([
       listJulesSources(apiKey),
-      listJulesSessions(apiKey, 10)
+      listJulesSessions(apiKey)
     ]);
 
     // Fetch branch details for each source

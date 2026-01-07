@@ -1,4 +1,6 @@
 // Session storage cache utilities
+import { CACHE_DURATIONS } from './constants.js';
+
 const CACHE_KEYS = {
   JULES_ACCOUNT: 'jules_account_info',
   JULES_SESSIONS: 'jules_sessions',
@@ -10,12 +12,12 @@ const CACHE_KEYS = {
   USER_PROFILE: 'user_profile'
 };
 
-// Optional cache durations (set to null for session-only caching)
-const CACHE_DURATION = {
-  JULES_ACCOUNT: null, // Cache for entire session
-  QUEUE_ITEMS: null,   // Cache until modified (we invalidate on changes)
-  BRANCHES: null,      // Cache until branch change
-  DEFAULT: 5 * 60 * 1000 // 5 minutes fallback
+// Map keys to specific cache durations
+const KEY_DURATIONS = {
+  JULES_ACCOUNT: CACHE_DURATIONS.session,
+  QUEUE_ITEMS: CACHE_DURATIONS.session,
+  BRANCHES: CACHE_DURATIONS.session,
+  DEFAULT: CACHE_DURATIONS.short
 };
 
 function getCacheKey(key, userId) {
@@ -43,15 +45,13 @@ export function getCache(key, userId = null) {
 
     const { data, timestamp } = JSON.parse(cached);
     
-    // Check if this key has a duration limit
-    const duration = CACHE_DURATION[key] || CACHE_DURATION.DEFAULT;
+    const duration = KEY_DURATIONS[key] || KEY_DURATIONS.DEFAULT;
     
-    // If duration is null, cache for entire session (no expiration)
-    if (duration === null) {
+    // A duration of 0 means session-only cache
+    if (duration === CACHE_DURATIONS.session) {
       return data;
     }
     
-    // Otherwise check expiration
     const age = Date.now() - timestamp;
     if (age < duration) {
       return data;

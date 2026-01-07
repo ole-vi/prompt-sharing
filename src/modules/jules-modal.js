@@ -5,6 +5,7 @@ import { encryptAndStoreKey } from './jules-keys.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { addToJulesQueue } from './jules-queue.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
+import { RETRY_CONFIG, TIMEOUTS } from '../utils/constants.js';
 
 let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
 let lastSelectedBranch = 'master';
@@ -177,13 +178,12 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
   lastSelectedBranch = branch || 'master';
   
   let retryCount = 0;
-  let maxRetries = 3;
   let submitted = false;
 
   const { callRunJulesFunction } = await import('./jules-api.js');
   const title = extractTitleFromPrompt(promptText);
   
-  while (retryCount < maxRetries && !submitted) {
+  while (retryCount < RETRY_CONFIG.maxRetries && !submitted) {
     try {
       const sessionUrl = await callRunJulesFunction(promptText, sourceId, lastSelectedBranch, title);
       if (sessionUrl && !suppressPopups) {
@@ -197,7 +197,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
     } catch (error) {
       retryCount++;
 
-      if (retryCount < maxRetries) {
+      if (retryCount < RETRY_CONFIG.maxRetries) {
         const result = await showSubtaskErrorModal(1, 1, error);
 
         if (result.action === 'cancel') {
@@ -225,7 +225,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
           return;
         } else if (result.action === 'retry') {
           if (result.shouldDelay) {
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            await new Promise(resolve => setTimeout(resolve, TIMEOUTS.fetch));
           }
         }
       } else {
@@ -254,7 +254,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
         
         if (result.action === 'retry') {
           if (result.shouldDelay) {
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            await new Promise(resolve => setTimeout(resolve, TIMEOUTS.fetch));
           }
           try {
             const sessionUrl = await callRunJulesFunction(promptText, sourceId, lastSelectedBranch, title);
@@ -270,7 +270,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
     }
 
     if (!submitted) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, RETRY_CONFIG.baseDelay));
     }
   }
 }
