@@ -6,6 +6,7 @@ import { checkJulesKey } from './jules-keys.js';
 import { showJulesKeyModal, showSubtaskErrorModal } from './jules-modal.js';
 import { addToJulesQueue } from './jules-queue.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
+import { retryWithErrorModal } from '../utils/retry.js';
 
 // Module state
 let _lastSelectedSourceId = null;
@@ -118,104 +119,44 @@ export function showFreeInputForm() {
     const { callRunJulesFunction } = await import('./jules-api.js');
     const { openUrlInBackground } = await import('./jules-modal.js');
 
-    try {
-      let retryCount = 0;
-      let maxRetries = 3;
-      let submitted = false;
-
-      while (retryCount < maxRetries && !submitted) {
-        try {
-          const sessionUrl = await callRunJulesFunction(promptText, _lastSelectedSourceId, _lastSelectedBranch, title);
-          if (sessionUrl && !suppressPopups) {
-            if (openInBackground) {
-              openUrlInBackground(sessionUrl);
-            } else {
-              window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-            }
-          }
-          submitted = true;
-        } catch (error) {
-          retryCount++;
-
-          if (retryCount < maxRetries) {
-            const result = await showSubtaskErrorModal(1, 1, error);
-
-            if (result.action === 'cancel') {
-              return;
-            } else if (result.action === 'skip') {
-              return;
-            } else if (result.action === 'queue') {
-              const user = window.auth?.currentUser;
-              if (!user) {
-                alert('Please sign in to queue prompts.');
-                return;
-              }
-              try {
-                await addToJulesQueue(user.uid, {
-                  type: 'single',
-                  prompt: promptText,
-                  sourceId: _lastSelectedSourceId,
-                  branch: _lastSelectedBranch,
-                  note: 'Queued from Free Input flow'
-                });
-                alert('Prompt queued. You can restart it later from your Jules queue.');
-              } catch (err) {
-                alert('Failed to queue prompt: ' + err.message);
-              }
-              return;
-            } else if (result.action === 'retry') {
-              if (result.shouldDelay) {
-                await new Promise(resolve => setTimeout(resolve, 5000));
-              }
-            }
-          } else {
-            const result = await showSubtaskErrorModal(1, 1, error);
-
-            if (result.action === 'queue') {
-              const user = window.auth?.currentUser;
-              if (!user) {
-                alert('Please sign in to queue prompts.');
-                return;
-              }
-              try {
-                await addToJulesQueue(user.uid, {
-                  type: 'single',
-                  prompt: promptText,
-                  sourceId: _lastSelectedSourceId,
-                  branch: _lastSelectedBranch,
-                  note: 'Queued from Free Input flow (final failure)'
-                });
-                alert('Prompt queued. You can restart it later from your Jules queue.');
-              } catch (err) {
-                alert('Failed to queue prompt: ' + err.message);
-              }
-              return;
-            }
-
-            if (result.action === 'retry') {
-              if (result.shouldDelay) {
-                await new Promise(resolve => setTimeout(resolve, 5000));
-              }
-              try {
-                const sessionUrl = await callRunJulesFunction(promptText, _lastSelectedSourceId, _lastSelectedBranch, title);
-                if (sessionUrl) {
-                  window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-                }
-              } catch (finalError) {
-                alert('Failed to submit task after multiple retries. Please try again later.');
-              }
-            }
+    const onQueue = async (isFinal) => {
+        const user = window.auth?.currentUser;
+        if (!user) {
+            alert('Please sign in to queue prompts.');
             return;
-          }
         }
+        try {
+            await addToJulesQueue(user.uid, {
+                type: 'single',
+                prompt: promptText,
+                sourceId: _lastSelectedSourceId,
+                branch: _lastSelectedBranch,
+                note: `Queued from Free Input flow (${isFinal ? 'final failure' : 'intermediate'})`
+            });
+            alert('Prompt queued. You can restart it later from your Jules queue.');
+        } catch (err) {
+            alert('Failed to queue prompt: ' + err.message);
+        }
+    };
 
-        if (!submitted) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+    await retryWithErrorModal(
+        () => callRunJulesFunction(promptText, _lastSelectedSourceId, _lastSelectedBranch, title),
+        {
+            onSuccess: (sessionUrl) => {
+                if (sessionUrl && !suppressPopups) {
+                    if (openInBackground) {
+                        openUrlInBackground(sessionUrl);
+                    } else {
+                        window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+                    }
+                }
+            },
+            onQueue,
+            onFinalFailure: (error) => {
+                alert('Failed to submit task after multiple retries. Please try again later.');
+            }
         }
-      }
-    } catch (error) {
-      alert('Failed to submit prompt: ' + error.message);
-    }
+    );
   };
 
   const handleSplit = async () => {

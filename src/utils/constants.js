@@ -6,7 +6,7 @@ export const BRANCH = "main";
 export const PRETTY_TITLES = true;
 
 // GitHub API
-export const GIST_POINTER_REGEX = /^https:\/\/gist\.githubusercontent\.com\/\S+\/raw\/\S+$/i;
+export const GIST_POITER_REGEX = /^https:\/\/gist\.githubusercontent\.com\/\S+\/raw\/\S+$/i;
 export const GIST_URL_REGEX = /^https:\/\/gist\.github\.com\/[\w-]+\/[a-f0-9]+\/?(?:#file-[\w.-]+)?(?:\?file=[\w.-]+)?$/i;
 export const CODEX_URL_REGEX = /^https:\/\/chatgpt\.com\/s\/[a-f0-9_]+$/i;
 
@@ -75,3 +75,5 @@ export const UI_TEXT = {
   RUNNING: "Running...",
   SAVE_KEY: "Save & Continue"
 };
+
+export const MAX_RETRIES = 3;

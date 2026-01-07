@@ -9,6 +9,7 @@ import { lastSelectedSourceId, lastSelectedBranch } from './jules-modal.js';
 import { addToJulesQueue } from './jules-queue.js';
 import { callRunJulesFunction } from './jules-api.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
+import { retryWithErrorModal } from '../utils/retry.js';
 import statusBar from './status-bar.js';
 
 // Module state
@@ -236,70 +237,27 @@ function showSubtaskPreview(subtask, partNumber) {
 async function submitSubtasks(subtasks) {
   const suppressPopups = document.getElementById('splitSuppressPopupsCheckbox')?.checked || false;
   const openInBackground = document.getElementById('splitOpenInBackgroundCheckbox')?.checked || false;
-  
-  if (!subtasks || subtasks.length === 0) {
-    let retryCount = 0;
-    let maxRetries = 3;
-    let submitted = false;
 
-    while (retryCount < maxRetries && !submitted) {
-      try {
-        const title = extractTitleFromPrompt(currentFullPrompt);
-        const sessionUrl = await callRunJulesFunction(currentFullPrompt, lastSelectedSourceId, lastSelectedBranch, title);
-        if (sessionUrl && !suppressPopups) {
-          if (openInBackground) {
-            openUrlInBackground(sessionUrl);
-          } else {
-            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-          }
-        }
-        submitted = true;
-      } catch (error) {
-        retryCount++;
-        if (retryCount < maxRetries) {
-          const result = await showSubtaskErrorModal(1, 1, error);
-          if (result.action === 'cancel') {
-            return;
-          } else if (result.action === 'skip') {
-            return;
-          } else if (result.action === 'retry') {
-            if (result.shouldDelay) {
-              await new Promise(resolve => setTimeout(resolve, 5000));
-            }
-          }
-        } else {
-          const result = await showSubtaskErrorModal(1, 1, error);
-          if (result.action === 'retry') {
-            if (result.shouldDelay) {
-              await new Promise(resolve => setTimeout(resolve, 5000));
-            }
-            try {
-              const title = extractTitleFromPrompt(currentFullPrompt);
-              const sessionUrl = await callRunJulesFunction(currentFullPrompt, lastSelectedSourceId, lastSelectedBranch, title);
-              if (sessionUrl) {
-                if (openInBackground) {
-                  openUrlInBackground(sessionUrl);
-                } else {
-                  window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-                }
-              }
-            } catch (finalError) {
-              alert('Failed to submit task after multiple retries. Please try again later.');
-            }
-          }
-          return;
-        }
-      }
-
-      if (!submitted) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+  const onSuccess = (sessionUrl) => {
+    if (sessionUrl && !suppressPopups) {
+      if (openInBackground) {
+        openUrlInBackground(sessionUrl);
+      } else {
+        window.open(sessionUrl, '_blank', 'noopener,noreferrer');
       }
     }
+  };
+
+  if (!subtasks || subtasks.length === 0) {
+    const title = extractTitleFromPrompt(currentFullPrompt);
+    await retryWithErrorModal(
+      () => callRunJulesFunction(currentFullPrompt, lastSelectedSourceId, lastSelectedBranch, title),
+      { onSuccess }
+    );
     return;
   }
-  
+
   const sequenced = buildSubtaskSequence(currentFullPrompt, subtasks);
-  
   const totalCount = sequenced.length;
   const proceed = confirm(
     `Ready to send ${totalCount} subtask${totalCount > 1 ? 's' : ''} to Jules.\n\n` +
@@ -307,11 +265,7 @@ async function submitSubtasks(subtasks) {
     `Proceed?`
   );
 
-  if (!proceed) {
-    statusBar?.clearProgress?.();
-    statusBar?.clearAction?.();
-    return;
-  }
+  if (!proceed) return;
 
   let skippedCount = 0;
   let successCount = 0;
@@ -324,174 +278,91 @@ async function submitSubtasks(subtasks) {
     statusBar?.showMessage?.('Pausing after current subtask...', { timeout: 3000 });
     statusBar?.clearAction?.();
   });
-  
+
   for (let i = 0; i < sequenced.length; i++) {
     const subtask = sequenced[i];
-    
-    let retryCount = 0;
-    let maxRetries = 3;
-    let submitted = false;
+    const title = extractTitleFromPrompt(subtask.fullContent) || subtask.title || '';
 
-    while (retryCount < maxRetries && !submitted) {
+    const onQueue = async (isFinal) => {
+      const remaining = sequenced.slice(i).map(s => ({ fullContent: s.fullContent, sequenceInfo: s.sequenceInfo }));
       try {
-        const title = extractTitleFromPrompt(subtask.fullContent) || subtask.title || '';
-        const sessionUrl = await callRunJulesFunction(subtask.fullContent, lastSelectedSourceId, lastSelectedBranch, title);
-        if (sessionUrl && !suppressPopups) {
-          if (openInBackground) {
-            openUrlInBackground(sessionUrl);
-          } else {
-            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-          }
-        }
-        
-        successCount++;
-        submitted = true;
-
-        // update status bar progress
-        const percent = totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 100;
-        statusBar?.setProgress?.(`${successCount}/${totalCount}`, percent);
-        statusBar?.showMessage?.(`Processing subtask ${successCount}/${totalCount}`, { timeout: 0 });
-
-        // if user requested pause, queue remaining subtasks and stop
-        if (paused) {
-          const remaining = sequenced.slice(i + 1).map(s => ({ fullContent: s.fullContent, sequenceInfo: s.sequenceInfo }));
-          if (user && remaining.length > 0) {
-            try {
-              await addToJulesQueue(user.uid, {
-                type: 'subtasks',
-                prompt: currentFullPrompt,
-                sourceId: lastSelectedSourceId,
-                branch: lastSelectedBranch,
-                remaining,
-                totalCount,
-                note: 'Paused by user'
-              });
-              statusBar?.showMessage?.(`Paused and queued ${remaining.length} remaining subtasks`, { timeout: 4000 });
-            } catch (err) {
-              console.warn('Failed to queue remaining subtasks on pause', err.message || err);
-              statusBar?.showMessage?.('Paused but failed to save remaining subtasks', { timeout: 4000 });
-            }
-          } else {
-            statusBar?.showMessage?.('Paused', { timeout: 3000 });
-          }
-          statusBar?.clearProgress?.();
-          statusBar?.clearAction?.();
-          // Only reload queue page if we're actually on that page
-          const { loadQueuePage } = await import('../pages/queue-page.js');
-          if (document.getElementById('allQueueList')) {
-            await loadQueuePage();
-          }
-          return;
-        }
-      } catch (error) {
-        retryCount++;
-
-        if (retryCount < maxRetries) {
-          const result = await showSubtaskErrorModal(
-            subtask.sequenceInfo.current,
-            subtask.sequenceInfo.total,
-            error
-          );
-
-          if (result.action === 'cancel') {
-            statusBar?.clearProgress?.();
-            statusBar?.clearAction?.();
-            alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
-            return;
-          } else if (result.action === 'skip') {
-            skippedCount++;
-            submitted = true;
-          } else if (result.action === 'queue') {
-            const user = window.auth?.currentUser;
-            if (!user) {
-              statusBar?.clearProgress?.();
-              statusBar?.clearAction?.();
-              alert('Please sign in to queue subtasks.');
-              return;
-            }
-            const remaining = sequenced.slice(i).map(s => ({ fullContent: s.fullContent, sequenceInfo: s.sequenceInfo }));
-            try {
-              await addToJulesQueue(user.uid, {
-                type: 'subtasks',
-                prompt: currentFullPrompt,
-                sourceId: lastSelectedSourceId,
-                branch: lastSelectedBranch,
-                remaining,
-                totalCount,
-                note: 'Queued remaining subtasks'
-              });
-              statusBar?.clearProgress?.();
-              statusBar?.clearAction?.();
-              alert(`Queued ${remaining.length} remaining subtasks to your account.`);
-            } catch (err) {
-              statusBar?.clearProgress?.();
-              statusBar?.clearAction?.();
-              alert('Failed to queue subtasks: ' + err.message);
-            }
-            return;
-          } else if (result.action === 'retry') {
-            if (result.shouldDelay) {
-              await new Promise(resolve => setTimeout(resolve, 5000));
-            }
-          }
-        } else {
-          const result = await showSubtaskErrorModal(
-            subtask.sequenceInfo.current,
-            subtask.sequenceInfo.total,
-            error
-          );
-
-          if (result.action === 'cancel') {
-            statusBar?.clearProgress?.();
-            statusBar?.clearAction?.();
-            alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
-            return;
-          } else {
-            if (result.action === 'queue') {
-              const user = window.auth?.currentUser;
-              if (!user) {
-                statusBar?.clearProgress?.();
-                statusBar?.clearAction?.();
-                alert('Please sign in to queue subtasks.');
-                return;
-              }
-              const remaining = sequenced.slice(i).map(s => ({ fullContent: s.fullContent, sequenceInfo: s.sequenceInfo }));
-              try {
-                await addToJulesQueue(user.uid, {
-                  type: 'subtasks',
-                  prompt: currentFullPrompt,
-                  sourceId: lastSelectedSourceId,
-                  branch: lastSelectedBranch,
-                  remaining,
-                  totalCount,
-                  note: 'Queued remaining subtasks (final failure)'
-                });
-                statusBar?.clearProgress?.();
-                statusBar?.clearAction?.();
-                alert(`Queued ${remaining.length} remaining subtasks to your account.`);
-              } catch (err) {
-                statusBar?.clearProgress?.();
-                statusBar?.clearAction?.();
-                alert('Failed to queue subtasks: ' + err.message);
-              }
-              return;
-            }
-            skippedCount++;
-            submitted = true;
-          }
-        }
+        await addToJulesQueue(user.uid, {
+          type: 'subtasks',
+          prompt: currentFullPrompt,
+          sourceId: lastSelectedSourceId,
+          branch: lastSelectedBranch,
+          remaining,
+          totalCount,
+          note: `Queued remaining subtasks (${isFinal ? 'final failure' : 'intermediate'})`
+        });
+        statusBar?.clearProgress?.();
+        statusBar?.clearAction?.();
+        alert(`Queued ${remaining.length} remaining subtasks to your account.`);
+      } catch (err) {
+        alert('Failed to queue subtasks: ' + err.message);
       }
+    };
 
-      if (!submitted && i < sequenced.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+    const result = await retryWithErrorModal(
+      () => callRunJulesFunction(subtask.fullContent, lastSelectedSourceId, lastSelectedBranch, title),
+      {
+        onSuccess,
+        onQueue,
+        subtaskNumber: subtask.sequenceInfo.current,
+        totalSubtasks: subtask.sequenceInfo.total,
       }
+    );
+
+    if (result.success) {
+      successCount++;
+      const percent = totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 100;
+      statusBar?.setProgress?.(`${successCount}/${totalCount}`, percent);
+      statusBar?.showMessage?.(`Processing subtask ${successCount}/${totalCount}`, { timeout: 0 });
+    } else if (result.reason === 'skipped') {
+      skippedCount++;
+    } else if (result.reason === 'cancelled') {
+      statusBar?.clearProgress?.();
+      statusBar?.clearAction?.();
+      alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
+      return;
+    } else if (result.reason === 'queued') {
+      return;
+    }
+
+    if (paused) {
+      const remaining = sequenced.slice(i + 1).map(s => ({ fullContent: s.fullContent, sequenceInfo: s.sequenceInfo }));
+      if (user && remaining.length > 0) {
+        try {
+          await addToJulesQueue(user.uid, {
+            type: 'subtasks',
+            prompt: currentFullPrompt,
+            sourceId: lastSelectedSourceId,
+            branch: lastSelectedBranch,
+            remaining,
+            totalCount,
+            note: 'Paused by user'
+          });
+          statusBar?.showMessage?.(`Paused and queued ${remaining.length} remaining subtasks`, { timeout: 4000 });
+        } catch (err) {
+          statusBar?.showMessage?.('Paused but failed to save remaining subtasks', { timeout: 4000 });
+        }
+      } else {
+        statusBar?.showMessage?.('Paused', { timeout: 3000 });
+      }
+      statusBar?.clearProgress?.();
+      statusBar?.clearAction?.();
+      const { loadQueuePage } = await import('../pages/queue-page.js');
+      if (document.getElementById('allQueueList')) {
+        await loadQueuePage();
+      }
+      return;
     }
   }
 
   statusBar?.clearProgress?.();
   statusBar?.clearAction?.();
   statusBar?.showMessage?.('All subtasks completed', { timeout: 3000 });
-  
+
   const summary = `✓ Completed!\n\n` +
     `Successful: ${successCount}/${totalCount}\n` +
     `Skipped: ${skippedCount}/${totalCount}`;
