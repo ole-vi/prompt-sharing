@@ -10,3 +10,35 @@
 .tree-dir .folder-icons span:hover { opacity: 1; background: rgba(255, 255, 255, 0.05); }
 .tree-dir .add-file-icon { color: #4ade80; font-weight: bold; }
 .tree-dir .add-file-icon:hover { background: rgba(74, 222, 128, 0.1) !important; }
+
+/* Submenu for folder actions */
+.folder-submenu {
+  position: absolute;
+  left: var(--submenu-left, 0);
+  top: var(--submenu-top, 0);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 0;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  display: none;
+  z-index: 10;
+  min-width: 200px;
+}
+
+.folder-submenu--visible {
+  display: block;
+}
+
+.folder-submenu-item {
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+  background-color: transparent;
+  transition: background-color 0.15s;
+}
+
+.folder-submenu-item:hover {
+  background-color: #1a1f35;
+}
