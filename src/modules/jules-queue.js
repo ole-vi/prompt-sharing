@@ -4,6 +4,7 @@
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
+import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 
 let queueCache = [];
 
@@ -105,9 +106,38 @@ let editModalState = {
   currentDocId: null
 };
 
+// Initialize repo and branch selectors
+async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu) {
+  // Create BranchSelector instance
+  const branchSelector = new BranchSelector({
+    dropdownBtn: branchDropdownBtn,
+    dropdownText: branchDropdownText,
+    dropdownMenu: branchDropdownMenu,
+    onSelect: (selectedBranch) => {
+      editModalState.hasUnsavedChanges = true;
+    }
+  });
+
+  // Create RepoSelector instance
+  const repoSelector = new RepoSelector({
+    dropdownBtn: repoDropdownBtn,
+    dropdownText: repoDropdownText,
+    dropdownMenu: repoDropdownMenu,
+    branchSelector: branchSelector,
+    onSelect: (selectedSourceId) => {
+      editModalState.hasUnsavedChanges = true;
+    }
+  });
+
+  // Store selectors in state for later access
+  editModalState.repoSelector = repoSelector;
+  editModalState.branchSelector = branchSelector;
+
+  // Initialize with current values
+  await repoSelector.initialize(sourceId, branch);
+}
+
 async function fetchAndPopulateBranches(sourceId, currentBranch, branchDropdownBtn, branchDropdownText, branchDropdownMenu) {
-  console.log('fetchAndPopulateBranches called with:', { sourceId, currentBranch });
-  
   // Setup dropdown toggle (do this first so it always works)
   branchDropdownBtn.onclick = (e) => {
     e.stopPropagation();
@@ -124,7 +154,6 @@ async function fetchAndPopulateBranches(sourceId, currentBranch, branchDropdownB
   document.addEventListener('click', closeHandler);
   
   if (!sourceId) {
-    console.log('No sourceId, using default branch');
     branchDropdownText.textContent = currentBranch || 'master';
     branchDropdownBtn.disabled = false;
     
@@ -142,10 +171,8 @@ async function fetchAndPopulateBranches(sourceId, currentBranch, branchDropdownB
 
   // Parse owner and repo from sourceId (format: sources/github.com/owner/repo)
   const pathParts = sourceId.split('/');
-  console.log('Parsed pathParts:', pathParts);
   
   if (pathParts.length < 4 || (pathParts[1] !== 'github.com' && pathParts[1] !== 'github')) {
-    console.log('Not a GitHub repo, pathParts:', pathParts);
     // Not a GitHub repo, just use the current branch
     branchDropdownText.textContent = currentBranch || 'master';
     branchDropdownBtn.disabled = false;
@@ -173,8 +200,6 @@ async function fetchAndPopulateBranches(sourceId, currentBranch, branchDropdownB
     const { getBranches } = await import('./github-api.js');
     const branches = await getBranches(owner, repo);
 
-    console.log('Fetched branches for', owner, repo, ':', branches);
-
     if (!branches || branches.length === 0) {
       branchDropdownText.textContent = currentBranch || 'master';
       branchDropdownBtn.disabled = false;
@@ -198,8 +223,6 @@ async function fetchAndPopulateBranches(sourceId, currentBranch, branchDropdownB
     // Populate dropdown menu
     branchDropdownMenu.innerHTML = '';
     
-    console.log('Populating dropdown with', branches.length, 'branches');
-    
     // Add current branch first (selected)
     const currentItem = document.createElement('div');
     currentItem.className = 'custom-dropdown-item selected';
@@ -211,7 +234,6 @@ async function fetchAndPopulateBranches(sourceId, currentBranch, branchDropdownB
     
     // Add other branches
     branches.forEach(branch => {
-      console.log('Adding branch:', branch.name);
       if (branch.name === currentBranch) return;
       
       const item = document.createElement('div');
@@ -285,9 +307,15 @@ async function openEditQueueModal(docId) {
           </div>
           <div class="form-group">
             <label class="form-label">Repository:</label>
-            <input type="text" id="editQueueRepo" class="form-control" readonly />
+            <div id="editQueueRepoDropdown" class="custom-dropdown">
+              <button id="editQueueRepoDropdownBtn" class="custom-dropdown-btn w-full" type="button">
+                <span id="editQueueRepoDropdownText">Loading...</span>
+                <span class="custom-dropdown-caret" aria-hidden="true">▼</span>
+              </button>
+              <div id="editQueueRepoDropdownMenu" class="custom-dropdown-menu" role="menu"></div>
+            </div>
           </div>
-          <div class="form-group">
+          <div class="form-group space-below">
             <label class="form-label">Branch:</label>
             <div id="editQueueBranchDropdown" class="custom-dropdown">
               <button id="editQueueBranchDropdownBtn" class="custom-dropdown-btn w-full" type="button">
@@ -313,7 +341,9 @@ async function openEditQueueModal(docId) {
   const subtasksGroup = document.getElementById('editSubtasksGroup');
   const promptTextarea = document.getElementById('editQueuePrompt');
   const subtasksList = document.getElementById('editQueueSubtasksList');
-  const repoInput = document.getElementById('editQueueRepo');
+  const repoDropdownBtn = document.getElementById('editQueueRepoDropdownBtn');
+  const repoDropdownText = document.getElementById('editQueueRepoDropdownText');
+  const repoDropdownMenu = document.getElementById('editQueueRepoDropdownMenu');
   const branchDropdownBtn = document.getElementById('editQueueBranchDropdownBtn');
   const branchDropdownText = document.getElementById('editQueueBranchDropdownText');
   const branchDropdownMenu = document.getElementById('editQueueBranchDropdownMenu');
@@ -342,12 +372,11 @@ async function openEditQueueModal(docId) {
     };
   }
 
-  repoInput.value = item.sourceId || '';
   editModalState.originalData.sourceId = item.sourceId || '';
   editModalState.originalData.branch = item.branch || 'master';
 
-  // Fetch and populate branches
-  await fetchAndPopulateBranches(item.sourceId, item.branch || 'master', branchDropdownBtn, branchDropdownText, branchDropdownMenu);
+  // Initialize repo and branch selectors
+  await initializeEditRepoAndBranch(item.sourceId, item.branch || 'master', repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu);
 
   // Show modal
   modal.style.display = 'flex';
@@ -402,9 +431,13 @@ async function saveQueueItemEdit(item, closeModalCallback) {
   }
 
   try {
-    const branchDropdownText = document.getElementById('editQueueBranchDropdownText');
+    // Get values from selectors
+    const sourceId = editModalState.repoSelector?.getSelectedSourceId();
+    const branch = editModalState.branchSelector?.getSelectedBranch();
+    
     const updates = {
-      branch: branchDropdownText.textContent.trim(),
+      sourceId: sourceId || item.sourceId,
+      branch: branch || item.branch || 'master',
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
