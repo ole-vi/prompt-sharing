@@ -22,74 +22,41 @@ function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
 
 function showUpdateBanner(latestDate, latestSha) {
   if (document.getElementById('updateBanner')) return;
-  
+
   const banner = document.createElement('div');
   banner.id = 'updateBanner';
-  banner.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    background: linear-gradient(90deg, #a259f7 0%, #7c3aed 100%);
-    color: var(--text);
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    font-size: 14px;
-    border-bottom: 1px solid var(--border);
-  `;
-  
+  banner.classList.add('update-banner');
+
   const message = document.createElement('span');
   message.textContent = `Update available: v${latestDate} (${latestSha})`;
-  message.style.flex = '1';
-  
+  message.classList.add('update-banner__message');
+
   const buttonContainer = document.createElement('div');
-  buttonContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
-  
+  buttonContainer.classList.add('update-banner__actions');
+
   const refreshButton = document.createElement('button');
   refreshButton.textContent = 'Refresh';
-  refreshButton.style.cssText = `
-    background-color: white;
-    color: #0969DA;
-    border: none;
-    padding: 6px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 14px;
-  `;
+  refreshButton.classList.add('update-banner__button');
   refreshButton.addEventListener('click', () => {
     window.location.reload();
   });
-  
+
   const dismissButton = document.createElement('button');
   dismissButton.textContent = '×';
-  dismissButton.style.cssText = `
-    background: transparent;
-    color: white;
-    border: none;
-    font-size: 24px;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0 8px;
-    margin-left: 8px;
-  `;
+  dismissButton.classList.add('update-banner__dismiss');
   dismissButton.addEventListener('click', () => {
     localStorage.setItem(`dismissed-version-${latestSha}`, 'true');
     banner.remove();
   });
-  
+
   buttonContainer.appendChild(refreshButton);
   buttonContainer.appendChild(dismissButton);
-  
+
   banner.appendChild(message);
   banner.appendChild(buttonContainer);
-  
+
   document.body.insertBefore(banner, document.body.firstChild);
-  
+
   document.body.style.paddingTop = '48px';
 }
 
