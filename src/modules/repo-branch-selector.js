@@ -58,6 +58,10 @@ export class RepoSelector {
     return null;
   }
 
+  getSelectedSourceId() {
+    return this.selectedSourceId;
+  }
+
   async initialize() {
     const user = getCurrentUser();
     if (!user) {
@@ -141,6 +145,16 @@ export class RepoSelector {
         this.dropdownMenu.style.display = 'none';
         return;
       }
+      
+      // Position dropdown menu if it's fixed (e.g., in modals)
+      const computedStyle = window.getComputedStyle(this.dropdownMenu);
+      if (computedStyle.position === 'fixed') {
+        const rect = this.dropdownBtn.getBoundingClientRect();
+        this.dropdownMenu.style.top = `${rect.bottom + 4}px`;
+        this.dropdownMenu.style.left = `${rect.left}px`;
+        this.dropdownMenu.style.width = `${rect.width}px`;
+      }
+      
       await this.populateDropdown();
     };
 
@@ -468,6 +482,10 @@ export class BranchSelector {
     return null;
   }
 
+  getSelectedBranch() {
+    return this.selectedBranch;
+  }
+
   initialize(sourceId, defaultBranch) {
     // Try to restore from storage if no sourceId provided
     if (!sourceId) {
@@ -508,6 +526,16 @@ export class BranchSelector {
         this.dropdownMenu.style.display = 'none';
         return;
       }
+      
+      // Position dropdown menu if it's fixed (e.g., in modals)
+      const computedStyle = window.getComputedStyle(this.dropdownMenu);
+      if (computedStyle.position === 'fixed') {
+        const rect = this.dropdownBtn.getBoundingClientRect();
+        this.dropdownMenu.style.top = `${rect.bottom + 4}px`;
+        this.dropdownMenu.style.left = `${rect.left}px`;
+        this.dropdownMenu.style.width = `${rect.width}px`;
+      }
+      
       this.populateDropdown();
     };
 

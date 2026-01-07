@@ -29,3 +29,29 @@
 
 /* Specific modal layering */
 #subtaskPreviewModal { z-index: 1002; }
+
+/* Modal overlay and dialog structure */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1001; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+.modal-dialog { background: var(--card); border: 1px solid var(--border); border-radius: 14px; max-width: 600px; width: 100%; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+.modal-header { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-title { margin: 0; font-size: 18px; font-weight: 600; }
+.modal-body { padding: 20px; flex: 1; overflow-y: auto; }
+.modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+/* Dropdown menus inside modals need fixed positioning to avoid overflow clipping */
+.modal-body .custom-dropdown-menu { position: fixed; }
+
+/* Form elements in modals */
+.form-group { margin-bottom: 16px; }
+.form-group.space-below { margin-bottom: 24px; }
+.form-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: var(--text); }
+.form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: #12162a; color: var(--text); outline: none; box-sizing: border-box; font-size: 14px; font-family: inherit; }
+.form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(77, 217, 255, 0.1); }
+.form-control:read-only { background: #0a0d1a; color: var(--muted); cursor: not-allowed; }
+.form-control:disabled { background: #0a0d1a; color: var(--muted); cursor: not-allowed; opacity: 0.6; }
+.form-control select, select.form-control { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234dd9ff' d='M6 9L1 4h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+.form-text { font-size: 13px; color: var(--muted); padding: 8px 0; }
+
+/* Close button */
+.close-modal { background: transparent; border: none; font-size: 20px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; padding: 4px 8px; color: var(--text); }
+.close-modal:hover { opacity: 1; }

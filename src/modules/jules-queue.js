@@ -4,6 +4,7 @@
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
+import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 
 let queueCache = [];
 
@@ -99,6 +100,250 @@ export function attachQueueHandlers() {
   attachQueueModalHandlers();
 }
 
+let editModalState = {
+  originalData: null,
+  hasUnsavedChanges: false,
+  currentDocId: null
+};
+
+// Initialize repo and branch selectors
+async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu) {
+  // Create BranchSelector instance
+  const branchSelector = new BranchSelector({
+    dropdownBtn: branchDropdownBtn,
+    dropdownText: branchDropdownText,
+    dropdownMenu: branchDropdownMenu,
+    onSelect: (selectedBranch) => {
+      editModalState.hasUnsavedChanges = true;
+    }
+  });
+
+  // Create RepoSelector instance
+  const repoSelector = new RepoSelector({
+    dropdownBtn: repoDropdownBtn,
+    dropdownText: repoDropdownText,
+    dropdownMenu: repoDropdownMenu,
+    branchSelector: branchSelector,
+    onSelect: (selectedSourceId) => {
+      editModalState.hasUnsavedChanges = true;
+    }
+  });
+
+  // Store selectors in state for later access
+  editModalState.repoSelector = repoSelector;
+  editModalState.branchSelector = branchSelector;
+
+  // Initialize with current values
+  await repoSelector.initialize(sourceId, branch);
+}
+
+async function openEditQueueModal(docId) {
+  const item = queueCache.find(i => i.id === docId);
+  if (!item) {
+    alert('Queue item not found');
+    return;
+  }
+
+  editModalState.currentDocId = docId;
+  editModalState.hasUnsavedChanges = false;
+
+  // Create modal if it doesn't exist
+  let modal = document.getElementById('editQueueItemModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'editQueueItemModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-dialog" style="max-width: 700px;">
+        <div class="modal-header">
+          <h2 class="modal-title">Edit Queue Item</h2>
+          <button class="btn-icon close-modal" id="closeEditQueueModal" title="Close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Type:</label>
+            <div id="editQueueType" class="form-text"></div>
+          </div>
+          <div class="form-group" id="editPromptGroup">
+            <label class="form-label">Prompt:</label>
+            <textarea id="editQueuePrompt" class="form-control" rows="10" style="font-family: monospace; font-size: 13px;"></textarea>
+          </div>
+          <div class="form-group" id="editSubtasksGroup" style="display: none;">
+            <label class="form-label">Subtasks:</label>
+            <div id="editQueueSubtasksList"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Repository:</label>
+            <div id="editQueueRepoDropdown" class="custom-dropdown">
+              <button id="editQueueRepoDropdownBtn" class="custom-dropdown-btn w-full" type="button">
+                <span id="editQueueRepoDropdownText">Loading...</span>
+                <span class="custom-dropdown-caret" aria-hidden="true">▼</span>
+              </button>
+              <div id="editQueueRepoDropdownMenu" class="custom-dropdown-menu" role="menu"></div>
+            </div>
+          </div>
+          <div class="form-group space-below">
+            <label class="form-label">Branch:</label>
+            <div id="editQueueBranchDropdown" class="custom-dropdown">
+              <button id="editQueueBranchDropdownBtn" class="custom-dropdown-btn w-full" type="button">
+                <span id="editQueueBranchDropdownText">Loading branches...</span>
+                <span class="custom-dropdown-caret" aria-hidden="true">▼</span>
+              </button>
+              <div id="editQueueBranchDropdownMenu" class="custom-dropdown-menu" role="menu"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="cancelEditQueue" class="btn">Cancel</button>
+          <button id="saveEditQueue" class="btn primary">Save</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Set up event handlers only once when modal is created
+    document.getElementById('closeEditQueueModal').onclick = () => closeEditModal();
+    document.getElementById('cancelEditQueue').onclick = () => closeEditModal();
+    
+    // Click outside to close
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        closeEditModal();
+      }
+    };
+    
+    // Save handler
+    document.getElementById('saveEditQueue').onclick = async () => {
+      await saveQueueItemEdit(editModalState.currentDocId, closeEditModal);
+    };
+  }
+
+  // Populate the form
+  const typeDiv = document.getElementById('editQueueType');
+  const promptGroup = document.getElementById('editPromptGroup');
+  const subtasksGroup = document.getElementById('editSubtasksGroup');
+  const promptTextarea = document.getElementById('editQueuePrompt');
+  const subtasksList = document.getElementById('editQueueSubtasksList');
+  const repoDropdownBtn = document.getElementById('editQueueRepoDropdownBtn');
+  const repoDropdownText = document.getElementById('editQueueRepoDropdownText');
+  const repoDropdownMenu = document.getElementById('editQueueRepoDropdownMenu');
+  const branchDropdownBtn = document.getElementById('editQueueBranchDropdownBtn');
+  const branchDropdownText = document.getElementById('editQueueBranchDropdownText');
+  const branchDropdownMenu = document.getElementById('editQueueBranchDropdownMenu');
+
+  if (item.type === 'single') {
+    typeDiv.textContent = 'Single Prompt';
+    promptGroup.style.display = 'block';
+    subtasksGroup.style.display = 'none';
+    promptTextarea.value = item.prompt || '';
+    editModalState.originalData = { prompt: item.prompt || '' };
+  } else if (item.type === 'subtasks') {
+    typeDiv.textContent = 'Subtasks Batch';
+    promptGroup.style.display = 'none';
+    subtasksGroup.style.display = 'block';
+    
+    const subtasks = item.remaining || [];
+    subtasksList.innerHTML = subtasks.map((subtask, index) => `
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label class="form-label">Subtask ${index + 1}:</label>
+        <textarea class="form-control edit-subtask-content" rows="5" style="font-family: monospace; font-size: 12px;">${escapeHtml(subtask.fullContent || '')}</textarea>
+      </div>
+    `).join('');
+    
+    editModalState.originalData = { 
+      subtasks: subtasks.map(s => s.fullContent || '') 
+    };
+  }
+
+  editModalState.originalData.sourceId = item.sourceId || '';
+  editModalState.originalData.branch = item.branch || 'master';
+
+  // Initialize repo and branch selectors
+  await initializeEditRepoAndBranch(item.sourceId, item.branch || 'master', repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu);
+
+  // Show modal
+  modal.style.display = 'flex';
+
+  // Track changes
+  const trackChanges = () => {
+    editModalState.hasUnsavedChanges = true;
+  };
+
+  if (promptTextarea) {
+    promptTextarea.oninput = trackChanges;
+  }
+  
+  document.querySelectorAll('.edit-subtask-content').forEach(textarea => {
+    textarea.oninput = trackChanges;
+  });
+}
+
+// Close modal handler function (defined outside so it can be referenced in event handlers)
+function closeEditModal(force = false) {
+  const modal = document.getElementById('editQueueItemModal');
+  if (!modal) return;
+  
+  if (!force && editModalState.hasUnsavedChanges) {
+    if (!confirm('You have unsaved changes. Are you sure you want to close?')) {
+      return;
+    }
+  }
+  modal.style.display = 'none';
+  editModalState.hasUnsavedChanges = false;
+  editModalState.originalData = null;
+  editModalState.currentDocId = null;
+  editModalState.repoSelector = null;
+  editModalState.branchSelector = null;
+}
+
+async function saveQueueItemEdit(docId, closeModalCallback) {
+  const item = queueCache.find(i => i.id === docId);
+  if (!item) {
+    alert('Queue item not found');
+    return;
+  }
+  
+  const user = window.auth?.currentUser;
+  if (!user) {
+    alert('Not signed in');
+    return;
+  }
+
+  try {
+    // Get values from selectors
+    const sourceId = editModalState.repoSelector?.getSelectedSourceId();
+    const branch = editModalState.branchSelector?.getSelectedBranch();
+    
+    const updates = {
+      sourceId: sourceId || item.sourceId,
+      branch: branch || item.branch || 'master',
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (item.type === 'single') {
+      const promptTextarea = document.getElementById('editQueuePrompt');
+      updates.prompt = promptTextarea.value;
+    } else if (item.type === 'subtasks') {
+      const subtaskTextareas = document.querySelectorAll('.edit-subtask-content');
+      const updatedSubtasks = Array.from(subtaskTextareas).map(textarea => ({
+        fullContent: textarea.value
+      }));
+      updates.remaining = updatedSubtasks;
+    }
+
+    await updateJulesQueueItem(user.uid, item.id, updates);
+    
+    statusBar.showMessage('Queue item updated successfully', { timeout: 3000 });
+    editModalState.hasUnsavedChanges = false;
+    closeModalCallback(true);
+    
+    // Reload the queue
+    await loadQueuePage();
+  } catch (err) {
+    alert('Failed to update queue item: ' + err.message);
+  }
+}
+
 async function loadQueuePage() {
   const user = window.auth?.currentUser;
   const listDiv = document.getElementById('allQueueList');
@@ -172,6 +417,7 @@ function renderQueueList(items) {
               <div class="queue-title">
                 Subtasks Batch <span class="queue-status">${status}</span>
                 <span class="queue-status">(${remainingCount} remaining)</span>
+                <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item">✏️</button>
               </div>
               <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
               ${repoDisplay}
@@ -196,6 +442,7 @@ function renderQueueList(items) {
           <div class="queue-content">
             <div class="queue-title">
               Single Prompt <span class="queue-status">${status}</span>
+              <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item">✏️</button>
             </div>
             <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
             ${repoDisplay}
@@ -290,6 +537,15 @@ function attachQueueModalHandlers() {
       document.querySelectorAll(`.subtask-checkbox[data-docid="${docId}"]`).forEach(subtaskCb => {
         subtaskCb.checked = checked;
       });
+    };
+  });
+
+  // Attach edit handlers
+  document.querySelectorAll('.edit-queue-item').forEach(editBtn => {
+    editBtn.onclick = (e) => {
+      e.stopPropagation();
+      const docId = editBtn.dataset.docid;
+      openEditQueueModal(docId);
     };
   });
 
