@@ -75,3 +75,63 @@ export const UI_TEXT = {
   RUNNING: "Running...",
   SAVE_KEY: "Save & Continue"
 };
+
+/**
+ * @typedef {object} RetryConfig
+ * @property {number} maxRetries - The maximum number of retries.
+ * @property {number} baseDelay - The base delay in milliseconds for exponential backoff.
+ */
+
+/**
+ * Configuration for retry logic.
+ * @type {RetryConfig}
+ */
+export const RETRY_CONFIG = {
+  maxRetries: 3,
+  baseDelay: 1000
+};
+
+/**
+ * @typedef {object} Timeouts
+ * @property {number} statusBar - The duration in milliseconds to display a status bar message.
+ * @property {number} fetch - The timeout in milliseconds for fetch requests.
+ */
+
+/**
+ * Timeouts for various UI and network operations.
+ * @type {Timeouts}
+ */
+export const TIMEOUTS = {
+  statusBar: 3000,
+  fetch: 5000
+};
+
+/**
+ * @typedef {object} PageSizes
+ * @property {number} julesSessions - The number of Jules sessions to fetch per page.
+ * @property {number} branches - The number of branches to fetch per page.
+ */
+
+/**
+ * Page sizes for paginated API calls.
+ * @type {PageSizes}
+ */
+export const PAGE_SIZES = {
+  julesSessions: 10,
+  branches: 100
+};
+
+/**
+ * @typedef {object} CacheDurations
+ * @property {number} short - The duration in milliseconds for short-lived cache items.
+ * @property {number} session - A flag indicating that the cache item should last for the session.
+ */
+
+/**
+ * Cache durations for various data types.
+ * @type {CacheDurations}
+ */
+export const CACHE_DURATIONS = {
+  short: 300000, // 5 minutes
+  session: 0
+};
