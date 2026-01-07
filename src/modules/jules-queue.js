@@ -103,7 +103,10 @@ export function attachQueueHandlers() {
 let editModalState = {
   originalData: null,
   hasUnsavedChanges: false,
-  currentDocId: null
+  currentDocId: null,
+  currentType: null,
+  repoSelector: null,
+  branchSelector: null
 };
 
 // Initialize repo and branch selectors
@@ -165,11 +168,17 @@ async function openEditQueueModal(docId) {
             <div id="editQueueType" class="form-text"></div>
           </div>
           <div class="form-group" id="editPromptGroup">
-            <label class="form-label">Prompt:</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="form-label" style="margin-bottom: 0;">Prompt:</label>
+              <button type="button" id="convertToSubtasksBtn" class="btn btn-secondary" style="font-size: 12px; padding: 4px 12px;">Split into Subtasks</button>
+            </div>
             <textarea id="editQueuePrompt" class="form-control" rows="10" style="font-family: monospace; font-size: 13px;"></textarea>
           </div>
           <div class="form-group" id="editSubtasksGroup" style="display: none;">
-            <label class="form-label">Subtasks:</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="form-label" style="margin-bottom: 0;">Subtasks:</label>
+              <button type="button" id="convertToSingleBtn" class="btn btn-secondary" style="font-size: 12px; padding: 4px 12px; display: none;">Convert to Single Prompt</button>
+            </div>
             <div id="editQueueSubtasksList"></div>
           </div>
           <div class="form-group">
@@ -237,6 +246,10 @@ async function openEditQueueModal(docId) {
     subtasksGroup.style.display = 'none';
     promptTextarea.value = item.prompt || '';
     editModalState.originalData = { prompt: item.prompt || '' };
+    editModalState.currentType = 'single';
+    
+    // Set up convert to subtasks button
+    document.getElementById('convertToSubtasksBtn').onclick = convertToSubtasks;
   } else if (item.type === 'subtasks') {
     typeDiv.textContent = 'Subtasks Batch';
     promptGroup.style.display = 'none';
@@ -248,6 +261,11 @@ async function openEditQueueModal(docId) {
     editModalState.originalData = { 
       subtasks: subtasks.map(s => s.fullContent || '') 
     };
+    editModalState.currentType = 'subtasks';
+    
+    // Set up convert to single button
+    document.getElementById('convertToSingleBtn').onclick = convertToSingle;
+    updateConvertToSingleButtonVisibility();
   }
 
   editModalState.originalData.sourceId = item.sourceId || '';
@@ -269,6 +287,81 @@ async function openEditQueueModal(docId) {
   }
   
   // Note: subtask textarea change tracking is now handled in renderSubtasksList()
+}
+
+/**
+ * Convert single prompt to subtasks
+ */
+function convertToSubtasks() {
+  const promptTextarea = document.getElementById('editQueuePrompt');
+  const promptContent = promptTextarea.value.trim();
+  
+  const promptGroup = document.getElementById('editPromptGroup');
+  const subtasksGroup = document.getElementById('editSubtasksGroup');
+  const typeDiv = document.getElementById('editQueueType');
+  
+  // Switch view
+  promptGroup.style.display = 'none';
+  subtasksGroup.style.display = 'block';
+  typeDiv.textContent = 'Subtasks Batch';
+  
+  // Create initial subtask from prompt
+  const subtasks = promptContent ? [{ fullContent: promptContent }] : [{ fullContent: '' }];
+  renderSubtasksList(subtasks);
+  
+  // Update state
+  editModalState.currentType = 'subtasks';
+  editModalState.hasUnsavedChanges = true;
+  
+  // Set up convert to single button
+  document.getElementById('convertToSingleBtn').onclick = convertToSingle;
+  updateConvertToSingleButtonVisibility();
+}
+
+/**
+ * Convert subtasks to single prompt
+ */
+function convertToSingle() {
+  const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => textarea.value);
+  
+  if (currentSubtasks.length > 1) {
+    if (!confirm('This will combine all subtasks into a single prompt. Continue?')) {
+      return;
+    }
+  }
+  
+  const promptGroup = document.getElementById('editPromptGroup');
+  const subtasksGroup = document.getElementById('editSubtasksGroup');
+  const typeDiv = document.getElementById('editQueueType');
+  const promptTextarea = document.getElementById('editQueuePrompt');
+  
+  // Combine subtasks into single prompt
+  const combinedPrompt = currentSubtasks.join('\n\n---\n\n');
+  
+  // Switch view
+  subtasksGroup.style.display = 'none';
+  promptGroup.style.display = 'block';
+  typeDiv.textContent = 'Single Prompt';
+  promptTextarea.value = combinedPrompt;
+  
+  // Update state
+  editModalState.currentType = 'single';
+  editModalState.hasUnsavedChanges = true;
+  
+  // Set up convert to subtasks button
+  document.getElementById('convertToSubtasksBtn').onclick = convertToSubtasks;
+}
+
+/**
+ * Update visibility of convert to single button based on subtask count
+ */
+function updateConvertToSingleButtonVisibility() {
+  const convertBtn = document.getElementById('convertToSingleBtn');
+  const subtaskCount = document.querySelectorAll('.edit-subtask-content').length;
+  
+  if (convertBtn) {
+    convertBtn.style.display = subtaskCount === 1 ? 'block' : 'none';
+  }
 }
 
 /**
@@ -310,6 +403,9 @@ function renderSubtasksList(subtasks) {
       editModalState.hasUnsavedChanges = true;
     };
   });
+  
+  // Update convert to single button visibility
+  updateConvertToSingleButtonVisibility();
 }
 
 /**
@@ -375,6 +471,7 @@ function closeEditModal(force = false) {
   editModalState.hasUnsavedChanges = false;
   editModalState.originalData = null;
   editModalState.currentDocId = null;
+  editModalState.currentType = null;
   editModalState.repoSelector = null;
   editModalState.branchSelector = null;
 }
@@ -403,15 +500,30 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    if (item.type === 'single') {
+    // Determine current type based on what's visible
+    const currentType = editModalState.currentType || item.type;
+    
+    if (currentType === 'single') {
       const promptTextarea = document.getElementById('editQueuePrompt');
+      updates.type = 'single';
       updates.prompt = promptTextarea.value;
-    } else if (item.type === 'subtasks') {
+      // Remove subtasks fields if converting from subtasks to single
+      if (item.type === 'subtasks') {
+        updates.remaining = firebase.firestore.FieldValue.delete();
+        updates.totalCount = firebase.firestore.FieldValue.delete();
+      }
+    } else if (currentType === 'subtasks') {
       const subtaskTextareas = document.querySelectorAll('.edit-subtask-content');
       const updatedSubtasks = Array.from(subtaskTextareas).map(textarea => ({
         fullContent: textarea.value
       }));
+      updates.type = 'subtasks';
       updates.remaining = updatedSubtasks;
+      updates.totalCount = updatedSubtasks.length;
+      // Remove prompt field if converting from single to subtasks
+      if (item.type === 'single') {
+        updates.prompt = firebase.firestore.FieldValue.delete();
+      }
     }
 
     await updateJulesQueueItem(user.uid, item.id, updates);
