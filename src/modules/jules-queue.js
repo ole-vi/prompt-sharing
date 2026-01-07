@@ -412,7 +412,6 @@ function renderSubtasksList(subtasks) {
  * Add a new empty subtask
  */
 function addNewSubtask() {
-  const subtasksList = document.getElementById('editQueueSubtasksList');
   const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => ({
     fullContent: textarea.value
   }));
