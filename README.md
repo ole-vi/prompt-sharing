@@ -1,15 +1,15 @@
-# PromptSync
+# PromptRoot
 
 Share and amplify your team's AI knowledge.
 Hosted for free with GitHub Pages, backed by simple `.md` files.
 
 ## Live site
 
-[https://ole-vi.github.io/prompt-sharing/](https://ole-vi.github.io/prompt-sharing/)
+[https://promptroot.github.io/promptroot/](https://promptroot.github.io/promptroot/)
 
-## What is PromptSync?
+## What is PromptRoot?
 
-PromptSync is a zero-build web application for managing and sharing AI prompts as markdown files. It provides a browsable library interface with deep linking, GitHub integration, and direct integration with Google's Jules AI assistant. Teams can organize prompts in folders, switch between branches, and send prompts directly to Jules with full context awareness.
+PromptRoot is a zero-build web application for managing and sharing AI prompts as markdown files. It provides a browsable library interface with deep linking, GitHub integration, and direct integration with Google's Jules AI assistant. Teams can organize prompts in folders, switch between branches, and send prompts directly to Jules with full context awareness.
 
 ### Key Features
 
@@ -60,7 +60,7 @@ Guidelines:
 ### Folder structure
 
 ```
-prompt-sharing/
+promptroot/
 ├── pages/                 # Routed pages
 │   ├── home/index.html    # Home / Prompt Library
 │   ├── jules/jules.html   # Jules account management & sessions
@@ -101,7 +101,7 @@ prompt-sharing/
 ├── prompts/               # Markdown prompt files
 │   ├── planet/           # Planet repo onboarding
 │   ├── myplanet/         # myPlanet repo onboarding
-│   └── promptsync/       # PromptSync repo onboarding
+│   └── promptsync/       # PromptRoot repo onboarding
 ├── webclips/             # User web clips from browser extension
 │   └── {username}/       # Each user's synced clips
 ├── browser-extension/    # Web capture browser extension
@@ -169,13 +169,13 @@ If a prompt file contains only a ChatGPT conversation URL (e.g., `https://chatgp
 Every prompt has its own URL:
 
 ```
-https://ole-vi.github.io/prompt-sharing/#p=<filename-without-.md>
+https://promptroot.github.io/promptroot/#p=<filename-without-.md>
 ```
 
 Example:
 
 * File: `prompts/stubs.md`
-* Link: [https://ole-vi.github.io/prompt-sharing/#p=stubs](https://ole-vi.github.io/prompt-sharing/#p=stubs)
+* Link: [https://promptroot.github.io/promptroot/#p=stubs](https://promptroot.github.io/promptroot/#p=stubs)
 
 These links can be shared in Discord, Whatsapp, docs, etc.
 
@@ -201,7 +201,7 @@ These links can be shared in Discord, Whatsapp, docs, etc.
 
 ### Jules API Integration
 
-PromptSync provides deep integration with Google's Jules AI assistant:
+PromptRoot provides deep integration with Google's Jules AI assistant:
 
 #### Try in Jules
 * **One-Click Sending**: Send any prompt directly to Jules with the "⚡ Try in Jules" button
@@ -255,7 +255,7 @@ Click your username after signing in to access:
 
 ## Browser Extension - Web Capture
 
-PromptSync includes a powerful browser extension that captures any webpage as Markdown and syncs it to GitHub.
+PromptRoot includes a powerful browser extension that captures any webpage as Markdown and syncs it to GitHub.
 
 ### Features
 
@@ -341,7 +341,7 @@ For issues, questions, or feature requests, please open an issue on GitHub.
 ### Running locally
 
 ```bash
-cd prompt-sharing
+cd promptroot
 python -m http.server 8888
 # Visit http://localhost:8888/pages/home/index.html
 ```

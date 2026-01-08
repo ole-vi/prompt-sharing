@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PromptSync Web Capture</title>
+  <title>PromptRoot Web Capture</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h1><img src="promptclipper.png" alt="PromptSync" class="header-icon">PromptSync Web Capture</h1>
+  <h1><img src="promptclipper.png" alt="PromptRoot" class="header-icon">PromptRoot Web Capture</h1>
 
   <div id="mainView">
     <!-- GitHub Connection Status -->
     <div class="section" id="githubSection">
       <div id="githubDisconnected">
         <button class="button secondary" id="connectGitHubBtn">🔗 Connect to GitHub</button>
-        <div class="info-text">Connect to send clips to PromptSync</div>
+        <div class="info-text">Connect to send clips to PromptRoot</div>
       </div>
       <div id="githubConnected" class="hidden">
         <div class="github-connected-container">
@@ -42,7 +42,7 @@
     <!-- Action Buttons -->
     <div class="action-buttons">
       <button class="button secondary flex-1" id="downloadBtn" disabled>💾 Download</button>
-      <button class="button flex-1" id="syncBtn" disabled><img src="PromptSyncLogo.svg" alt="" class="button-icon">Send to PromptSync</button>
+      <button class="button flex-1" id="syncBtn" disabled><img src="PromptSyncLogo.svg" alt="" class="button-icon">Send to PromptRoot</button>
     </div>
     
     <div class="status" id="status"></div>

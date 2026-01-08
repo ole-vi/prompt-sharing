@@ -1,10 +1,10 @@
 ---
 name: vision
-description: Authoritative charter and execution mandate for the prompt-sharing repository.
+description: Authoritative charter and execution mandate for the promptroot repository.
 version: 7.0
 ---
 
-# prompt-sharing: Agentic Charter and Execution Framework
+# promptroot: Agentic Charter and Execution Framework
 
 ## What this repository is
 

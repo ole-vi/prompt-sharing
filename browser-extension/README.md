@@ -1,4 +1,4 @@
-# PromptSync Web Capture Browser Extension
+# PromptRoot Web Capture Browser Extension
 
 A browser extension that captures any webpage as Markdown and syncs it directly to your GitHub repository.
 
@@ -27,12 +27,12 @@ A browser extension that captures any webpage as Markdown and syncs it directly 
 
 3. **Load the Extension**:
    - Click "Load unpacked"
-   - Navigate to the `browser-extension` folder in your prompt-sharing repository
+   - Navigate to the `browser-extension` folder in your promptroot repository
    - Select the folder and click "Select Folder"
 
 4. **Pin the Extension** (optional):
    - Click the puzzle piece icon in the browser toolbar
-   - Find "PromptSync Web Capture"
+   - Find "PromptRoot Web Capture"
    - Click the pin icon to keep it visible
 
 ### Firefox
@@ -66,7 +66,7 @@ A browser extension that captures any webpage as Markdown and syncs it directly 
 
 1. **Navigate to any webpage** you want to save (ChatGPT conversation, article, documentation, etc.)
 
-2. **Click the PromptSync Clipper extension icon**
+2. **Click the PromptRoot Clipper extension icon**
 
 3. **Review the extraction**:
    - Page title (editable)
@@ -83,7 +83,7 @@ A browser extension that captures any webpage as Markdown and syncs it directly 
 
 Your synced clips appear at:
 ```
-https://github.com/jessewashburn/prompt-sharing/tree/main/webclips/{your-username}
+https://github.com/promptroot/promptroot/tree/main/webclips/{your-username}
 ```
 
 ### File Format
@@ -115,7 +115,7 @@ type: web-clip
 When you make changes to the extension code:
 
 1. Go to your browser's extensions page
-2. Find "PromptSync Web Capture"
+2. Find "PromptRoot Web Capture"
 3. Click the refresh/reload icon
 4. The extension is now updated with your changes
 
@@ -183,7 +183,7 @@ function generateFilename(title, domain) {
 
 ## Configuration
 
-The extension is pre-configured to sync with the `prompt-sharing` repository. If you want to fork this and use your own repository:
+The extension is pre-configured to sync with the `promptroot` repository. If you want to fork this and use your own repository:
 
 1. Edit [config.js](config.js)
 2. Update `github.targetRepo.owner` and `github.targetRepo.repo`

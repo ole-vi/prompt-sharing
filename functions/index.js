@@ -389,7 +389,7 @@ exports.getGitHubUser = functions.https.onRequest(async (req, res) => {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Accept': 'application/vnd.github.v3+json',
-        'User-Agent': 'PromptSync-WebClipper'
+        'User-Agent': 'PromptRoot-WebClipper'
       }
     });
 

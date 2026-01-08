@@ -1,9 +1,9 @@
-# PromptSync Code Style Guide
+# PromptRoot Code Style Guide
 
 **Version:** 1.0  
 **Last Updated:** January 6, 2026
 
-This guide covers JavaScript patterns, module architecture, and coding conventions for the PromptSync application. For UI/CSS guidelines, see [UI_GUIDELINES.md](UI_GUIDELINES.md).
+This guide covers JavaScript patterns, module architecture, and coding conventions for the PromptRoot application. For UI/CSS guidelines, see [UI_GUIDELINES.md](UI_GUIDELINES.md).
 
 **Recent Architecture Update (PR #218)**: All inline `<script>` blocks have been removed from HTML files. Each page now has a dedicated initialization file in `src/pages/`. See [Page Initialization Pattern](#page-initialization-pattern) section.
 
@@ -784,10 +784,10 @@ Define storage keys in `src/utils/constants.js`:
 
 ```javascript
 export const STORAGE_KEYS = {
-  AUTH_TOKEN: 'promptsync_auth_token',
-  USER_PREFS: 'promptsync_user_prefs',
-  JULES_API_KEY: 'promptsync_jules_key',
-  LAST_REPO: 'promptsync_last_repo'
+  AUTH_TOKEN: 'promptroot_auth_token',
+  USER_PREFS: 'promptroot_user_prefs',
+  JULES_API_KEY: 'promptroot_jules_key',
+  LAST_REPO: 'promptroot_last_repo'
 };
 ```
 

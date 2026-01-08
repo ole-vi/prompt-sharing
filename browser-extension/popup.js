@@ -132,7 +132,7 @@ async function syncToGitHub() {
   
   syncBtn.disabled = true;
   syncBtn.innerHTML = '⏳ Sending...';
-  showStatus('Sending to PromptSync...', 'info');
+  showStatus('Sending to PromptRoot...', 'info');
   
   try {
     const result = await GitHubSync.syncWebClip(
@@ -160,11 +160,11 @@ async function syncToGitHub() {
     }
     
     syncBtn.disabled = false;
-    syncBtn.innerHTML = '<img src="PromptSyncLogo.svg" alt="" class="button-icon">Send to PromptSync';
+    syncBtn.innerHTML = '<img src="PromptSyncLogo.svg" alt="" class="button-icon">Send to PromptRoot';
   } catch (error) {
     showStatus('Error: ' + error.message, 'error');
     syncBtn.disabled = false;
-    syncBtn.innerHTML = '<img src="PromptSyncLogo.svg" alt="" class="button-icon">Send to PromptSync';
+    syncBtn.innerHTML = '<img src="PromptSyncLogo.svg" alt="" class="button-icon">Send to PromptRoot';
   }
 }
 

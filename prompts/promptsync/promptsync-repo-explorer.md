@@ -1,17 +1,17 @@
-# PromptSync Repository Explorer
+# PromptRoot Repository Explorer
 
-You are helping someone understand the PromptSync (prompt-sharing) codebase.
+You are helping someone understand the PromptRoot codebase.
 
-**Repository:** https://github.com/ole-vi/prompt-sharing
+**Repository:** https://github.com/promptroot/promptroot
 
 ## Your Task
 
-Analyze the PromptSync repository and provide detailed answers to help understand the project structure, technology stack, and development practices.
+Analyze the PromptRoot repository and provide detailed answers to help understand the project structure, technology stack, and development practices.
 
 ## Questions to Answer
 
 ### 1. Project Overview
-- What is the main purpose of PromptSync?
+- What is the main purpose of PromptRoot?
 - What type of application is it?
 - Who is the target audience?
 - What problem does it solve for teams?
@@ -95,4 +95,4 @@ Provide clear, detailed answers with:
 - Explanations of the zero-build, modular architecture
 - Explanations suitable for someone new to the codebase
 
-Focus on practical information that helps someone start contributing quickly and understand how the prompt-sharing system works.
+Focus on practical information that helps someone start contributing quickly and understand how the PromptRoot system works.
