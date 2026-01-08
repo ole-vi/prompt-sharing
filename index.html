@@ -72,8 +72,8 @@
         </div>
         
         <div class="options-box">
-          <label class="form-label small-text"><input type="checkbox" id="freeInputSuppressPopupsCheckbox" /> Suppress Popups</label>
-          <label class="form-label small-text"><input type="checkbox" id="freeInputOpenInBackgroundCheckbox" /> Open in Background</label>
+          <label class="form-label small-text"><input type="checkbox" id="freeInputSuppressPopupsCheckbox" data-exclusive-group="free-input" /> Suppress Popups</label>
+          <label class="form-label small-text"><input type="checkbox" id="freeInputOpenInBackgroundCheckbox" data-exclusive-group="free-input" /> Open in Background</label>
         </div>
         
         <div class="actions-right">
@@ -176,8 +176,8 @@
       </div>
       
       <div class="options-box">
-        <label class="form-label small-text"><input type="checkbox" id="julesEnvSuppressPopupsCheckbox" /> Suppress Popups</label>
-        <label class="form-label small-text"><input type="checkbox" id="julesEnvOpenInBackgroundCheckbox" /> Open in Background</label>
+        <label class="form-label small-text"><input type="checkbox" id="julesEnvSuppressPopupsCheckbox" data-exclusive-group="jules-env" /> Suppress Popups</label>
+        <label class="form-label small-text"><input type="checkbox" id="julesEnvOpenInBackgroundCheckbox" data-exclusive-group="jules-env" /> Open in Background</label>
       </div>
       
       <div class="modal-buttons">
@@ -200,11 +200,11 @@
 
       <div style="margin-bottom: 12px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px;">
         <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
-          <input id="splitSuppressPopupsCheckbox" type="checkbox" style="cursor: pointer;" />
+          <input id="splitSuppressPopupsCheckbox" type="checkbox" style="cursor: pointer;" data-exclusive-group="split" />
           <span>Suppress popups</span>
         </label>
         <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; margin-top: 8px;">
-          <input id="splitOpenInBackgroundCheckbox" type="checkbox" style="cursor: pointer;" />
+          <input id="splitOpenInBackgroundCheckbox" type="checkbox" style="cursor: pointer;" data-exclusive-group="split" />
           <span>Open in background</span>
         </label>
       </div>

@@ -8,6 +8,7 @@ import statusBar from './modules/status-bar.js';
 import { initPromptList, loadList, loadExpandedState, renderList, setSelectFileCallback, setRepoContext } from './modules/prompt-list.js';
 import { initPromptRenderer, selectBySlug, selectFile, setHandleTryInJulesCallback } from './modules/prompt-renderer.js';
 import { setCurrentBranch, setCurrentRepo } from './modules/branch-selector.js';
+import { initSidebar } from './modules/sidebar.js';
 
 // App state
 let currentOwner = OWNER;
@@ -43,7 +44,7 @@ export function initApp() {
   setupEventListeners();
   
   // Initialize sidebar toggle
-  initSidebarToggle();
+  initSidebar();
 }
 
 async function loadPrompts() {
@@ -132,26 +133,5 @@ function setupEventListeners() {
     } catch (error) {
       console.error('Error handling branch change:', error);
     }
-  });
-}
-
-function initSidebarToggle() {
-  const sidebar = document.getElementById('sidebar');
-  const toggleBtn = document.getElementById('sidebarToggle');
-  const STORAGE_KEY = 'sidebar-collapsed';
-  
-  if (!sidebar || !toggleBtn) return;
-  
-  // Restore previous state
-  const isCollapsed = localStorage.getItem(STORAGE_KEY) === 'true';
-  if (isCollapsed) {
-    sidebar.classList.add('collapsed');
-  }
-  
-  // Handle toggle click
-  toggleBtn.addEventListener('click', () => {
-    sidebar.classList.toggle('collapsed');
-    const collapsed = sidebar.classList.contains('collapsed');
-    localStorage.setItem(STORAGE_KEY, collapsed);
   });
 }
