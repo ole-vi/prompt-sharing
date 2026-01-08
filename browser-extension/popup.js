@@ -160,11 +160,11 @@ async function syncToGitHub() {
     }
     
     syncBtn.disabled = false;
-    syncBtn.innerHTML = '<img src="PromptSyncLogo.svg" alt="" class="button-icon">Send to PromptRoot';
+    syncBtn.innerHTML = '<img src="PromptRootLogo.svg" alt="" class="button-icon">Send to PromptRoot';
   } catch (error) {
     showStatus('Error: ' + error.message, 'error');
     syncBtn.disabled = false;
-    syncBtn.innerHTML = '<img src="PromptSyncLogo.svg" alt="" class="button-icon">Send to PromptRoot';
+    syncBtn.innerHTML = '<img src="PromptRootLogo.svg" alt="" class="button-icon">Send to PromptRoot';
   }
 }
 
