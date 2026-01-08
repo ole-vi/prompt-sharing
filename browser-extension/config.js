@@ -4,8 +4,8 @@ const CONFIG = {
     redirectUri: 'https://prompt-sharing-f8eeb.firebaseapp.com/oauth-callback.html',
     scopes: ['repo'],
     targetRepo: {
-      owner: 'ole-vi',
-      repo: 'prompt-sharing',
+      owner: 'promptroot',
+      repo: 'promptroot',
       branch: 'web-captures',
       path: 'webcaptures'
     }

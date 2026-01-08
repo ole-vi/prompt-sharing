@@ -1,7 +1,7 @@
 // ===== All Constants, Regex Patterns, and Magic Strings =====
 
-export const OWNER = "ole-vi";
-export const REPO = "prompt-sharing";
+export const OWNER = "promptroot";
+export const REPO = "promptroot";
 export const BRANCH = "main";
 export const PRETTY_TITLES = true;
 
