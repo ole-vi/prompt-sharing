@@ -44,7 +44,9 @@
 /* Form elements in modals */
 .form-group { margin-bottom: 16px; }
 .form-group.space-below { margin-bottom: 24px; }
+.form-section-label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600; color: var(--text); text-transform: uppercase; letter-spacing: 0.5px; }
 .form-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: var(--text); }
+.subtask-item-header .form-label { font-size: 12px; font-weight: 400; color: var(--muted); }
 .form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: #12162a; color: var(--text); outline: none; box-sizing: border-box; font-size: 14px; font-family: inherit; }
 .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(77, 217, 255, 0.1); }
 .form-control:read-only { background: #0a0d1a; color: var(--muted); cursor: not-allowed; }
@@ -55,3 +57,12 @@
 /* Close button */
 .close-modal { background: transparent; border: none; font-size: 20px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; padding: 4px 8px; color: var(--text); }
 .close-modal:hover { opacity: 1; }
+
+/* Subtask editing */
+.subtask-item { margin-bottom: 16px; position: relative; }
+.subtask-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.subtask-item-header .form-label { margin-bottom: 0; }
+.remove-subtask-btn { background: none; border: none; cursor: pointer; color: var(--warn); font-size: 18px; padding: 4px 8px; transition: color 0.2s; }
+.remove-subtask-btn:hover { color: var(--error); }
+.edit-subtask-content { font-family: monospace; font-size: 12px; }
+.add-subtask-btn { margin-top: 8px; width: 100%; }
