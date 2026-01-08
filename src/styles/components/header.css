@@ -1,6 +1,6 @@
 /* Header */
 header { 
-  padding: 20px 16px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
@@ -10,7 +10,6 @@ header {
   box-shadow: 0 2px 16px rgba(77, 217, 255, 0.05);
 }
 
-.branding-link:hover img { animation: spin 1.5s linear infinite; }
 .branding-link:hover .site-title { filter: brightness(1.2); }
 .branding-link:hover .site-tagline { filter: brightness(1.2); }
 
@@ -92,15 +91,15 @@ header {
 #headerNav { display:flex; gap:0; align-items:center; justify-content:center; flex-shrink:0; }
 
 /* Branding link utilities */
-.branding-link { text-decoration:none; color:inherit; display:flex; align-items:center; gap:10px; }
-.logo-img { width:32px; height:32px; flex-shrink:0; object-fit:contain; }
+.branding-link { text-decoration:none; color:inherit; display:flex; align-items:flex-start; gap:10px; }
+.logo-img { height:50px; width:auto; flex-shrink:0; }
 
 /* Extracted from inline styles: layout helpers */
-#headerContainer { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:8px 12px; width:100%; }
+#headerContainer { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 8px; width:100%; }
 .header-left { display:flex; align-items:center; gap:12px; flex-shrink:0; flex:1; min-width:0; }
 .header-right { display:flex; align-items:center; gap:12px; flex:1; min-width:0; justify-content:flex-end; }
 .sidebar-branding { display:flex; align-items:center; gap:10px; }
-.sidebar-logo { width:28px; height:28px; }
+.sidebar-logo { height:50px; width:auto; }
 .sidebar-title { font-size:18px; font-weight:900; letter-spacing:0.5px; }
 .user-dropdown-header { padding: 12px 10px 8px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
 .user-dropdown-header-inner { display: flex; align-items: center; gap: 10px; }
@@ -108,8 +107,6 @@ header {
 .user-status { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .user-menu-caret { display: none; }
 #authStatus { display:flex; align-items:center; gap:6px; font-size:13px; flex-shrink:0; }
-.branding-link { text-decoration:none; color:inherit; display:flex; align-items:center; gap:10px; }
-.logo-img { width:32px; height:32px; flex-shrink:0; object-fit:contain; }
 #appVersion { color: var(--muted); font-size: 10px; opacity: 0.7; margin-top: 4px; font-family: monospace; }
 .site-title { font-size:20px; font-weight:900; letter-spacing:0.5px; line-height:1.2; }
 .site-tagline { color:var(--muted); font-size:11px; margin-top:4px; }

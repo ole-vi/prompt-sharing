@@ -50,9 +50,9 @@ FeatureDetails**Provider Type**MVNO (Mobile Virtual Network Operator)**Host Netw
 
 Sourcesin a world of claude code web, google jules and openai codex cloud
 
-what is https://ole-vi.github.io/prompt-sharing with its code repo https://github.com/ole-vi/prompt-sharing
+what is https://promptroot.github.io/promptroot with its code repo https://github.com/promptroot/promptroot
 
-Show thinkingIn the landscape of advanced, autonomous AI coding agents like **Google Jules** (Google's async coding agent), **OpenAI Codex/Canvas**, and **Claude**, the repository **ole-vi/prompt-sharing** represents a **"GitOps" approach to prompt engineering**.
+Show thinkingIn the landscape of advanced, autonomous AI coding agents like **Google Jules** (Google's async coding agent), **OpenAI Codex/Canvas**, and **Claude**, the repository **promptroot/promptroot** represents a **"GitOps" approach to prompt engineering**.
 
 Specifically, it is a **lightweight static website generator** that turns a GitHub repository of Markdown files into a browseable, shareable library of AI prompts.
 
@@ -61,11 +61,11 @@ Specifically, it is a **lightweight static website generator** that turns a GitH
 
 - **A Static Prompt Library:** It is a minimal web application (hosted via GitHub Pages) that reads Markdown files located in the `/prompts` folder of the repository.
 - **"Prompts as Code":** Instead of storing prompts in a database or a complex SaaS app, you store them as `.md` files in a Git repository. This allows you to version control, diff, and fork your prompts just like software code.
-- **Functionality:****Auto-Listing:** It automatically generates a list/menu of all prompts found in the repo.**Deep Linking:** Each prompt gets a unique URL (e.g., `.../prompt-sharing/?prompt=my-prompt`), making it easy to share a specific technique with a teammate.**Copy-Paste Friendly:** It provides a clean interface to view and copy the raw prompt text to paste into agents like Jules or Claude.
+- **Functionality:****Auto-Listing:** It automatically generates a list/menu of all prompts found in the repo.**Deep Linking:** Each prompt gets a unique URL (e.g., `.../promptroot/?prompt=my-prompt`), making it easy to share a specific technique with a teammate.**Copy-Paste Friendly:** It provides a clean interface to view and copy the raw prompt text to paste into agents like Jules or Claude.
 
 ### Why it exists in this "World":
 
-While tools like **Google Jules** are *agents* (they do the work for you asynchronously), tools like **prompt-sharing** are *knowledge bases*.
+While tools like **Google Jules** are *agents* (they do the work for you asynchronously), tools like **PromptRoot** are *knowledge bases*.
 
 
 - **Standardization:** In a team using multiple AI models (Claude for reasoning, Jules for PRs, OpenAI for snippets), you need a "source of truth" for the best prompts that work for your specific codebase.
@@ -75,11 +75,11 @@ While tools like **Google Jules** are *agents* (they do the work for you asynchr
 
 the web experiences of claude jules and codex are like mno in the agentic world
 
-as of prompt-sharing aka promptsync is more like google fi a mvno
+as of promptroot is more like google fi a mvno
 
 anyhow how would we call this
 
-Show thinkingThat is a brilliant analogy. If Claude, Google Jules, and OpenAI Codex are the **MNOs** (Mobile Network Operators)—the giants owning the "towers" (models) and the "spectrum" (compute)—then `prompt-sharing` (or "PromptSync") is indeed the **MVNO** (Mobile Virtual Network Operator).
+Show thinkingThat is a brilliant analogy. If Claude, Google Jules, and OpenAI Codex are the **MNOs** (Mobile Network Operators)—the giants owning the "towers" (models) and the "spectrum" (compute)—then `promptroot` (PromptRoot) is indeed the **MVNO** (Mobile Virtual Network Operator).
 
 Here is how we would classify this layer in the "Agentic World."
 
@@ -89,7 +89,7 @@ If we strictly follow your telecom metaphor, we would call this a **Virtual Agen
 
 
 - **The MNOs (Claude, OpenAI, Google):** They own the heavy infrastructure (GPUs, Data Centers, Foundation Models). They sell "coverage" (intelligence).
-- **The VANO (PromptSync/Prompt-Sharing):** It doesn't own the towers. It leases the intelligence from the big providers but adds a layer of **flexibility, user experience, and "roaming"** (the ability to take your prompt from Claude to Jules without losing your data).
+- **The VANO (PromptRoot):** It doesn't own the towers. It leases the intelligence from the big providers but adds a layer of **flexibility, user experience, and "roaming"** (the ability to take your prompt from Claude to Jules without losing your data).
 
 ### 2. The Technical Industry Term: "The Orchestration Layer"
 
@@ -104,7 +104,7 @@ Just as Google Fi's "secret sauce" was automatically switching you to the strong
 
 ### 3. The "GitOps" Specific Term: "PromptOps"
 
-Since `prompt-sharing` is specifically built on GitHub/Markdown, it fits into a sub-category called **PromptOps** (a play on DevOps).
+Since `promptroot` is specifically built on GitHub/Markdown, it fits into a sub-category called **PromptOps** (a play on DevOps).
 
 
 - **MNO Approach:** "Come into our walled garden (ChatGPT web UI), type your prompts here, and leave them here. If you leave, you lose your history."
@@ -119,7 +119,7 @@ If you want to stick to your (excellent) metaphor, call it a **"VANO" (Virtual A
 
 ok next layer
 
-Show thinkingIf `prompt-sharing` is the **MVNO** (the service provider/SIM card), then the "next layer" in the analogy is the **Subscriber Device** (the phone) or the **Operating System** that you insert that SIM card into.
+Show thinkingIf `promptroot` is the **MVNO** (the service provider/SIM card), then the "next layer" in the analogy is the **Subscriber Device** (the phone) or the **Operating System** that you insert that SIM card into.
 
 In the AI world, we call this the **Agentic IDE** (Integrated Development Environment) or the **Agentic Runtime**.
 
@@ -136,7 +136,7 @@ Here is the complete "Telecom Stack" of the Agentic World:
 
 
 - **Analogy:** Google Fi, Mint Mobile.
-- **Real World:** Your `prompt-sharing` repo, LangChain, semantic routers.
+- **Real World:** Your `promptroot` repo, LangChain, semantic routers.
 - **Role:** The "SIM Card." It leases the intelligence from the MNOs but adds a layer of user experience, routing you to the best model, and storing your specific "contacts" (context/prompts).
 
 ### 3. The Device (The Hardware) -> The Agentic IDE
@@ -144,7 +144,7 @@ Here is the complete "Telecom Stack" of the Agentic World:
 
 - **Analogy:** The Pixel Phone, iPhone, Samsung Galaxy.
 - **Real World:** **Cursor, Windsurf, VS Code (with Continue/Cline), Google IDX.**
-- **Why:** This is the *environment* where you "insert" your prompt library. Just as a SIM card is useless without a phone to make the call, your `prompt-sharing` repo is useless without an Agentic IDE to execute the prompts against your codebase.*Example:* You clone your `prompt-sharing` repo (the SIM) into the Cursor IDE (the Phone) to start "calling" the models.
+- **Why:** This is the *environment* where you "insert" your prompt library. Just as a SIM card is useless without a phone to make the call, your `promptroot` repo is useless without an Agentic IDE to execute the prompts against your codebase.*Example:* You clone your `promptroot` repo (the SIM) into the Cursor IDE (the Phone) to start "calling" the models.
 
 ### 4. The Operating System (The OS) -> The Agentic OS
 
@@ -155,15 +155,15 @@ Here is the complete "Telecom Stack" of the Agentic World:
 
 ### Summary: The "Next Layer" is the Agentic IDE
 
-If you are building the *MVNO* (PromptSync), your "customers" are the people using **Agentic IDEs**. You are selling them a "Roaming Plan" that lets their IDE switch seamlessly between Claude, Gemini, and GPT based on which prompt they pull from your library.
+If you are building the *MVNO* (PromptRoot), your "customers" are the people using **Agentic IDEs**. You are selling them a "Roaming Plan" that lets their IDE switch seamlessly between Claude, Gemini, and GPT based on which prompt they pull from your library.
 
-**Next Step:** Would you like to see how to configure a "roaming" setup in VS Code (using the 'Continue' extension) that pulls system prompts directly from your `prompt-sharing` repo?
+**Next Step:** Would you like to see how to configure a "roaming" setup in VS Code (using the 'Continue' extension) that pulls system prompts directly from your `promptroot` repo?
 
 yes
 
-Show thinkingThis is how we "insert the SIM card" (your `prompt-sharing` repo) into the "Device" (VS Code + Continue).
+Show thinkingThis is how we "insert the SIM card" (your `promptroot` repo) into the "Device" (VS Code + Continue).
 
-We will configure Continue to treat your local clone of `prompt-sharing` as a **local "roaming" folder**. This allows you to update the prompt in the repo once (via Git), and have it instantly available as a slash command (e.g., `/refactor` or `/tests`) in VS Code.
+We will configure Continue to treat your local clone of `promptroot` as a **local "roaming" folder**. This allows you to update the prompt in the repo once (via Git), and have it instantly available as a slash command (e.g., `/refactor` or `/tests`) in VS Code.
 
 ### Phase 1: The "SIM Card" (Setup the Repo)
 
@@ -173,10 +173,10 @@ Bash
 ```
 # Example location
 cd ~
-git clone https://github.com/ole-vi/prompt-sharing.git
+git clone https://github.com/promptroot/promptroot.git
 ```
 
-*Note the path:* `/Users/dogi/prompt-sharing` (or Windows equivalent).
+*Note the path:* `/Users/dogi/promptroot` (or Windows equivalent).
 
 ### Phase 2: The "APN Settings" (Configure VS Code)
 
@@ -185,14 +185,14 @@ Newer versions of Continue use a `.prompt` file system that is far superior to t
 
 1. **Open VS Code Settings** (`Cmd+,` or `Ctrl+,`).
 2. Search for **Continue: Prompt Files Locations** (or look for `chat.promptFilesLocations` in `settings.json`).
-3. **Add Item:** Enter the absolute path to your repo's prompt folder.*Mac/Linux:* `/Users/dogi/prompt-sharing/prompts`*Windows:* `C:\Users\dogi\prompt-sharing\prompts`
+3. **Add Item:** Enter the absolute path to your repo's prompt folder.*Mac/Linux:* `/Users/dogi/promptroot/prompts`*Windows:* `C:\Users\dogi\promptroot\prompts`
 
 **Alternatively, edit settings.json directly:**
 
 JSON
 ```
 "chat.promptFilesLocations": [
-    "/Users/dogi/prompt-sharing/prompts" 
+    "/Users/dogi/promptroot/prompts" 
 ]
 ```
 
@@ -201,7 +201,7 @@ JSON
 Now, create a test prompt in your repo to verify the connection.
 
 
-1. Go to your `prompt-sharing` folder.
+1. Go to your `promptroot` folder.
 2. Create a file inside `/prompts` called `roaming-test.prompt.md`.
 3. Paste this content (YAML frontmatter is required):
 
@@ -212,7 +212,7 @@ name: roaming
 description: Test connectivity to the Dogi VANO
 ---
 You are a connectivity assistant. 
-Please confirm that you are receiving this signal from the local prompt-sharing repository.
+Please confirm that you are receiving this signal from the local promptroot repository.
 Acknowledge that the user is "Dogi" and the current network status is "Roaming Active".
 ```
 
@@ -242,7 +242,7 @@ description: Broadcasts the prompt to multiple models (Manual Switch Required)
 
 # CONTEXT
 User: Dogi
-Repo: prompt-sharing
+Repo: promptroot
 ```
 
 *Note: Currently, Continue runs one model at a time. To simulate the "Dual SIM" experience where you verify both networks:*
@@ -255,11 +255,11 @@ Repo: prompt-sharing
 
 hmm
 
-I am looking for a prompt for our prompt-sharing repo which describes our long term plan
+I am looking for a prompt for our promptroot repo which describes our long term plan
 
 give me 10 options
 
-Show thinkingBased on your vision of the **VANO (Virtual Agent Network Operator)** and the **PromptOps** workflow, here are 10 different ways to frame the "Long Term Plan" for your `prompt-sharing` repository.
+Show thinkingBased on your vision of the **VANO (Virtual Agent Network Operator)** and the **PromptOps** workflow, here are 10 different ways to frame the "Long Term Plan" for your `promptroot` repository.
 
 You can save these as a file named `vision.prompt.md` or `roadmap.prompt.md` in your repo. When you run this prompt (e.g., `/vision`), it will ground your AI agent (Jules/Claude) in the project's goals before it writes any code.
 
@@ -269,7 +269,7 @@ You can save these as a file named `vision.prompt.md` or `roadmap.prompt.md` in 
 
 
 > *Focus: Connectivity & Roaming*
-> **Prompt:** "This repository aims to become the 'Google Fi' of the AI ecosystem. Just as Fi switches between towers for the best signal, `prompt-sharing` acts as a Model-Agnostic Middleware (VANO). Our long-term goal is to decouple intelligence from the provider, allowing users to 'roam' their prompts seamlessly between Claude, Google Jules, and OpenAI without vendor lock-in, ensuring the 'best signal' (best answer) for the lowest cost."
+> **Prompt:** "This repository aims to become the 'Google Fi' of the AI ecosystem. Just as Fi switches between towers for the best signal, `promptroot` acts as a Model-Agnostic Middleware (VANO). Our long-term goal is to decouple intelligence from the provider, allowing users to 'roam' their prompts seamlessly between Claude, Google Jules, and OpenAI without vendor lock-in, ensuring the 'best signal' (best answer) for the lowest cost."
 
 **2. The "Universal SIM Card"**
 
@@ -289,7 +289,7 @@ You can save these as a file named `vision.prompt.md` or `roadmap.prompt.md` in 
 
 
 > *Focus: Future Tech Integration*
-> **Prompt:** "Our roadmap is aligned with the emerging Model Context Protocol (MCP). We plan to evolve `prompt-sharing` into a compliant MCP Server that serves prompts as resources to any MCP-enabled client (like Claude Desktop or IntelliJ). This transforms the repo from a passive folder of files into an active local API for AI agents."
+> **Prompt:** "Our roadmap is aligned with the emerging Model Context Protocol (MCP). We plan to evolve `promptroot` into a compliant MCP Server that serves prompts as resources to any MCP-enabled client (like Claude Desktop or IntelliJ). This transforms the repo from a passive folder of files into an active local API for AI agents."
 
 **5. The Recursive "Self-Healing" Repo**
 
@@ -319,7 +319,7 @@ You can save these as a file named `vision.prompt.md` or `roadmap.prompt.md` in 
 
 
 > *Focus: OS Integration*
-> **Prompt:** "We view this repository not just as data, but as the kernel configuration for a future 'Agentic OS.' Our long-term plan is to define the permissions, memory structures, and personality profiles that govern how autonomous agents interact with our file systems, ensuring safety and coherence across the 'ole-vi' organization."
+> **Prompt:** "We view this repository not just as data, but as the kernel configuration for a future 'Agentic OS.' Our long-term plan is to define the permissions, memory structures, and personality profiles that govern how autonomous agents interact with our file systems, ensuring safety and coherence across the 'promptroot' organization."
 
 **9. The "Semantic Router" Vision**
 
@@ -349,7 +349,7 @@ Markdown
 ```
 ---
 name: vision
-description: The master architectural roadmap for this prompt-sharing repository.
+description: The master architectural roadmap for this promptroot repository.
 ---
 
 # PROJECT VISION: The Universal Agentic Middleware

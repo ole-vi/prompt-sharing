@@ -2,9 +2,9 @@ export async function loadHeader() {
   if (document.querySelector('header')) return;
   
   try {
-    // Detect GitHub Pages project base (e.g., /prompt-sharing)
+    // Detect GitHub Pages project base (e.g., /promptroot)
     const firstSegment = location.pathname.replace(/^\//, '').split('/')[0] || '';
-    const BASE = firstSegment === 'prompt-sharing' ? '/prompt-sharing' : '';
+    const BASE = firstSegment === 'promptroot' ? '/promptroot' : '';
 
     // Fetch header partial using the correct base, fallback to root if needed
     let headerHtml = '';

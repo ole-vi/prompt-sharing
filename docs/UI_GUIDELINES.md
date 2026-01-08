@@ -1,4 +1,4 @@
-# PromptSync UI Guidelines
+# PromptRoot UI Guidelines
 
 **Version:** 2.0  
 **Last Updated:** January 6, 2026

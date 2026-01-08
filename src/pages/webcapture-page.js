@@ -60,7 +60,7 @@ function initApp() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'promptsync-web-capture-extension.zip';
+        a.download = 'promptroot-web-capture-extension.zip';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
