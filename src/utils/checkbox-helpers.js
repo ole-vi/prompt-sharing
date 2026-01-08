@@ -1,34 +1,39 @@
 /**
  * Checkbox Mutual Exclusivity Helper
- * Ensures that two checkboxes cannot be checked at the same time
+ * Ensures that within a group of checkboxes, only one can be checked at a time.
+ * The group is defined by the `data-exclusive-group` attribute in the HTML.
  */
 
 /**
- * Makes two checkboxes mutually exclusive
- * @param {string} checkbox1Id - ID of the first checkbox
- * @param {string} checkbox2Id - ID of the second checkbox
+ * Initializes mutual exclusivity for all checkboxes with `data-exclusive-group` attribute.
  */
-export function setupMutualExclusivity(checkbox1Id, checkbox2Id) {
-  const checkbox1 = document.getElementById(checkbox1Id);
-  const checkbox2 = document.getElementById(checkbox2Id);
-  
-  if (checkbox1 && checkbox2) {
-    checkbox1.addEventListener('change', () => {
-      if (checkbox1.checked) checkbox2.checked = false;
-    });
+export function initMutualExclusivity() {
+  const checkboxGroups = {};
+
+  // Find all checkboxes with the data attribute and group them
+  document.querySelectorAll('input[type="checkbox"][data-exclusive-group]').forEach(checkbox => {
+    const group = checkbox.dataset.exclusiveGroup;
+    if (!checkboxGroups[group]) {
+      checkboxGroups[group] = [];
+    }
+    checkboxGroups[group].push(checkbox);
+  });
+
+  // Add event listeners to each group
+  for (const groupName in checkboxGroups) {
+    const groupCheckboxes = checkboxGroups[groupName];
     
-    checkbox2.addEventListener('change', () => {
-      if (checkbox2.checked) checkbox1.checked = false;
+    groupCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
+          // Uncheck all other checkboxes in the same group
+          groupCheckboxes.forEach(otherCheckbox => {
+            if (otherCheckbox !== checkbox) {
+              otherCheckbox.checked = false;
+            }
+          });
+        }
+      });
     });
   }
-}
-
-/**
- * Initialize all checkbox mutual exclusivity pairs for a page
- * @param {Array<{id1: string, id2: string}>} pairs - Array of checkbox ID pairs
- */
-export function initializeMutualExclusivity(pairs) {
-  pairs.forEach(pair => {
-    setupMutualExclusivity(pair.id1, pair.id2);
-  });
 }

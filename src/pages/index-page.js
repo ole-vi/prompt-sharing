@@ -4,16 +4,10 @@
  */
 
 import { initApp } from '../app.js';
-import { setupMutualExclusivity } from '../utils/checkbox-helpers.js';
+import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
 
-// Initialize checkbox mutual exclusivity for Jules Environment Modal
-setupMutualExclusivity('julesEnvSuppressPopupsCheckbox', 'julesEnvOpenInBackgroundCheckbox');
-
-// Initialize checkbox mutual exclusivity for Free Input
-setupMutualExclusivity('freeInputSuppressPopupsCheckbox', 'freeInputOpenInBackgroundCheckbox');
-
-// Initialize checkbox mutual exclusivity for Subtask Split Modal
-setupMutualExclusivity('splitSuppressPopupsCheckbox', 'splitOpenInBackgroundCheckbox');
+// Initialize all mutually exclusive checkboxes defined by data-exclusive-group attributes
+initMutualExclusivity();
 
 // Wait for shared components to load, then initialize app
 function waitForComponents() {
