@@ -9,6 +9,7 @@ import { initPromptList, loadList, loadExpandedState, renderList, setSelectFileC
 import { initPromptRenderer, selectBySlug, selectFile, setHandleTryInJulesCallback } from './modules/prompt-renderer.js';
 import { setCurrentBranch, setCurrentRepo } from './modules/branch-selector.js';
 import { initSidebar } from './modules/sidebar.js';
+import { initModals } from './modules/modal-manager.js';
 
 // App state
 let currentOwner = OWNER;
@@ -30,6 +31,7 @@ export function initApp() {
   initPromptList();
   initPromptRenderer();
   initJulesKeyModalListeners();
+  initModals();
   
   // Init status bar
   statusBar.init();

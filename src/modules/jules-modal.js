@@ -1,6 +1,7 @@
 // ===== Jules Modal Module =====
 // Core modal UI functions (key modal, env modal, error modal)
 
+import { openModal, closeModal } from './modal-manager.js';
 import { encryptAndStoreKey } from './jules-keys.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { addToJulesQueue } from './jules-queue.js';
@@ -34,10 +35,9 @@ export function openUrlInBackground(url) {
 }
 
 export function showJulesKeyModal(onSave) {
-  const modal = document.getElementById('julesKeyModal');
   const input = document.getElementById('julesKeyInput');
   
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  openModal('julesKeyModal');
   input.value = '';
   input.focus();
 
@@ -86,13 +86,11 @@ export function showJulesKeyModal(onSave) {
 }
 
 export function hideJulesKeyModal() {
-  const modal = document.getElementById('julesKeyModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  closeModal('julesKeyModal');
 }
 
 export async function showJulesEnvModal(promptText) {
-  const modal = document.getElementById('julesEnvModal');
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  openModal('julesEnvModal');
 
   const submitBtn = document.getElementById('julesEnvSubmitBtn');
   const queueBtn = document.getElementById('julesEnvQueueBtn');
@@ -276,8 +274,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
 }
 
 export function hideJulesEnvModal() {
-  const modal = document.getElementById('julesEnvModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  closeModal('julesEnvModal');
 }
 
 export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
@@ -301,8 +298,7 @@ export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
     messageDiv.textContent = error.message || String(error);
     detailsDiv.textContent = error.toString();
 
-    modal.style.removeProperty('display');
-    modal.style.setProperty('display', 'flex', 'important');
+    openModal('subtaskErrorModal');
 
     const handleAction = (action) => {
       retryBtn.onclick = null;
@@ -324,86 +320,11 @@ export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
 }
 
 export function hideSubtaskErrorModal() {
-  const modal = document.getElementById('subtaskErrorModal');
-  if (modal) {
-    modal.style.removeProperty('display');
-  }
+  closeModal('subtaskErrorModal');
 }
 
 export function initJulesKeyModalListeners() {
-  const keyModal = document.getElementById('julesKeyModal');
-  const envModal = document.getElementById('julesEnvModal');
-  const profileModal = document.getElementById('userProfileModal');
-  const sessionsHistoryModal = document.getElementById('julesSessionsHistoryModal');
-  const errorModal = document.getElementById('subtaskErrorModal');
   const keyInput = document.getElementById('julesKeyInput');
-
-  document.addEventListener('keydown', async (e) => {
-    if (e.key === 'Escape') {
-      if (keyModal && keyModal.style.display === 'flex') {
-        hideJulesKeyModal();
-      }
-      if (envModal && envModal.style.display === 'flex') {
-        hideJulesEnvModal();
-      }
-      const freeInputSection = document.getElementById('freeInputSection');
-      if (freeInputSection && !freeInputSection.classList.contains('hidden')) {
-        const { hideFreeInputForm } = await import('./jules-free-input.js');
-        hideFreeInputForm();
-      }
-      if (profileModal && profileModal.style.display === 'flex') {
-        const { hideUserProfileModal } = await import('./jules-profile-modal.js');
-        hideUserProfileModal();
-      }
-      if (sessionsHistoryModal && sessionsHistoryModal.style.display === 'flex') {
-        const { hideJulesSessionsHistoryModal } = await import('./jules-profile-modal.js');
-        hideJulesSessionsHistoryModal();
-      }
-    }
-  });
-
-  if (keyModal) {
-    keyModal.addEventListener('click', (e) => {
-      if (e.target === keyModal) {
-        hideJulesKeyModal();
-      }
-    });
-  }
-
-  if (envModal) {
-    envModal.addEventListener('click', (e) => {
-      if (e.target === envModal) {
-        hideJulesEnvModal();
-      }
-    });
-  }
-
-  if (profileModal) {
-    profileModal.addEventListener('click', async (e) => {
-      if (e.target === profileModal) {
-        const { hideUserProfileModal } = await import('./jules-profile-modal.js');
-        hideUserProfileModal();
-      }
-    });
-  }
-  
-  if (sessionsHistoryModal) {
-    sessionsHistoryModal.addEventListener('click', async (e) => {
-      if (e.target === sessionsHistoryModal) {
-        const { hideJulesSessionsHistoryModal } = await import('./jules-profile-modal.js');
-        hideJulesSessionsHistoryModal();
-      }
-    });
-  }
-
-  if (errorModal) {
-    errorModal.addEventListener('click', (e) => {
-      if (e.target === errorModal) {
-        e.preventDefault();
-      }
-    });
-  }
-
   if (keyInput) {
     keyInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
