@@ -3,11 +3,11 @@
  * Handles Jules queue page functionality
  */
 
-import { setupMutualExclusivity } from '../utils/checkbox-helpers.js';
+import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
 import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly } from '../modules/jules-queue.js';
 
 // Initialize checkbox mutual exclusivity
-setupMutualExclusivity('queueSuppressPopupsCheckbox', 'queueOpenInBackgroundCheckbox');
+initMutualExclusivity();
 
 function waitForComponents() {
   if (document.querySelector('header')) {
