@@ -1,6 +1,7 @@
 import { USER_BRANCHES, FEATURE_PATTERNS, STORAGE_KEYS } from '../utils/constants.js';
 import { getBranches } from './github-api.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
+import { initDropdown } from './dropdown.js';
 
 let branchSelect = null;
 let branchDropdownBtn = null;
@@ -25,18 +26,7 @@ export function initBranchSelector(owner, repo, branch) {
   }
 
   if (branchDropdownBtn && branchDropdownMenu) {
-    branchDropdownBtn.addEventListener('click', () => {
-      const isOpen = branchDropdownMenu.style.display === 'block';
-      branchDropdownMenu.style.display = isOpen ? 'none' : 'block';
-      branchDropdownBtn.setAttribute('aria-expanded', (!isOpen).toString());
-    });
-    document.addEventListener('click', (e) => {
-      if (!branchDropdown || branchDropdownMenu.style.display !== 'block') return;
-      if (!branchDropdown.contains(e.target)) {
-        branchDropdownMenu.style.display = 'none';
-        branchDropdownBtn.setAttribute('aria-expanded', 'false');
-      }
-    });
+    initDropdown(branchDropdownBtn, branchDropdownMenu, branchDropdown);
   }
 }
 

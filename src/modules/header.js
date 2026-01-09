@@ -1,3 +1,5 @@
+import { initDropdown } from './dropdown.js';
+
 export async function loadHeader() {
   if (document.querySelector('header')) return;
   
@@ -21,41 +23,11 @@ export async function loadHeader() {
     
     document.body.insertAdjacentHTML('afterbegin', fixedHtml);
     
-      // Wire up user menu interactions (toggle + outside click close)
-      const setupUserMenu = () => {
+    // Wire up user menu interactions
+    const setupUserMenu = () => {
       const btn = document.getElementById('userMenuButton');
       const menu = document.getElementById('userMenuDropdown');
-      if (!btn || !menu) return;
-
-      const closeMenu = () => {
-        menu.style.display = 'none';
-        btn.setAttribute('aria-expanded', 'false');
-      };
-
-      const toggleMenu = () => {
-        const isOpen = menu.style.display === 'block';
-        if (isOpen) {
-          closeMenu();
-        } else {
-          menu.style.display = 'block';
-          btn.setAttribute('aria-expanded', 'true');
-        }
-      };
-
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleMenu();
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!menu.contains(e.target) && e.target !== btn) {
-          closeMenu();
-        }
-      });
-
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeMenu();
-      });
+      initDropdown(btn, menu);
     };
     
     // Setup mobile sidebar
