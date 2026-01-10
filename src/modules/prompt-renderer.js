@@ -360,13 +360,32 @@ function enhanceCodeBlocks() {
   pres.forEach((pre) => {
     if (pre.querySelector('.copy')) return;
     const btn = document.createElement('button');
-    btn.textContent = 'Copy';
-    btn.className = 'btn copy';
+    btn.textContent = '📋';
+    btn.className = 'copy';
     btn.dataset.action = 'copy-code';
-    btn.style.position = 'absolute';
-    btn.style.margin = '6px';
-    btn.style.right = '8px';
-    btn.style.transform = 'translateY(-2px)';
+    btn.title = 'Copy code';
+    Object.assign(btn.style, {
+      position: 'absolute',
+      top: '8px',
+      right: '8px',
+      padding: '4px 8px',
+      background: 'rgba(255, 255, 255, 0.1)',
+      border: '1px solid rgba(255, 255, 255, 0.2)',
+      borderRadius: '4px',
+      color: 'inherit',
+      cursor: 'pointer',
+      fontSize: '14px',
+      opacity: '0.7',
+      transition: 'opacity 0.2s, background 0.2s'
+    });
+    btn.onmouseenter = () => {
+      btn.style.opacity = '1';
+      btn.style.background = 'rgba(255, 255, 255, 0.15)';
+    };
+    btn.onmouseleave = () => {
+      btn.style.opacity = '0.7';
+      btn.style.background = 'rgba(255, 255, 255, 0.1)';
+    };
     const wrapper = document.createElement('div');
     wrapper.style.position = 'relative';
     pre.parentNode.insertBefore(wrapper, pre);
@@ -383,8 +402,13 @@ function enhanceCodeBlocks() {
           const code = pre.innerText;
           try {
             await navigator.clipboard.writeText(code);
-            btn.textContent = 'Copied';
-            setTimeout(() => (btn.textContent = 'Copy'), 900);
+            const originalText = btn.textContent;
+            btn.textContent = '✓';
+            btn.style.color = '#4ade80';
+            setTimeout(() => {
+              btn.textContent = originalText;
+              btn.style.color = 'inherit';
+            }, 900);
           } catch {}
         }
       }
