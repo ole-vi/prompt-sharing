@@ -1,0 +1,38 @@
+services:
+  firebase-emulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: prompt-sharing-dev
+    ports:
+      - "4000:4000"  # Emulator UI
+      - "5000:5000"  # Hosting
+      - "5001:5001"  # Functions
+      - "8080:8080"  # Firestore
+      - "9199:9199"  # Storage
+    volumes:
+      # Mount source code for live reload
+      - ./src:/app/src
+      - ./pages:/app/pages
+      - ./partials:/app/partials
+      - ./assets:/app/assets
+      - ./functions:/app/functions
+      - ./config:/app/config
+      - ./firebase.json:/app/firebase.json
+      - ./index.html:/app/index.html
+      - ./oauth-callback.html:/app/oauth-callback.html
+      # Persist emulator data
+      - ./emulator-data:/app/emulator-data
+      # Exclude node_modules from host
+      - /app/functions/node_modules
+    environment:
+      - FIREBASE_CONFIG='{"projectId":"demo-prompt-sharing","storageBucket":"demo-prompt-sharing.appspot.com"}'
+      - GCLOUD_PROJECT=demo-prompt-sharing
+    networks:
+      - firebase-net
+    stdin_open: true
+    tty: true
+
+networks:
+  firebase-net:
+    driver: bridge

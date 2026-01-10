@@ -1,0 +1,44 @@
+# Node modules
+node_modules
+functions/node_modules
+
+# Firebase
+.firebase
+emulator-data
+firebase-debug.log
+firebase-debug.*.log
+
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+.env.local
+
+# IDE
+.vscode
+.idea
+
+# Build artifacts
+dist
+build
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+coverage
+.nyc_output
+
+# CLI tests
+CLI-tests
+
+# Documentation
+docs
+README.md

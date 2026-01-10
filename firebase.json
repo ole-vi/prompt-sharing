@@ -2,8 +2,38 @@
   "projects": {
     "default": "prompt-sharing-f8eeb"
   },
+  "emulators": {
+    "ui": {
+      "enabled": true,
+      "host": "0.0.0.0",
+      "port": 4000
+    },
+    "functions": {
+      "host": "0.0.0.0",
+      "port": 5001
+    },
+    "firestore": {
+      "host": "0.0.0.0",
+      "port": 8080
+    },
+    "hosting": {
+      "host": "0.0.0.0",
+      "port": 5000
+    },
+    "storage": {
+      "host": "0.0.0.0",
+      "port": 9199
+    },
+    "hub": {
+      "host": "0.0.0.0",
+      "port": 4400
+    }
+  },
   "firestore": {
     "rules": "config/firestore/firestore.rules"
+  },
+  "storage": {
+    "rules": "config/storage.rules"
   },
   "functions": [
     {
@@ -27,8 +57,7 @@
       "functions/**"
     ],
     "redirects": [
-      { "source": "/favicon.ico", "destination": "/assets/favicon.ico", "type": 301 },
-      { "source": "/", "destination": "/pages/home/index.html", "type": 302 }
+      { "source": "/favicon.ico", "destination": "/assets/favicon.ico", "type": 301 }
     ]
   }
 }
