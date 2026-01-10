@@ -95,6 +95,15 @@ header {
 .logo-img { height:50px; width:auto; flex-shrink:0; cursor: pointer; }
 .sidebar-logo { height:50px; width:auto; }
 
+/* Logo SVG fill colors */
+.logo-img path,
+.logo-img circle,
+.sidebar-logo path,
+.sidebar-logo circle {
+  fill: #4dd9ff;
+  fill-opacity: 1;
+}
+
 /* Logo dot base styles */
 .logo-img #dot1,
 .logo-img #dot2,
