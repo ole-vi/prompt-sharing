@@ -92,7 +92,53 @@ header {
 
 /* Branding link utilities */
 .branding-link { text-decoration:none; color:inherit; display:flex; align-items:flex-start; gap:10px; }
-.logo-img { height:50px; width:auto; flex-shrink:0; }
+.logo-img { height:50px; width:auto; flex-shrink:0; cursor: pointer; }
+.sidebar-logo { height:50px; width:auto; }
+
+/* Logo dot base styles */
+.logo-img #dot1,
+.logo-img #dot2,
+.logo-img #dot3,
+.sidebar-logo #dot1,
+.sidebar-logo #dot2,
+.sidebar-logo #dot3 {
+  opacity: 1;
+  transform-origin: center;
+}
+
+/* Logo dot pulse animation */
+@keyframes dotPulse {
+  0% { opacity: 0; transform: scale(0.6); }
+  10% { opacity: 1; transform: scale(1); }
+  90% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.6); }
+}
+
+/* Logo dot hover animation */
+.branding-link:hover .logo-img #dot1,
+.branding-link:hover .logo-img #dot2,
+.branding-link:hover .logo-img #dot3,
+.sidebar-branding:hover .sidebar-logo #dot1,
+.sidebar-branding:hover .sidebar-logo #dot2,
+.sidebar-branding:hover .sidebar-logo #dot3 {
+  animation: dotPulse 1.8s ease infinite;
+  animation-fill-mode: backwards;
+}
+
+.branding-link:hover .logo-img #dot1,
+.sidebar-branding:hover .sidebar-logo #dot1 {
+  animation-delay: 0.2s;
+}
+
+.branding-link:hover .logo-img #dot2,
+.sidebar-branding:hover .sidebar-logo #dot2 {
+  animation-delay: 0.4s;
+}
+
+.branding-link:hover .logo-img #dot3,
+.sidebar-branding:hover .sidebar-logo #dot3 {
+  animation-delay: 0.6s;
+}
 
 /* Extracted from inline styles: layout helpers */
 #headerContainer { display:flex; justify-content:space-between; align-items:center; gap:6px; padding:4px 8px; width:100%; }
