@@ -10,8 +10,19 @@ header {
   box-shadow: 0 2px 16px rgba(77, 217, 255, 0.05);
 }
 
-.branding-link:hover .site-title { filter: brightness(1.2); }
-.branding-link:hover .site-tagline { filter: brightness(1.2); }
+.branding-link {
+  transition: filter 0.3s ease;
+}
+
+.branding-link:hover {
+  filter: drop-shadow(0 0 8px rgba(77, 217, 255, 0.4)) drop-shadow(0 0 16px rgba(77, 217, 255, 0.2));
+}
+
+.branding-link .site-title,
+.branding-link .site-tagline,
+.branding-link #appVersion {
+  text-decoration: none;
+}
 
 /* Moved from inline <style> in header.html */
 .user-menu { position: relative; }
@@ -91,7 +102,16 @@ header {
 #headerNav { display:flex; gap:0; align-items:center; justify-content:center; flex-shrink:0; }
 
 /* Branding link utilities */
-.branding-link { text-decoration:none; color:inherit; display:flex; align-items:flex-start; gap:10px; }
+.branding-link { 
+  text-decoration: none !important; 
+  color: inherit; 
+  display: flex; 
+  align-items: flex-start; 
+  gap: 10px; 
+}
+.branding-link * {
+  text-decoration: none !important;
+}
 .logo-img { height:50px; width:auto; flex-shrink:0; cursor: pointer; }
 .sidebar-logo { height:50px; width:auto; }
 
