@@ -3,34 +3,26 @@ import { initDropdown } from './dropdown.js';
 export async function loadHeader() {
   if (document.querySelector('header')) return;
   
-  try {
-    // Detect GitHub Pages project base (e.g., /promptroot)
+  try {    
     const firstSegment = location.pathname.replace(/^\//, '').split('/')[0] || '';
     const BASE = firstSegment === 'promptroot' ? '/promptroot' : '';
-
-    // Fetch header partial using the correct base, fallback to root if needed
     let headerHtml = '';
     let res = await fetch(`${BASE}/partials/header.html`);
     if (!res.ok) {
       res = await fetch('/partials/header.html');
     }
     headerHtml = await res.text();
-
-    // Rewrite absolute href/src inside injected markup to respect project base (only when BASE is set)
     const fixedHtml = BASE
       ? headerHtml.replaceAll('href="/','href="'+BASE+'/').replaceAll('src="/','src="'+BASE+'/')
       : headerHtml;
     
     document.body.insertAdjacentHTML('afterbegin', fixedHtml);
-    
-    // Wire up user menu interactions
     const setupUserMenu = () => {
       const btn = document.getElementById('userMenuButton');
       const menu = document.getElementById('userMenuDropdown');
       initDropdown(btn, menu);
     };
     
-    // Setup mobile sidebar
     const setupMobileSidebar = () => {
       const mobileMenuBtn = document.getElementById('mobileMenuBtn');
       const mobileSidebar = document.getElementById('mobileSidebar');
@@ -81,7 +73,6 @@ export async function loadHeader() {
       
       window.addEventListener('beforeunload', closeSidebar);
       
-      // Set active page in mobile nav
       const currentPage = document.body.getAttribute('data-page');
       if (currentPage) {
         const mobileNavItem = document.querySelector(`.mobile-nav-item[data-page="${currentPage}"]`);
@@ -90,8 +81,6 @@ export async function loadHeader() {
         }
       }
     };
-
-    // Defer to next microtask to ensure DOM is attached
     queueMicrotask(() => {
       setupUserMenu();
       setupMobileSidebar();
