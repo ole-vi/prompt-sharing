@@ -1,64 +1,28 @@
+import { initDropdown } from './dropdown.js';
+
 export async function loadHeader() {
   if (document.querySelector('header')) return;
   
-  try {
-    // Detect GitHub Pages project base (e.g., /promptroot)
+  try {    
     const firstSegment = location.pathname.replace(/^\//, '').split('/')[0] || '';
     const BASE = firstSegment === 'promptroot' ? '/promptroot' : '';
-
-    // Fetch header partial using the correct base, fallback to root if needed
     let headerHtml = '';
     let res = await fetch(`${BASE}/partials/header.html`);
     if (!res.ok) {
       res = await fetch('/partials/header.html');
     }
     headerHtml = await res.text();
-
-    // Rewrite absolute href/src inside injected markup to respect project base (only when BASE is set)
     const fixedHtml = BASE
       ? headerHtml.replaceAll('href="/','href="'+BASE+'/').replaceAll('src="/','src="'+BASE+'/')
       : headerHtml;
     
     document.body.insertAdjacentHTML('afterbegin', fixedHtml);
-    
-      // Wire up user menu interactions (toggle + outside click close)
-      const setupUserMenu = () => {
+    const setupUserMenu = () => {
       const btn = document.getElementById('userMenuButton');
       const menu = document.getElementById('userMenuDropdown');
-      if (!btn || !menu) return;
-
-      const closeMenu = () => {
-        menu.style.display = 'none';
-        btn.setAttribute('aria-expanded', 'false');
-      };
-
-      const toggleMenu = () => {
-        const isOpen = menu.style.display === 'block';
-        if (isOpen) {
-          closeMenu();
-        } else {
-          menu.style.display = 'block';
-          btn.setAttribute('aria-expanded', 'true');
-        }
-      };
-
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleMenu();
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!menu.contains(e.target) && e.target !== btn) {
-          closeMenu();
-        }
-      });
-
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeMenu();
-      });
+      initDropdown(btn, menu);
     };
     
-    // Setup mobile sidebar
     const setupMobileSidebar = () => {
       const mobileMenuBtn = document.getElementById('mobileMenuBtn');
       const mobileSidebar = document.getElementById('mobileSidebar');
@@ -109,7 +73,6 @@ export async function loadHeader() {
       
       window.addEventListener('beforeunload', closeSidebar);
       
-      // Set active page in mobile nav
       const currentPage = document.body.getAttribute('data-page');
       if (currentPage) {
         const mobileNavItem = document.querySelector(`.mobile-nav-item[data-page="${currentPage}"]`);
@@ -118,8 +81,6 @@ export async function loadHeader() {
         }
       }
     };
-
-    // Defer to next microtask to ensure DOM is attached
     queueMicrotask(() => {
       setupUserMenu();
       setupMobileSidebar();
