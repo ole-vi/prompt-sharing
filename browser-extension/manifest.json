@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "description": "Capture any webpage as Markdown and send to GitHub",
   "icons": {
-    "16": "promptclipper.png",
-    "48": "promptclipper.png",
-    "128": "promptclipper.png"
+    "16": "WebCapture.png",
+    "48": "WebCapture.png",
+    "128": "WebCapture.png"
   },
   "permissions": [
     "activeTab",
@@ -22,9 +22,9 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "promptclipper.png",
-      "48": "promptclipper.png",
-      "128": "promptclipper.png"
+      "16": "WebCapture.png",
+      "48": "WebCapture.png",
+      "128": "WebCapture.png"
     }
   },
   "content_scripts": [
