@@ -125,7 +125,7 @@ docker-compose up --build
 
 ## Environment Isolation
 
-This Docker setup uses a separate Firebase project ID (`prompt-sharing-dev`) to ensure complete isolation from your production environment. No changes made in the emulators will affect your live Firebase project.
+This Docker setup uses a separate Firebase project ID (`demo-prompt-sharing`) to ensure complete isolation from your production environment. No changes made in the emulators will affect your live Firebase project.
 
 ## Next Steps
 
