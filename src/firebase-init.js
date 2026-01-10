@@ -31,11 +31,8 @@ function initFirebaseWhenReady() {
       
       // For local development, allow localhost
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        // Connect to Firebase Emulators for Firestore and Functions
-        // Auth uses production for real GitHub OAuth
         window.db.useEmulator('localhost', 8080);
         window.functions.useEmulator('localhost', 5001);
-        
         console.log('🔧 Connected to Firebase Emulators (Firestore, Functions)');
         console.log('🔐 Using production Firebase Auth for GitHub OAuth');
       }
