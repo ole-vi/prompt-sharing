@@ -136,8 +136,37 @@ async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, re
   editModalState.repoSelector = repoSelector;
   editModalState.branchSelector = branchSelector;
 
-  // Initialize with current values
   await repoSelector.initialize(sourceId, branch);
+}
+
+function setupSubtasksEventDelegation() {
+  const subtasksList = document.getElementById('editQueueSubtasksList');
+  if (!subtasksList) return;
+  
+  if (subtasksList.dataset.listenerAttached) return;
+  subtasksList.dataset.listenerAttached = 'true';
+  
+  subtasksList.addEventListener('click', (event) => {
+    const target = event.target;
+    
+    if (target.classList.contains('add-subtask-btn')) {
+      addNewSubtask();
+      return;
+    }
+    
+    const removeBtn = target.closest('.remove-subtask-btn');
+    if (removeBtn) {
+      const index = parseInt(removeBtn.dataset.index);
+      removeSubtask(index);
+      return;
+    }
+  });
+  
+  subtasksList.addEventListener('input', (event) => {
+    if (event.target.classList.contains('edit-subtask-content')) {
+      editModalState.hasUnsavedChanges = true;
+    }
+  });
 }
 
 async function openEditQueueModal(docId) {
@@ -210,21 +239,20 @@ async function openEditQueueModal(docId) {
     `;
     document.body.appendChild(modal);
     
-    // Set up event handlers only once when modal is created
     document.getElementById('closeEditQueueModal').onclick = () => closeEditModal();
     document.getElementById('cancelEditQueue').onclick = () => closeEditModal();
     
-    // Click outside to close
     modal.onclick = (e) => {
       if (e.target === modal) {
         closeEditModal();
       }
     };
     
-    // Save handler
     document.getElementById('saveEditQueue').onclick = async () => {
       await saveQueueItemEdit(editModalState.currentDocId, closeEditModal);
-    };
+    };    
+    setupSubtasksEventDelegation();    
+    setupSubtasksEventDelegation();
   }
 
   // Populate the form
@@ -285,8 +313,6 @@ async function openEditQueueModal(docId) {
   if (promptTextarea) {
     promptTextarea.oninput = trackChanges;
   }
-  
-  // Note: subtask textarea change tracking is now handled in renderSubtasksList()
 }
 
 /**
@@ -384,27 +410,12 @@ function renderSubtasksList(subtasks) {
     </div>
   `).join('');
   
-  // Add "Add Subtask" button at the end
   const addButton = document.createElement('button');
   addButton.type = 'button';
   addButton.className = 'btn btn-secondary add-subtask-btn';
   addButton.textContent = '+ Add Subtask';
-  addButton.onclick = addNewSubtask;
   subtasksList.appendChild(addButton);
   
-  // Attach remove handlers
-  document.querySelectorAll('.remove-subtask-btn').forEach(btn => {
-    btn.onclick = () => removeSubtask(parseInt(btn.dataset.index));
-  });
-  
-  // Attach change tracking to all textareas
-  document.querySelectorAll('.edit-subtask-content').forEach(textarea => {
-    textarea.oninput = () => {
-      editModalState.hasUnsavedChanges = true;
-    };
-  });
-  
-  // Update convert to single button visibility
   updateConvertToSingleButtonVisibility();
 }
 
