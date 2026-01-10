@@ -178,7 +178,7 @@ export async function selectBySlug(slug, files, owner, repo, branch) {
 export async function selectFile(f, pushHash, owner, repo, branch) {
   if (!f) {
     if (editBtn) {
-      editBtn.style.display = 'none';
+      editBtn.classList.add('hidden');
       editBtn.removeAttribute('href');
     }
     return;
@@ -193,9 +193,8 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   setElementDisplay(titleEl, true);
   setElementDisplay(metaEl, true);
   setElementDisplay(actionsEl, true);
-  
   if (contentEl) {
-    contentEl.style.display = '';
+    contentEl.classList.remove('hidden');
   }
 
   titleEl.textContent = f.name.replace(/\.md$/i, '');
@@ -325,10 +324,10 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   editBtn.href = `https://github.com/${owner}/${repo}/edit/${branch}/${f.path}`;
 
   if (isCodexContent) {
-    copyBtn.style.display = 'none';
+    copyBtn.classList.add('hidden');
     shareBtn.textContent = '🔗 Copy link';
   } else {
-    copyBtn.style.display = '';
+    copyBtn.classList.remove('hidden');
     copyBtn.textContent = '📋 Copy prompt';
     shareBtn.textContent = '🔗 Copy link';
   }
@@ -358,36 +357,14 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
 function enhanceCodeBlocks() {
   const pres = contentEl.querySelectorAll('pre');
   pres.forEach((pre) => {
-    if (pre.querySelector('.copy')) return;
+    if (pre.querySelector('.copy-code-btn')) return;
     const btn = document.createElement('button');
     btn.textContent = '📋';
-    btn.className = 'copy';
+    btn.className = 'copy-code-btn';
     btn.dataset.action = 'copy-code';
     btn.title = 'Copy code';
-    Object.assign(btn.style, {
-      position: 'absolute',
-      top: '8px',
-      right: '8px',
-      padding: '4px 8px',
-      background: 'rgba(255, 255, 255, 0.1)',
-      border: '1px solid rgba(255, 255, 255, 0.2)',
-      borderRadius: '4px',
-      color: 'inherit',
-      cursor: 'pointer',
-      fontSize: '14px',
-      opacity: '0.7',
-      transition: 'opacity 0.2s, background 0.2s'
-    });
-    btn.onmouseenter = () => {
-      btn.style.opacity = '1';
-      btn.style.background = 'rgba(255, 255, 255, 0.15)';
-    };
-    btn.onmouseleave = () => {
-      btn.style.opacity = '0.7';
-      btn.style.background = 'rgba(255, 255, 255, 0.1)';
-    };
     const wrapper = document.createElement('div');
-    wrapper.style.position = 'relative';
+    wrapper.className = 'code-block-wrapper';
     pre.parentNode.insertBefore(wrapper, pre);
     wrapper.appendChild(pre);
     wrapper.appendChild(btn);
@@ -404,10 +381,10 @@ function enhanceCodeBlocks() {
             await navigator.clipboard.writeText(code);
             const originalText = btn.textContent;
             btn.textContent = '✓';
-            btn.style.color = '#4ade80';
+            btn.classList.add('copied');
             setTimeout(() => {
               btn.textContent = originalText;
-              btn.style.color = 'inherit';
+              btn.classList.remove('copied');
             }, 900);
           } catch {}
         }

@@ -1,7 +1,31 @@
 /* Content */
 #content { line-height: 1.55; font-size: 15px; }
-#content pre { background: #0b0f21; padding: 12px; border: 1px solid var(--border); border-radius: 10px; overflow: auto; }
+#content pre { background: #0b0f21; padding: 12px; border: 1px solid var(--border); border-radius: 10px; overflow: auto; position: relative; }
 #content code { background: #0b0f21; padding: 1px 4px; border-radius: 6px; font-family: 'Courier New', monospace; }
+
+/* Code block copy button */
+.code-block-wrapper { position: relative; }
+.copy-code-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.7;
+  transition: opacity 0.2s, background 0.2s;
+}
+.copy-code-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.15);
+}
+.copy-code-btn.copied {
+  color: #4ade80;
+}
 
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
