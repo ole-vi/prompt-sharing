@@ -292,7 +292,6 @@ function handleListClick(event) {
   const fileLink = target.closest('.item');
   if (fileLink) {
     event.preventDefault();
-    const slug = fileLink.dataset.slug;
     const filePath = fileLink.dataset.path;
     
     if (selectFileCallback && filePath) {
