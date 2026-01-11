@@ -1,8 +1,6 @@
 // ===== Confirmation Modal Module =====
 // Provides styled confirmation dialogs to replace confirm() calls
 
-import { showToast } from './toast.js';
-
 let confirmModal = null;
 let confirmResolve = null;
 
@@ -22,7 +20,7 @@ function createConfirmModal() {
       </div>
       <div class="modal-buttons">
         <button id="confirmModalCancel" class="btn">Cancel</button>
-        <button id="confirmModalConfirm" class="btn error">Confirm</button>
+        <button id="confirmModalConfirm" class="btn danger">Confirm</button>
       </div>
     </div>
   `;
@@ -36,7 +34,6 @@ function showConfirmModal() {
     confirmModal = createConfirmModal();
   }
   
-  console.log('showConfirmModal: Adding show class', confirmModal);
   confirmModal.classList.add('show');
   
   // Focus the confirm button
@@ -58,16 +55,14 @@ function hideConfirmModal() {
  * @param {Object} options - Optional configuration
  * @param {string} options.title - Modal title (default: "Confirm Action")
  * @param {string} options.confirmText - Confirm button text (default: "Confirm")
- * @param {string} options.confirmStyle - Confirm button style: 'error', 'warn', 'primary' (default: 'error')
+ * @param {string} options.confirmStyle - Confirm button style: 'danger', 'warn', 'primary', 'success' (default: 'danger')
  * @param {string} options.cancelText - Cancel button text (default: "Cancel")
  * @returns {Promise<boolean>} - Resolves to true if confirmed, false if cancelled
  */
 export function showConfirm(message, options = {}) {
-  console.log('showConfirm called with message:', message);
   return new Promise((resolve) => {
     if (!confirmModal) {
       confirmModal = createConfirmModal();
-      console.log('Created confirm modal');
     }
     
     const title = options.title || 'Confirm Action';
@@ -88,12 +83,14 @@ export function showConfirm(message, options = {}) {
     
     // Set button style
     confirmBtn.className = 'btn';
-    if (confirmStyle === 'error') {
-      confirmBtn.classList.add('error');
+    if (confirmStyle === 'error' || confirmStyle === 'danger') {
+      confirmBtn.classList.add('danger');
     } else if (confirmStyle === 'warn') {
       confirmBtn.classList.add('warn');
     } else if (confirmStyle === 'primary') {
       confirmBtn.classList.add('primary');
+    } else if (confirmStyle === 'success') {
+      confirmBtn.classList.add('success');
     }
     
     confirmResolve = resolve;
