@@ -74,7 +74,7 @@ export function showJulesQueueModal() {
     console.error('julesQueueModal element not found!');
     return;
   }
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1003; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  modal.classList.add('show');
   
   // Close modal when clicking on backdrop
   modal.onclick = (e) => {
@@ -88,7 +88,7 @@ export function showJulesQueueModal() {
 
 export function hideJulesQueueModal() {
   const modal = document.getElementById('julesQueueModal');
-  if (modal) modal.setAttribute('style', 'display:none !important;');
+  if (modal) modal.classList.remove('show');
 }
 
 export function renderQueueListDirectly(items) {
@@ -303,7 +303,7 @@ async function openEditQueueModal(docId) {
   await initializeEditRepoAndBranch(item.sourceId, item.branch || 'master', repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu);
 
   // Show modal
-  modal.style.display = 'flex';
+  modal.classList.add('show');
 
   // Track changes
   const trackChanges = () => {
@@ -477,7 +477,7 @@ function closeEditModal(force = false) {
       return;
     }
   }
-  modal.style.display = 'none';
+  modal.classList.remove('show');
   editModalState.hasUnsavedChanges = false;
   editModalState.originalData = null;
   editModalState.currentDocId = null;
