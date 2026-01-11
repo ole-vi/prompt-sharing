@@ -1,5 +1,3 @@
-// ===== Prompt Renderer Module =====
-
 import { slugify } from '../utils/slug.js';
 import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './github-api.js';
 import { CODEX_URL_REGEX } from '../utils/constants.js';
@@ -8,15 +6,12 @@ import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, rende
 
 let cacheRaw = new Map();
 let currentPromptText = null;
-
-// Callbacks to avoid circular dependencies
 let handleTryInJulesCallback = null;
 
 export function setHandleTryInJulesCallback(callback) {
   handleTryInJulesCallback = callback;
 }
 
-// DOM elements
 let contentEl = null;
 let titleEl = null;
 let metaEl = null;
@@ -48,112 +43,119 @@ export function initPromptRenderer() {
   freeInputBtn = document.getElementById('freeInputBtn');
   moreBtn = document.getElementById('moreBtn');
 
-  if (copyBtn) copyBtn.addEventListener('click', handleCopyPrompt);
-  if (copenBtn) {
-    const copenMenu = document.getElementById('copenMenu');
-    
-    copenBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
-    });
-    
-    // Handle menu item clicks
+  document.addEventListener('click', handleDocumentClick);
+  window.addEventListener('branchChanged', handleBranchChanged);
+}
+
+export function destroyPromptRenderer() {
+  document.removeEventListener('click', handleDocumentClick);
+  window.removeEventListener('branchChanged', handleBranchChanged);
+  cacheRaw.clear();
+  currentPromptText = null;
+  handleTryInJulesCallback = null;
+}
+
+function handleDocumentClick(event) {
+  const target = event.target;
+  const copenMenu = document.getElementById('copenMenu');
+  const moreMenu = document.getElementById('moreMenu');
+
+  if (target === copyBtn) {
+    handleCopyPrompt();
+    return;
+  }
+
+  if (target === copenBtn) {
+    event.stopPropagation();
     if (copenMenu) {
-      copenMenu.querySelectorAll('.custom-dropdown-item').forEach(item => {
-        item.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          const target = item.dataset.target;
-          await handleCopenPrompt(target);
-          copenMenu.style.display = 'none';
-        });
-      });
+      copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
     }
-    
-    // Close menu when clicking outside
-    document.addEventListener('click', () => {
-      if (copenMenu) copenMenu.style.display = 'none';
-    });
+    return;
   }
-  if (shareBtn) shareBtn.addEventListener('click', handleShareLink);
-  if (julesBtn) {
-    julesBtn.addEventListener('click', () => {
-      if (handleTryInJulesCallback) {
-        handleTryInJulesCallback(currentPromptText);
-      }
-    });
+
+  const copenMenuItem = target.closest('.custom-dropdown-item[data-target]');
+  if (copenMenuItem && copenMenu && copenMenuItem.parentElement === copenMenu) {
+    event.stopPropagation();
+    const targetApp = copenMenuItem.dataset.target;
+    handleCopenPrompt(targetApp);
+    copenMenu.style.display = 'none';
+    return;
   }
-  if (freeInputBtn) {
-    freeInputBtn.addEventListener('click', async () => {
+
+  if (target === shareBtn) {
+    handleShareLink();
+    return;
+  }
+
+  if (target === julesBtn) {
+    if (handleTryInJulesCallback) {
+      handleTryInJulesCallback(currentPromptText);
+    }
+    return;
+  }
+
+  if (target === freeInputBtn) {
+    (async () => {
       const { showFreeInputModal } = await import('./jules-free-input.js');
       showFreeInputModal();
-    });
+    })();
+    return;
   }
 
-  // Handle More menu
-  if (moreBtn) {
-    const moreMenu = document.getElementById('moreMenu');
-    
-    moreBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
+  if (target === moreBtn) {
+    event.stopPropagation();
+    if (moreMenu) {
       moreMenu.style.display = moreMenu.style.display === 'none' ? 'block' : 'none';
-    });
-    
-    // Handle menu item clicks
-    const moreEditBtn = document.getElementById('moreEditBtn');
-    const moreGhBtn = document.getElementById('moreGhBtn');
-    const moreRawBtn = document.getElementById('moreRawBtn');
-    
-    if (moreEditBtn) {
-      moreEditBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (editBtn && editBtn.href) {
-          window.open(editBtn.href, '_blank', 'noopener,noreferrer');
-        }
-        moreMenu.style.display = 'none';
-      });
     }
-    
-    if (moreGhBtn) {
-      moreGhBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (ghBtn && ghBtn.href) {
-          window.open(ghBtn.href, '_blank', 'noopener,noreferrer');
-        }
-        moreMenu.style.display = 'none';
-      });
-    }
-    
-    if (moreRawBtn) {
-      moreRawBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (rawBtn && rawBtn.href) {
-          window.open(rawBtn.href, '_blank', 'noopener,noreferrer');
-        }
-        moreMenu.style.display = 'none';
-      });
-    }
-    
-    // Close menu when clicking outside
-    document.addEventListener('click', () => {
-      if (moreMenu) moreMenu.style.display = 'none';
-    });
+    return;
   }
 
-  window.addEventListener('branchChanged', async () => {
-    setElementDisplay(titleEl, false);
-    setElementDisplay(metaEl, false);
-    setElementDisplay(actionsEl, false);
-    setElementDisplay(emptyEl, false);
+  const moreEditBtn = document.getElementById('moreEditBtn');
+  const moreGhBtn = document.getElementById('moreGhBtn');
+  const moreRawBtn = document.getElementById('moreRawBtn');
 
-    if (contentEl) contentEl.innerHTML = '';
+  if (target === moreEditBtn) {
+    event.stopPropagation();
+    if (editBtn && editBtn.href) {
+      window.open(editBtn.href, '_blank', 'noopener,noreferrer');
+    }
+    if (moreMenu) moreMenu.style.display = 'none';
+    return;
+  }
 
-    setCurrentSlug(null);
-    currentPromptText = null;
-    updateActiveItem();
-    
-    const { showFreeInputForm } = await import('./jules-free-input.js');
-    showFreeInputForm();
-  });
+  if (target === moreGhBtn) {
+    event.stopPropagation();
+    if (ghBtn && ghBtn.href) {
+      window.open(ghBtn.href, '_blank', 'noopener,noreferrer');
+    }
+    if (moreMenu) moreMenu.style.display = 'none';
+    return;
+  }
+
+  if (target === moreRawBtn) {
+    event.stopPropagation();
+    if (rawBtn && rawBtn.href) {
+      window.open(rawBtn.href, '_blank', 'noopener,noreferrer');
+    }
+    if (moreMenu) moreMenu.style.display = 'none';
+    return;
+  }
+
+  if (copenMenu) copenMenu.style.display = 'none';
+  if (moreMenu) moreMenu.style.display = 'none';
+}
+
+async function handleBranchChanged() {
+  setElementDisplay(titleEl, false);
+  setElementDisplay(metaEl, false);
+  setElementDisplay(actionsEl, false);
+  setElementDisplay(emptyEl, false);
+  if (contentEl) contentEl.innerHTML = '';
+  setCurrentSlug(null);
+  currentPromptText = null;
+  updateActiveItem();
+  const { showFreeInputForm } = await import('./jules-free-input.js');
+  showFreeInputForm();
 }
 
 export function getCurrentPromptText() {
@@ -176,7 +178,7 @@ export async function selectBySlug(slug, files, owner, repo, branch) {
 export async function selectFile(f, pushHash, owner, repo, branch) {
   if (!f) {
     if (editBtn) {
-      editBtn.style.display = 'none';
+      editBtn.classList.add('hidden');
       editBtn.removeAttribute('href');
     }
     return;
@@ -191,9 +193,8 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   setElementDisplay(titleEl, true);
   setElementDisplay(metaEl, true);
   setElementDisplay(actionsEl, true);
-  
   if (contentEl) {
-    contentEl.style.display = '';
+    contentEl.classList.remove('hidden');
   }
 
   titleEl.textContent = f.name.replace(/\.md$/i, '');
@@ -323,10 +324,10 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   editBtn.href = `https://github.com/${owner}/${repo}/edit/${branch}/${f.path}`;
 
   if (isCodexContent) {
-    copyBtn.style.display = 'none';
+    copyBtn.classList.add('hidden');
     shareBtn.textContent = '🔗 Copy link';
   } else {
-    copyBtn.style.display = '';
+    copyBtn.classList.remove('hidden');
     copyBtn.textContent = '📋 Copy prompt';
     shareBtn.textContent = '🔗 Copy link';
   }
@@ -356,28 +357,41 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
 function enhanceCodeBlocks() {
   const pres = contentEl.querySelectorAll('pre');
   pres.forEach((pre) => {
-    if (pre.querySelector('.copy')) return;
+    if (pre.querySelector('.copy-code-btn')) return;
     const btn = document.createElement('button');
-    btn.textContent = 'Copy';
-    btn.className = 'btn copy';
-    btn.style.position = 'absolute';
-    btn.style.margin = '6px';
-    btn.style.right = '8px';
-    btn.style.transform = 'translateY(-2px)';
+    btn.textContent = '📋';
+    btn.className = 'copy-code-btn';
+    btn.dataset.action = 'copy-code';
+    btn.title = 'Copy code';
     const wrapper = document.createElement('div');
-    wrapper.style.position = 'relative';
+    wrapper.className = 'code-block-wrapper';
     pre.parentNode.insertBefore(wrapper, pre);
     wrapper.appendChild(pre);
     wrapper.appendChild(btn);
-    btn.addEventListener('click', async () => {
-      const code = pre.innerText;
-      try {
-        await navigator.clipboard.writeText(code);
-        btn.textContent = 'Copied';
-        setTimeout(() => (btn.textContent = 'Copy'), 900);
-      } catch {}
-    });
   });
+  
+  if (!contentEl.dataset.codeBlockListenerAttached) {
+    contentEl.addEventListener('click', async (event) => {
+      const btn = event.target.closest('[data-action="copy-code"]');
+      if (btn) {
+        const pre = btn.previousElementSibling;
+        if (pre && pre.tagName === 'PRE') {
+          const code = pre.innerText;
+          try {
+            await navigator.clipboard.writeText(code);
+            const originalText = btn.textContent;
+            btn.textContent = '✓';
+            btn.classList.add('copied');
+            setTimeout(() => {
+              btn.textContent = originalText;
+              btn.classList.remove('copied');
+            }, 900);
+          } catch {}
+        }
+      }
+    });
+    contentEl.dataset.codeBlockListenerAttached = 'true';
+  }
 }
 
 async function handleCopyPrompt() {
