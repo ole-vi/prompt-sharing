@@ -6,6 +6,7 @@ import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { addToJulesQueue } from './jules-queue.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import { RETRY_CONFIG, TIMEOUTS } from '../utils/constants.js';
+import { showToast } from './toast.js';
 
 let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
 let lastSelectedBranch = 'master';
@@ -47,7 +48,7 @@ export function showJulesKeyModal(onSave) {
   const handleSave = async () => {
     const apiKey = input.value.trim();
     if (!apiKey) {
-      alert('Please enter your Jules API key.');
+      showToast('Please enter your Jules API key.', 'warn');
       return;
     }
 
@@ -57,7 +58,7 @@ export function showJulesKeyModal(onSave) {
 
       const user = window.auth ? window.auth.currentUser : null;
       if (!user) {
-        alert('Not logged in.');
+        showToast('Not logged in.', 'error');
         saveBtn.textContent = 'Save & Continue';
         saveBtn.disabled = false;
         return;
@@ -65,13 +66,14 @@ export function showJulesKeyModal(onSave) {
 
       await encryptAndStoreKey(apiKey, user.uid);
 
+      showToast('Jules API key saved successfully', 'success');
       hideJulesKeyModal();
       saveBtn.textContent = 'Save & Continue';
       saveBtn.disabled = false;
 
       if (onSave) onSave();
     } catch (error) {
-      alert('Failed to save API key: ' + error.message);
+      showToast('Failed to save API key: ' + error.message, 'error');
       saveBtn.textContent = 'Save & Continue';
       saveBtn.disabled = false;
     }
@@ -147,7 +149,7 @@ export async function showJulesEnvModal(promptText) {
     
     const user = window.auth?.currentUser;
     if (!user) {
-      alert('Please sign in to queue prompts.');
+      showToast('Please sign in to queue prompts.', 'warn');
       return;
     }
     
@@ -159,10 +161,10 @@ export async function showJulesEnvModal(promptText) {
         branch: selectedBranch,
         note: 'Queued from Try in Jules modal'
       });
-      alert('Prompt queued successfully!');
+      showToast('Prompt queued successfully!', 'success');
       hideJulesEnvModal();
     } catch (err) {
-      alert('Failed to queue prompt: ' + err.message);
+      showToast('Failed to queue prompt: ' + err.message, 'error');
     }
   };
   
@@ -207,7 +209,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
         } else if (result.action === 'queue') {
           const user = window.auth?.currentUser;
           if (!user) {
-            alert('Please sign in to queue prompts.');
+            showToast('Please sign in to queue prompts.', 'warn');
             return;
           }
           try {
@@ -218,9 +220,9 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
               branch: lastSelectedBranch,
               note: 'Queued from Try in Jules flow (partial retries)'
             });
-            alert('Prompt queued. You can restart it later from your Jules queue.');
+            showToast('Prompt queued. You can restart it later from your Jules queue.', 'success');
           } catch (err) {
-            alert('Failed to queue prompt: ' + err.message);
+            showToast('Failed to queue prompt: ' + err.message, 'error');
           }
           return;
         } else if (result.action === 'retry') {
@@ -234,7 +236,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
         if (result.action === 'queue') {
           const user = window.auth?.currentUser;
           if (!user) {
-            alert('Please sign in to queue prompts.');
+            showToast('Please sign in to queue prompts.', 'warn');
             return;
           }
           try {
@@ -245,9 +247,9 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
               branch: lastSelectedBranch,
               note: 'Queued from Try in Jules flow (final failure)'
             });
-            alert('Prompt queued. You can restart it later from your Jules queue.');
+            showToast('Prompt queued. You can restart it later from your Jules queue.', 'success');
           } catch (err) {
-            alert('Failed to queue prompt: ' + err.message);
+            showToast('Failed to queue prompt: ' + err.message, 'error');
           }
           return;
         }
@@ -262,7 +264,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
               window.open(sessionUrl, '_blank', 'noopener,noreferrer');
             }
           } catch (finalError) {
-            alert('Failed to submit task after multiple retries. Please try again later.');
+            showToast('Failed to submit task after multiple retries. Please try again later.', 'error');
           }
         }
         return;
@@ -348,7 +350,7 @@ export function initJulesKeyModalListeners() {
       }
       const freeInputSection = document.getElementById('freeInputSection');
       if (freeInputSection && !freeInputSection.classList.contains('hidden')) {
-        const { hideFreeInputForm } = await import('./jules-free-input.js');
+        const { hideFreeInputForm } = await import('./jules-free-input.js?v=' + Date.now());
         hideFreeInputForm();
       }
       if (profileModal && profileModal.style.display === 'flex') {

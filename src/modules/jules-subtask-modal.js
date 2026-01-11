@@ -8,6 +8,7 @@ import { showSubtaskErrorModal, openUrlInBackground } from './jules-modal.js';
 import { getLastSelectedSource } from './jules-free-input.js';
 import { addToJulesQueue } from './jules-queue.js';
 import { callRunJulesFunction } from './jules-api.js';
+import { showToast } from './toast.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 
@@ -48,7 +49,7 @@ export function showSubtaskSplitModal(promptText) {
     
     const validation = validateSubtasks(currentSubtasks);
     if (!validation.valid) {
-      alert('Error:\n' + validation.errors.join('\n'));
+      showToast('Error:\n' + validation.errors.join('\n'), 'error');
       return;
     }
     
@@ -69,18 +70,18 @@ export function showSubtaskSplitModal(promptText) {
   queueBtn.onclick = async () => {
     const user = window.auth?.currentUser;
     if (!user) {
-      alert('Please sign in to queue subtasks.');
+      showToast('Please sign in to queue subtasks.', 'warn');
       return;
     }
 
     const { sourceId, branch } = getLastSelectedSource();
     if (!sourceId) {
-      alert('Please select a repository first.');
+      showToast('Please select a repository first.', 'warn');
       return;
     }
 
     if (!branch) {
-      alert('Please select a branch first.');
+      showToast('Please select a branch first.', 'warn');
       return;
     }
 
@@ -93,17 +94,17 @@ export function showSubtaskSplitModal(promptText) {
           branch: branch,
           note: 'Queued from Split Dialog (no subtasks)'
         });
-        alert('Prompt queued successfully!');
+        showToast('Prompt queued successfully!', 'success');
         hideSubtaskSplitModal();
       } catch (err) {
-        alert('Failed to queue prompt: ' + err.message);
+        showToast('Failed to queue prompt: ' + err.message, 'error');
       }
       return;
     }
 
     const validation = validateSubtasks(currentSubtasks);
     if (!validation.valid) {
-      alert('Error:\n' + validation.errors.join('\n'));
+      showToast('Error:\n' + validation.errors.join('\n'), 'error');
       return;
     }
 
@@ -129,9 +130,9 @@ export function showSubtaskSplitModal(promptText) {
       hideSubtaskSplitModal();
       const { showFreeInputForm } = await import('./jules-free-input.js');
       showFreeInputForm();
-      alert(`${remaining.length} subtask(s) queued successfully!`);
+      showToast(`${remaining.length} subtask(s) queued successfully!`, 'success');
     } catch (err) {
-      alert('Failed to queue subtasks: ' + err.message);
+      showToast('Failed to queue subtasks: ' + err.message, 'error');
     }
   };
 }
@@ -286,7 +287,7 @@ async function submitSubtasks(subtasks) {
                 }
               }
             } catch (finalError) {
-              alert('Failed to submit task after multiple retries. Please try again later.');
+              showToast('Failed to submit task after multiple retries. Please try again later.', 'error');
             }
           }
           return;
@@ -398,7 +399,7 @@ async function submitSubtasks(subtasks) {
           if (result.action === 'cancel') {
             statusBar?.clearProgress?.();
             statusBar?.clearAction?.();
-            alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
+            showToast(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`, 'info');
             return;
           } else if (result.action === 'skip') {
             skippedCount++;
@@ -408,7 +409,7 @@ async function submitSubtasks(subtasks) {
             if (!user) {
               statusBar?.clearProgress?.();
               statusBar?.clearAction?.();
-              alert('Please sign in to queue subtasks.');
+              showToast('Please sign in to queue subtasks.', 'warn');
               return;
             }
             const remaining = sequenced.slice(i).map(s => ({ fullContent: s.fullContent, sequenceInfo: s.sequenceInfo }));
@@ -424,11 +425,11 @@ async function submitSubtasks(subtasks) {
               });
               statusBar?.clearProgress?.();
               statusBar?.clearAction?.();
-              alert(`Queued ${remaining.length} remaining subtasks to your account.`);
+              showToast(`Queued ${remaining.length} remaining subtasks to your account.`, 'success');
             } catch (err) {
               statusBar?.clearProgress?.();
               statusBar?.clearAction?.();
-              alert('Failed to queue subtasks: ' + err.message);
+              showToast('Failed to queue subtasks: ' + err.message, 'error');
             }
             return;
           } else if (result.action === 'retry') {
@@ -446,7 +447,7 @@ async function submitSubtasks(subtasks) {
           if (result.action === 'cancel') {
             statusBar?.clearProgress?.();
             statusBar?.clearAction?.();
-            alert(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`);
+            showToast(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`, 'info');
             return;
           } else {
             if (result.action === 'queue') {
@@ -454,7 +455,7 @@ async function submitSubtasks(subtasks) {
               if (!user) {
                 statusBar?.clearProgress?.();
                 statusBar?.clearAction?.();
-                alert('Please sign in to queue subtasks.');
+                showToast('Please sign in to queue subtasks.', 'warn');
                 return;
               }
               const remaining = sequenced.slice(i).map(s => ({ fullContent: s.fullContent, sequenceInfo: s.sequenceInfo }));
@@ -470,11 +471,11 @@ async function submitSubtasks(subtasks) {
                 });
                 statusBar?.clearProgress?.();
                 statusBar?.clearAction?.();
-                alert(`Queued ${remaining.length} remaining subtasks to your account.`);
+                showToast(`Queued ${remaining.length} remaining subtasks to your account.`, 'success');
               } catch (err) {
                 statusBar?.clearProgress?.();
                 statusBar?.clearAction?.();
-                alert('Failed to queue subtasks: ' + err.message);
+                showToast('Failed to queue subtasks: ' + err.message, 'error');
               }
               return;
             }
@@ -497,5 +498,5 @@ async function submitSubtasks(subtasks) {
   const summary = `✓ Completed!\n\n` +
     `Successful: ${successCount}/${totalCount}\n` +
     `Skipped: ${skippedCount}/${totalCount}`;
-  alert(summary);
+  showToast(summary, 'success', 6000);
 }

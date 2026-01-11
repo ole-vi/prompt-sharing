@@ -3,6 +3,7 @@ import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './
 import { CODEX_URL_REGEX } from '../utils/constants.js';
 import { setElementDisplay } from '../utils/dom-helpers.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
+import { showToast } from './toast.js';
 
 let cacheRaw = new Map();
 let currentPromptText = null;
@@ -412,7 +413,7 @@ async function handleCopyPrompt() {
     copyBtn.textContent = 'Copied';
     setTimeout(() => (copyBtn.textContent = buttonText), 1000);
   } catch {
-    alert('Clipboard blocked. Select and copy manually.');
+    showToast('Clipboard blocked. Select and copy manually.', 'warn');
   }
 }
 
@@ -420,7 +421,7 @@ async function handleCopenPrompt(target) {
   try {
     const promptText = getCurrentPromptText();
     if (!promptText) {
-      alert('No prompt available.');
+      showToast('No prompt available.', 'warn');
       return;
     }
 
@@ -451,7 +452,7 @@ async function handleCopenPrompt(target) {
     }
     window.open(url, '_blank', 'noopener,noreferrer');
   } catch {
-    alert('Clipboard blocked. Could not copy prompt.');
+    showToast('Clipboard blocked. Could not copy prompt.', 'warn');
   }
 }
 
@@ -460,7 +461,7 @@ async function handleShareLink() {
     await navigator.clipboard.writeText(location.href);
     shareBtn.textContent = 'Link copied';
   } catch {
-    alert('Could not copy link.');
+    showToast('Could not copy link.', 'warn');
   } finally {
     const originalText = '🔗 Copy link';
     setTimeout(() => (shareBtn.textContent = originalText), 1000);

@@ -6,6 +6,7 @@ import { showJulesKeyModal } from './jules-modal.js';
 import { showJulesQueueModal } from './jules-queue.js';
 import { loadJulesProfileInfo, listJulesSessions, getDecryptedJulesKey } from './jules-api.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
+import { showToast } from './toast.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -15,11 +16,11 @@ export function showUserProfileModal() {
   const user = window.auth?.currentUser;
 
   if (!user) {
-    alert('Not logged in.');
+    showToast('Not logged in.', 'error');
     return;
   }
 
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  modal.classList.add('show');
 
   const profileUserName = document.getElementById('profileUserName');
   const julesKeyStatus = document.getElementById('julesKeyStatus');
@@ -37,19 +38,19 @@ export function showUserProfileModal() {
   checkJulesKey(user.uid).then(async (hasKey) => {
     if (julesKeyStatus) {
       julesKeyStatus.textContent = hasKey ? '✓ Saved' : '✗ Not saved';
-      julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+      julesKeyStatus.className = hasKey ? 'color-accent' : 'color-muted';
     }
     
     if (hasKey) {
-      if (addBtn) addBtn.style.display = 'none';
-      if (dangerZoneSection) dangerZoneSection.style.display = 'block';
-      if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'block';
+      if (addBtn) addBtn.classList.add('d-none');
+      if (dangerZoneSection) dangerZoneSection.classList.remove('d-none');
+      if (julesProfileInfoSection) julesProfileInfoSection.classList.remove('d-none');
       
       await loadAndDisplayJulesProfile(user.uid);
     } else {
-      if (addBtn) addBtn.style.display = 'block';
-      if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-      if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+      if (addBtn) addBtn.classList.remove('d-none');
+      if (dangerZoneSection) dangerZoneSection.classList.add('d-none');
+      if (julesProfileInfoSection) julesProfileInfoSection.classList.add('d-none');
     }
   });
 
@@ -83,12 +84,12 @@ export function showUserProfileModal() {
           if (dangerZoneSection) dangerZoneSection.style.display = 'none';
           if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
           
-          alert('Jules API key has been deleted. You can enter a new one next time.');
+          showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
         } else {
           throw new Error('Failed to delete key');
         }
       } catch (error) {
-        alert('Failed to reset API key: ' + error.message);
+        showToast('Failed to reset API key: ' + error.message, 'error');
         resetBtn.textContent = '🔄 Reset Jules API Key';
         resetBtn.disabled = false;
       }
@@ -290,7 +291,7 @@ async function loadAndDisplayJulesProfile(uid) {
 
 export function hideUserProfileModal() {
   const modal = document.getElementById('userProfileModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  modal.classList.remove('show');
 }
 
 export function showJulesSessionsHistoryModal() {
@@ -497,12 +498,12 @@ export async function loadProfileDirectly(user) {
           if (dangerZoneSection) dangerZoneSection.style.display = 'none';
           if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
           
-          alert('Jules API key has been deleted. You can enter a new one next time.');
+          showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
         } else {
           throw new Error('Failed to delete key');
         }
       } catch (error) {
-        alert('Failed to reset API key: ' + error.message);
+        showToast('Failed to reset API key: ' + error.message, 'error');
         resetBtn.textContent = '🗑️ Delete Jules API Key';
         resetBtn.disabled = false;
       }

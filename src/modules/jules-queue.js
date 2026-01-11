@@ -5,6 +5,7 @@ import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
+import { showToast } from './toast.js';
 
 let queueCache = [];
 
@@ -172,7 +173,7 @@ function setupSubtasksEventDelegation() {
 async function openEditQueueModal(docId) {
   const item = queueCache.find(i => i.id === docId);
   if (!item) {
-    alert('Queue item not found');
+    showToast('Queue item not found', 'error');
     return;
   }
 
@@ -489,13 +490,13 @@ function closeEditModal(force = false) {
 async function saveQueueItemEdit(docId, closeModalCallback) {
   const item = queueCache.find(i => i.id === docId);
   if (!item) {
-    alert('Queue item not found');
+    showToast('Queue item not found', 'error');
     return;
   }
   
   const user = window.auth?.currentUser;
   if (!user) {
-    alert('Not signed in');
+    showToast('Not signed in', 'error');
     return;
   }
 
@@ -538,14 +539,14 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
 
     await updateJulesQueueItem(user.uid, item.id, updates);
     
-    statusBar.showMessage('Queue item updated successfully', { timeout: 3000 });
+    showToast('Queue item updated successfully', 'success');
     editModalState.hasUnsavedChanges = false;
     closeModalCallback(true);
     
     // Reload the queue
     await loadQueuePage();
   } catch (err) {
-    alert('Failed to update queue item: ' + err.message);
+    showToast('Failed to update queue item: ' + err.message, 'error');
   }
 }
 
@@ -784,12 +785,12 @@ function getSelectedQueueIds() {
 
 async function deleteSelectedQueueItems() {
   const user = window.auth?.currentUser;
-  if (!user) { alert('Not signed in'); return; }
+  if (!user) { showToast('Not signed in', 'error'); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0 && Object.keys(subtaskSelections).length === 0) {
-    alert('No items selected');
+    showToast('No items selected', 'warn');
     return;
   }
   
@@ -807,10 +808,10 @@ async function deleteSelectedQueueItems() {
       await deleteSelectedSubtasks(docId, indices);
     }
     
-    alert('Deleted selected items');
+    showToast('Deleted selected items', 'success');
     await loadQueuePage();
   } catch (err) {
-    alert('Failed to delete selected items: ' + err.message);
+    showToast('Failed to delete selected items: ' + err.message, 'error');
   }
 }
 
@@ -824,12 +825,12 @@ function sortByCreatedAt(ids) {
 
 async function runSelectedQueueItems() {
   const user = window.auth?.currentUser;
-  if (!user) { alert('Not signed in'); return; }
+  if (!user) { showToast('Not signed in', 'error'); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0 && Object.keys(subtaskSelections).length === 0) {
-    alert('No items selected');
+    showToast('No items selected', 'warn');
     return;
   }
 

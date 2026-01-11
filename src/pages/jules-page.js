@@ -7,6 +7,7 @@ import { waitForFirebase } from '../shared-init.js';
 import { loadJulesAccountInfo } from '../modules/jules-profile-modal.js';
 import { showJulesKeyModal } from '../modules/jules-modal.js';
 import { deleteStoredJulesKey, checkJulesKey } from '../modules/jules-keys.js';
+import { showToast } from '../modules/toast.js';
 
 function waitForComponents() {
   if (document.querySelector('header')) {
@@ -117,12 +118,12 @@ function initApp() {
           document.getElementById('dangerZoneSection').classList.add('hidden');
           document.getElementById('julesProfileInfoSection').classList.remove('hidden');
           
-          alert('Jules API key has been deleted. You can enter a new one next time.');
+          showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
         } else {
           throw new Error('Failed to delete key');
         }
       } catch (error) {
-        alert('Failed to delete API key: ' + error.message);
+        showToast('Failed to delete API key: ' + error.message, 'error');
         resetJulesKeyBtn.textContent = '🗑️ Delete Jules API Key';
         resetJulesKeyBtn.disabled = false;
       }
