@@ -7,6 +7,7 @@ import { showJulesQueueModal } from './jules-queue.js';
 import { loadJulesProfileInfo, listJulesSessions, getDecryptedJulesKey } from './jules-api.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { showToast } from './toast.js';
+import { showConfirm } from './confirm-modal.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -65,9 +66,13 @@ export function showUserProfileModal() {
 
   if (resetBtn) {
     resetBtn.onclick = async () => {
-      if (!confirm('This will delete your stored Jules API key. You\'ll need to enter a new one next time.')) {
-        return;
-      }
+      const confirmed = await showConfirm(`This will delete your stored Jules API key. You'll need to enter a new one next time.`, {
+        title: 'Delete API Key',
+        confirmText: 'Delete',
+        confirmStyle: 'error'
+      });
+      if (!confirmed) return;
+      
       try {
         resetBtn.disabled = true;
         resetBtn.textContent = 'Deleting...';
@@ -479,9 +484,13 @@ export async function loadProfileDirectly(user) {
 
   if (resetBtn) {
     resetBtn.onclick = async () => {
-      if (!confirm('This will delete your stored Jules API key. You\'ll need to enter a new one next time.')) {
-        return;
-      }
+      const confirmed = await showConfirm(`This will delete your stored Jules API key. You'll need to enter a new one next time.`, {
+        title: 'Delete API Key',
+        confirmText: 'Delete',
+        confirmStyle: 'error'
+      });
+      if (!confirmed) return;
+      
       try {
         resetBtn.disabled = true;
         resetBtn.textContent = 'Deleting...';

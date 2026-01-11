@@ -9,6 +9,7 @@ import { getLastSelectedSource } from './jules-free-input.js';
 import { addToJulesQueue } from './jules-queue.js';
 import { callRunJulesFunction } from './jules-api.js';
 import { showToast } from './toast.js';
+import { showConfirm } from './confirm-modal.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 
@@ -54,7 +55,11 @@ export function showSubtaskSplitModal(promptText) {
     }
     
     if (validation.warnings.length > 0) {
-      const proceed = confirm('Warnings:\n' + validation.warnings.join('\n') + '\n\nProceed anyway?');
+      const proceed = await showConfirm('Warnings:\n' + validation.warnings.join('\n') + '\n\nProceed anyway?', {
+        title: 'Validation Warnings',
+        confirmText: 'Proceed',
+        confirmStyle: 'warn'
+      });
       if (!proceed) return;
     }
 
@@ -109,7 +114,11 @@ export function showSubtaskSplitModal(promptText) {
     }
 
     if (validation.warnings.length > 0) {
-      const proceed = confirm('Warnings:\n' + validation.warnings.join('\n') + '\n\nQueue anyway?');
+      const proceed = await showConfirm('Warnings:\n' + validation.warnings.join('\n') + '\n\nQueue anyway?', {
+        title: 'Validation Warnings',
+        confirmText: 'Queue',
+        confirmStyle: 'warn'
+      });
       if (!proceed) return;
     }
 
@@ -304,10 +313,15 @@ async function submitSubtasks(subtasks) {
   const sequenced = buildSubtaskSequence(currentFullPrompt, subtasks);
   
   const totalCount = sequenced.length;
-  const proceed = confirm(
+  const proceed = await showConfirm(
     `Ready to send ${totalCount} subtask${totalCount > 1 ? 's' : ''} to Jules.\n\n` +
     `Each subtask will be submitted sequentially. This may take a few minutes.\n\n` +
-    `Proceed?`
+    `Proceed?`,
+    {
+      title: 'Submit Subtasks',
+      confirmText: 'Submit',
+      confirmStyle: 'primary'
+    }
   );
 
   if (!proceed) {

@@ -6,6 +6,7 @@ import statusBar from './status-bar.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
+import { showConfirm } from './confirm-modal.js';
 
 let queueCache = [];
 
@@ -348,13 +349,16 @@ function convertToSubtasks() {
 /**
  * Convert subtasks to single prompt
  */
-function convertToSingle() {
+async function convertToSingle() {
   const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => textarea.value);
   
   if (currentSubtasks.length > 1) {
-    if (!confirm('This will combine all subtasks into a single prompt. Continue?')) {
-      return;
-    }
+    const confirmed = await showConfirm('This will combine all subtasks into a single prompt. Continue?', {
+      title: 'Convert to Single Prompt',
+      confirmText: 'Convert',
+      confirmStyle: 'warn'
+    });
+    if (!confirmed) return;
   }
   
   const promptGroup = document.getElementById('editPromptGroup');
@@ -447,15 +451,18 @@ function addNewSubtask() {
 /**
  * Remove a subtask by index
  */
-function removeSubtask(index) {
+async function removeSubtask(index) {
   const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => ({
     fullContent: textarea.value
   }));
   
   if (currentSubtasks.length <= 1) {
-    if (!confirm('This is the last subtask. Removing it will leave no subtasks. Continue?')) {
-      return;
-    }
+    const confirmed = await showConfirm('This is the last subtask. Removing it will leave no subtasks. Continue?', {
+      title: 'Remove Last Subtask',
+      confirmText: 'Remove',
+      confirmStyle: 'warn'
+    });
+    if (!confirmed) return;
   }
   
   // Remove the subtask at the specified index
@@ -469,14 +476,17 @@ function removeSubtask(index) {
 }
 
 // Close modal handler function (defined outside so it can be referenced in event handlers)
-function closeEditModal(force = false) {
+async function closeEditModal(force = false) {
   const modal = document.getElementById('editQueueItemModal');
   if (!modal) return;
   
   if (!force && editModalState.hasUnsavedChanges) {
-    if (!confirm('You have unsaved changes. Are you sure you want to close?')) {
-      return;
-    }
+    const confirmed = await showConfirm('You have unsaved changes. Are you sure you want to close?', {
+      title: 'Unsaved Changes',
+      confirmText: 'Close Anyway',
+      confirmStyle: 'warn'
+    });
+    if (!confirmed) return;
   }
   modal.style.display = 'none';
   editModalState.hasUnsavedChanges = false;
@@ -795,7 +805,12 @@ async function deleteSelectedQueueItems() {
   }
   
   const totalCount = queueSelections.length + Object.values(subtaskSelections).reduce((sum, arr) => sum + arr.length, 0);
-  if (!confirm(`Delete ${totalCount} selected item(s)?`)) return;
+  const confirmed = await showConfirm(`Delete ${totalCount} selected item(s)?`, {
+    title: 'Delete Items',
+    confirmText: 'Delete',
+    confirmStyle: 'error'
+  });
+  if (!confirmed) return;
   
   try {
     for (const id of queueSelections) {

@@ -8,6 +8,7 @@ import { loadJulesAccountInfo } from '../modules/jules-profile-modal.js';
 import { showJulesKeyModal } from '../modules/jules-modal.js';
 import { deleteStoredJulesKey, checkJulesKey } from '../modules/jules-keys.js';
 import { showToast } from '../modules/toast.js';
+import { showConfirm } from '../modules/confirm-modal.js';
 
 function waitForComponents() {
   if (document.querySelector('header')) {
@@ -90,9 +91,13 @@ function initApp() {
   
   if (resetJulesKeyBtn) {
     resetJulesKeyBtn.onclick = async () => {
-      if (!confirm('This will delete your stored Jules API key. You\'ll need to enter a new one next time.')) {
-        return;
-      }
+      const confirmed = await showConfirm(`This will delete your stored Jules API key. You'll need to enter a new one next time.`, {
+        title: 'Delete API Key',
+        confirmText: 'Delete',
+        confirmStyle: 'error'
+      });
+      if (!confirmed) return;
+      
       try {
         const user = window.auth?.currentUser;
         if (!user) return;

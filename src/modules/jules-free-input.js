@@ -134,6 +134,7 @@ export function showFreeInputForm() {
               window.open(sessionUrl, '_blank', 'noopener,noreferrer');
             }
           }
+          showToast('Prompt sent to Jules successfully!', 'success');
           submitted = true;
         } catch (error) {
           retryCount++;
