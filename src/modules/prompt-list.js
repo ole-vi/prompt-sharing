@@ -1,5 +1,3 @@
-// ===== Prompt List & Tree Module =====
-
 import { slugify } from '../utils/slug.js';
 import { STORAGE_KEYS, TAG_DEFINITIONS } from '../utils/constants.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
@@ -11,17 +9,12 @@ let expandedStateKey = null;
 let openSubmenus = new Set();
 let activeSubmenuHeaders = new Set();
 let currentSlug = null;
-
-// Store current repo context for event handlers
 let currentOwner = null;
 let currentRepo = null;
 let currentBranch = null;
-
-// Sidebar elements
 let listEl = null;
 let searchEl = null;
-
-// Callback for selectFile - set by app.js to avoid circular dependency
+let submenuEl = null;
 let selectFileCallback = null;
 
 export function setSelectFileCallback(callback) {
@@ -42,7 +35,6 @@ export function initPromptList() {
   if (searchEl) {
     searchEl.addEventListener('input', () => {
       renderList(files, currentOwner, currentRepo, currentBranch);
-      // Show/hide clear button based on input value
       if (searchClearBtn) {
         if (searchEl.value) {
           searchClearBtn.classList.remove('hidden');
@@ -61,21 +53,26 @@ export function initPromptList() {
       renderList(files, currentOwner, currentRepo, currentBranch);
     });
   }
+  createSubmenu();
+  document.addEventListener('click', handleDocumentClick);
+  listEl.addEventListener('click', handleListClick);
+}
 
-  // Delegated event listener for tag badges
-  listEl.addEventListener('click', (event) => {
-    const badge = event.target.closest('.tag-badge');
-    if (badge && searchEl) {
-      event.preventDefault();
-      event.stopPropagation();
-      const tagKey = badge.dataset.tag;
-      const label = TAG_DEFINITIONS[tagKey]?.label || tagKey;
-      if (label) {
-        searchEl.value = label;
-        searchEl.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-    }
-  });
+export function destroyPromptList() {
+  document.removeEventListener('click', handleDocumentClick);
+  if (submenuEl && submenuEl.parentNode) {
+    submenuEl.parentNode.removeChild(submenuEl);
+  }
+  submenuEl = null;
+  files = [];
+  expandedState.clear();
+  openSubmenus.clear();
+  activeSubmenuHeaders.clear();
+  currentSlug = null;
+  currentOwner = null;
+  currentRepo = null;
+  currentBranch = null;
+  selectFileCallback = null;
 }
 
 export function getFiles() {
@@ -126,8 +123,6 @@ export function loadExpandedState(owner, repo, branch) {
 }
 
 export function persistExpandedState() {
-  // sessionStorage: expanded state is per-session (cleared on refresh)
-  // This prevents expanded folders from persisting after page reload
   const key = expandedStateKey;
   if (!key) return;
   try {
@@ -149,15 +144,166 @@ export function toggleDirectory(path, expand) {
 }
 
 function closeAllSubmenus() {
-  openSubmenus.forEach(submenu => {
-    submenu.classList.remove('folder-submenu--visible');
-    submenu.style.visibility = ''; // Reset inline style
-  });
+  if (submenuEl) {
+    submenuEl.classList.remove('folder-submenu--visible');
+    submenuEl.style.visibility = '';
+  }
   activeSubmenuHeaders.forEach(header => {
     header.classList.remove('submenu-open');
   });
   openSubmenus.clear();
   activeSubmenuHeaders.clear();
+}
+
+function createSubmenu() {
+  if (submenuEl) return;
+  
+  submenuEl = document.createElement('div');
+  submenuEl.className = 'folder-submenu';
+  
+  const makeMenuItem = (label, emoji, dataAction) => {
+    const item = document.createElement('div');
+    item.className = 'folder-submenu-item';
+    item.textContent = `${emoji} ${label}`;
+    item.dataset.action = dataAction;
+    return item;
+  };
+  
+  submenuEl.appendChild(makeMenuItem('Prompt (blank)', '📝', 'create-prompt'));
+  submenuEl.appendChild(makeMenuItem('Conversation (template)', '💬', 'create-conversation'));
+  
+  document.body.appendChild(submenuEl);
+}
+
+function handleDocumentClick(event) {
+  const target = event.target;
+  const submenuItem = target.closest('.folder-submenu-item');
+  if (submenuItem && submenuEl) {
+    event.stopPropagation();
+    const action = submenuItem.dataset.action;
+    const path = submenuEl.dataset.currentPath;
+    
+    closeAllSubmenus();
+    
+    if (action === 'create-prompt') {
+      const newFilePath = path ? `${path}/new-prompt.md` : 'new-prompt.md';
+      const ghUrl = `https://github.com/${currentOwner}/${currentRepo}/new/${currentBranch}?filename=${encodeURIComponent(newFilePath)}&ref=${encodeURIComponent(currentBranch)}`;
+      window.open(ghUrl, '_blank', 'noopener,noreferrer');
+    } else if (action === 'create-conversation') {
+      const template = `**Conversation Link (Codex, Jules, etc):** [https://chatgpt.com/s/...]
+
+### Prompt
+[paste your full prompt here]
+
+### Output
+[response(s), context, notes, or follow-up thoughts]
+`;
+      const encoded = encodeURIComponent(template);
+      const newFilePath = path ? `${path}/new-conversation.md` : 'new-conversation.md';
+      const ghUrl = `https://github.com/${currentOwner}/${currentRepo}/new/${currentBranch}?filename=${encodeURIComponent(newFilePath)}&value=${encoded}&ref=${encodeURIComponent(currentBranch)}`;
+      window.open(ghUrl, '_blank', 'noopener,noreferrer');
+    }
+    return;
+  }
+  closeAllSubmenus();
+}
+
+function handleListClick(event) {
+  const target = event.target;
+  const badge = target.closest('.tag-badge');
+  if (badge && searchEl) {
+    event.preventDefault();
+    event.stopPropagation();
+    const tagKey = badge.dataset.tag;
+    const label = TAG_DEFINITIONS[tagKey]?.label || tagKey;
+    if (label) {
+      searchEl.value = label;
+      searchEl.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    return;
+  }
+  const toggleBtn = target.closest('[data-action="toggle-dir"]');
+  if (toggleBtn) {
+    event.stopPropagation();
+    const path = toggleBtn.dataset.path;
+    const isExpanded = expandedState.has(path);
+    toggleDirectory(path, !isExpanded);
+    return;
+  }
+  const treeDir = target.closest('.tree-dir');
+  if (treeDir && !target.closest('.folder-icons')) {
+    event.stopPropagation();
+    const path = treeDir.dataset.path;
+    if (path) {
+      const isExpanded = expandedState.has(path);
+      toggleDirectory(path, !isExpanded);
+    }
+    return;
+  }
+  const ghIcon = target.closest('[data-action="open-github"]');
+  if (ghIcon) {
+    event.stopPropagation();
+    const path = ghIcon.dataset.path;
+    const ghUrl = `https://github.com/${currentOwner}/${currentRepo}/tree/${currentBranch}/${path}`;
+    window.open(ghUrl, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  const addIcon = target.closest('[data-action="show-submenu"]');
+  if (addIcon) {
+    event.stopPropagation();
+    const header = addIcon.closest('.tree-dir');
+    const path = addIcon.dataset.path;
+    
+    const wasOpen = submenuEl.classList.contains('folder-submenu--visible');
+    closeAllSubmenus();
+    
+    if (!wasOpen) {
+      const rect = addIcon.getBoundingClientRect();
+      submenuEl.dataset.currentPath = path;
+      submenuEl.style.visibility = 'hidden';
+      submenuEl.classList.add('folder-submenu--visible');
+      
+      const submenuRect = submenuEl.getBoundingClientRect();
+      
+      let left = rect.right;
+      let top = rect.top;
+      
+      if (left + submenuRect.width > window.innerWidth - 10) {
+        left = rect.left - submenuRect.width;
+      }
+      
+      if (top + submenuRect.height > window.innerHeight - 10) {
+        top = rect.bottom - submenuRect.height;
+      }
+      
+      if (left < 10) left = 10;
+      if (top < 10) top = 10;
+      
+      submenuEl.style.setProperty('--submenu-left', `${left}px`);
+      submenuEl.style.setProperty('--submenu-top', `${top}px`);
+      submenuEl.style.visibility = 'visible';
+      
+      openSubmenus.add(submenuEl);
+      header.classList.add('submenu-open');
+      activeSubmenuHeaders.add(header);
+    }
+    return;
+  }
+  const fileLink = target.closest('.item');
+  if (fileLink) {
+    event.preventDefault();
+    const filePath = fileLink.dataset.path;
+    
+    if (selectFileCallback && filePath) {
+      const file = files.find(f => f.path === filePath);
+      if (file) {
+        selectFileCallback(file, true, currentOwner, currentRepo, currentBranch).catch(err => {
+          console.error('Error selecting file:', err);
+        });
+      }
+    }
+    return;
+  }
 }
 
 function ancestorPaths(path) {
@@ -217,21 +363,15 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       const li = document.createElement('li');
       const header = document.createElement('div');
       header.className = 'tree-dir';
+      header.dataset.path = entry.path;
 
       const toggle = document.createElement('button');
       toggle.type = 'button';
       const isForced = forcedExpanded.has(entry.path);
       const isExpanded = isForced || expandedState.has(entry.path);
       toggle.textContent = isExpanded ? '▾' : '▸';
-      toggle.addEventListener('click', (ev) => {
-        stopPropagation(ev);
-        toggleDirectory(entry.path, !isExpanded);
-      });
-
-      header.addEventListener('click', (ev) => {
-        stopPropagation(ev);
-        toggleDirectory(entry.path, !isExpanded);
-      });
+      toggle.dataset.action = 'toggle-dir';
+      toggle.dataset.path = entry.path;
 
       const label = document.createElement('span');
       label.className = 'folder-name';
@@ -244,94 +384,15 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       ghIcon.className = 'github-folder-icon';
       ghIcon.textContent = '🗂️';
       ghIcon.title = 'Open directory on GitHub';
-      ghIcon.addEventListener('click', (ev) => {
-        stopPropagation(ev);
-        const ghUrl = `https://github.com/${owner}/${repo}/tree/${branch}/${entry.path}`;
-        window.open(ghUrl, '_blank', 'noopener,noreferrer');
-      });
+      ghIcon.dataset.action = 'open-github';
+      ghIcon.dataset.path = entry.path;
 
       const addIcon = document.createElement('span');
       addIcon.className = 'add-file-icon';
       addIcon.textContent = '+';
       addIcon.title = 'Create new file in this directory';
-
-      const submenu = document.createElement('div');
-      submenu.className = 'folder-submenu';
-
-      const makeMenuItem = (label, emoji, onClick) => {
-        const item = document.createElement('div');
-        item.className = 'folder-submenu-item';
-        item.textContent = `${emoji} ${label}`;
-        item.addEventListener('click', (e) => {
-          e.stopPropagation();
-          closeAllSubmenus();
-          onClick();
-        });
-        return item;
-      };
-
-      submenu.appendChild(makeMenuItem("Prompt (blank)", "📝", () => {
-        const newFilePath = entry.path ? `${entry.path}/new-prompt.md` : 'new-prompt.md';
-        // GitHub's /new/{branch} endpoint: uses branch if it exists on the repo
-        // Include ref parameter to ensure correct branch is selected in the web UI
-        const ghUrl = `https://github.com/${owner}/${repo}/new/${branch}?filename=${encodeURIComponent(newFilePath)}&ref=${encodeURIComponent(branch)}`;
-        window.open(ghUrl, '_blank', 'noopener,noreferrer');
-      }));
-
-      submenu.appendChild(makeMenuItem("Conversation (template)", "💬", () => {
-        const template = `**Conversation Link (Codex, Jules, etc):** [https://chatgpt.com/s/...]\n\n### Prompt\n[paste your full prompt here]\n\n### Additional Info\n[context, notes, or follow-up thoughts]\n`;
-        const encoded = encodeURIComponent(template);
-        const newFilePath = entry.path ? `${entry.path}/new-conversation.md` : 'new-conversation.md';
-        // GitHub's /new/{branch} endpoint: uses branch if it exists on the repo
-        // Include ref parameter to ensure correct branch is selected in the web UI
-        const ghUrl = `https://github.com/${owner}/${repo}/new/${branch}?filename=${encodeURIComponent(newFilePath)}&value=${encoded}&ref=${encodeURIComponent(branch)}`;
-        window.open(ghUrl, '_blank', 'noopener,noreferrer');
-      }));
-
-      document.body.appendChild(submenu);
-
-      addIcon.addEventListener('click', (ev) => {
-        stopPropagation(ev);
-
-        const wasOpen = submenu.classList.contains('folder-submenu--visible');
-        closeAllSubmenus();
-
-        if (!wasOpen) {
-          const rect = addIcon.getBoundingClientRect();
-
-          // Render invisibly to measure
-          submenu.style.visibility = 'hidden';
-          submenu.classList.add('folder-submenu--visible');
-
-          const submenuRect = submenu.getBoundingClientRect();
-
-          let left = rect.right;
-          let top = rect.top;
-
-          if (left + submenuRect.width > window.innerWidth - 10) {
-            left = rect.left - submenuRect.width;
-          }
-
-          if (top + submenuRect.height > window.innerHeight - 10) {
-            top = rect.bottom - submenuRect.height;
-          }
-
-          if (left < 10) left = 10;
-          if (top < 10) top = 10;
-
-          submenu.style.setProperty('--submenu-left', `${left}px`);
-          submenu.style.setProperty('--submenu-top', `${top}px`);
-
-          // Make visible now that it's positioned
-          submenu.style.visibility = 'visible';
-
-          openSubmenus.add(submenu);
-          header.classList.add('submenu-open');
-          activeSubmenuHeaders.add(header);
-        }
-      });
-
-      document.addEventListener('click', () => closeAllSubmenus());
+      addIcon.dataset.action = 'show-submenu';
+      addIcon.dataset.path = entry.path;
 
       iconsContainer.appendChild(ghIcon);
       iconsContainer.appendChild(addIcon);
@@ -357,14 +418,7 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       a.className = 'item';
       a.href = `#p=${encodeURIComponent(slug)}`;
       a.dataset.slug = slug;
-      a.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        if (selectFileCallback) {
-          selectFileCallback(file, true, owner, repo, branch).catch(err => {
-            console.error('Error selecting file:', err);
-          });
-        }
-      });
+      a.dataset.path = file.path;
 
       const left = document.createElement('div');
       left.style.display = 'flex';
@@ -424,7 +478,6 @@ export function renderList(items, owner, repo, branch) {
   if (!q) {
     filtered = items.slice();
   } else {
-    // Create a new data structure for Fuse.js that includes tags.
     const itemsWithTags = items.map(item => {
       const tags = [];
       for (const tagKey in TAG_DEFINITIONS) {
