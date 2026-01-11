@@ -9,7 +9,7 @@ services:
       - "5000:5000"  # Hosting
       - "5001:5001"  # Functions
       - "8080:8080"  # Firestore
-      - "9199:9199"  # Storage
+      - "9299:9299"  # Storage
     volumes:
       # Mount source code for live reload
       - ./src:/app/src
