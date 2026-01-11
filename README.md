@@ -32,6 +32,21 @@ Then open **`http://localhost:8888/pages/home/index.html`** in your browser.
 
 **Important:** Opening `index.html` directly (via `file://` URL) will not work with Firebase authentication. The app must be served over HTTP for GitHub OAuth to function.
 
+## Docker Development
+
+For a more complete development environment with Firebase emulators, use Docker Compose:
+
+```bash
+docker-compose up --build
+```
+
+This provides:
+- Local Firebase emulators (Firestore, Functions, Storage)
+- Full emulator UI at http://localhost:4000
+- App served at http://localhost:5000
+
+See [docs/DOCKER.md](docs/DOCKER.md) for complete setup instructions.
+
 ## Architecture
 
 This is a zero-build, modular single-page application using plain JavaScript ES6 modules.

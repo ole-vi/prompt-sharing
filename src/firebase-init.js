@@ -31,8 +31,14 @@ function initFirebaseWhenReady() {
       
       // For local development, allow localhost
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        if (window.auth.settings) {
-          window.auth.settings.appVerificationDisabledForTesting = true;
+        try {
+          window.db.useEmulator('localhost', 8080);
+          window.functions.useEmulator('localhost', 5001);
+          console.log('🔧 Connected to Firebase Emulators (Firestore, Functions)');
+          console.log('🔐 Using production Firebase Auth for GitHub OAuth');
+        } catch (emulatorError) {
+          console.error('Failed to connect to Firebase emulators (Firestore, Functions):', emulatorError);
+          console.error('Proceeding without emulators; check that the Firebase emulators are running on localhost:8080 (Firestore) and localhost:5001 (Functions).');
         }
       }
       

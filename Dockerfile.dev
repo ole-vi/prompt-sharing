@@ -1,0 +1,49 @@
+# Development Dockerfile for Firebase Emulator Suite
+FROM node:22-slim
+
+# Install OpenJDK 21 (required for Firebase Emulators)
+RUN apt-get update && apt-get install -y \
+    wget \
+    curl \
+    && wget -O /tmp/temurin.tar.gz https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.5%2B11/OpenJDK21U-jre_x64_linux_hotspot_21.0.5_11.tar.gz \
+    && mkdir -p /opt/java \
+    && tar -xzf /tmp/temurin.tar.gz -C /opt/java --strip-components=1 \
+    && rm /tmp/temurin.tar.gz \
+    && apt-get remove -y wget \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set JAVA_HOME and add to PATH
+ENV JAVA_HOME=/opt/java
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
+# Install Firebase CLI globally
+RUN npm install -g firebase-tools
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files for functions
+COPY functions/package*.json ./functions/
+
+# Install function dependencies
+WORKDIR /app/functions
+RUN npm install
+
+# Go back to app root
+WORKDIR /app
+
+# Copy the rest of the application
+COPY . .
+
+# Expose ports for Firebase Emulators
+# 4000 - Emulator UI
+# 5000 - Hosting
+# 5001 - Functions
+# 8080 - Firestore
+# 9199 - Storage
+# Note: Auth uses production Firebase for real GitHub OAuth
+EXPOSE 4000 5000 5001 8080 9199
+
+# Start Firebase Emulators
+CMD ["firebase", "emulators:start", "--project=demo-prompt-sharing", "--import=./emulator-data", "--export-on-exit"]
