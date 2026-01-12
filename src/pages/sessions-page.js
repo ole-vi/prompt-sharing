@@ -9,8 +9,6 @@ import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js
 let allSessionsCache = [];
 let sessionNextPageToken = null;
 let isSessionsLoading = false;
-
-// Search cache to avoid rebuilding Fuse on every keystroke
 let cachedSessions = null;
 let cachedSearchData = null;
 let cachedFuseInstance = null;
@@ -76,7 +74,6 @@ function renderAllSessions(sessions) {
   if (!searchTerm) {
     filteredSessions = sessions;
   } else {
-    // Cache Fuse instance and search data to avoid rebuilding on every keystroke
     if (cachedSessions !== sessions) {
       cachedSessions = sessions;
       cachedSearchData = sessions.map(s => ({

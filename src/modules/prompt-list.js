@@ -16,8 +16,6 @@ let listEl = null;
 let searchEl = null;
 let submenuEl = null;
 let selectFileCallback = null;
-
-// Search cache to avoid rebuilding Fuse on every keystroke
 let cachedFiles = null;
 let cachedItemsWithTags = null;
 let cachedFuseInstance = null;
@@ -486,7 +484,6 @@ export function renderList(items, owner, repo, branch) {
   if (!q) {
     filtered = items.slice();
   } else {
-    // Cache Fuse instance and tagged data to avoid rebuilding on every keystroke
     if (cachedFiles !== items) {
       cachedFiles = items;
       cachedItemsWithTags = items.map(item => {
