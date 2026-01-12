@@ -10,24 +10,16 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 export function clearJulesKeyCache(uid = null) {
   if (uid) {
     keyCache.delete(uid);
-    console.log(`[Jules API] 🗑️ Cleared API key cache for user: ${uid}`);
   } else {
     keyCache.clear();
-    console.log(`[Jules API] 🗑️ Cleared all API key caches`);
   }
 }
 
 export async function getDecryptedJulesKey(uid) {
-  // Check cache first
   const cached = keyCache.get(uid);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    const age = Math.round((Date.now() - cached.timestamp) / 1000);
-    console.log(`[Jules API] ✅ API key cache HIT (age: ${age}s)`);
     return cached.key;
   }
-
-  console.log(`[Jules API] 🔑 Decrypting API key (cache miss)`);
-  const startTime = performance.now();
 
   try {
     if (!window.db) {
@@ -54,13 +46,7 @@ export async function getDecryptedJulesKey(uid) {
     const plaintext = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertextData);
 
     const decryptedKey = new TextDecoder().decode(plaintext);
-    
-    // Cache the decrypted key
     keyCache.set(uid, { key: decryptedKey, timestamp: Date.now() });
-    
-    const decryptTime = Math.round(performance.now() - startTime);
-    console.log(`[Jules API] ✅ API key decrypted and cached (${decryptTime}ms)`);
-    
     return decryptedKey;
   } catch (error) {
     return null;
@@ -75,9 +61,6 @@ function createJulesHeaders(apiKey) {
 }
 
 export async function listJulesSources(apiKey, pageToken = null) {
-  const startTime = performance.now();
-  console.log(`[Jules API] 📡 Fetching sources...`);
-  
   const url = new URL(`${JULES_API_BASE}/sources`);
   if (pageToken) {
     url.searchParams.set('pageToken', pageToken);
@@ -91,18 +74,10 @@ export async function listJulesSources(apiKey, pageToken = null) {
     throw new Error(`Failed to fetch sources: ${response.status} ${response.statusText}`);
   }
 
-  const data = await response.json();
-  const elapsed = Math.round(performance.now() - startTime);
-  const sourceCount = data.sources?.length || 0;
-  const totalBranches = data.sources?.reduce((sum, s) => sum + (s.githubRepo?.branches?.length || 0), 0) || 0;
-  console.log(`[Jules API] ✅ Fetched ${sourceCount} sources with ${totalBranches} total branches (${elapsed}ms)`);
-  
-  return data;
+  return await response.json();
 }
 
 export async function getJulesSourceDetails(apiKey, sourceId) {
-  // Source ID already contains the full path (e.g., "sources/github/owner/repo")
-  // So we need to use it directly, not prepend /sources/
   const url = `${JULES_API_BASE}/${sourceId}`;
   const response = await fetch(url, {
     headers: createJulesHeaders(apiKey)
@@ -116,12 +91,8 @@ export async function getJulesSourceDetails(apiKey, sourceId) {
 }
 
 export async function listJulesSessions(apiKey, pageSize = null, pageToken = null) {
-  const startTime = performance.now();
-  const requestedPageSize = pageSize || PAGE_SIZES.julesSessions;
-  console.log(`[Jules API] 📡 Fetching sessions (pageSize: ${requestedPageSize})...`);
-  
   const url = new URL(`${JULES_API_BASE}/sessions`);
-  url.searchParams.set('pageSize', requestedPageSize.toString());
+  url.searchParams.set('pageSize', (pageSize || PAGE_SIZES.julesSessions).toString());
   if (pageToken) {
     url.searchParams.set('pageToken', pageToken);
   }
@@ -134,12 +105,7 @@ export async function listJulesSessions(apiKey, pageSize = null, pageToken = nul
     throw new Error(`Failed to fetch sessions: ${response.status} ${response.statusText}`);
   }
 
-  const data = await response.json();
-  const elapsed = Math.round(performance.now() - startTime);
-  const sessionCount = data.sessions?.length || 0;
-  console.log(`[Jules API] ✅ Fetched ${sessionCount} sessions (${elapsed}ms)`);
-  
-  return data;
+  return await response.json();
 }
 
 export async function getJulesSession(apiKey, sessionId) {
@@ -214,36 +180,19 @@ export async function approveJulesSessionPlan(apiKey, sessionId) {
 }
 
 export async function loadJulesProfileInfo(uid) {
-  console.log(`[Jules API] 🚀 Loading profile info for user...`);
-  const overallStart = performance.now();
-  
   const apiKey = await getDecryptedJulesKey(uid);
   if (!apiKey) {
     throw new Error(ERRORS.JULES_KEY_REQUIRED);
   }
 
-  // Fetch sources and sessions in parallel
-  // Note: listJulesSources already returns branch data in githubRepo.branches
-  // This eliminates the need for N additional API calls (one per source)
-  console.log(`[Jules API] 📡 Fetching sources and sessions in parallel...`);
   const [sourcesData, sessionsData] = await Promise.all([
     listJulesSources(apiKey),
     listJulesSessions(apiKey)
   ]);
 
-  // No need to fetch branch details separately - they're already in the response
-  const sources = sourcesData.sources || [];
-  const sessions = sessionsData.sessions || [];
-  
-  const totalTime = Math.round(performance.now() - overallStart);
-  const totalBranches = sources.reduce((sum, s) => sum + (s.githubRepo?.branches?.length || 0), 0);
-  
-  console.log(`[Jules API] ✅ Profile loaded: ${sources.length} sources, ${totalBranches} branches, ${sessions.length} sessions`);
-  console.log(`[Jules API] ⚡ Total time: ${totalTime}ms (saved ${sources.length} redundant API calls!)`);
-  
   return {
-    sources,
-    sessions
+    sources: sourcesData.sources || [],
+    sessions: sessionsData.sessions || []
   };
 }
 

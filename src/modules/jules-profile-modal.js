@@ -97,7 +97,6 @@ export function showUserProfileModal() {
 
   if (loadJulesInfoBtn) {
     loadJulesInfoBtn.onclick = async () => {
-      // Clear cache to force fresh data load
       const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
       clearCache(CACHE_KEYS.JULES_ACCOUNT, user.uid);
       
@@ -187,7 +186,6 @@ async function loadAndDisplayJulesProfile(uid) {
         const githubPath = repoName.includes('github/')
           ? repoName.split('github/')[1]
           : repoName.replace('sources/', '');
-        // Get branches from githubRepo.branches (API returns them here)
         const branches = source.githubRepo?.branches || [];
         const sourceId = `source-${index}`;
 
