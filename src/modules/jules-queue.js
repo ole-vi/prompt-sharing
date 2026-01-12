@@ -823,7 +823,7 @@ async function deleteSelectedQueueItems() {
       await deleteSelectedSubtasks(docId, indices);
     }
     
-    showToast('Deleted selected items', 'success');
+    showToast(`Deleted ${totalCount} ${totalCount === 1 ? 'item' : 'items'}`, 'success');
     await loadQueuePage();
   } catch (err) {
     showToast('Failed to delete selected items: ' + err.message, 'error');

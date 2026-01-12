@@ -139,7 +139,7 @@ export function showSubtaskSplitModal(promptText) {
       hideSubtaskSplitModal();
       const { showFreeInputForm } = await import('./jules-free-input.js');
       showFreeInputForm();
-      showToast(`${remaining.length} subtask(s) queued successfully!`, 'success');
+      showToast(`${remaining.length} ${remaining.length === 1 ? 'subtask' : 'subtasks'} queued successfully!`, 'success');
     } catch (err) {
       showToast('Failed to queue subtasks: ' + err.message, 'error');
     }
@@ -410,7 +410,7 @@ async function submitSubtasks(subtasks) {
 
           if (result.action === 'cancel') {
             statusBar?.clear?.();
-            showToast(`Cancelled. Submitted ${successCount} of ${totalCount} subtask(s) before cancellation.`, 'warn');
+            showToast(`Cancelled. Submitted ${successCount} of ${totalCount} ${successCount === 1 ? 'subtask' : 'subtasks'} before cancellation.`, 'warn');
             return;
           } else if (result.action === 'skip') {
             skippedCount++;
@@ -435,7 +435,7 @@ async function submitSubtasks(subtasks) {
                 note: 'Queued remaining subtasks'
               });
               statusBar?.clear?.();
-              showToast(`Queued ${remaining.length} remaining subtasks.`, 'success');
+              showToast(`Queued ${remaining.length} remaining ${remaining.length === 1 ? 'subtask' : 'subtasks'}`, 'success');
             } catch (err) {
               statusBar?.clear?.();
               showToast('Failed to queue subtasks: ' + err.message, 'error');
@@ -455,7 +455,7 @@ async function submitSubtasks(subtasks) {
 
           if (result.action === 'cancel') {
             statusBar?.clear?.();
-            showToast(`Cancelled. Submitted ${successCount} of ${totalCount} subtask(s) before cancellation.`, 'warn');
+            showToast(`Cancelled. Submitted ${successCount} of ${totalCount} ${successCount === 1 ? 'subtask' : 'subtasks'} before cancellation.`, 'warn');
             return;
           } else {
             if (result.action === 'queue') {
@@ -477,7 +477,7 @@ async function submitSubtasks(subtasks) {
                   note: 'Queued remaining subtasks (final failure)'
                 });
                 statusBar?.clear?.();
-                showToast(`Queued ${remaining.length} remaining subtasks to your account.`, 'success');
+                showToast(`Queued ${remaining.length} remaining ${remaining.length === 1 ? 'subtask' : 'subtasks'}`, 'success');
               } catch (err) {
                 statusBar?.clear?.();
                 showToast('Failed to queue subtasks: ' + err.message, 'error');
