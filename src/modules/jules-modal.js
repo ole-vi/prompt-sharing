@@ -292,6 +292,7 @@ export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
     const skipBtn = document.getElementById('subtaskErrorSkipBtn');
     const queueBtn = document.getElementById('subtaskErrorQueueBtn');
     const cancelBtn = document.getElementById('subtaskErrorCancelBtn');
+    const closeBtn = document.getElementById('errorModalClose');
     const retryDelayCheckbox = document.getElementById('errorRetryDelayCheckbox');
 
     if (!modal) {
@@ -303,13 +304,14 @@ export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
     messageDiv.textContent = error.message || String(error);
     detailsDiv.textContent = error.toString();
 
-    modal.style.removeProperty('display');
-    modal.style.setProperty('display', 'flex', 'important');
+    modal.style.zIndex = '10000';
+    modal.classList.add('show');
 
     const handleAction = (action) => {
       retryBtn.onclick = null;
       skipBtn.onclick = null;
       cancelBtn.onclick = null;
+      closeBtn.onclick = null;
       if (queueBtn) queueBtn.onclick = null;
 
       hideSubtaskErrorModal();
@@ -321,14 +323,33 @@ export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
     retryBtn.onclick = () => handleAction('retry');
     skipBtn.onclick = () => handleAction('skip');
     cancelBtn.onclick = () => handleAction('cancel');
+    closeBtn.onclick = () => handleAction('cancel');
     if (queueBtn) queueBtn.onclick = () => handleAction('queue');
+    
+    // Handle Escape key
+    const escapeHandler = (e) => {
+      if (e.key === 'Escape') {
+        document.removeEventListener('keydown', escapeHandler);
+        handleAction('cancel');
+      }
+    };
+    document.addEventListener('keydown', escapeHandler);
+    
+    // Handle background click
+    const backgroundClickHandler = (e) => {
+      if (e.target === modal) {
+        modal.removeEventListener('click', backgroundClickHandler);
+        handleAction('cancel');
+      }
+    };
+    modal.addEventListener('click', backgroundClickHandler);
   });
 }
 
 export function hideSubtaskErrorModal() {
   const modal = document.getElementById('subtaskErrorModal');
   if (modal) {
-    modal.style.removeProperty('display');
+    modal.classList.remove('show');
   }
 }
 
