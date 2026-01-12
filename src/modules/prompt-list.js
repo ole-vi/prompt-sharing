@@ -547,14 +547,18 @@ export async function refreshList(owner, repo, branch, cacheKey) {
   let data;
   const folder = getPromptFolder(branch);
   try {
-    data = await listPromptsViaContents(owner, repo, branch, folder);
+    data = await listPromptsViaTrees(owner, repo, branch, folder);
   } catch (e) {
-    if (e.status === 403 || e.status === 404) {
-      data = await listPromptsViaTrees(owner, repo, branch, folder);
-    } else {
-      throw e;
+    // Fall back to Contents API if Trees fails (large repos or permissions)
+    console.warn('Trees API failed, using Contents fallback');
+    try {
+      data = await listPromptsViaContents(owner, repo, branch, folder);
+    } catch (contentsError) {
+      console.error('Both API strategies failed:', contentsError);
+      throw contentsError;
     }
   }
+  
   files = (data || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
   sessionStorage.setItem(cacheKey, JSON.stringify(files));
   renderList(files, owner, repo, branch);

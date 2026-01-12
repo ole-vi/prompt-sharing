@@ -59,7 +59,8 @@ export async function listPromptsViaTrees(owner, repo, branch, path = 'prompts')
     type: 'file',
     name: n.path.split('/').pop(),
     path: n.path,
-    sha: n.sha
+    sha: n.sha,
+    download_url: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${n.path}`
   }));
 }
 
