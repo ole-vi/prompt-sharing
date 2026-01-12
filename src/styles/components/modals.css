@@ -36,7 +36,7 @@
 .modal select option:hover { background: rgba(77, 217, 255, 0.08); }
 @-moz-document url-prefix() { .modal select option:checked { background-color: rgba(77, 217, 255, 0.2) !important; } }
 .modal select optgroup { font-weight: 600; color: var(--muted); background: var(--card); }
-.modal-buttons .btn { padding: 8px 12px; }
+.modal-buttons .btn { padding: 8px 12px; line-height: 1.5; }
 .modal-buttons .btn.primary { border-color: var(--accent); color: var(--accent); }
 
 /* Specific modal layering */
