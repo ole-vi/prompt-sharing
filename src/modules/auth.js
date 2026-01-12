@@ -20,7 +20,24 @@ export async function signInWithGitHub() {
       return;
     }
     const provider = new firebase.auth.GithubAuthProvider();
-    await window.auth.signInWithPopup(provider);
+    // Request repo scope for API access
+    provider.addScope('repo');
+    console.log('🔐 Starting GitHub OAuth sign-in...');
+    const result = await window.auth.signInWithPopup(provider);
+    
+    // Store the GitHub access token for API calls
+    if (result.credential && result.credential.accessToken) {
+      const tokenData = {
+        token: result.credential.accessToken,
+        timestamp: Date.now()
+      };
+      localStorage.setItem('github_access_token', JSON.stringify(tokenData));
+      console.log('✅ GitHub OAuth token captured and stored');
+      console.log('   Token starts with:', result.credential.accessToken.substring(0, 10) + '...');
+      console.log('   This gives you 5,000 API requests/hour');
+    } else {
+      console.warn('⚠️ No OAuth token in sign-in result');
+    }
   } catch (error) {
     console.error('Sign-in failed:', error);
     alert('Failed to sign in. Please try again.');
@@ -31,6 +48,9 @@ export async function signOutUser() {
   try {
     if (window.auth) {
       await window.auth.signOut();
+      // Clear the stored GitHub access token
+      localStorage.removeItem('github_access_token');
+      console.log('🔓 Signed out - GitHub OAuth token cleared');
     }
   } catch (error) {
     console.error('Sign-out failed:', error);

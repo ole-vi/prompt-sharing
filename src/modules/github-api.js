@@ -6,12 +6,81 @@ export function setViaProxy(proxyFn) {
   viaProxy = proxyFn;
 }
 
+/**
+ * Get GitHub OAuth access token from localStorage
+ * @returns {Promise<string|null>} The access token or null if not available
+ */
+async function getGitHubAccessToken() {
+  try {
+    // Check if user is logged in with GitHub
+    if (!window.auth?.currentUser) {
+      console.log('🔓 No authenticated user - using unauthenticated API calls (60/hr)');
+      return null;
+    }
+    
+    const providerData = window.auth.currentUser.providerData.find(
+      provider => provider.providerId === 'github.com'
+    );
+    
+    if (!providerData) {
+      console.log('🔓 User not authenticated with GitHub - using unauthenticated API calls (60/hr)');
+      return null;
+    }
+    
+    // Get cached token from localStorage
+    const tokenDataStr = localStorage.getItem('github_access_token');
+    if (!tokenDataStr) {
+      console.warn('⚠️ No GitHub OAuth token found. Sign out and sign in again to capture token.');
+      return null;
+    }
+    
+    const tokenData = JSON.parse(tokenDataStr);
+    
+    // GitHub OAuth tokens don't expire unless revoked, but we'll check if it's been
+    // stored for more than 60 days and prompt re-authentication for security
+    const SIXTY_DAYS = 60 * 24 * 60 * 60 * 1000;
+    const tokenAge = Date.now() - tokenData.timestamp;
+    if (tokenAge > SIXTY_DAYS) {
+      console.warn('⚠️ GitHub token is old (>60 days), consider re-authenticating');
+      localStorage.removeItem('github_access_token');
+      return null;
+    }
+    
+    const ageDays = Math.floor(tokenAge / (24 * 60 * 60 * 1000));
+    console.log(`🔐 Using authenticated GitHub API calls (5,000/hr) - token age: ${ageDays} days`);
+    return tokenData.token;
+  } catch (error) {
+    console.error('Error getting GitHub access token:', error);
+    return null;
+  }
+}
+
 export async function fetchJSON(url) {
   try {
+    const headers = { 'Accept': 'application/vnd.github+json' };
+    
+    // Add Authorization header if user is logged in with GitHub
+    const token = await getGitHubAccessToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const shortUrl = url.replace('https://api.github.com/', '');
+    console.log(`📡 API Call: ${shortUrl} ${token ? '(authenticated ✓)' : '(unauthenticated)'}`);
+    
     const res = await fetch(viaProxy(url), {
       cache: 'no-store',
-      headers: { 'Accept': 'application/vnd.github+json' }
+      headers
     });
+    
+    // Log rate limit info from response headers
+    const remaining = res.headers.get('x-ratelimit-remaining');
+    const limit = res.headers.get('x-ratelimit-limit');
+    if (remaining && limit) {
+      const percentUsed = ((limit - remaining) / limit * 100).toFixed(1);
+      console.log(`   Rate Limit: ${remaining}/${limit} remaining (${percentUsed}% used)`);
+    }
+    
     if (!res.ok) return null;
     return res.json();
   } catch (e) {
