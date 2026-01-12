@@ -160,7 +160,7 @@ export function showFreeInputForm() {
                   branch: _lastSelectedBranch,
                   note: 'Queued from Free Input flow'
                 });
-                showToast('Prompt queued. You can restart it later from your Jules queue.', 'success');
+                showToast('Prompt queued successfully!', 'success');
               } catch (err) {
                 showToast('Failed to queue prompt: ' + err.message, 'error');
               }
@@ -187,7 +187,7 @@ export function showFreeInputForm() {
                   branch: _lastSelectedBranch,
                   note: 'Queued from Free Input flow (final failure)'
                 });
-                showToast('Prompt queued. You can restart it later from your Jules queue.', 'success');
+                showToast('Prompt queued successfully!', 'success');
               } catch (err) {
                 showToast('Failed to queue prompt: ' + err.message, 'error');
               }
