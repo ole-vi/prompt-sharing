@@ -64,10 +64,13 @@ export function showFreeInputForm() {
   const content = document.getElementById('content');
   
   empty.classList.add('hidden');
-  title.style.display = 'none';
-  meta.style.display = 'none';
-  actions.style.display = 'none';
-  content.style.display = 'none';
+  if (title) title.style.display = 'none';
+  if (meta) meta.style.display = 'none';
+  if (actions) actions.style.display = 'none';
+  if (content) {
+    content.style.display = 'none';
+    content.classList.add('hidden');
+  }
   
   freeInputSection.classList.remove('hidden');
   
