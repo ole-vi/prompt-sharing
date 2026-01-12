@@ -7,6 +7,7 @@ import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, rende
 let cacheRaw = new Map();
 let currentPromptText = null;
 let handleTryInJulesCallback = null;
+let currentBlobUrl = null;
 
 export function setHandleTryInJulesCallback(callback) {
   handleTryInJulesCallback = callback;
@@ -53,6 +54,10 @@ export function destroyPromptRenderer() {
   cacheRaw.clear();
   currentPromptText = null;
   handleTryInJulesCallback = null;
+  if (currentBlobUrl) {
+    URL.revokeObjectURL(currentBlobUrl);
+    currentBlobUrl = null;
+  }
 }
 
 function handleDocumentClick(event) {
@@ -286,8 +291,12 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     ghBtn.href = gistUrl;
     if (moreGhBtn) moreGhBtn.textContent = '🗂️ View on Gist';
     
+    if (currentBlobUrl) {
+      URL.revokeObjectURL(currentBlobUrl);
+    }
     const blob = new Blob([raw], { type: 'text/plain' });
     const dataUrl = URL.createObjectURL(blob);
+    currentBlobUrl = dataUrl;
     rawBtn.href = dataUrl;
     rawBtn.removeAttribute('download');
     rawBtn.title = 'Open gist content in new tab';
@@ -302,8 +311,12 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     ghBtn.target = '_blank';
     if (moreGhBtn) moreGhBtn.textContent = '💬 View on Codex';
     
+    if (currentBlobUrl) {
+      URL.revokeObjectURL(currentBlobUrl);
+    }
     const blob = new Blob([codexUrl], { type: 'text/plain' });
     const dataUrl = URL.createObjectURL(blob);
+    currentBlobUrl = dataUrl;
     rawBtn.href = dataUrl;
     rawBtn.target = '_blank';
     rawBtn.removeAttribute('download');
@@ -318,6 +331,10 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     ghBtn.href = `https://github.com/${owner}/${repo}/blob/${branch}/${f.path}`;
     if (moreGhBtn) moreGhBtn.textContent = '🗂️ View on GitHub';
     
+    if (currentBlobUrl) {
+      URL.revokeObjectURL(currentBlobUrl);
+      currentBlobUrl = null;
+    }
     rawBtn.href = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${f.path}`;
     rawBtn.title = 'Open raw markdown';
   }
