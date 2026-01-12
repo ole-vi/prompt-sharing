@@ -97,6 +97,10 @@ export function showUserProfileModal() {
 
   if (loadJulesInfoBtn) {
     loadJulesInfoBtn.onclick = async () => {
+      // Clear cache to force fresh data load
+      const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
+      clearCache(CACHE_KEYS.JULES_ACCOUNT, user.uid);
+      
       await loadAndDisplayJulesProfile(user.uid);
       attachViewAllSessionsHandler();
       attachViewQueueHandler();
@@ -183,7 +187,8 @@ async function loadAndDisplayJulesProfile(uid) {
         const githubPath = repoName.includes('github/')
           ? repoName.split('github/')[1]
           : repoName.replace('sources/', '');
-        const branches = source.branches || [];
+        // Get branches from githubRepo.branches (API returns them here)
+        const branches = source.githubRepo?.branches || [];
         const sourceId = `source-${index}`;
 
         const branchSummaryText = branches.length > 0
@@ -511,6 +516,10 @@ export async function loadProfileDirectly(user) {
 
   if (loadJulesInfoBtn) {
     loadJulesInfoBtn.onclick = async () => {
+      // Clear cache to force fresh data load
+      const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
+      clearCache(CACHE_KEYS.JULES_ACCOUNT, user.uid);
+      
       await loadAndDisplayJulesProfile(user.uid);
       attachViewAllSessionsHandler();
       attachViewQueueHandler();
@@ -543,6 +552,10 @@ export async function loadJulesAccountInfo(user) {
 
   if (loadJulesInfoBtn) {
     loadJulesInfoBtn.onclick = async () => {
+      // Clear cache to force fresh data load
+      const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
+      clearCache(CACHE_KEYS.JULES_ACCOUNT, user.uid);
+      
       await loadAndDisplayJulesProfile(user.uid);
       attachViewAllSessionsHandler();
       attachViewQueueHandler();
