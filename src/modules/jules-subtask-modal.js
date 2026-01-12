@@ -439,7 +439,7 @@ async function submitSubtasks(subtasks) {
               });
               statusBar?.clearProgress?.();
               statusBar?.clearAction?.();
-              showToast(`Queued ${remaining.length} remaining subtasks to your account.`, 'success');
+              showToast(`Queued ${remaining.length} remaining subtasks.`, 'success');
             } catch (err) {
               statusBar?.clearProgress?.();
               statusBar?.clearAction?.();
