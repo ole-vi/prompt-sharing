@@ -19,6 +19,34 @@ export async function fetchJSON(url) {
   }
 }
 
+export async function fetchJSONWithETag(url, etag = null) {
+  try {
+    const headers = { 'Accept': 'application/vnd.github+json' };
+    if (etag) {
+      headers['If-None-Match'] = etag;
+    }
+    
+    const res = await fetch(viaProxy(url), {
+      cache: 'no-store',
+      headers
+    });
+    
+    // 304 Not Modified - use cached data
+    if (res.status === 304) {
+      return { notModified: true, etag };
+    }
+    
+    if (!res.ok) return { data: null, etag: null };
+    
+    const data = await res.json();
+    const newEtag = res.headers.get('ETag');
+    
+    return { data, etag: newEtag, notModified: false };
+  } catch (e) {
+    return { data: null, etag: null, error: e };
+  }
+}
+
 function encodePathPreservingSlashes(path) {
   return String(path)
     .split('/')
@@ -50,18 +78,30 @@ export async function listPromptsViaContents(owner, repo, branch, path = 'prompt
   return results;
 }
 
-export async function listPromptsViaTrees(owner, repo, branch, path = 'prompts') {
-  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(branch)}?recursive=1&ts=${Date.now()}`;
-  const data = await fetchJSON(url);
+export async function listPromptsViaTrees(owner, repo, branch, path = 'prompts', etag = null) {
+  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(branch)}?recursive=1`;
+  const result = await fetchJSONWithETag(url, etag);
+  
+  // Return cached indicator if not modified
+  if (result.notModified) {
+    return { notModified: true, etag: result.etag };
+  }
+  
+  if (!result.data) {
+    throw new Error('Failed to fetch tree data');
+  }
+  
   const pathRegex = new RegExp(`^${path}/.+\\.md$`, 'i');
-  const items = (data.tree || []).filter(n => n.type === 'blob' && pathRegex.test(n.path));
-  return items.map(n => ({
+  const items = (result.data.tree || []).filter(n => n.type === 'blob' && pathRegex.test(n.path));
+  const files = items.map(n => ({
     type: 'file',
     name: n.path.split('/').pop(),
     path: n.path,
     sha: n.sha,
     download_url: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${n.path}`
   }));
+  
+  return { files, etag: result.etag, notModified: false };
 }
 
 export async function fetchRawFile(owner, repo, branch, path) {

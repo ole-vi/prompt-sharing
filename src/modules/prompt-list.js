@@ -524,10 +524,19 @@ export function renderList(items, owner, repo, branch) {
 export async function loadList(owner, repo, branch, cacheKey) {
   try {
     const cached = sessionStorage.getItem(cacheKey);
+    const now = Date.now();
+    const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+    
     if (cached) {
-      files = JSON.parse(cached);
+      const cacheData = JSON.parse(cached);
+      const cacheAge = now - (cacheData.timestamp || 0);
+      files = cacheData.files || [];
       renderList(files, owner, repo, branch);
-      refreshList(owner, repo, branch, cacheKey).catch(() => {});
+      
+      if (cacheAge > CACHE_DURATION) {
+        refreshList(owner, repo, branch, cacheKey).catch(() => {});
+      }
+      
       return files;
     }
 
@@ -544,22 +553,44 @@ export async function loadList(owner, repo, branch, cacheKey) {
 }
 
 export async function refreshList(owner, repo, branch, cacheKey) {
-  let data;
+  let result;
   const folder = getPromptFolder(branch);
+  
+  // Get cached ETag if available
+  const cached = sessionStorage.getItem(cacheKey);
+  const cachedETag = cached ? JSON.parse(cached).etag : null;
+  
   try {
-    data = await listPromptsViaTrees(owner, repo, branch, folder);
+    result = await listPromptsViaTrees(owner, repo, branch, folder, cachedETag);
+    
+    // If not modified, keep using cached data (0 API calls used!)
+    if (result.notModified && cached) {
+      const cacheData = JSON.parse(cached);
+      // Update timestamp to extend cache validity
+      cacheData.timestamp = Date.now();
+      sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      return;
+    }
+    
+    // New data received
+    files = (result.files || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
   } catch (e) {
-    // Fall back to Contents API if Trees fails (large repos or permissions)
     console.warn('Trees API failed, using Contents fallback');
     try {
-      data = await listPromptsViaContents(owner, repo, branch, folder);
+      const data = await listPromptsViaContents(owner, repo, branch, folder);
+      files = (data || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
+      result = { files, etag: null }; // Contents API doesn't provide ETag
     } catch (contentsError) {
       console.error('Both API strategies failed:', contentsError);
       throw contentsError;
     }
   }
   
-  files = (data || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
-  sessionStorage.setItem(cacheKey, JSON.stringify(files));
+  const cacheData = {
+    files,
+    etag: result.etag,
+    timestamp: Date.now()
+  };
+  sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
   renderList(files, owner, repo, branch);
 }
