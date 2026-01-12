@@ -17,6 +17,11 @@ let searchEl = null;
 let submenuEl = null;
 let selectFileCallback = null;
 
+// Search cache to avoid rebuilding Fuse on every keystroke
+let cachedFiles = null;
+let cachedItemsWithTags = null;
+let cachedFuseInstance = null;
+
 export function setSelectFileCallback(callback) {
   selectFileCallback = callback;
 }
@@ -48,7 +53,7 @@ export function initPromptList() {
   if (searchClearBtn && searchEl) {
     searchClearBtn.addEventListener('click', () => {
       searchEl.value = '';
-      searchClearBtn.style.display = 'none';
+      searchClearBtn.classList.add('hidden');
       searchEl.focus();
       renderList(files, currentOwner, currentRepo, currentBranch);
     });
@@ -73,6 +78,9 @@ export function destroyPromptList() {
   currentRepo = null;
   currentBranch = null;
   selectFileCallback = null;
+  cachedFiles = null;
+  cachedItemsWithTags = null;
+  cachedFuseInstance = null;
 }
 
 export function getFiles() {
@@ -478,23 +486,26 @@ export function renderList(items, owner, repo, branch) {
   if (!q) {
     filtered = items.slice();
   } else {
-    const itemsWithTags = items.map(item => {
-      const tags = [];
-      for (const tagKey in TAG_DEFINITIONS) {
-        const tag = TAG_DEFINITIONS[tagKey];
-        if (tag.keywords.some(kw => new RegExp(kw, 'i').test(item.name))) {
-          tags.push(tag.label);
+    // Cache Fuse instance and tagged data to avoid rebuilding on every keystroke
+    if (cachedFiles !== items) {
+      cachedFiles = items;
+      cachedItemsWithTags = items.map(item => {
+        const tags = [];
+        for (const tagKey in TAG_DEFINITIONS) {
+          const tag = TAG_DEFINITIONS[tagKey];
+          if (tag.keywords.some(kw => new RegExp(kw, 'i').test(item.name))) {
+            tags.push(tag.label);
+          }
         }
-      }
-      return { ...item, tags };
-    });
-
-    const fuse = new Fuse(itemsWithTags, {
-      keys: ['name', 'path', 'tags'],
-      includeScore: true,
-      threshold: 0.4,
-    });
-    filtered = fuse.search(q).map(result => result.item);
+        return { ...item, tags };
+      });
+      cachedFuseInstance = new Fuse(cachedItemsWithTags, {
+        keys: ['name', 'path', 'tags'],
+        includeScore: true,
+        threshold: 0.4,
+      });
+    }
+    filtered = cachedFuseInstance.search(q).map(result => result.item);
   }
 
   if (!filtered.length) {

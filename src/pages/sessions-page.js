@@ -10,6 +10,11 @@ let allSessionsCache = [];
 let sessionNextPageToken = null;
 let isSessionsLoading = false;
 
+// Search cache to avoid rebuilding Fuse on every keystroke
+let cachedSessions = null;
+let cachedSearchData = null;
+let cachedFuseInstance = null;
+
 function waitForComponents() {
   if (document.querySelector('header')) {
     initApp();
@@ -71,18 +76,21 @@ function renderAllSessions(sessions) {
   if (!searchTerm) {
     filteredSessions = sessions;
   } else {
-    const sessionsWithSearchableFields = sessions.map(s => ({
-      ...s,
-      promptText: s.prompt || s.displayName || '',
-      sessionId: s.name?.split('/').pop() || ''
-    }));
-    
-    const fuse = new Fuse(sessionsWithSearchableFields, {
-      keys: ['promptText', 'sessionId'],
-      includeScore: true,
-      threshold: 0.4,
-    });
-    filteredSessions = fuse.search(searchTerm).map(result => result.item);
+    // Cache Fuse instance and search data to avoid rebuilding on every keystroke
+    if (cachedSessions !== sessions) {
+      cachedSessions = sessions;
+      cachedSearchData = sessions.map(s => ({
+        ...s,
+        promptText: s.prompt || s.displayName || '',
+        sessionId: s.name?.split('/').pop() || ''
+      }));
+      cachedFuseInstance = new Fuse(cachedSearchData, {
+        keys: ['promptText', 'sessionId'],
+        includeScore: true,
+        threshold: 0.4,
+      });
+    }
+    filteredSessions = cachedFuseInstance.search(searchTerm).map(result => result.item);
   }
   
   if (filteredSessions.length === 0 && searchTerm) {
