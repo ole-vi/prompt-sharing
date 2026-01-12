@@ -325,8 +325,7 @@ async function submitSubtasks(subtasks) {
   );
 
   if (!proceed) {
-    statusBar?.clearProgress?.();
-    statusBar?.clearAction?.();
+    statusBar?.clear?.();
     return;
   }
 
@@ -391,8 +390,7 @@ async function submitSubtasks(subtasks) {
           } else {
             statusBar?.showMessage?.('Paused', { timeout: 3000 });
           }
-          statusBar?.clearProgress?.();
-          statusBar?.clearAction?.();
+          statusBar?.clear?.();
           // Only reload queue page if we're actually on that page
           const { loadQueuePage } = await import('../pages/queue-page.js');
           if (document.getElementById('allQueueList')) {
@@ -411,18 +409,17 @@ async function submitSubtasks(subtasks) {
           );
 
           if (result.action === 'cancel') {
-            statusBar?.clearProgress?.();
-            statusBar?.clearAction?.();
-            showToast(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`, 'info');
+            statusBar?.clear?.();
+            showToast(`Cancelled. Submitted ${successCount} of ${totalCount} subtask(s) before cancellation.`, 'warn');
             return;
           } else if (result.action === 'skip') {
             skippedCount++;
             submitted = true;
+            statusBar?.showMessage?.(`Skipped subtask. Continuing with remaining...`, { timeout: 2000 });
           } else if (result.action === 'queue') {
             const user = window.auth?.currentUser;
             if (!user) {
-              statusBar?.clearProgress?.();
-              statusBar?.clearAction?.();
+              statusBar?.clear?.();
               showToast('Please sign in to queue subtasks.', 'warn');
               return;
             }
@@ -437,12 +434,10 @@ async function submitSubtasks(subtasks) {
                 totalCount,
                 note: 'Queued remaining subtasks'
               });
-              statusBar?.clearProgress?.();
-              statusBar?.clearAction?.();
+              statusBar?.clear?.();
               showToast(`Queued ${remaining.length} remaining subtasks.`, 'success');
             } catch (err) {
-              statusBar?.clearProgress?.();
-              statusBar?.clearAction?.();
+              statusBar?.clear?.();
               showToast('Failed to queue subtasks: ' + err.message, 'error');
             }
             return;
@@ -459,16 +454,14 @@ async function submitSubtasks(subtasks) {
           );
 
           if (result.action === 'cancel') {
-            statusBar?.clearProgress?.();
-            statusBar?.clearAction?.();
-            showToast(`✗ Cancelled. Submitted ${successCount} of ${totalCount} subtasks before cancellation.`, 'info');
+            statusBar?.clear?.();
+            showToast(`Cancelled. Submitted ${successCount} of ${totalCount} subtask(s) before cancellation.`, 'warn');
             return;
           } else {
             if (result.action === 'queue') {
               const user = window.auth?.currentUser;
               if (!user) {
-                statusBar?.clearProgress?.();
-                statusBar?.clearAction?.();
+                statusBar?.clear?.();
                 showToast('Please sign in to queue subtasks.', 'warn');
                 return;
               }
@@ -483,18 +476,17 @@ async function submitSubtasks(subtasks) {
                   totalCount,
                   note: 'Queued remaining subtasks (final failure)'
                 });
-                statusBar?.clearProgress?.();
-                statusBar?.clearAction?.();
+                statusBar?.clear?.();
                 showToast(`Queued ${remaining.length} remaining subtasks to your account.`, 'success');
               } catch (err) {
-                statusBar?.clearProgress?.();
-                statusBar?.clearAction?.();
+                statusBar?.clear?.();
                 showToast('Failed to queue subtasks: ' + err.message, 'error');
               }
               return;
             }
             skippedCount++;
             submitted = true;
+            statusBar?.showMessage?.(`Skipped subtask. Continuing with remaining...`, { timeout: 2000 });
           }
         }
       }
@@ -505,9 +497,7 @@ async function submitSubtasks(subtasks) {
     }
   }
 
-  statusBar?.clearProgress?.();
-  statusBar?.clearAction?.();
-  statusBar?.showMessage?.('All subtasks completed', { timeout: 3000 });
+  statusBar?.clear?.();
   
   const summary = `✓ Completed!\n\n` +
     `Successful: ${successCount}/${totalCount}\n` +

@@ -83,7 +83,7 @@
 .toast--success {
   border-color: var(--success);
   background: linear-gradient(135deg, 
-    rgba(39, 174, 96, 0.9) 0%, 
+    rgba(39, 174, 96, 1) 0%, 
     var(--card) 100%);
 }
 
@@ -95,7 +95,7 @@
 .toast--error {
   border-color: var(--error);
   background: linear-gradient(135deg, 
-    rgba(255, 107, 107, 0.6) 0%, 
+    rgba(255, 107, 107, 1) 0%, 
     var(--card) 100%);
 }
 
@@ -107,7 +107,7 @@
 .toast--warn {
   border-color: var(--warn);
   background: linear-gradient(135deg, 
-    rgba(243, 156, 18, 0.6) 0%, 
+    rgba(243, 156, 18, 1) 0%, 
     var(--card) 100%);
 }
 
@@ -119,7 +119,7 @@
 .toast--info {
   border-color: var(--info);
   background: linear-gradient(135deg, 
-    rgba(41, 128, 185, 0.6) 0%, 
+    rgba(41, 128, 185, 1) 0%, 
     var(--card) 100%);
 }
 
