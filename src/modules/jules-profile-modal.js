@@ -166,7 +166,6 @@ async function loadAndDisplayJulesProfile(uid) {
 
   try {
     loadBtn.disabled = true;
-    loadBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span>Loading...';
     
     // Check cache first
     let profileData = getCache(CACHE_KEYS.JULES_ACCOUNT, uid);
