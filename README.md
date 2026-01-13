@@ -345,7 +345,7 @@ These are purely cosmetic and based on keywords in the filename.
 
 ## License
 
-This project is open source. See repository for license details.
+Licensed under the GNU Affero General Public License v3.0 (AGPL-3.0-only). See [LICENSE](LICENSE).
 
 ## Support
 
