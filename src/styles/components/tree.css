@@ -5,8 +5,8 @@
 .tree-dir button { appearance: none; border: none; background: none; color: var(--muted); cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; width: 18px; }
 .tree-dir button:focus { outline: 1px solid var(--accent); border-radius: 4px; }
 .tree-dir .folder-name { font-size: 13px; font-weight: 600; flex: 1; }
-.tree-dir .folder-icons { display: flex; gap: 4px; margin-left: auto; }
-.tree-dir .folder-icons span { cursor: pointer; opacity: 0.6; transition: opacity 0.2s, background 0.2s; padding: 4px; border-radius: 4px; min-width: 28px; min-height: 28px; display: flex; align-items: center; justify-content: center; font-weight: normal; }
+.tree-dir .folder-icons { display: flex; gap: 2px; margin-left: auto; }
+.tree-dir .folder-icons span { cursor: pointer; opacity: 0.6; transition: opacity 0.2s, background 0.2s; padding: 4px; border-radius: 4px; min-width: 24px; min-height: 24px; display: flex; align-items: center; justify-content: center; font-weight: normal; }
 .tree-dir .folder-icons span:hover { opacity: 1; background: rgba(255, 255, 255, 0.05); }
 .tree-dir .add-file-icon { color: #4ade80; }
 .tree-dir .add-file-icon:hover { background: rgba(74, 222, 128, 0.1) !important; }
