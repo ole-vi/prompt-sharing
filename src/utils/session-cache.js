@@ -6,7 +6,7 @@ const CACHE_KEYS = {
   JULES_SESSIONS: 'jules_sessions',
   JULES_REPOS: 'jules_repos',
   QUEUE_ITEMS: 'queue_items',
-  BRANCHES: 'branches',
+  BRANCHES: 'branches_v2',
   CURRENT_BRANCH: 'current_branch',
   CURRENT_REPO: 'current_repo',
   USER_PROFILE: 'user_profile'
