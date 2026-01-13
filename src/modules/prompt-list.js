@@ -528,16 +528,33 @@ export async function loadList(owner, repo, branch, cacheKey) {
     const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
     
     if (cached) {
-      const cacheData = JSON.parse(cached);
-      const cacheAge = now - (cacheData.timestamp || 0);
-      files = cacheData.files || [];
-      renderList(files, owner, repo, branch);
-      
-      if (cacheAge > CACHE_DURATION) {
-        refreshList(owner, repo, branch, cacheKey).catch(() => {});
+      let cacheData;
+      try {
+        cacheData = JSON.parse(cached);
+        // Validate cache structure - handle migration from old formats
+        if (!cacheData || typeof cacheData !== 'object' || Array.isArray(cacheData) || !Array.isArray(cacheData.files)) {
+          console.warn('Old cache format detected, clearing cache');
+          sessionStorage.removeItem(cacheKey);
+          cacheData = null;
+        }
+      } catch (e) {
+        console.warn('Corrupted cache data detected, clearing cache', e);
+        sessionStorage.removeItem(cacheKey);
+        // Proceed to fetch fresh data below
+        cacheData = null;
       }
       
-      return files;
+      if (cacheData) {
+        const cacheAge = now - (cacheData.timestamp || 0);
+        files = cacheData.files || [];
+        renderList(files, owner, repo, branch);
+        
+        if (cacheAge > CACHE_DURATION) {
+          refreshList(owner, repo, branch, cacheKey).catch(() => {});
+        }
+        
+        return files;
+      }
     }
 
     await refreshList(owner, repo, branch, cacheKey);
@@ -558,17 +575,34 @@ export async function refreshList(owner, repo, branch, cacheKey) {
   
   // Get cached ETag if available
   const cached = sessionStorage.getItem(cacheKey);
-  const cachedETag = cached ? JSON.parse(cached).etag : null;
+  let cachedETag = null;
+  let parsedCache = null;
+  
+  if (cached) {
+    try {
+      parsedCache = JSON.parse(cached);
+      // Validate cache structure - handle migration from old formats
+      if (!parsedCache || typeof parsedCache !== 'object' || Array.isArray(parsedCache)) {
+        console.warn('Old cache format detected, clearing cache');
+        sessionStorage.removeItem(cacheKey);
+        parsedCache = null;
+      } else {
+        cachedETag = parsedCache.etag || null;
+      }
+    } catch (e) {
+      console.warn('Corrupted cache data detected, clearing cache', e);
+      sessionStorage.removeItem(cacheKey);
+    }
+  }
   
   try {
     result = await listPromptsViaTrees(owner, repo, branch, folder, cachedETag);
     
     // If not modified, keep using cached data (0 API calls used!)
-    if (result.notModified && cached) {
-      const cacheData = JSON.parse(cached);
+    if (result.notModified && parsedCache) {
       // Update timestamp to extend cache validity
-      cacheData.timestamp = Date.now();
-      sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      parsedCache.timestamp = Date.now();
+      sessionStorage.setItem(cacheKey, JSON.stringify(parsedCache));
       return;
     }
     
