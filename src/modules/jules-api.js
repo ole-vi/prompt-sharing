@@ -2,6 +2,7 @@
 // Provides access to the Jules API for managing sources, sessions, and activities
 
 import { JULES_API_BASE, ERRORS, PAGE_SIZES } from '../utils/constants.js';
+import { showToast } from './toast.js';
 
 export async function getDecryptedJulesKey(uid) {
   try {
@@ -236,7 +237,7 @@ export async function loadJulesProfileInfo(uid) {
 export async function callRunJulesFunction(promptText, sourceId, branch = 'master', title = '') {
   const user = window.auth ? window.auth.currentUser : null;
   if (!user) {
-    alert('Not logged in.');
+    showToast('Not logged in.', 'error');
     return null;
   }
 
@@ -301,20 +302,20 @@ export async function handleTryInJules(promptText) {
         await signInWithGitHub();
         setTimeout(() => handleTryInJulesAfterAuth(promptText), 500);
       } catch (error) {
-        alert('Login required to use Jules.');
+        showToast('Login required to use Jules.', 'warn');
       }
       return;
     }
     await handleTryInJulesAfterAuth(promptText);
   } catch (error) {
-    alert('An error occurred: ' + error.message);
+    showToast('An error occurred: ' + error.message, 'error');
   }
 }
 
 export async function handleTryInJulesAfterAuth(promptText) {
   const user = window.auth ? window.auth.currentUser : null;
   if (!user) {
-    alert('Not logged in.');
+    showToast('Not logged in.', 'error');
     return;
   }
 
@@ -332,6 +333,6 @@ export async function handleTryInJulesAfterAuth(promptText) {
       showJulesEnvModal(promptText);
     }
   } catch (error) {
-    alert('An error occurred. Please try again.');
+    showToast('An error occurred. Please try again.', 'error');
   }
 }

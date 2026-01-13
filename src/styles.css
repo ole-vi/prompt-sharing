@@ -23,6 +23,8 @@
 @import url('./styles/components/tags.css');
 @import url('./styles/components/jules-profile.css');
 @import url('./styles/components/update-banner.css');
+@import url('./styles/components/toast.css');
+@import url('./styles/components/utilities.css');
 
 /* Page-specific overrides */
 @import url('./styles/pages/home.css');

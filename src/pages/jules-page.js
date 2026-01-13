@@ -7,6 +7,8 @@ import { waitForFirebase } from '../shared-init.js';
 import { loadJulesAccountInfo } from '../modules/jules-profile-modal.js';
 import { showJulesKeyModal } from '../modules/jules-modal.js';
 import { deleteStoredJulesKey, checkJulesKey } from '../modules/jules-keys.js';
+import { showToast } from '../modules/toast.js';
+import { showConfirm } from '../modules/confirm-modal.js';
 
 function waitForComponents() {
   if (document.querySelector('header')) {
@@ -95,9 +97,13 @@ function initApp() {
   
   if (resetJulesKeyBtn) {
     resetJulesKeyBtn.onclick = async () => {
-      if (!confirm('This will delete your stored Jules API key. You\'ll need to enter a new one next time.')) {
-        return;
-      }
+      const confirmed = await showConfirm(`This will delete your stored Jules API key. You'll need to enter a new one next time.`, {
+        title: 'Delete API Key',
+        confirmText: 'Delete',
+        confirmStyle: 'error'
+      });
+      if (!confirmed) return;
+      
       try {
         const user = window.auth?.currentUser;
         if (!user) return;
@@ -123,12 +129,12 @@ function initApp() {
           document.getElementById('dangerZoneSection').classList.add('hidden');
           document.getElementById('julesProfileInfoSection').classList.remove('hidden');
           
-          alert('Jules API key has been deleted. You can enter a new one next time.');
+          showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
         } else {
           throw new Error('Failed to delete key');
         }
       } catch (error) {
-        alert('Failed to delete API key: ' + error.message);
+        showToast('Failed to delete API key: ' + error.message, 'error');
         resetJulesKeyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key';
         resetJulesKeyBtn.disabled = false;
       }
