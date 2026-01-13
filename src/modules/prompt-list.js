@@ -16,6 +16,9 @@ let listEl = null;
 let searchEl = null;
 let submenuEl = null;
 let selectFileCallback = null;
+let cachedFiles = null;
+let cachedItemsWithTags = null;
+let cachedFuseInstance = null;
 
 export function setSelectFileCallback(callback) {
   selectFileCallback = callback;
@@ -48,7 +51,7 @@ export function initPromptList() {
   if (searchClearBtn && searchEl) {
     searchClearBtn.addEventListener('click', () => {
       searchEl.value = '';
-      searchClearBtn.style.display = 'none';
+      searchClearBtn.classList.add('hidden');
       searchEl.focus();
       renderList(files, currentOwner, currentRepo, currentBranch);
     });
@@ -73,6 +76,9 @@ export function destroyPromptList() {
   currentRepo = null;
   currentBranch = null;
   selectFileCallback = null;
+  cachedFiles = null;
+  cachedItemsWithTags = null;
+  cachedFuseInstance = null;
 }
 
 export function getFiles() {
@@ -484,23 +490,25 @@ export function renderList(items, owner, repo, branch) {
   if (!q) {
     filtered = items.slice();
   } else {
-    const itemsWithTags = items.map(item => {
-      const tags = [];
-      for (const tagKey in TAG_DEFINITIONS) {
-        const tag = TAG_DEFINITIONS[tagKey];
-        if (tag.keywords.some(kw => new RegExp(kw, 'i').test(item.name))) {
-          tags.push(tag.label);
+    if (cachedFiles !== items) {
+      cachedFiles = items;
+      cachedItemsWithTags = items.map(item => {
+        const tags = [];
+        for (const tagKey in TAG_DEFINITIONS) {
+          const tag = TAG_DEFINITIONS[tagKey];
+          if (tag.keywords.some(kw => new RegExp(kw, 'i').test(item.name))) {
+            tags.push(tag.label);
+          }
         }
-      }
-      return { ...item, tags };
-    });
-
-    const fuse = new Fuse(itemsWithTags, {
-      keys: ['name', 'path', 'tags'],
-      includeScore: true,
-      threshold: 0.4,
-    });
-    filtered = fuse.search(q).map(result => result.item);
+        return { ...item, tags };
+      });
+      cachedFuseInstance = new Fuse(cachedItemsWithTags, {
+        keys: ['name', 'path', 'tags'],
+        includeScore: true,
+        threshold: 0.4,
+      });
+    }
+    filtered = cachedFuseInstance.search(q).map(result => result.item);
   }
 
   if (!filtered.length) {
@@ -530,12 +538,35 @@ export function renderList(items, owner, repo, branch) {
 export async function loadList(owner, repo, branch, cacheKey) {
   try {
     const cached = sessionStorage.getItem(cacheKey);
+    const now = Date.now();
+    const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+    
     if (cached) {
-      const parsed = JSON.parse(cached);
-      files = Array.isArray(parsed) ? parsed : [];
-      renderList(files, owner, repo, branch);
-      refreshList(owner, repo, branch, cacheKey).catch(() => {});
-      return files;
+      let cacheData;
+      try {
+        cacheData = JSON.parse(cached);
+        if (!cacheData || typeof cacheData !== 'object' || Array.isArray(cacheData) || !Array.isArray(cacheData.files)) {
+          console.warn('Old cache format detected, clearing cache');
+          sessionStorage.removeItem(cacheKey);
+          cacheData = null;
+        }
+      } catch (e) {
+        console.warn('Corrupted cache data detected, clearing cache', e);
+        sessionStorage.removeItem(cacheKey);
+        cacheData = null;
+      }
+      
+      if (cacheData) {
+        const cacheAge = now - (cacheData.timestamp || 0);
+        files = cacheData.files || [];
+        renderList(files, owner, repo, branch);
+        
+        if (cacheAge > CACHE_DURATION) {
+          refreshList(owner, repo, branch, cacheKey).catch(() => {});
+        }
+        
+        return files;
+      }
     }
 
     await refreshList(owner, repo, branch, cacheKey);
@@ -551,18 +582,61 @@ export async function loadList(owner, repo, branch, cacheKey) {
 }
 
 export async function refreshList(owner, repo, branch, cacheKey) {
-  let data;
+  let result;
   const folder = getPromptFolder(branch);
-  try {
-    data = await listPromptsViaContents(owner, repo, branch, folder);
-  } catch (e) {
-    if (e.status === 403 || e.status === 404) {
-      data = await listPromptsViaTrees(owner, repo, branch, folder);
-    } else {
-      throw e;
+  
+  // Get cached ETag if available
+  const cached = sessionStorage.getItem(cacheKey);
+  let cachedETag = null;
+  let parsedCache = null;
+  
+  if (cached) {
+    try {
+      parsedCache = JSON.parse(cached);
+      // Validate cache structure - handle migration from old formats
+      if (!parsedCache || typeof parsedCache !== 'object' || Array.isArray(parsedCache)) {
+        console.warn('Old cache format detected, clearing cache');
+        sessionStorage.removeItem(cacheKey);
+        parsedCache = null;
+      } else {
+        cachedETag = parsedCache.etag || null;
+      }
+    } catch (e) {
+      console.warn('Corrupted cache data detected, clearing cache', e);
+      sessionStorage.removeItem(cacheKey);
     }
   }
-  files = (data || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
-  sessionStorage.setItem(cacheKey, JSON.stringify(files));
+  
+  try {
+    result = await listPromptsViaTrees(owner, repo, branch, folder, cachedETag);
+    
+    // If not modified, keep using cached data (0 API calls used!)
+    if (result.notModified && parsedCache) {
+      // Update timestamp to extend cache validity
+      parsedCache.timestamp = Date.now();
+      sessionStorage.setItem(cacheKey, JSON.stringify(parsedCache));
+      return;
+    }
+    
+    // New data received
+    files = (result.files || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
+  } catch (e) {
+    console.warn('Trees API failed, using Contents fallback');
+    try {
+      const data = await listPromptsViaContents(owner, repo, branch, folder);
+      files = (data || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
+      result = { files, etag: null }; // Contents API doesn't provide ETag
+    } catch (contentsError) {
+      console.error('Both API strategies failed:', contentsError);
+      throw contentsError;
+    }
+  }
+  
+  const cacheData = {
+    files,
+    etag: result.etag,
+    timestamp: Date.now()
+  };
+  sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
   renderList(files, owner, repo, branch);
 }

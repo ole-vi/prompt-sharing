@@ -1,7 +1,103 @@
 /* Status Bar */
-#statusBar { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 9999; display: none; justify-content: center; pointer-events: auto; }
-#statusBar .status-inner { max-width: 1200px; width: 100%; background: linear-gradient(90deg, rgba(20,24,41,0.9), rgba(16,20,34,0.85)); border: 1px solid rgba(255,255,255,0.04); color: var(--text); padding: 8px 12px; border-radius: 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.6); }
-#statusBar.status-visible { display: flex; }
-#statusBar .status-msg { font-size: 13px; color: var(--text); }
-#statusBar .status-progress { font-size: 12px; color: var(--muted); }
-#statusBar .status-action { font-size: 13px; }
+#statusBar { 
+  position: fixed; 
+  left: 12px; 
+  right: 12px; 
+  bottom: 12px; 
+  z-index: 9999; 
+  display: none; 
+  justify-content: center; 
+  pointer-events: auto;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#statusBar .status-inner { 
+  max-width: 1200px; 
+  width: 100%; 
+  background: linear-gradient(135deg, 
+    rgba(20, 24, 41, 0.98), 
+    rgba(25, 30, 48, 0.95)
+  );
+  border: 1px solid rgba(77, 217, 255, 0.15);
+  color: var(--text); 
+  padding: 14px 18px; 
+  border-radius: 12px; 
+  display: flex; 
+  align-items: center; 
+  gap: 14px; 
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(77, 217, 255, 0.08) inset;
+  backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+#statusBar.status-visible { 
+  display: flex; 
+}
+
+#statusBar .status-msg { 
+  font-size: 14px; 
+  color: var(--text); 
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+#statusBar .status-progress { 
+  font-size: 13px; 
+  color: var(--accent); 
+  font-weight: 700;
+  background: linear-gradient(135deg, 
+    rgba(77, 217, 255, 0.15), 
+    rgba(77, 217, 255, 0.08)
+  );
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(77, 217, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(77, 217, 255, 0.1);
+  letter-spacing: 0.5px;
+  min-width: 60px;
+  text-align: center;
+}
+
+#statusBar .status-action { 
+  font-size: 13px; 
+  padding: 6px 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+#statusBar .status-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+#statusBar .status-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.7;
+  transition: opacity 0.2s, transform 0.2s;
+  line-height: 1;
+}
+
+#statusBar .status-close:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
