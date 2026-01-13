@@ -227,25 +227,28 @@
       </div>
     </div>
   </div>
-
+  
   <!-- Subtask Error Modal -->
   <div id="subtaskErrorModal" class="modal">
-    <div class="modal-content">
-      <h2 class="error-title"><span class="icon icon-inline" aria-hidden="true">warning</span>Subtask Failed</h2>
-      <div class="error-banner">
-        <div style="flex:1;">
-          <div id="errorSubtaskNumber" class="small-text muted-text mb-md"></div>
-          <div id="errorMessage"></div>
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h3 id="errorModalTitle" class="modal-title"><span class="icon icon-inline" aria-hidden="true">warning</span> Subtask Failed</h3>
+        <button class="btn-icon close-modal" id="errorModalClose" title="Close"><span class="icon" aria-hidden="true">close</span></button>
+      </div>
+      <div class="modal-body">
+        <div id="errorSubtaskNumber" class="small-text muted-text mb-md"></div>
+        <div class="error-banner">
+          <div id="errorMessage" style="flex:1;"></div>
         </div>
-      </div>
-      <div class="error-details">
-        <div id="errorDetails" style="word-break: break-word;"></div>
-      </div>
-      <div class="mb-md">
-        <label class="small-text" style="display:flex; align-items:center; gap:6px;">
-          <input id="errorRetryDelayCheckbox" type="checkbox" checked />
-          <span>Wait 5 seconds before retry</span>
-        </label>
+        <div class="error-details">
+          <div id="errorDetails" style="word-break: break-word;"></div>
+        </div>
+        <div class="mb-md">
+          <label class="small-text" style="display:flex; align-items:center; gap:6px;">
+            <input id="errorRetryDelayCheckbox" type="checkbox" checked />
+            <span>Wait 5 seconds before retry</span>
+          </label>
+        </div>
       </div>
       <div class="modal-buttons">
         <button id="subtaskErrorCancelBtn" class="btn">Cancel All</button>
@@ -253,6 +256,16 @@
         <button id="subtaskErrorQueueBtn" class="btn primary">Queue Remainder</button>
         <button id="subtaskErrorRetryBtn" class="btn success">Retry</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div id="statusBar" class="hidden" aria-live="polite">
+    <div class="status-inner">
+      <div class="status-msg flex-1">Ready</div>
+      <div class="status-progress hidden"></div>
+      <button class="status-action btn hidden">Action</button>
+      <button class="status-close btn-icon" title="Close">✕</button>
     </div>
   </div>
 

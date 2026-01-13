@@ -1,4 +1,5 @@
 import { getCurrentUser } from './auth.js';
+import { showToast } from './toast.js';
 
 function extractDefaultBranch(source) {
   const defaultBranchObj = source?.githubRepo?.defaultBranch ||
@@ -546,7 +547,7 @@ export class BranchSelector {
 
   populateDropdown() {
     if (!this.sourceId) {
-      alert('Please select a repository first');
+      showToast('Please select a repository first', 'warn');
       return;
     }
     

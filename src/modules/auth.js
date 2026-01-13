@@ -1,5 +1,7 @@
 // ===== Firebase Authentication Module =====
 
+import { showToast } from './toast.js';
+
 let currentUser = null;
 
 export function getCurrentUser() {
@@ -16,14 +18,14 @@ export function setCurrentUser(user) {
 export async function signInWithGitHub() {
   try {
     if (!window.auth) {
-      alert('Authentication not ready. Please refresh the page.');
+      showToast('Authentication not ready. Please refresh the page.', 'error');
       return;
     }
     const provider = new firebase.auth.GithubAuthProvider();
     await window.auth.signInWithPopup(provider);
   } catch (error) {
     console.error('Sign-in failed:', error);
-    alert('Failed to sign in. Please try again.');
+    showToast('Failed to sign in. Please try again.', 'error');
   }
 }
 
@@ -34,7 +36,7 @@ export async function signOutUser() {
     }
   } catch (error) {
     console.error('Sign-out failed:', error);
-    alert('Failed to sign out.');
+    showToast('Failed to sign out.', 'error');
   }
 }
 
