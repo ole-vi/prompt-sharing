@@ -189,7 +189,7 @@ async function openEditQueueModal(docId) {
       <div class="modal-dialog" style="max-width: 700px;">
         <div class="modal-header">
           <h2 class="modal-title">Edit Queue Item</h2>
-          <button class="btn-icon close-modal" id="closeEditQueueModal" title="Close">✕</button>
+          <button class="btn-icon close-modal" id="closeEditQueueModal" title="Close"><span class="icon" aria-hidden="true">close</span></button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -404,7 +404,7 @@ function renderSubtasksList(subtasks) {
     <div class="form-group subtask-item" data-index="${index}">
       <div class="subtask-item-header">
         <label class="form-label">Subtask ${index + 1}:</label>
-        <button type="button" class="remove-subtask-btn" data-index="${index}" title="Remove this subtask">✕</button>
+        <button type="button" class="remove-subtask-btn" data-index="${index}" title="Remove this subtask"><span class="icon" aria-hidden="true">close</span></button>
       </div>
       <textarea class="form-control edit-subtask-content" rows="5">${escapeHtml(subtask.fullContent || '')}</textarea>
     </div>
@@ -610,7 +610,7 @@ function renderQueueList(items) {
         `;
       }).join('');
 
-      const repoDisplay = item.sourceId ? `<div class="queue-repo">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+      const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span>${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
       
       return `
         <div class="queue-card queue-item" data-docid="${item.id}">
@@ -622,7 +622,7 @@ function renderQueueList(items) {
               <div class="queue-title">
                 Subtasks Batch <span class="queue-status">${status}</span>
                 <span class="queue-status">(${remainingCount} remaining)</span>
-                <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item">✏️</button>
+                <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item"><span class="icon" aria-hidden="true">edit</span></button>
               </div>
               <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
               ${repoDisplay}
@@ -636,7 +636,7 @@ function renderQueueList(items) {
     }
 
     const promptPreview = (item.prompt || '').substring(0, 200);
-    const repoDisplay = item.sourceId ? `<div class="queue-repo">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+    const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span>${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
     
     return `
       <div class="queue-card queue-item" data-docid="${item.id}">
@@ -647,7 +647,7 @@ function renderQueueList(items) {
           <div class="queue-content">
             <div class="queue-title">
               Single Prompt <span class="queue-status">${status}</span>
-              <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item">✏️</button>
+              <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item"><span class="icon" aria-hidden="true">edit</span></button>
             </div>
             <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
             ${repoDisplay}
