@@ -4,3 +4,45 @@
   margin: 0 auto;
   padding: 2rem;
 }
+
+.help-container h1,
+.help-container h2,
+.help-container h3 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: var(--primary-text);
+}
+
+.help-container p {
+  line-height: 1.6;
+  margin-bottom: 1em;
+}
+
+.help-container a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+.help-container a:hover {
+  text-decoration: underline;
+}
+
+.help-container ul,
+.help-container ol {
+  padding-left: 2em;
+  margin-bottom: 1em;
+}
+
+.help-container code {
+  background-color: var(--code-bg-color);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: var(--font-family-monospace);
+}
+
+.help-container pre {
+  background-color: var(--code-bg-color);
+  padding: 1em;
+  border-radius: 5px;
+  overflow-x: auto;
+}

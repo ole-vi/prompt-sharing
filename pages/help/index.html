@@ -1,17 +1,408 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Help - PromptRoot</title>
-  <link rel="stylesheet" href="/src/styles.css">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Help - PromptRoot</title>
+<link href="/src/styles.css" rel="stylesheet"/>
 </head>
 <body>
-  <div id="header-placeholder"></div>
-  <main class="help-container">
-    <h1>Help</h1>
-    <p>This is the help page.</p>
-  </main>
-  <script src="/src/shared-init.js" type="module"></script>
+<div id="header-placeholder"></div>
+<main class="help-container">
+<h1>PromptRoot</h1>
+<p>Share and amplify your team's AI knowledge.
+Hosted for free with GitHub Pages, backed by simple <code>.md</code> files.</p>
+<h2>Live site</h2>
+<p><a href="https://promptroot.github.io/promptroot/">https://promptroot.github.io/promptroot/</a></p>
+<h2>What is PromptRoot?</h2>
+<p>PromptRoot is a zero-build web application for managing and sharing AI prompts as markdown files. It provides a browsable library interface with deep linking, GitHub integration, and direct integration with Google's Jules AI assistant. Teams can organize prompts in folders, switch between branches, and send prompts directly to Jules with full context awareness.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Prompt Library</strong>: Browse and share prompts organized in a GitHub repository.</li>
+<li><strong>Jules Integration</strong>: Send prompts directly to Google's Jules AI coding agent.</li>
+<li><strong>Task Queue</strong>: Queue up multiple subtasks for Jules to execute sequentially.</li>
+<li><strong>Session Management</strong>: View and manage your active and past Jules sessions.</li>
+<li><strong>Web Capture</strong>: A browser extension that lets you capture any webpage as Markdown and sync it directly to your GitHub repository. See <a href="https://github.com/promptroot/promptroot/blob/main/browser-extension/README.md">browser-extension/README.md</a> for details.</li>
+</ul>
+<h2>Local development</h2>
+<p>To test the app locally, you must serve it over HTTP (not open the HTML file directly):</p>
+<pre><code class="language-bash"># From the repo root
+python -m http.server 8888
+</code></pre>
+<p>Then open <strong><code>http://localhost:8888/pages/home/index.html</code></strong> in your browser. </p>
+<p><strong>Important:</strong> Opening <code>index.html</code> directly (via <code>file://</code> URL) will not work with Firebase authentication. The app must be served over HTTP for GitHub OAuth to function.</p>
+<h2>Architecture</h2>
+<p>This is a zero-build, modular single-page application using plain JavaScript ES6 modules.</p>
+<h3>Key Design Principles</h3>
+<ul>
+<li><strong>No Build Step</strong>: Files served directly from GitHub Pages</li>
+<li><strong>No Framework</strong>: Plain JavaScript with ES6 modules</li>
+<li><strong>Modular</strong>: Each feature is isolated in its own module</li>
+<li><strong>Zero Dependencies</strong>: Only CDN-loaded libraries (marked.js, Firebase)</li>
+<li><strong>Fast</strong>: Caching, lazy loading, and optimized rendering</li>
+</ul>
+<h3>CSS Structure</h3>
+<ul>
+<li>Aggregator: See <a href="https://github.com/promptroot/promptroot/blob/main/src/styles.css">src/styles.css</a> for ordered imports.</li>
+<li>Base: <a href="https://github.com/promptroot/promptroot/blob/main/src/styles/base.css">src/styles/base.css</a> defines variables and resets.</li>
+<li>Layout: <a href="https://github.com/promptroot/promptroot/blob/main/src/styles/layout.css">src/styles/layout.css</a> contains grid and responsive rules.</li>
+<li>Components: Modular styles in <a href="https://github.com/promptroot/promptroot/blob/main/src/styles/components/">src/styles/components/</a> (header, navbar, sidebar, buttons, status bar, etc.).</li>
+<li>Pages: Per-page overrides in <a href="https://github.com/promptroot/promptroot/blob/main/src/styles/pages/">src/styles/pages/</a>.</li>
+</ul>
+<p>Guidelines:
+- Keep base/layout first, components next, pages last in the aggregator.
+- Add new components under <code>src/styles/components/</code> and import them in <code>src/styles.css</code>.
+- Use page styles sparingly for view-specific tweaks.</p>
+<h3>Folder structure</h3>
+<pre><code>promptroot/
+├── pages/                 # Routed pages
+│   ├── home/index.html    # Home / Prompt Library
+│   ├── jules/jules.html   # Jules account management &amp; sessions
+│   ├── queue/queue.html   # Jules task queue management
+│   ├── sessions/sessions.html # Full list of Jules sessions
+│   ├── profile/profile.html   # User profile &amp; settings
+│   └── webcapture/webcapture.html # Web Capture extension
+├── partials/
+│   └── header.html        # Shared header partial (loaded on all pages)
+├── src/firebase-init.js   # Firebase SDK initialization (src)
+├── firebase.json          # Firebase hosting config
+├── config/
+│   └── firestore/firestore.rules # Firestore security rules
+├── oauth-callback.html    # GitHub OAuth callback for extension
+├── src/
+│   ├── app.js             # Main application initialization
+│   ├── shared-init.js     # Shared initialization for all pages
+│   ├── styles.css         # Aggregated stylesheet importing modular CSS
+│   ├── modules/           # Feature modules (ES6)
+│   │   ├── auth.js        # GitHub OAuth &amp; auth state management
+│   │   ├── jules.js       # Jules integration, modals, queue system
+│   │   ├── jules-api.js   # Jules API client (sources, sessions, activities)
+│   │   ├── github-api.js  # GitHub API calls &amp; Gist handling
+│   │   ├── prompt-list.js # Sidebar tree navigation &amp; rendering
+│   │   ├── prompt-renderer.js # Markdown rendering &amp; display
+│   │   ├── branch-selector.js # Branch listing &amp; switching
+│   │   ├── subtask-manager.js # Prompt splitting &amp; parsing
+│   │   ├── header.js      # Shared header component
+│   │   ├── navbar.js      # Shared navigation component
+│   │   └── status-bar.js  # Status notifications
+│   └── utils/             # Shared utilities
+│       ├── constants.js   # Config, regex patterns, storage keys
+│       ├── slug.js        # URL-safe slug generation
+│       ├── url-params.js  # URL parameter parsing
+│       ├── dom-helpers.js # DOM manipulation helpers
+│       ├── session-cache.js # Session data caching
+│       └── title.js       # Title extraction from prompts
+├── prompts/               # Markdown prompt files
+│   ├── planet/           # Planet repo onboarding
+│   ├── myplanet/         # myPlanet repo onboarding
+│   └── promptsync/       # PromptRoot repo onboarding
+├── webclips/             # User web clips from browser extension
+│   └── {username}/       # Each user's synced clips
+├── browser-extension/    # Web capture browser extension
+│   ├── manifest.json     # Extension configuration
+│   ├── content.js        # Page content extraction
+│   ├── popup.html/js     # Extension UI
+│   ├── config.js         # OAuth configuration
+│   ├── github-auth.js    # GitHub OAuth flow
+│   ├── github-sync.js    # GitHub sync logic
+│   └── background.js     # Service worker
+└── functions/            # Firebase Cloud Functions
+  ├── index.js          # Jules backend + GitHub OAuth proxy
+  └── package.json
+</code></pre>
+<h2>Adding a new prompt</h2>
+<ol>
+<li>
+<p>Create a new file inside the <code>prompts/</code> folder.</p>
+</li>
+<li>
+<p>Use lowercase filenames with no spaces. Example: <code>my-new-prompt.md</code>.</p>
+</li>
+<li>
+<p>File must end with <code>.md</code>.</p>
+</li>
+<li>
+<p>Start the file with a first-level heading (<code>#</code>) for the title:</p>
+</li>
+</ol>
+<pre><code class="language-markdown"># My New Prompt
+
+Prompt instructions go here...
+</code></pre>
+<ol>
+<li>
+<p>Commit the file to the <code>main</code> branch:</p>
+</li>
+<li>
+<p>Either upload directly through the GitHub web UI, or</p>
+</li>
+<li>
+<p>Use git locally:</p>
+<pre><code class="language-bash">
+git add prompts/my-new-prompt.md
+git commit -m "Add my-new-prompt.md"
+git push
+</code></pre>
+</li>
+<li>
+<p>After a minute or two, the live site will auto-refresh to include your new prompt.</p>
+</li>
+</ol>
+<h3>Using a Gist pointer</h3>
+<p>Instead of storing the full prompt in this repo, you can point a prompt file at a GitHub Gist. Create a markdown file whose entire body is the raw Gist URL:</p>
+<pre><code class="language-markdown">https://gist.githubusercontent.com/your-username/abc123456789/raw/my-shared-prompt.md
+</code></pre>
+<p>The app will fetch and cache the Gist content automatically.</p>
+<p><strong>Limitations:</strong>
+* Must be a publicly readable <code>gist.githubusercontent.com</code> raw link
+* Only one URL per file
+* Updates to the Gist appear on next fetch</p>
+<h3>ChatGPT/Codex Links</h3>
+<p>If a prompt file contains only a ChatGPT conversation URL (e.g., <code>https://chatgpt.com/s/...</code>), the app detects it and provides a clickable link to open the conversation.</p>
+<h2>Linking to prompts</h2>
+<p>Every prompt has its own URL:</p>
+<pre><code>https://promptroot.github.io/promptroot/#p=&lt;filename-without-.md&gt;
+</code></pre>
+<p>Example:</p>
+<ul>
+<li>File: <code>prompts/stubs.md</code></li>
+<li>Link: <a href="https://promptroot.github.io/promptroot/#p=stubs">https://promptroot.github.io/promptroot/#p=stubs</a></li>
+</ul>
+<p>These links can be shared in Discord, Whatsapp, docs, etc.</p>
+<h2>Features</h2>
+<h3>Core Features</h3>
+<ul>
+<li><strong>Prompt Library Browser</strong>: Navigate prompts organized in folders with a collapsible tree view</li>
+<li><strong>Markdown Rendering</strong>: Full markdown support with headings, lists, code blocks, and more</li>
+<li><strong>Deep Linking</strong>: Every prompt has a shareable URL (<code>#p=slug</code>)</li>
+<li><strong>Branch Switching</strong>: Switch between git branches to view different versions of your prompt library</li>
+<li><strong>Search</strong>: Filter prompts by filename in real-time</li>
+<li><strong>One-Click Copy</strong>: Copy prompt text to clipboard with a single click</li>
+<li><strong>Gist Integration</strong>: Reference GitHub Gists as external prompt sources</li>
+<li><strong>ChatGPT/Codex Links</strong>: Automatically detect and link to ChatGPT conversation URLs</li>
+<li><strong>Emoji Tags</strong>: Automatic visual categorization based on filename keywords</li>
+</ul>
+<h3>GitHub Authentication</h3>
+<ul>
+<li><strong>GitHub OAuth</strong>: Sign in with your GitHub account via Firebase</li>
+<li><strong>Persistent Sessions</strong>: Stay logged in across browser sessions</li>
+<li><strong>User Profile</strong>: Access your Jules profile and settings</li>
+</ul>
+<h3>Jules API Integration</h3>
+<p>PromptRoot provides deep integration with Google's Jules AI assistant:</p>
+<h4>Try in Jules</h4>
+<ul>
+<li><strong>One-Click Sending</strong>: Send any prompt directly to Jules with the "⚡ Try in Jules" button</li>
+<li><strong>Repository Context</strong>: Select which GitHub repository Jules should use</li>
+<li><strong>Branch Selection</strong>: Choose specific branches for Jules to access</li>
+<li><strong>Custom Titles</strong>: Name your Jules sessions for easy identification</li>
+<li><strong>Auto-Open</strong>: Automatically open Jules sessions in new tabs</li>
+</ul>
+<h4>Jules Queue System</h4>
+<ul>
+<li><strong>Batch Processing</strong>: Queue multiple prompts to send to Jules</li>
+<li><strong>Queue Management</strong>: View, edit, and delete queued items</li>
+<li><strong>Status Tracking</strong>: Monitor pending, processing, and completed items</li>
+<li><strong>Auto-Open Control</strong>: Choose whether to automatically open Jules tabs</li>
+</ul>
+<h4>Subtask Splitting</h4>
+<ul>
+<li><strong>Intelligent Parsing</strong>: Automatically detect task stubs, numbered lists, or paragraph breaks</li>
+<li><strong>Manual Splitting</strong>: Define custom <code>---split---</code> markers in prompts</li>
+<li><strong>Preview &amp; Edit</strong>: Review and modify detected subtasks before sending</li>
+<li><strong>Sequential Execution</strong>: Send subtasks to Jules one at a time or all at once</li>
+<li><strong>Context Preservation</strong>: Each subtask includes the full prompt context</li>
+</ul>
+<h4>User Profile Page</h4>
+<p>Click your username after signing in to access:</p>
+<ul>
+<li><strong>API Key Management</strong>: </li>
+<li>Securely store your Jules API key (encrypted in Firestore)</li>
+<li>Update or delete your stored key</li>
+<li>Keys are encrypted using AES-GCM with your user ID</li>
+<li><strong>Connected Repositories</strong>: </li>
+<li>View all GitHub repos connected via Jules GitHub App</li>
+<li>See available branches for each repository</li>
+<li>Refresh to sync latest connections</li>
+<li><strong>Recent Sessions</strong>: </li>
+<li>Last 10 Jules sessions with titles and status</li>
+<li>Direct links to Jules sessions and pull requests</li>
+<li>Status indicators (active, completed, errored)</li>
+<li>"View All →" to see complete session history</li>
+<li><strong>Full Sessions History Modal</strong>:</li>
+<li>Browse all your Jules sessions</li>
+<li>Search by conversation title or session ID</li>
+<li>Paginated loading (50 sessions at a time)</li>
+<li>Session cards with timestamps and links</li>
+</ul>
+<h3>Repository Management</h3>
+<ul>
+<li><strong>Multi-Repository Support</strong>: Browse prompts from any GitHub repository</li>
+<li><strong>URL Parameters</strong>: Share links with custom owner/repo/branch</li>
+<li><strong>Cache Management</strong>: Automatic caching with session storage</li>
+<li><strong>Real-Time Updates</strong>: Changes appear 1-2 minutes after pushing to GitHub</li>
+</ul>
+<h2>Browser Extension - Web Capture</h2>
+<p>PromptRoot includes a powerful browser extension that captures any webpage as Markdown and syncs it to GitHub.</p>
+<h3>Features</h3>
+<ul>
+<li><strong>📸 One-Click Capture</strong>: Save any webpage as clean Markdown</li>
+<li><strong>☁️ GitHub Sync</strong>: Automatically commit clips to this repository</li>
+<li><strong>🔐 OAuth Login</strong>: Secure GitHub authentication (no PAT needed)</li>
+<li><strong>💾 Local Download</strong>: Option to save locally without GitHub</li>
+<li><strong>👥 Multi-User</strong>: Each user gets their own folder in <code>webclips/</code></li>
+</ul>
+<h3>Quick Start</h3>
+<ol>
+<li><strong>Install Extension</strong>: Load <code>browser-extension</code> folder in Chrome (<code>chrome://extensions/</code>)</li>
+<li><strong>Connect GitHub</strong>: Click "🔗 Connect to GitHub" in extension popup</li>
+<li><strong>Clip Pages</strong>: Click extension icon, then "☁️ Sync to GitHub"</li>
+<li><strong>View Clips</strong>: Find them at <code>webclips/{your-username}/</code></li>
+</ol>
+<p>See <a href="https://github.com/promptroot/promptroot/blob/main/browser-extension/README.md">browser-extension/README.md</a> for full documentation.</p>
+<h3>For Administrators</h3>
+<p>See <a href="https://github.com/promptroot/promptroot/blob/main/DEPLOYMENT_GUIDE.md">DEPLOYMENT_GUIDE.md</a> for setup instructions and <a href="https://github.com/promptroot/promptroot/blob/main/QUICKSTART.md">QUICKSTART.md</a> for user guide.</p>
+<h2>Getting Started with Jules</h2>
+<ol>
+<li><strong>Sign in</strong>: Click "Sign in with GitHub" in the header</li>
+<li><strong>Add API Key</strong>: Click your username → "Add Jules API Key"</li>
+<li>Get your key from <a href="https://jules.google.com">jules.google.com</a> → Settings → API Keys</li>
+<li>Your key is encrypted and stored securely</li>
+<li><strong>Browse Prompts</strong>: Navigate the prompt library and find a useful prompt</li>
+<li><strong>Send to Jules</strong>: Click "⚡ Try in Jules" on any prompt</li>
+<li><strong>Configure</strong>: Select repository and branch for context</li>
+<li><strong>Track Sessions</strong>: View your Jules activity in your profile</li>
+</ol>
+<h2>Emoji Classification</h2>
+<p>The app automatically adds emojis to filenames for visual categorization:</p>
+<ul>
+<li><strong>🔍</strong> - Code review, PR, rubric</li>
+<li><strong>🩹</strong> - Bug fixes, triage</li>
+<li><strong>📖</strong> - Documentation, specs, design, explorers</li>
+<li><strong>🧹</strong> - Refactoring</li>
+</ul>
+<p>These are purely cosmetic and based on keywords in the filename.</p>
+<h2>Notes</h2>
+<ul>
+<li>Repository must remain public for GitHub Pages and API access</li>
+<li>Changes appear live 1–2 minutes after pushing to <code>main</code></li>
+<li>No in-browser editing; manage prompts via git or GitHub web interface</li>
+<li>Browser caching may require hard refresh (Ctrl+Shift+R) after updates</li>
+<li>Firebase configuration required for authentication features</li>
+<li>Jules integration requires valid Jules API key from <a href="https://jules.google.com">jules.google.com</a></li>
+</ul>
+<h2>Use Cases</h2>
+<ul>
+<li><strong>Team Onboarding</strong>: Repository explorer prompts help new contributors understand codebases</li>
+<li><strong>Prompt Library</strong>: Centralized collection of reusable AI prompts</li>
+<li><strong>Knowledge Sharing</strong>: Share effective prompts across your organization  </li>
+<li><strong>Jules Workflow</strong>: Streamline sending prompts to Jules with proper context</li>
+<li><strong>Documentation</strong>: Living documentation that AI assistants can consume</li>
+<li><strong>Best Practices</strong>: Capture and share successful prompt patterns</li>
+</ul>
+<h2>Contributing</h2>
+<ol>
+<li>Fork the repository</li>
+<li>Create a feature branch (<code>git checkout -b feature/amazing-feature</code>)</li>
+<li>Make your changes</li>
+<li>Test locally with <code>python -m http.server 8888</code></li>
+<li>Commit your changes (<code>git commit -m 'Add amazing feature'</code>)</li>
+<li>Push to the branch (<code>git push origin feature/amazing-feature</code>)</li>
+<li>Open a Pull Request</li>
+</ol>
+<h2>License</h2>
+<p>This project is open source. See repository for license details.</p>
+<h2>Support</h2>
+<p>For issues, questions, or feature requests, please open an issue on GitHub.</p>
+<h2>Development Guide</h2>
+<h3>Running locally</h3>
+<pre><code class="language-bash">cd promptroot
+python -m http.server 8888
+# Visit http://localhost:8888/pages/home/index.html
+</code></pre>
+<p>Routing notes:
+- Hosting redirects <code>/</code> to <code>/pages/home/index.html</code> via <code>firebase.json</code>.
+- Legacy root pages have been removed; use <code>/pages/*</code> paths.</p>
+<p>The dev setup loads modules directly without compilation. Changes are reflected immediately (reload browser).</p>
+<h3>Project organization</h3>
+<p>Each module in <code>src/modules/</code> handles one major feature area:</p>
+<ul>
+<li><strong>auth.js</strong>: Firebase authentication, GitHub OAuth flow, user state management</li>
+<li><strong>jules.js</strong>: Complete Jules integration including:</li>
+<li>API key encryption and storage</li>
+<li>"Try in Jules" workflow with repository/branch selection</li>
+<li>Queue system for batch processing</li>
+<li>Subtask splitting and management</li>
+<li>User profile modal with sessions history</li>
+<li>All Jules-related modals and UI</li>
+<li><strong>jules-api.js</strong>: Jules API client wrapper:</li>
+<li>List connected sources (repositories)</li>
+<li>Retrieve sessions with filtering and pagination</li>
+<li>Fetch activity logs</li>
+<li>Handle API authentication</li>
+<li><strong>github-api.js</strong>: GitHub API interactions:</li>
+<li>Fetch repository contents and file trees</li>
+<li>Load raw markdown files</li>
+<li>Resolve and fetch GitHub Gists</li>
+<li>List repository branches</li>
+<li><strong>prompt-list.js</strong>: Sidebar prompt browser:</li>
+<li>Tree-based folder navigation</li>
+<li>Collapsible folders with state persistence</li>
+<li>Search/filter functionality</li>
+<li>Active item highlighting</li>
+<li><strong>prompt-renderer.js</strong>: Content display:</li>
+<li>Markdown rendering with marked.js</li>
+<li>Code syntax highlighting</li>
+<li>Copy to clipboard functionality</li>
+<li>Deep linking support</li>
+<li><strong>branch-selector.js</strong>: Branch management:</li>
+<li>List available branches</li>
+<li>Switch between branches</li>
+<li>User/feature branch filtering</li>
+<li><strong>subtask-manager.js</strong>: Prompt parsing and splitting:</li>
+<li>Detect task stubs, numbered lists, manual splits</li>
+<li>Analyze prompt structure</li>
+<li>Build subtask sequences with context</li>
+<li>Validate subtask integrity</li>
+<li><strong>status-bar.js</strong>: User notifications and status messages</li>
+</ul>
+<p>Utilities in <code>src/utils/</code> provide shared helpers:</p>
+<ul>
+<li><strong>constants.js</strong>: All configuration, magic strings, regex patterns, emoji mappings, storage keys</li>
+<li><strong>slug.js</strong>: Generate URL-safe slugs from filenames</li>
+<li><strong>url-params.js</strong>: Parse URL query strings and hash parameters</li>
+<li><strong>dom-helpers.js</strong>: Reusable DOM manipulation functions</li>
+<li><strong>title.js</strong>: Extract titles from markdown content</li>
+</ul>
+<h3>Code style</h3>
+<ul>
+<li>ES6 modules with explicit imports/exports</li>
+<li>No transpilation or build step required</li>
+<li>Plain JavaScript (no frameworks or libraries except CDN-loaded dependencies)</li>
+<li>Modular architecture with clear separation of concerns</li>
+<li>Async/await for asynchronous operations</li>
+<li>SessionStorage for caching and state persistence</li>
+<li>Firestore for secure data storage (API keys, queue items)</li>
+</ul>
+<h2>Technology Stack</h2>
+<ul>
+<li><strong>Frontend</strong>: Vanilla JavaScript (ES6 modules), HTML5, CSS3</li>
+<li><strong>Markdown</strong>: marked.js (CDN)</li>
+<li><strong>Authentication</strong>: Firebase Authentication (GitHub OAuth)</li>
+<li><strong>Database</strong>: Cloud Firestore</li>
+<li><strong>Backend</strong>: Firebase Cloud Functions (Node.js)</li>
+<li><strong>Hosting</strong>: GitHub Pages</li>
+<li><strong>APIs</strong>: GitHub REST API, Jules API (Google)</li>
+</ul>
+<h2>Security</h2>
+<ul>
+<li><strong>API Key Encryption</strong>: Jules API keys encrypted using AES-GCM before storage</li>
+<li><strong>Firestore Rules</strong>: Strict security rules ensuring users can only access their own data</li>
+<li><strong>GitHub OAuth</strong>: Secure authentication flow via Firebase</li>
+<li><strong>HTTPS Only</strong>: All API calls and hosting over HTTPS</li>
+</ul>
+</main>
+<script src="/src/shared-init.js" type="module"></script>
 </body>
 </html>
