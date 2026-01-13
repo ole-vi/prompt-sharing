@@ -97,9 +97,12 @@ export async function listPromptsViaContents(owner, repo, branch, path = 'prompt
 
 export async function listPromptsViaTrees(owner, repo, branch, path = 'prompts') {
   const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(branch)}?recursive=1&ts=${Date.now()}`;
-  const data = await fetchJSON(url);
+  const data = await fetchJSON(url);  
+  if (!data || !Array.isArray(data.tree)) {
+    return [];
+  }
   const pathRegex = new RegExp(`^${path}/.+\\.md$`, 'i');
-  const items = (data.tree || []).filter(n => n.type === 'blob' && pathRegex.test(n.path));
+  const items = data.tree.filter(n => n.type === 'blob' && pathRegex.test(n.path));
   return items.map(n => ({
     type: 'file',
     name: n.path.split('/').pop(),

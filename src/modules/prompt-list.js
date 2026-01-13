@@ -470,6 +470,11 @@ export function updateActiveItem() {
 }
 
 export function renderList(items, owner, repo, branch) {
+  if (!Array.isArray(items)) {
+    console.warn('renderList received non-array items:', items);
+    items = [];
+  }
+  
   loadExpandedState(owner, repo, branch);
   const q = searchEl && searchEl.value ? searchEl.value.trim() : '';
   const searchActive = Boolean(q);
@@ -525,7 +530,8 @@ export async function loadList(owner, repo, branch, cacheKey) {
   try {
     const cached = sessionStorage.getItem(cacheKey);
     if (cached) {
-      files = JSON.parse(cached);
+      const parsed = JSON.parse(cached);
+      files = Array.isArray(parsed) ? parsed : (parsed.files || []);
       renderList(files, owner, repo, branch);
       refreshList(owner, repo, branch, cacheKey).catch(() => {});
       return files;
