@@ -23,13 +23,13 @@ const { createIcon, createIconWithText, ICONS } = iconHelpers;
 const originalSyncLabel = syncBtn.innerHTML;
 
 function setDownloadButtonIdle() {
-  downloadBtn.innerHTML = createIconWithText('download', 'Download');
+  downloadBtn.innerHTML = createIconWithText(ICONS.DOWNLOAD, 'Download');
 }
 
 async function init() {
   await updateGitHubStatus();
   connectGitHubBtn.innerHTML = createIconWithText(ICONS.LINK, 'Connect to GitHub');
-  disconnectBtn.innerHTML = createIcon('logout', { title: 'Disconnect' });
+  disconnectBtn.innerHTML = createIcon(ICONS.LOGOUT, { title: 'Disconnect' });
   disconnectBtn.title = 'Disconnect';
   setDownloadButtonIdle();
   extractContent();

@@ -1,29 +1,47 @@
 (function attachIconHelpers(global) {
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function safeClassTokens(value) {
+    return String(value)
+      .split(/\s+/)
+      .map(t => t.trim())
+      .filter(Boolean)
+      .filter(t => /^[a-zA-Z0-9_-]+$/.test(t));
+  }
+
   function createIcon(iconName, options = {}) {
     const { size = null, className = '', title = '' } = options;
 
     const classes = ['icon'];
-    if (size) classes.push(`icon-${size}`);
-    if (className) classes.push(className);
+    if (size && /^[a-zA-Z0-9_-]+$/.test(String(size))) classes.push(`icon-${String(size)}`);
+    if (className) classes.push(...safeClassTokens(className));
 
-    const titleAttr = title ? ` title="${title}"` : '';
+    const titleAttr = title ? ` title="${escapeHtml(title)}"` : '';
 
-    return `<span class="${classes.join(' ')}" aria-hidden="true"${titleAttr}>${iconName}</span>`;
+    return `<span class="${escapeHtml(classes.join(' '))}" aria-hidden="true"${titleAttr}>${escapeHtml(iconName)}</span>`;
   }
 
   function createIconWithText(iconName, text, options = {}) {
     const iconOptions = { size: 'inline', ...options };
-    return `${createIcon(iconName, iconOptions)} ${text}`;
+    return `${createIcon(iconName, iconOptions)} ${escapeHtml(text)}`;
   }
 
   function createIconButton(iconName, text = '', options = {}) {
     const { iconSize = 'inline' } = options;
+    const safeIconSize = /^[a-zA-Z0-9_-]+$/.test(String(iconSize)) ? String(iconSize) : 'inline';
 
     if (text) {
-      return `<span class="icon icon-${iconSize}" aria-hidden="true">${iconName}</span> ${text}`;
+      return `<span class="icon icon-${escapeHtml(safeIconSize)}" aria-hidden="true">${escapeHtml(iconName)}</span> ${escapeHtml(text)}`;
     }
 
-    return `<span class="icon" aria-hidden="true">${iconName}</span>`;
+    return `<span class="icon" aria-hidden="true">${escapeHtml(iconName)}</span>`;
   }
 
   const ICON_BUTTONS = {
@@ -41,11 +59,13 @@
   const ICONS = {
     COPY: 'content_copy',
     LINK: 'link',
+    DOWNLOAD: 'download',
     EDIT: 'edit',
     DELETE: 'delete',
     ADD: 'add',
     CLOSE: 'close',
     SYNC: 'sync',
+    LOGOUT: 'logout',
     REFRESH: 'refresh',
 
     CHECK: 'check_circle',
