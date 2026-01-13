@@ -480,6 +480,12 @@ export function renderList(items, owner, repo, branch) {
   const q = searchEl && searchEl.value ? searchEl.value.trim() : '';
   const searchActive = Boolean(q);
 
+  // Ensure items is an array
+  if (!Array.isArray(items)) {
+    console.error('renderList received non-array items:', items);
+    items = [];
+  }
+
   let filtered = [];
   if (!q) {
     filtered = items.slice();
@@ -539,7 +545,6 @@ export async function loadList(owner, repo, branch, cacheKey) {
       let cacheData;
       try {
         cacheData = JSON.parse(cached);
-        // Validate cache structure - handle migration from old formats
         if (!cacheData || typeof cacheData !== 'object' || Array.isArray(cacheData) || !Array.isArray(cacheData.files)) {
           console.warn('Old cache format detected, clearing cache');
           sessionStorage.removeItem(cacheKey);
@@ -548,7 +553,6 @@ export async function loadList(owner, repo, branch, cacheKey) {
       } catch (e) {
         console.warn('Corrupted cache data detected, clearing cache', e);
         sessionStorage.removeItem(cacheKey);
-        // Proceed to fetch fresh data below
         cacheData = null;
       }
       
