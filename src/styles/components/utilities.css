@@ -1,0 +1,83 @@
+/* ===== Utility Classes ===== */
+/* Additional utility classes for common patterns and layouts */
+
+/* Display */
+.d-block { display: block !important; }
+.d-none { display: none !important; }
+.d-flex { display: flex !important; }
+.d-flex-center { display: flex; align-items: center; }
+
+/* Flexbox Layout */
+.flex-col { display: flex; flex-direction: column; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.flex-1 { flex: 1; }
+.flex-gap-sm { gap: 8px; }
+.flex-gap-md { gap: 12px; }
+.d-flex-gap-8 { display: flex; gap: 8px; }
+
+/* Spacing - Margin */
+.mb-0 { margin-bottom: 0 !important; }
+.mb-4 { margin-bottom: 4px; }
+.mb-6 { margin-bottom: 6px; }
+.mb-12 { margin-bottom: 12px; }
+.ml-12 { margin-left: 12px; }
+
+/* Spacing - Padding */
+.pad-8 { padding: 8px; }
+.pad-24 { padding: 24px; }
+
+/* Dimensions */
+.max-w-700 { max-width: 700px; }
+.max-h-400 { max-height: 400px; }
+
+/* Typography */
+.text-align-center { text-align: center; }
+.font-sm { font-size: 12px; }
+.font-13 { font-size: 13px; }
+.font-mono { font-family: monospace; }
+
+/* Colors */
+.color-accent { color: var(--accent); }
+.color-muted { color: var(--muted); }
+.color-error { color: var(--error); }
+.color-success { color: var(--success); }
+
+/* Backgrounds */
+.bg-subtle { background: rgba(255, 255, 255, 0.03); }
+.bg-hover { background: rgba(255, 255, 255, 0.06); }
+
+/* Borders */
+.border-radius-8 { border-radius: 8px; }
+
+/* Overflow */
+.overflow-y-auto { overflow-y: auto; }
+
+/* Cursor */
+.cursor-pointer { cursor: pointer; }
+
+/* Modal States */
+.modal-show { display: flex !important; }
+.modal-hide { display: none !important; }
+
+/* Component-Specific Utilities */
+.label-flex {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.split-panel-container {
+  padding: 8px;
+}
+
+.split-panel-config {
+  margin-bottom: 12px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+
+.btn-padding-sm { padding: 4px 12px; }
+.btn-padding-xs { padding: 6px 10px; }
