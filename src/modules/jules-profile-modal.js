@@ -77,14 +77,14 @@ export function showUserProfileModal() {
       
       try {
         resetBtn.disabled = true;
-        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span>Deleting...';
+        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span> Deleting...';
         const deleted = await deleteStoredJulesKey(user.uid);
         if (deleted) {
           if (julesKeyStatus) {
-            julesKeyStatus.innerHTML = '<span class="icon icon-inline" aria-hidden="true">cancel</span>Not saved';
+            julesKeyStatus.innerHTML = '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
             julesKeyStatus.style.color = 'var(--muted)';
           }
-          resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span>Delete Jules API Key';
+          resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key';
           resetBtn.disabled = false;
           
           if (addBtn) addBtn.style.display = 'block';
@@ -199,7 +199,7 @@ async function loadAndDisplayJulesProfile(uid) {
 
         const branchesHtml = branches.length > 0
           ? `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted);">
-               <div style="margin-bottom:4px; color:var(--text);"><span class="icon icon-inline" aria-hidden="true">account_tree</span>Branches (${branches.length}):</div>
+               <div style="margin-bottom:4px; color:var(--text);"><span class="icon icon-inline" aria-hidden="true">account_tree</span> Branches (${branches.length}):</div>
                ${branches.map(b => `<div style="padding:3px 0 3px 8px; cursor:pointer;"
                   onclick="window.open('https://github.com/${githubPath}/tree/${encodeURIComponent(b.displayName || b.name)}', '_blank')">
                   • ${b.displayName || b.name}
@@ -219,7 +219,7 @@ async function loadAndDisplayJulesProfile(uid) {
                       else { el.style.display = 'none'; arrow.textContent = '▶'; }
                     })()">
                   <span id="${sourceId}-arrow" style="display:inline-block; width:12px; font-size:10px; margin-right:6px;">▶</span>
-                  <span class="icon icon-inline" aria-hidden="true">folder</span>${githubPath}
+                  <span class="icon icon-inline" aria-hidden="true">folder</span> ${githubPath}
                   <span class="queue-status">${branchSummaryText}</span>
                 </div>
               </div>
@@ -264,7 +264,7 @@ async function loadAndDisplayJulesProfile(uid) {
         const cardHtml = `
           <div class="session-card" onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
             <div class="session-row">
-              <div class="session-pill"><span class="icon icon-inline" aria-hidden="true">${stateIcon}</span>${stateLabel}</div>
+              <div class="session-pill"><span class="icon icon-inline" aria-hidden="true">${stateIcon}</span> ${stateLabel}</div>
               <div class="session-hint">Created: ${createdAt}</div>
             </div>
             <div class="session-prompt">${displayPrompt}</div>
@@ -416,12 +416,12 @@ function renderAllSessions(sessions) {
     
     const prUrl = session.githubPrUrl || null;
     const prLink = prUrl 
-      ? `<div style="margin-top:4px;" onclick="event.stopPropagation();"><a href="${prUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none;"><span class="icon icon-inline" aria-hidden="true">link</span>View PR</a></div>`
+      ? `<div style="margin-top:4px;" onclick="event.stopPropagation();"><a href="${prUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none;"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a></div>`
       : '';
     
     const subtaskCount = session.childTasks?.length || 0;
     const subtaskInfo = subtaskCount > 0 
-      ? `<div style="font-size:11px; color:var(--muted); margin-top:4px;"><span class="icon icon-inline" aria-hidden="true">list_alt</span>${subtaskCount} subtask${subtaskCount > 1 ? 's' : ''}</div>`
+      ? `<div style="font-size:11px; color:var(--muted); margin-top:4px;"><span class="icon icon-inline" aria-hidden="true">list_alt</span> ${subtaskCount} subtask${subtaskCount > 1 ? 's' : ''}</div>`
       : '';
     
     return `<div style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.03); cursor:pointer; transition:all 0.2s;"
@@ -431,7 +431,7 @@ function renderAllSessions(sessions) {
       <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:6px;">
         <div style="font-weight:600; font-size:13px; flex:1; margin-right:8px;">${displayTitle}</div>
         <div style="font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(255,255,255,0.1); white-space:nowrap; margin-left:8px; display:flex; align-items:center;">
-          <span class="icon icon-inline" aria-hidden="true">${icon}</span>${label}
+          <span class="icon icon-inline" aria-hidden="true">${icon}</span> ${label}
         </div>
       </div>
       <div style="font-size:11px; color:var(--muted); margin-bottom:2px;">Created: ${createTime}</div>
@@ -459,8 +459,8 @@ export async function loadProfileDirectly(user) {
   
   if (julesKeyStatus) {
     julesKeyStatus.innerHTML = hasKey
-      ? '<span class="icon icon-inline" aria-hidden="true">check_circle</span>Saved'
-      : '<span class="icon icon-inline" aria-hidden="true">cancel</span>Not saved';
+      ? '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Saved'
+      : '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
     julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
   }
   
@@ -497,11 +497,11 @@ export async function loadProfileDirectly(user) {
       
       try {
         resetBtn.disabled = true;
-        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span>Deleting...';
+        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span> Deleting...';
         const deleted = await deleteStoredJulesKey(user.uid);
         if (deleted) {
           if (julesKeyStatus) {
-            julesKeyStatus.innerHTML = '<span class="icon icon-inline" aria-hidden="true">cancel</span>Not saved';
+            julesKeyStatus.innerHTML = '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
             julesKeyStatus.style.color = 'var(--muted)';
           }
           resetBtn.innerHTML = originalResetLabel;

@@ -259,7 +259,7 @@ export function showFreeInputForm() {
 
     try {
       await navigator.clipboard.writeText(promptText);
-      copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span>Copied!';
+      copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied!';
       setTimeout(() => {
         copenBtn.innerHTML = originalCopenLabel;
       }, 1000);

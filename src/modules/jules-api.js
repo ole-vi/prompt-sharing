@@ -263,7 +263,7 @@ export async function callRunJulesFunction(promptText, sourceId, branch = 'maste
     return sessionUrl;
   } catch (error) {
     if (julesBtn) {
-      julesBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">bolt</span> Try in Jules';
+      julesBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">smart_toy</span> Try in Jules';
       julesBtn.disabled = false;
     }
     throw error;

@@ -420,7 +420,7 @@ async function handleCopyPrompt() {
     }
 
     await navigator.clipboard.writeText(contentToCopy);
-    copyBtn.textContent = 'Copied';
+    copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied';
     setTimeout(() => (copyBtn.innerHTML = buttonText), 1000);
   } catch {
     showToast('Clipboard blocked. Select and copy manually.', 'warn');
@@ -437,7 +437,7 @@ async function handleCopenPrompt(target) {
 
     // Copy to clipboard
     await navigator.clipboard.writeText(promptText);
-    copenBtn.textContent = 'Copied!';
+    copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied!';
     setTimeout(() => (copenBtn.innerHTML = originalCopenLabel), 1000);
 
     // Open appropriate tab based on target
@@ -469,7 +469,7 @@ async function handleCopenPrompt(target) {
 async function handleShareLink() {
   try {
     await navigator.clipboard.writeText(location.href);
-    shareBtn.textContent = 'Link copied';
+    shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Link copied';
   } catch {
     showToast('Could not copy link.', 'warn');
   } finally {
