@@ -42,7 +42,7 @@
             }
 
             if (response && response.success) {
-              showSuccess('✅ Successfully connected to GitHub!');
+              showSuccess('Successfully connected to GitHub!');
               setTimeout(() => window.close(), 2000);
             } else {
               showError(response?.error || 'Failed to complete authentication');
