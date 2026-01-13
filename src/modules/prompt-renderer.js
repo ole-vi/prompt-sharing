@@ -293,6 +293,7 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
+      currentBlobUrl = null;
     }
     const blob = new Blob([raw], { type: 'text/plain' });
     const dataUrl = URL.createObjectURL(blob);
@@ -313,6 +314,7 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
+      currentBlobUrl = null;
     }
     const blob = new Blob([codexUrl], { type: 'text/plain' });
     const dataUrl = URL.createObjectURL(blob);
