@@ -1,5 +1,6 @@
 // ===== Firebase Authentication Module =====
 
+import { clearJulesKeyCache } from './jules-api.js';
 import { showToast } from './toast.js';
 
 let currentUser = null;
@@ -32,6 +33,10 @@ export async function signInWithGitHub() {
 export async function signOutUser() {
   try {
     if (window.auth) {
+      // Clear Jules API key cache on logout
+      if (window.auth.currentUser) {
+        clearJulesKeyCache(window.auth.currentUser.uid);
+      }
       await window.auth.signOut();
     }
   } catch (error) {

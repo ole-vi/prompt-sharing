@@ -4,7 +4,28 @@
 import { JULES_API_BASE, ERRORS, PAGE_SIZES } from '../utils/constants.js';
 import { showToast } from './toast.js';
 
+// API key cache for memoization
+const keyCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+export function clearJulesKeyCache(uid = null) {
+  if (uid) {
+    keyCache.delete(uid);
+  } else {
+    keyCache.clear();
+  }
+}
+
 export async function getDecryptedJulesKey(uid) {
+  const cached = keyCache.get(uid);
+  if (cached) {
+    if (Date.now() - cached.timestamp < CACHE_TTL) {
+      return cached.key;
+    }
+    // Remove expired cache entry to avoid unbounded memory growth
+    keyCache.delete(uid);
+  }
+
   try {
     if (!window.db) {
       return null;
@@ -29,7 +50,9 @@ export async function getDecryptedJulesKey(uid) {
     const ciphertextData = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
     const plaintext = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertextData);
 
-    return new TextDecoder().decode(plaintext);
+    const decryptedKey = new TextDecoder().decode(plaintext);
+    keyCache.set(uid, { key: decryptedKey, timestamp: Date.now() });
+    return decryptedKey;
   } catch (error) {
     return null;
   }
@@ -43,195 +66,139 @@ function createJulesHeaders(apiKey) {
 }
 
 export async function listJulesSources(apiKey, pageToken = null) {
-  try {
-    const url = new URL(`${JULES_API_BASE}/sources`);
-    if (pageToken) {
-      url.searchParams.set('pageToken', pageToken);
-    }
-    
-    const response = await fetch(url.toString(), {
-      headers: createJulesHeaders(apiKey)
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch sources: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    throw error;
+  const url = new URL(`${JULES_API_BASE}/sources`);
+  if (pageToken) {
+    url.searchParams.set('pageToken', pageToken);
   }
+  
+  const response = await fetch(url.toString(), {
+    headers: createJulesHeaders(apiKey)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch sources: ${response.status} ${response.statusText}`);
+  }
+
+  return await response.json();
 }
 
 export async function getJulesSourceDetails(apiKey, sourceId) {
-  try {
-    // Source ID already contains the full path (e.g., "sources/github/owner/repo")
-    // So we need to use it directly, not prepend /sources/
-    const url = `${JULES_API_BASE}/${sourceId}`;
-    const response = await fetch(url, {
-      headers: createJulesHeaders(apiKey)
-    });
+  const url = `${JULES_API_BASE}/${sourceId}`;
+  const response = await fetch(url, {
+    headers: createJulesHeaders(apiKey)
+  });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch source details: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Failed to fetch source details: ${response.status} ${response.statusText}`);
   }
+
+  return await response.json();
 }
 
-export async function listJulesSessions(apiKey, pageToken = null) {
-  try {
-    const url = new URL(`${JULES_API_BASE}/sessions`);
-    url.searchParams.set('pageSize', PAGE_SIZES.julesSessions.toString());
-    if (pageToken) {
-      url.searchParams.set('pageToken', pageToken);
-    }
-
-    const response = await fetch(url.toString(), {
-      headers: createJulesHeaders(apiKey)
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch sessions: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    throw error;
+export async function listJulesSessions(apiKey, pageSize = null, pageToken = null) {
+  const url = new URL(`${JULES_API_BASE}/sessions`);
+  url.searchParams.set('pageSize', (pageSize || PAGE_SIZES.julesSessions).toString());
+  if (pageToken) {
+    url.searchParams.set('pageToken', pageToken);
   }
+
+  const response = await fetch(url.toString(), {
+    headers: createJulesHeaders(apiKey)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch sessions: ${response.status} ${response.statusText}`);
+  }
+
+  return await response.json();
 }
 
 export async function getJulesSession(apiKey, sessionId) {
-  try {
-    const response = await fetch(`${JULES_API_BASE}/sessions/${sessionId}`, {
-      headers: createJulesHeaders(apiKey)
-    });
+  const response = await fetch(`${JULES_API_BASE}/sessions/${sessionId}`, {
+    headers: createJulesHeaders(apiKey)
+  });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch session: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Failed to fetch session: ${response.status} ${response.statusText}`);
   }
+
+  return await response.json();
 }
 
 export async function getJulesSessionActivities(apiKey, sessionId) {
-  try {
-    const response = await fetch(`${JULES_API_BASE}/sessions/${sessionId}/activities`, {
-      headers: createJulesHeaders(apiKey)
-    });
+  const response = await fetch(`${JULES_API_BASE}/sessions/${sessionId}/activities`, {
+    headers: createJulesHeaders(apiKey)
+  });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch session activities: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Failed to fetch session activities: ${response.status} ${response.statusText}`);
   }
+
+  return await response.json();
 }
 
 export async function createJulesSession(apiKey, sessionConfig) {
-  try {
-    const body = {
-      prompt: sessionConfig.prompt,
-      title: sessionConfig.title || '',
-      sourceContext: {
-        source: sessionConfig.sourceId,
-        githubRepoContext: {
-          startingBranch: sessionConfig.branch
-        }
+  const body = {
+    prompt: sessionConfig.prompt,
+    title: sessionConfig.title || '',
+    sourceContext: {
+      source: sessionConfig.sourceId,
+      githubRepoContext: {
+        startingBranch: sessionConfig.branch
       }
-    };
-
-    if (sessionConfig.autoCreatePR) {
-      body.automationMode = 'AUTO_CREATE_PR';
     }
+  };
 
-    if (sessionConfig.requirePlanApproval !== undefined) {
-      body.requirePlanApproval = sessionConfig.requirePlanApproval;
-    }
-
-    const response = await fetch(`${JULES_API_BASE}/sessions`, {
-      method: 'POST',
-      headers: createJulesHeaders(apiKey),
-      body: JSON.stringify(body)
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create session: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    throw error;
+  if (sessionConfig.autoCreatePR) {
+    body.automationMode = 'AUTO_CREATE_PR';
   }
+
+  if (sessionConfig.requirePlanApproval !== undefined) {
+    body.requirePlanApproval = sessionConfig.requirePlanApproval;
+  }
+
+  const response = await fetch(`${JULES_API_BASE}/sessions`, {
+    method: 'POST',
+    headers: createJulesHeaders(apiKey),
+    body: JSON.stringify(body)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to create session: ${response.status} ${response.statusText}`);
+  }
+
+  return await response.json();
 }
 
 export async function approveJulesSessionPlan(apiKey, sessionId) {
-  try {
-    const response = await fetch(`${JULES_API_BASE}/sessions/${sessionId}:approvePlan`, {
-      method: 'POST',
-      headers: createJulesHeaders(apiKey),
-      body: JSON.stringify({})
-    });
+  const response = await fetch(`${JULES_API_BASE}/sessions/${sessionId}:approvePlan`, {
+    method: 'POST',
+    headers: createJulesHeaders(apiKey),
+    body: JSON.stringify({})
+  });
 
-    if (!response.ok) {
-      throw new Error(`Failed to approve plan: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Failed to approve plan: ${response.status} ${response.statusText}`);
   }
+
+  return await response.json();
 }
 
 export async function loadJulesProfileInfo(uid) {
-  try {
-    const apiKey = await getDecryptedJulesKey(uid);
-    if (!apiKey) {
-      throw new Error(ERRORS.JULES_KEY_REQUIRED);
-    }
-
-    // Fetch sources and sessions in parallel
-    const [sourcesData, sessionsData] = await Promise.all([
-      listJulesSources(apiKey),
-      listJulesSessions(apiKey)
-    ]);
-
-    // Fetch branch details for each source
-    const sourcesWithBranches = await Promise.all(
-      (sourcesData.sources || []).map(async (source) => {
-        try {
-          // Source object has both 'name' (full path like "sources/github/owner/repo") 
-          // and 'id' fields. Use 'name' for the API call.
-          const sourceIdentifier = source.name || source.id;
-          const details = await getJulesSourceDetails(apiKey, sourceIdentifier);
-          return {
-            ...source,
-            branches: details.githubRepo?.branches || []
-          };
-        } catch (error) {
-          return {
-            ...source,
-            branches: []
-          };
-        }
-      })
-    );
-
-    return {
-      sources: sourcesWithBranches,
-      sessions: sessionsData.sessions || []
-    };
-  } catch (error) {
-    throw error;
+  const apiKey = await getDecryptedJulesKey(uid);
+  if (!apiKey) {
+    throw new Error(ERRORS.JULES_KEY_REQUIRED);
   }
+
+  const [sourcesData, sessionsData] = await Promise.all([
+    listJulesSources(apiKey),
+    listJulesSessions(apiKey)
+  ]);
+
+  return {
+    sources: sourcesData.sources || [],
+    sessions: sessionsData.sessions || []
+  };
 }
 
 export async function callRunJulesFunction(promptText, sourceId, branch = 'master', title = '') {

@@ -5,7 +5,7 @@ import { checkJulesKey, deleteStoredJulesKey } from './jules-keys.js';
 import { showJulesKeyModal } from './jules-modal.js';
 import { showJulesQueueModal } from './jules-queue.js';
 import { loadJulesProfileInfo, listJulesSessions, getDecryptedJulesKey } from './jules-api.js';
-import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
+import { getCache, setCache, clearCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 
@@ -103,6 +103,8 @@ export function showUserProfileModal() {
 
   if (loadJulesInfoBtn) {
     loadJulesInfoBtn.onclick = async () => {
+      clearCache(CACHE_KEYS.JULES_ACCOUNT, user.uid);
+      
       await loadAndDisplayJulesProfile(user.uid);
       attachViewAllSessionsHandler();
       attachViewQueueHandler();
@@ -189,7 +191,7 @@ async function loadAndDisplayJulesProfile(uid) {
         const githubPath = repoName.includes('github/')
           ? repoName.split('github/')[1]
           : repoName.replace('sources/', '');
-        const branches = source.branches || [];
+        const branches = source.githubRepo?.branches || [];
         const sourceId = `source-${index}`;
 
         const branchSummaryText = branches.length > 0
@@ -521,6 +523,9 @@ export async function loadProfileDirectly(user) {
 
   if (loadJulesInfoBtn) {
     loadJulesInfoBtn.onclick = async () => {
+      // Clear cache to force fresh data load
+      clearCache(CACHE_KEYS.JULES_ACCOUNT, user.uid);
+      
       await loadAndDisplayJulesProfile(user.uid);
       attachViewAllSessionsHandler();
       attachViewQueueHandler();
@@ -553,6 +558,9 @@ export async function loadJulesAccountInfo(user) {
 
   if (loadJulesInfoBtn) {
     loadJulesInfoBtn.onclick = async () => {
+      // Clear cache to force fresh data load
+      clearCache(CACHE_KEYS.JULES_ACCOUNT, user.uid);
+      
       await loadAndDisplayJulesProfile(user.uid);
       attachViewAllSessionsHandler();
       attachViewQueueHandler();
