@@ -171,7 +171,7 @@ function renderSplitEdit(subtasks, promptText) {
           <strong>Part ${idx + 1}:</strong> ${st.title || `Part ${idx + 1}`}
         </label>
         <span style="font-size: 11px; color: var(--muted);">${st.content.length}c</span>
-        <button class="subtask-preview-btn" data-idx="${idx}" style="background: none; border: none; cursor: pointer; color: var(--accent); font-size: 16px; padding: 4px 8px; transition: transform 0.2s; line-height: 1;" title="Preview subtask" onclick="event.stopPropagation();">👁️</button>
+        <button class="subtask-preview-btn" data-idx="${idx}" style="background: none; border: none; cursor: pointer; color: var(--accent); font-size: 16px; padding: 4px 8px; transition: transform 0.2s; line-height: 1;" title="Preview subtask" onclick="event.stopPropagation();"><span class="icon icon-inline" aria-hidden="true">visibility</span></button>
       </div>
     `)
     .join('');

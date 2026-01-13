@@ -169,8 +169,8 @@ function createSubmenu() {
     return item;
   };
   
-  submenuEl.appendChild(makeMenuItem('Prompt (blank)', '📝', 'create-prompt'));
-  submenuEl.appendChild(makeMenuItem('Conversation (template)', '💬', 'create-conversation'));
+  submenuEl.appendChild(makeMenuItem('Prompt (blank)', '<span class="icon icon-inline" aria-hidden="true">edit_note</span>', 'create-prompt'));
+  submenuEl.appendChild(makeMenuItem('Conversation (template)', '<span class="icon icon-inline" aria-hidden="true">chat_bubble</span>', 'create-conversation'));
   
   document.body.appendChild(submenuEl);
 }
@@ -382,7 +382,7 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
 
       const ghIcon = document.createElement('span');
       ghIcon.className = 'github-folder-icon';
-      ghIcon.textContent = '🗂️';
+      ghIcon.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span>';
       ghIcon.title = 'Open directory on GitHub';
       ghIcon.dataset.action = 'open-github';
       ghIcon.dataset.path = entry.path;

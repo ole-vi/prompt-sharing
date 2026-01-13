@@ -107,7 +107,7 @@ function initApp() {
             julesKeyStatus.style.color = 'var(--muted)';
           }
           
-          resetJulesKeyBtn.textContent = '🗑️ Delete Jules API Key';
+          resetJulesKeyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key';
           resetJulesKeyBtn.disabled = false;
           
           const noJulesKeySection = document.getElementById('noJulesKeySection');
@@ -123,7 +123,7 @@ function initApp() {
         }
       } catch (error) {
         alert('Failed to delete API key: ' + error.message);
-        resetJulesKeyBtn.textContent = '🗑️ Delete Jules API Key';
+        resetJulesKeyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key';
         resetJulesKeyBtn.disabled = false;
       }
     };

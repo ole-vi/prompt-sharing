@@ -67,11 +67,11 @@ export const UI_TEXT = {
   LOADING: "Loading...",
   SIGN_IN: "Sign in with GitHub",
   SIGN_OUT: "Sign Out",
-  COPY_PROMPT: "📋 Copy prompt",
+  COPY_PROMPT: "<span class=\"icon icon-inline\" aria-hidden=\"true\">content_copy</span> Copy prompt",
   COPIED: "Copied",
-  COPY_LINK: "🔗 Copy link",
+  COPY_LINK: "<span class=\"icon icon-inline\" aria-hidden=\"true\">link</span> Copy link",
   LINK_COPIED: "Link copied",
-  TRY_JULES: "⚡ Try in Jules",
+  TRY_JULES: "<span class=\"icon icon-inline\" aria-hidden=\"true\">bolt</span> Try in Jules",
   RUNNING: "Running...",
   SAVE_KEY: "Save & Continue"
 };

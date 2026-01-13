@@ -92,14 +92,15 @@ function renderAllSessions(sessions) {
   
   allSessionsList.innerHTML = filteredSessions.map(session => {
     const state = session.state || 'UNKNOWN';
-    const stateEmoji = {
-      'COMPLETED': '✅',
-      'FAILED': '❌',
-      'IN_PROGRESS': '⏳',
-      'PLANNING': '⏳',
-      'QUEUED': '⏸️',
-      'AWAITING_USER_FEEDBACK': '💬'
-    }[state] || '❓';
+    const stateIcons = {
+      'COMPLETED': 'check_circle',
+      'FAILED': 'cancel',
+      'IN_PROGRESS': 'schedule',
+      'PLANNING': 'schedule',
+      'QUEUED': 'pause_circle',
+      'AWAITING_USER_FEEDBACK': 'chat_bubble'
+    };
+    const stateIcon = stateIcons[state] || 'help';
     
     const stateLabel = {
       'COMPLETED': 'COMPLETED',
@@ -123,9 +124,9 @@ function renderAllSessions(sessions) {
         <div class="session-meta">${createdAt}</div>
         <div class="session-prompt">${displayPrompt}</div>
         <div class="session-row" onclick="event.stopPropagation();">
-          <span class="session-pill">${stateEmoji} ${stateLabel}</span>
-          ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" style="color:var(--accent); text-decoration:none;">🔗 View PR</a>` : ''}
-          <span class="session-hint">💡 Click to view session</span>
+          <span class="session-pill"><span class="icon icon-inline" aria-hidden="true">${stateIcon}</span> ${stateLabel}</span>
+          ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" style="color:var(--accent); text-decoration:none;"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a>` : ''}
+          <span class="session-hint"><span class="icon icon-inline" aria-hidden="true">info</span> Click to view session</span>
         </div>
       </div>
     `;
