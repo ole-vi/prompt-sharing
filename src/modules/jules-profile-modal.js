@@ -5,7 +5,7 @@ import { checkJulesKey, deleteStoredJulesKey } from './jules-keys.js';
 import { showJulesKeyModal } from './jules-modal.js';
 import { showJulesQueueModal } from './jules-queue.js';
 import { loadJulesProfileInfo, listJulesSessions, getDecryptedJulesKey } from './jules-api.js';
-import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
+import { getCache, setCache, clearCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 
@@ -103,7 +103,6 @@ export function showUserProfileModal() {
 
   if (loadJulesInfoBtn) {
     loadJulesInfoBtn.onclick = async () => {
-      const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
       clearCache(CACHE_KEYS.JULES_ACCOUNT, user.uid);
       
       await loadAndDisplayJulesProfile(user.uid);
@@ -525,7 +524,6 @@ export async function loadProfileDirectly(user) {
   if (loadJulesInfoBtn) {
     loadJulesInfoBtn.onclick = async () => {
       // Clear cache to force fresh data load
-      const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
       clearCache(CACHE_KEYS.JULES_ACCOUNT, user.uid);
       
       await loadAndDisplayJulesProfile(user.uid);
@@ -561,7 +559,6 @@ export async function loadJulesAccountInfo(user) {
   if (loadJulesInfoBtn) {
     loadJulesInfoBtn.onclick = async () => {
       // Clear cache to force fresh data load
-      const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
       clearCache(CACHE_KEYS.JULES_ACCOUNT, user.uid);
       
       await loadAndDisplayJulesProfile(user.uid);
