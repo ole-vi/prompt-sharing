@@ -6,6 +6,7 @@ import { checkJulesKey } from './jules-keys.js';
 import { showJulesKeyModal, showSubtaskErrorModal } from './jules-modal.js';
 import { addToJulesQueue } from './jules-queue.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
+import { showToast } from './toast.js';
 
 // Module state
 let _lastSelectedSourceId = null;
@@ -24,7 +25,7 @@ export function showFreeInputModal() {
         await signInWithGitHub();
         setTimeout(() => showFreeInputModal(), 500);
       } catch (error) {
-        alert('Login required to use Jules.');
+        showToast('Login required to use Jules.', 'warn');
       }
     })();
     return;
@@ -36,7 +37,7 @@ export function showFreeInputModal() {
 export async function handleFreeInputAfterAuth() {
   const user = window.auth ? window.auth.currentUser : null;
   if (!user) {
-    alert('Not logged in.');
+    showToast('Not logged in.', 'error');
     return;
   }
 
@@ -51,7 +52,7 @@ export async function handleFreeInputAfterAuth() {
       showFreeInputForm();
     }
   } catch (error) {
-    alert('An error occurred. Please try again.');
+    showToast('An error occurred. Please try again.', 'error');
   }
 }
 
@@ -90,17 +91,17 @@ export function showFreeInputForm() {
   const handleSubmit = async () => {
     const promptText = textarea.value.trim();
     if (!promptText) {
-      alert('Please enter a prompt.');
+      showToast('Please enter a prompt.', 'warn');
       return;
     }
 
     if (!_lastSelectedSourceId) {
-      alert('Please select a repository.');
+      showToast('Please select a repository.', 'warn');
       return;
     }
 
     if (!_lastSelectedBranch) {
-      alert('Please select a branch.');
+      showToast('Please select a branch.', 'warn');
       return;
     }
     
@@ -136,6 +137,7 @@ export function showFreeInputForm() {
               window.open(sessionUrl, '_blank', 'noopener,noreferrer');
             }
           }
+          showToast('Prompt sent to Jules successfully!', 'success');
           submitted = true;
         } catch (error) {
           retryCount++;
@@ -150,7 +152,7 @@ export function showFreeInputForm() {
             } else if (result.action === 'queue') {
               const user = window.auth?.currentUser;
               if (!user) {
-                alert('Please sign in to queue prompts.');
+                showToast('Please sign in to queue prompts.', 'warn');
                 return;
               }
               try {
@@ -161,9 +163,9 @@ export function showFreeInputForm() {
                   branch: _lastSelectedBranch,
                   note: 'Queued from Free Input flow'
                 });
-                alert('Prompt queued. You can restart it later from your Jules queue.');
+                showToast('Prompt queued successfully!', 'success');
               } catch (err) {
-                alert('Failed to queue prompt: ' + err.message);
+                showToast('Failed to queue prompt: ' + err.message, 'error');
               }
               return;
             } else if (result.action === 'retry') {
@@ -177,7 +179,7 @@ export function showFreeInputForm() {
             if (result.action === 'queue') {
               const user = window.auth?.currentUser;
               if (!user) {
-                alert('Please sign in to queue prompts.');
+                showToast('Please sign in to queue prompts.', 'warn');
                 return;
               }
               try {
@@ -188,9 +190,9 @@ export function showFreeInputForm() {
                   branch: _lastSelectedBranch,
                   note: 'Queued from Free Input flow (final failure)'
                 });
-                alert('Prompt queued. You can restart it later from your Jules queue.');
+                showToast('Prompt queued successfully!', 'success');
               } catch (err) {
-                alert('Failed to queue prompt: ' + err.message);
+                showToast('Failed to queue prompt: ' + err.message, 'error');
               }
               return;
             }
@@ -205,7 +207,7 @@ export function showFreeInputForm() {
                   window.open(sessionUrl, '_blank', 'noopener,noreferrer');
                 }
               } catch (finalError) {
-                alert('Failed to submit task after multiple retries. Please try again later.');
+                showToast('Failed to submit task after multiple retries. Please try again later.', 'error');
               }
             }
             return;
@@ -217,24 +219,24 @@ export function showFreeInputForm() {
         }
       }
     } catch (error) {
-      alert('Failed to submit prompt: ' + error.message);
+      showToast('Failed to submit prompt: ' + error.message, 'error');
     }
   };
 
   const handleSplit = async () => {
     const promptText = textarea.value.trim();
     if (!promptText) {
-      alert('Please enter a prompt.');
+      showToast('Please enter a prompt.', 'warn');
       return;
     }
 
     if (!_lastSelectedSourceId) {
-      alert('Please select a repository.');
+      showToast('Please select a repository.', 'warn');
       return;
     }
 
     if (!_lastSelectedBranch) {
-      alert('Please select a branch.');
+      showToast('Please select a branch.', 'warn');
       return;
     }
     
@@ -243,14 +245,14 @@ export function showFreeInputForm() {
       showSubtaskSplitModal(promptText);
     } catch (error) {
       console.error('Error showing modal:', error);
-      alert('Failed to process prompt: ' + error.message);
+      showToast('Failed to process prompt: ' + error.message, 'error');
     }
   };
 
   const handleCopen = async (target) => {
     const promptText = textarea.value.trim();
     if (!promptText) {
-      alert('Please enter a prompt.');
+      showToast('Please enter a prompt.', 'warn');
       return;
     }
 
@@ -282,7 +284,7 @@ export function showFreeInputForm() {
       }
       window.open(url, '_blank', 'noopener,noreferrer');
     } catch (error) {
-      alert('Failed to copy prompt: ' + error.message);
+      showToast('Failed to copy prompt: ' + error.message, 'error');
     }
   };
 
@@ -293,23 +295,23 @@ export function showFreeInputForm() {
   const handleQueue = async () => {
     const promptText = textarea.value.trim();
     if (!promptText) {
-      alert('Please enter a prompt.');
+      showToast('Please enter a prompt.', 'warn');
       return;
     }
 
     if (!_lastSelectedSourceId) {
-      alert('Please select a repository.');
+      showToast('Please select a repository.', 'warn');
       return;
     }
 
     if (!_lastSelectedBranch) {
-      alert('Please select a branch.');
+      showToast('Please select a branch.', 'warn');
       return;
     }
 
     const user = window.auth?.currentUser;
     if (!user) {
-      alert('Please sign in to queue prompts.');
+      showToast('Please sign in to queue prompts.', 'warn');
       return;
     }
 
@@ -321,10 +323,10 @@ export function showFreeInputForm() {
         branch: _lastSelectedBranch,
         note: 'Queued from Free Input'
       });
-      alert('Prompt queued successfully!');
+      showToast('Prompt queued successfully!', 'success');
       hideFreeInputForm();
     } catch (err) {
-      alert('Failed to queue prompt: ' + err.message);
+      showToast('Failed to queue prompt: ' + err.message, 'error');
     }
   };
 
@@ -368,9 +370,19 @@ export function showFreeInputForm() {
 export function hideFreeInputForm() {
   const freeInputSection = document.getElementById('freeInputSection');
   const empty = document.getElementById('empty');
+  const title = document.getElementById('title');
+  const meta = document.getElementById('meta');
+  const actions = document.getElementById('actions');
+  const content = document.getElementById('content');
   
   freeInputSection.classList.add('hidden');
+  
+  // Restore the main content area elements
   empty.classList.remove('hidden');
+  if (title) title.style.display = '';
+  if (meta) meta.style.display = '';
+  if (actions) actions.style.display = '';
+  if (content) content.style.display = '';
 }
 
 async function populateFreeInputRepoSelection() {
