@@ -6,36 +6,28 @@ export function setViaProxy(proxyFn) {
   viaProxy = proxyFn;
 }
 
+const TOKEN_MAX_AGE = 60 * 24 * 60 * 60 * 1000; // 60 days
+
 async function getGitHubAccessToken() {
   try {
-    if (!window.auth?.currentUser) {
-      return null;
-    }
-    
-    const providerData = window.auth.currentUser.providerData.find(
-      provider => provider.providerId === 'github.com'
-    );
-    
-    if (!providerData) {
-      return null;
-    }
-    
+    const user = window.auth?.currentUser;
+    if (!user) return null;
+
+    const isGitHubAuth = user.providerData.some(p => p.providerId === 'github.com');
+    if (!isGitHubAuth) return null;
+
     const tokenDataStr = localStorage.getItem('github_access_token');
-    if (!tokenDataStr) {
-      return null;
-    }
+    if (!tokenDataStr) return null;
+
+    const { token, timestamp } = JSON.parse(tokenDataStr);
     
-    const tokenData = JSON.parse(tokenDataStr);
-    
-    const SIXTY_DAYS = 60 * 24 * 60 * 60 * 1000;
-    const tokenAge = Date.now() - tokenData.timestamp;
-    if (tokenAge > SIXTY_DAYS) {
+    if (Date.now() - timestamp > TOKEN_MAX_AGE) {
       localStorage.removeItem('github_access_token');
       return null;
     }
-    
-    return tokenData.token;
-  } catch (error) {
+
+    return token;
+  } catch {
     return null;
   }
 }
