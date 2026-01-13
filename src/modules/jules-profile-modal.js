@@ -273,7 +273,7 @@ async function loadAndDisplayJulesProfile(uid) {
     }
 
     loadBtn.disabled = false;
-    loadBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">refresh</span>Refresh Jules Info';
+    loadBtn.innerHTML = '<span class="icon" aria-hidden="true">sync</span>';
     
     attachViewAllSessionsHandler();
 
@@ -286,7 +286,7 @@ async function loadAndDisplayJulesProfile(uid) {
     </div>`;
 
     loadBtn.disabled = false;
-    loadBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">refresh</span>Refresh Jules Info';
+    loadBtn.innerHTML = '<span class="icon" aria-hidden="true">sync</span>';
   }
 }
 

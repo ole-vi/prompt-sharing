@@ -369,7 +369,9 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       toggle.type = 'button';
       const isForced = forcedExpanded.has(entry.path);
       const isExpanded = isForced || expandedState.has(entry.path);
-      toggle.textContent = isExpanded ? '▾' : '▸';
+      toggle.innerHTML = isExpanded 
+        ? '<span class="icon" aria-hidden="true">expand_more</span>'
+        : '<span class="icon" aria-hidden="true">chevron_right</span>';
       toggle.dataset.action = 'toggle-dir';
       toggle.dataset.path = entry.path;
 
@@ -381,15 +383,17 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       iconsContainer.className = 'folder-icons';
 
       const ghIcon = document.createElement('span');
-      ghIcon.className = 'github-folder-icon';
-      ghIcon.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span>';
+      ghIcon.className = 'github-folder-icon icon icon-inline';
+      ghIcon.textContent = 'folder';
+      ghIcon.setAttribute('aria-hidden', 'true');
       ghIcon.title = 'Open directory on GitHub';
       ghIcon.dataset.action = 'open-github';
       ghIcon.dataset.path = entry.path;
 
       const addIcon = document.createElement('span');
-      addIcon.className = 'add-file-icon';
-      addIcon.textContent = '+';
+      addIcon.className = 'add-file-icon icon icon-inline';
+      addIcon.textContent = 'add';
+      addIcon.setAttribute('aria-hidden', 'true');
       addIcon.title = 'Create new file in this directory';
       addIcon.dataset.action = 'show-submenu';
       addIcon.dataset.path = entry.path;

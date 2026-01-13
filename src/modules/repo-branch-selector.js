@@ -319,7 +319,9 @@ export class RepoSelector {
     }
     
     const star = document.createElement('span');
-    star.textContent = isFavorite ? '★' : '☆';
+    star.innerHTML = isFavorite 
+      ? '<span class="icon icon-inline" aria-hidden="true">star</span>'
+      : '<span class="icon icon-inline" aria-hidden="true">star_border</span>';
     star.style.cssText = `font-size:18px; cursor:pointer; color:${isFavorite ? 'var(--accent)' : 'var(--muted)'}; flex-shrink:0;`;
     star.onclick = async (e) => {
       e.stopPropagation();

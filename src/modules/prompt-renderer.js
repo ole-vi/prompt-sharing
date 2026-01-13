@@ -381,11 +381,11 @@ function enhanceCodeBlocks() {
           const code = pre.innerText;
           try {
             await navigator.clipboard.writeText(code);
-            const originalText = btn.textContent;
-            btn.textContent = '✓';
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span>';
             btn.classList.add('copied');
             setTimeout(() => {
-              btn.textContent = originalText;
+              btn.innerHTML = originalHTML;
               btn.classList.remove('copied');
             }, 900);
           } catch {}

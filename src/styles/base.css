@@ -55,6 +55,55 @@
   vertical-align: -0.25em;
 }
 
+/* Additional icon sizes */
+.icon-sm {
+  font-size: 0.875em;
+  vertical-align: -0.1em;
+}
+
+.icon-md {
+  font-size: 1.25em;
+  vertical-align: -0.15em;
+}
+
+.icon-2xl {
+  font-size: 3em;
+  vertical-align: -0.25em;
+}
+
+.icon-3xl {
+  font-size: 4em;
+  vertical-align: -0.25em;
+}
+
+/* Icon color variants */
+.icon-danger { color: var(--danger); }
+.icon-warn { color: var(--warn); }
+.icon-info { color: var(--info); }
+.icon-success { color: var(--success); }
+.icon-error { color: var(--error); }
+.icon-muted { color: var(--muted); }
+.icon-accent { color: var(--accent); }
+
+/* Icon animations */
+.icon-spin {
+  animation: spin 1s linear infinite;
+}
+
+.icon-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Loading state icons */
+.icon-loading {
+  animation: spin 1s linear infinite;
+}
+
 * { box-sizing: border-box; }
 
 html, body { 

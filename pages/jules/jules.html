@@ -16,7 +16,10 @@
 
   <div class="wrap">
     <main class="card pad-lg">
-      <h2 class="section-title-lg mb-md"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Jules Account</h2>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 class="section-title-lg" style="margin: 0;"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Jules Account</h2>
+        <button id="loadJulesInfoBtn" class="btn-icon" title="Refresh Jules Info" style="display: none;"><span class="icon" aria-hidden="true">sync</span></button>
+      </div>
       
       <!-- Loading Message -->
       <div id="julesLoading" class="panel pad-xl text-center mb-md hidden">
@@ -70,8 +73,6 @@
             <div class="muted-text small-text">Loading sources...</div>
           </div>
         </div>
-        
-        <button id="loadJulesInfoBtn" class="btn w-full mb-md"><span class="icon icon-inline" aria-hidden="true">refresh</span> Refresh Jules Info</button>
         </div>
         <!-- End Jules Content Section -->
         
