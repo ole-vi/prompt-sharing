@@ -6,54 +6,12 @@ export function setViaProxy(proxyFn) {
   viaProxy = proxyFn;
 }
 
-async function getGitHubAccessToken() {
-  try {
-    if (!window.auth?.currentUser) {
-      return null;
-    }
-    
-    const providerData = window.auth.currentUser.providerData.find(
-      provider => provider.providerId === 'github.com'
-    );
-    
-    if (!providerData) {
-      return null;
-    }
-    
-    const tokenDataStr = localStorage.getItem('github_access_token');
-    if (!tokenDataStr) {
-      return null;
-    }
-    
-    const tokenData = JSON.parse(tokenDataStr);
-    
-    const SIXTY_DAYS = 60 * 24 * 60 * 60 * 1000;
-    const tokenAge = Date.now() - tokenData.timestamp;
-    if (tokenAge > SIXTY_DAYS) {
-      localStorage.removeItem('github_access_token');
-      return null;
-    }
-    
-    return tokenData.token;
-  } catch (error) {
-    return null;
-  }
-}
-
 export async function fetchJSON(url) {
   try {
-    const headers = { 'Accept': 'application/vnd.github+json' };
-    
-    const token = await getGitHubAccessToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
     const res = await fetch(viaProxy(url), {
       cache: 'no-store',
-      headers
+      headers: { 'Accept': 'application/vnd.github+json' }
     });
-    
     if (!res.ok) return null;
     return res.json();
   } catch (e) {

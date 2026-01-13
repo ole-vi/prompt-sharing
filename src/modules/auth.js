@@ -20,16 +20,7 @@ export async function signInWithGitHub() {
       return;
     }
     const provider = new firebase.auth.GithubAuthProvider();
-    provider.addScope('repo');
-    const result = await window.auth.signInWithPopup(provider);
-    
-    if (result.credential && result.credential.accessToken) {
-      const tokenData = {
-        token: result.credential.accessToken,
-        timestamp: Date.now()
-      };
-      localStorage.setItem('github_access_token', JSON.stringify(tokenData));
-    }
+    await window.auth.signInWithPopup(provider);
   } catch (error) {
     console.error('Sign-in failed:', error);
     alert('Failed to sign in. Please try again.');
@@ -40,7 +31,6 @@ export async function signOutUser() {
   try {
     if (window.auth) {
       await window.auth.signOut();
-      localStorage.removeItem('github_access_token');
     }
   } catch (error) {
     console.error('Sign-out failed:', error);
