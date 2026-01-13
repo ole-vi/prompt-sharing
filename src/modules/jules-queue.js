@@ -622,7 +622,7 @@ function renderQueueList(items) {
               <div class="queue-title">
                 Subtasks Batch <span class="queue-status">${status}</span>
                 <span class="queue-status">(${remainingCount} remaining)</span>
-                <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item"><span class="icon" aria-hidden="true">edit</span></button>
+                <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item"><span class="icon icon-inline" aria-hidden="true">edit</span></button>
               </div>
               <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
               ${repoDisplay}
@@ -647,7 +647,7 @@ function renderQueueList(items) {
           <div class="queue-content">
             <div class="queue-title">
               Single Prompt <span class="queue-status">${status}</span>
-              <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item"><span class="icon" aria-hidden="true">edit</span></button>
+              <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item"><span class="icon icon-inline" aria-hidden="true">edit</span></button>
             </div>
             <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
             ${repoDisplay}
