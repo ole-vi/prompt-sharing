@@ -18,8 +18,12 @@ export function clearJulesKeyCache(uid = null) {
 
 export async function getDecryptedJulesKey(uid) {
   const cached = keyCache.get(uid);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.key;
+  if (cached) {
+    if (Date.now() - cached.timestamp < CACHE_TTL) {
+      return cached.key;
+    }
+    // Remove expired cache entry to avoid unbounded memory growth
+    keyCache.delete(uid);
   }
 
   try {
