@@ -20,7 +20,6 @@ export async function signInWithGitHub() {
       return;
     }
     const provider = new firebase.auth.GithubAuthProvider();
-    provider.addScope('repo');
     const result = await window.auth.signInWithPopup(provider);
     
     if (result.credential && result.credential.accessToken) {
@@ -29,6 +28,10 @@ export async function signInWithGitHub() {
         timestamp: Date.now()
       };
       localStorage.setItem('github_access_token', JSON.stringify(tokenData));
+    } else {
+      console.warn('GitHub sign-in succeeded but no access token was returned. Falling back to unauthenticated GitHub requests.', {
+        hasCredential: !!result.credential
+      });
     }
   } catch (error) {
     console.error('Sign-in failed:', error);

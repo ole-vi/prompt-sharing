@@ -19,9 +19,20 @@ async function getGitHubAccessToken() {
     const tokenDataStr = localStorage.getItem('github_access_token');
     if (!tokenDataStr) return null;
 
-    const { token, timestamp } = JSON.parse(tokenDataStr);
+    const parsed = JSON.parse(tokenDataStr);
+    const isObject = parsed !== null && typeof parsed === 'object';
+    const token = isObject ? parsed.token : undefined;
+    const timestamp = isObject ? parsed.timestamp : undefined;
     
-    if (Date.now() - timestamp > TOKEN_MAX_AGE) {
+    // Validate token is a non-empty string and timestamp is valid
+    if (typeof token !== 'string' || !token || !Number.isFinite(timestamp)) {
+      localStorage.removeItem('github_access_token');
+      return null;
+    }
+    
+    // Validate timestamp is not in the future and not expired
+    const now = Date.now();
+    if (timestamp > now || now - timestamp > TOKEN_MAX_AGE) {
       localStorage.removeItem('github_access_token');
       return null;
     }
@@ -37,7 +48,7 @@ export async function fetchJSON(url) {
     const headers = { 'Accept': 'application/vnd.github+json' };
     
     const token = await getGitHubAccessToken();
-    if (token) {
+    if (token && typeof token === 'string' && token.length > 0) {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
