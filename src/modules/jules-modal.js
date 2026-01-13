@@ -375,11 +375,11 @@ export function initJulesKeyModalListeners() {
         hideFreeInputForm();
       }
       if (profileModal && profileModal.style.display === 'flex') {
-        const { hideUserProfileModal } = await import('./jules-profile-modal.js');
+        const { hideUserProfileModal } = await import('./jules-account.js');
         hideUserProfileModal();
       }
       if (sessionsHistoryModal && sessionsHistoryModal.style.display === 'flex') {
-        const { hideJulesSessionsHistoryModal } = await import('./jules-profile-modal.js');
+        const { hideJulesSessionsHistoryModal } = await import('./jules-account.js');
         hideJulesSessionsHistoryModal();
       }
     }
@@ -404,7 +404,7 @@ export function initJulesKeyModalListeners() {
   if (profileModal) {
     profileModal.addEventListener('click', async (e) => {
       if (e.target === profileModal) {
-        const { hideUserProfileModal } = await import('./jules-profile-modal.js');
+        const { hideUserProfileModal } = await import('./jules-account.js');
         hideUserProfileModal();
       }
     });
@@ -413,7 +413,7 @@ export function initJulesKeyModalListeners() {
   if (sessionsHistoryModal) {
     sessionsHistoryModal.addEventListener('click', async (e) => {
       if (e.target === sessionsHistoryModal) {
-        const { hideJulesSessionsHistoryModal } = await import('./jules-profile-modal.js');
+        const { hideJulesSessionsHistoryModal } = await import('./jules-account.js');
         hideJulesSessionsHistoryModal();
       }
     });

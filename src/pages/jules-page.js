@@ -4,7 +4,7 @@
  */
 
 import { waitForFirebase } from '../shared-init.js';
-import { loadJulesAccountInfo } from '../modules/jules-profile-modal.js';
+import { loadJulesAccountInfo } from '../modules/jules-account.js';
 import { showJulesKeyModal } from '../modules/jules-modal.js';
 import { deleteStoredJulesKey, checkJulesKey } from '../modules/jules-keys.js';
 import { showToast } from '../modules/toast.js';

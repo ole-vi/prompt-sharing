@@ -1,5 +1,5 @@
-// ===== Jules Profile Modal Module =====
-// Profile modal and sessions history functionality
+// ===== Jules Account Module =====
+// Jules account information display and management
 
 import { checkJulesKey, deleteStoredJulesKey } from './jules-keys.js';
 import { showJulesKeyModal } from './jules-modal.js';
