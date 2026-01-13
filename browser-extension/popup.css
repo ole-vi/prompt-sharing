@@ -1,3 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+:root {
+  --accent: #4dd9ff;
+  --accent-hover-bg: rgba(77, 217, 255, 0.12);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -61,7 +68,7 @@ select:focus {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .button:hover {
@@ -81,11 +88,62 @@ select:focus {
   background: #34495e;
 }
 
+/* Accent outline button (like "Submit to Jules" styling) */
+.button.outline-accent {
+  background: #2c3e50;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+.button.outline-accent:hover {
+  background: #34495e;
+}
+
+.button.outline-accent:disabled {
+  background: #2c3e50;
+  border-color: #34495e;
+  color: #7f8c8d;
+}
+
 .button-icon {
   width: 16px;
   height: 16px;
   vertical-align: middle;
   margin-right: 6px;
+}
+
+/* Material Symbols Icon Styles */
+.icon {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga';
+}
+
+.icon-inline {
+  font-size: 1em;
+  vertical-align: -0.125em;
+}
+
+.icon-lg {
+  font-size: 1.5em;
+  vertical-align: -0.25em;
+}
+
+.icon-xl {
+  font-size: 2em;
+  vertical-align: -0.25em;
 }
 
 .status {
@@ -94,6 +152,7 @@ select:focus {
   margin-top: 12px;
   font-size: 12px;
   display: none;
+  align-items: center;
 }
 
 .status.success {
@@ -164,6 +223,15 @@ select:focus {
   margin-bottom: 8px;
 }
 
+.github-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .github-username {
   color: #27ae60;
   font-weight: 500;
@@ -171,8 +239,14 @@ select:focus {
 
 .disconnect-btn {
   margin-left: auto;
-  padding: 4px 8px;
-  font-size: 11px;
+  width: 36px;
+  min-width: 36px;
+  padding: 6px;
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .action-buttons {
