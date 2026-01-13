@@ -206,6 +206,12 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   setElementDisplay(titleEl, true);
   setElementDisplay(metaEl, true);
   setElementDisplay(actionsEl, true);
+  
+  // Clear inline styles that might have been set by showFreeInputForm
+  if (titleEl) titleEl.style.display = '';
+  if (metaEl) metaEl.style.display = '';
+  if (actionsEl) actionsEl.style.display = '';
+  
   if (contentEl) {
     contentEl.style.display = '';
     contentEl.classList.remove('hidden');
