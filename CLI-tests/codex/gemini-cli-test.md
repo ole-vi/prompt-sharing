@@ -28,7 +28,7 @@ You are in a Linux dev container. Do not run any Gradle or project builds.
 - [ ] Run a second prompt: `gemini -p "Write me a haiku about debugging"`
 
 
-- [ ] Run a realistic code-context prompt on a myPlanet file:  
+- [ ] Run a realistic code-context prompt on a project file:  
 
 
   `cat README.md | gemini -p "Summarize the purpose of this project"`

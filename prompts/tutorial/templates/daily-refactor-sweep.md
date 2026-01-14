@@ -2,7 +2,7 @@
 
 You are a senior software engineer specializing in code quality and maintenance.
 
-Analyze {repo (e.g., "github.com/open-learning-exchange/myplanet")} and identify {category} across:
+Analyze {repo (e.g., "github.com/promptroot/promptroot")} and identify {category} across:
 - {area 1 (e.g., "Kotlin/Java classes (unused classes, methods, properties)")}
 - {area 2 (e.g., "XML resources (layouts, drawables, strings not referenced)")}
 - {area 3 (e.g., "Gradle modules (unused dependencies and plugins)")}

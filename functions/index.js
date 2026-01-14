@@ -43,8 +43,8 @@ exports.runJules = functions.https.onCall(async (data, context) => {
   }
 
   const promptText = (data && data.promptText) || "";
-  const sourceId = (data && data.sourceId) || "sources/github/open-learning-exchange/myplanet";
-  const branch = (data && data.branch) || "master";
+  const sourceId = (data && data.sourceId) || "sources/github/promptroot/promptroot";
+  const branch = (data && data.branch) || "main";
 
   if (!promptText || typeof promptText !== "string" || promptText.trim() === "") {
     throw new functions.https.HttpsError("invalid-argument", "Prompt text is required");
@@ -145,8 +145,8 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
     const uid = decodedToken.uid;
 
     const { promptText, sourceId, branch } = req.body || {};
-    const source = sourceId || "sources/github/open-learning-exchange/myplanet";
-    const startingBranch = branch || "master";
+    const source = sourceId || "sources/github/promptroot/promptroot";
+    const startingBranch = branch || "main";
 
 
     if (!promptText || typeof promptText !== 'string' || promptText.trim() === '') {
