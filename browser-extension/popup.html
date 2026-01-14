@@ -13,11 +13,12 @@
     <!-- GitHub Connection Status -->
     <div class="section" id="githubSection">
       <div id="githubDisconnected">
-        <button class="button secondary" id="connectGitHubBtn">🔗 Connect to GitHub</button>
+        <button class="button secondary" id="connectGitHubBtn">Connect to GitHub</button>
         <div class="info-text">Connect to send clips to PromptRoot</div>
       </div>
       <div id="githubConnected" class="hidden">
         <div class="github-connected-container">
+          <img id="githubAvatar" class="github-avatar hidden" alt="GitHub avatar">
           <span id="githubUsername" class="github-username"></span>
           <button class="button secondary disconnect-btn" id="disconnectBtn">Disconnect</button>
         </div>
@@ -41,8 +42,8 @@
 
     <!-- Action Buttons -->
     <div class="action-buttons">
-      <button class="button secondary flex-1" id="downloadBtn" disabled>💾 Download</button>
-      <button class="button flex-1" id="syncBtn" disabled><img src="PromptRootLogo.svg" alt="" class="button-icon">Send to PromptRoot</button>
+      <button class="button secondary flex-1" id="downloadBtn" disabled>Download</button>
+      <button class="button outline-accent flex-1" id="syncBtn" disabled><img src="PromptRootLogo.svg" alt="" class="button-icon">Send to PromptRoot</button>
     </div>
     
     <div class="status" id="status"></div>
@@ -51,6 +52,7 @@
   <script src="config.js"></script>
   <script src="github-auth.js"></script>
   <script src="github-sync.js"></script>
+  <script src="icon-helpers.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

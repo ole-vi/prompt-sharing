@@ -10,7 +10,9 @@ const GitHubSync = (function() {
     return {
       connected: true,
       username: user?.login || 'Unknown',
-      repo: `${CONFIG.github.targetRepo.owner}/${CONFIG.github.targetRepo.repo}`
+      repo: `${CONFIG.github.targetRepo.owner}/${CONFIG.github.targetRepo.repo}`,
+      branch: CONFIG.github.targetRepo.branch,
+      path: CONFIG.github.targetRepo.path
     };
   }
 

@@ -224,6 +224,24 @@ export function isGistUrl(url) {
 }
 
 export async function getBranches(owner, repo) {
-  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=100&ts=${Date.now()}`;
-  return fetchJSON(viaProxy(url));
+  const perPage = 100;
+  const maxPages = 10;
+  const branches = [];
+
+  for (let page = 1; page <= maxPages; page++) {
+    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=${perPage}&page=${page}&ts=${Date.now()}`;
+    const batch = await fetchJSON(viaProxy(url));
+
+    if (!Array.isArray(batch) || batch.length === 0) {
+      break;
+    }
+
+    branches.push(...batch);
+
+    if (batch.length < perPage) {
+      break;
+    }
+  }
+
+  return branches;
 }

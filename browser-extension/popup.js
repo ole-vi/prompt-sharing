@@ -9,16 +9,34 @@ const connectGitHubBtn = document.getElementById('connectGitHubBtn');
 const disconnectBtn = document.getElementById('disconnectBtn');
 const githubDisconnected = document.getElementById('githubDisconnected');
 const githubConnected = document.getElementById('githubConnected');
+const githubAvatar = document.getElementById('githubAvatar');
 const githubUsername = document.getElementById('githubUsername');
 const repoPath = document.getElementById('repoPath');
 
+const iconHelpers = window.IconHelpers;
+if (!iconHelpers) {
+  throw new Error('IconHelpers not loaded. Ensure icon-helpers.js is included before popup.js');
+}
+
+const { createIcon, createIconWithText, ICONS } = iconHelpers;
+
+const originalSyncLabel = syncBtn.innerHTML;
+
+function setDownloadButtonIdle() {
+  downloadBtn.innerHTML = createIconWithText(ICONS.DOWNLOAD, 'Download');
+}
+
 async function init() {
   await updateGitHubStatus();
+  connectGitHubBtn.innerHTML = createIconWithText(ICONS.LINK, 'Connect to GitHub');
+  disconnectBtn.innerHTML = createIcon(ICONS.LOGOUT, { title: 'Disconnect' });
+  disconnectBtn.title = 'Disconnect';
+  setDownloadButtonIdle();
   extractContent();
   chrome.runtime.onMessage.addListener((request) => {
     if (request.action === 'authSuccess') {
       updateGitHubStatus();
-      showStatus('✅ Connected to GitHub!', 'success');
+      showStatus('Connected to GitHub!', 'success');
     }
   });
 }
@@ -89,7 +107,7 @@ function downloadMarkdown() {
   const finalFilename = filename.endsWith('.md') ? filename : filename + '.md';
   
   downloadBtn.disabled = true;
-  downloadBtn.textContent = '⏳ Downloading...';
+  downloadBtn.innerHTML = createIconWithText(ICONS.LOADING, 'Downloading...');
   showStatus('Preparing download...', 'info');
   
   try {
@@ -104,15 +122,15 @@ function downloadMarkdown() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    showStatus('✅ Downloaded successfully!', 'success');
+    showStatus('Downloaded successfully!', 'success');
     setTimeout(() => {
       downloadBtn.disabled = false;
-      downloadBtn.textContent = '💾 Download';
+      setDownloadButtonIdle();
     }, 1500);
   } catch (error) {
     showStatus('Error: ' + error.message, 'error');
     downloadBtn.disabled = false;
-    downloadBtn.textContent = '💾 Download';
+    setDownloadButtonIdle();
   }
 }
 
@@ -131,7 +149,7 @@ async function syncToGitHub() {
   const finalFilename = filename.endsWith('.md') ? filename : filename + '.md';
   
   syncBtn.disabled = true;
-  syncBtn.innerHTML = '⏳ Sending...';
+  syncBtn.innerHTML = createIconWithText(ICONS.LOADING, 'Sending...');
   showStatus('Sending to PromptRoot...', 'info');
   
   try {
@@ -143,7 +161,7 @@ async function syncToGitHub() {
     );
     
     if (result.success) {
-      showStatus(`✅ ${result.message}`, 'success');
+      showStatus(result.message, 'success');
       
       setTimeout(() => {
         const link = document.createElement('a');
@@ -156,15 +174,15 @@ async function syncToGitHub() {
         statusDiv.appendChild(link);
       }, 100);
     } else {
-      showStatus('❌ ' + result.error, 'error');
+      showStatus(result.error, 'error');
     }
     
     syncBtn.disabled = false;
-    syncBtn.innerHTML = '<img src="PromptRootLogo.svg" alt="" class="button-icon">Send to PromptRoot';
+    syncBtn.innerHTML = originalSyncLabel;
   } catch (error) {
     showStatus('Error: ' + error.message, 'error');
     syncBtn.disabled = false;
-    syncBtn.innerHTML = '<img src="PromptRootLogo.svg" alt="" class="button-icon">Send to PromptRoot';
+    syncBtn.innerHTML = originalSyncLabel;
   }
 }
 
@@ -175,13 +193,70 @@ async function updateGitHubStatus() {
     githubDisconnected.classList.add('hidden');
     githubConnected.classList.remove('hidden');
     githubUsername.textContent = `@${status.username}`;
-    repoPath.textContent = status.repo;
+    repoPath.textContent = status.branch ? `${status.repo}/${status.branch}` : status.repo;
+
+    try {
+      let avatarUrl = null;
+      const cachedUser = await GitHubAuth.getUserInfo();
+      if (cachedUser && typeof cachedUser.avatar_url === 'string') {
+        avatarUrl = cachedUser.avatar_url;
+      }
+
+      if (!avatarUrl) {
+        const token = await GitHubAuth.getAccessToken();
+        if (token) {
+          const response = await fetch('https://api.github.com/user', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28'
+            }
+          });
+          if (response.ok) {
+            const me = await response.json();
+            if (me && typeof me.avatar_url === 'string') {
+              avatarUrl = me.avatar_url;
+            }
+          }
+        }
+      }
+
+      if (githubAvatar && avatarUrl) {
+        githubAvatar.classList.add('hidden');
+        githubAvatar.onload = () => {
+          githubAvatar.classList.remove('hidden');
+        };
+        githubAvatar.onerror = () => {
+          githubAvatar.removeAttribute('src');
+          githubAvatar.classList.add('hidden');
+        };
+        githubAvatar.src = avatarUrl;
+      } else if (githubAvatar) {
+        githubAvatar.removeAttribute('src');
+        githubAvatar.classList.add('hidden');
+      }
+    } catch {
+      if (githubAvatar) {
+        githubAvatar.removeAttribute('src');
+        githubAvatar.classList.add('hidden');
+      }
+    }
     
     syncBtn.disabled = false;
   } else {
     githubDisconnected.classList.remove('hidden');
     githubConnected.classList.add('hidden');
     syncBtn.disabled = true;
+
+    if (repoPath) {
+      repoPath.textContent = '';
+    }
+
+    if (githubAvatar) {
+      githubAvatar.removeAttribute('src');
+      githubAvatar.classList.add('hidden');
+    }
   }
 }
 
@@ -208,9 +283,14 @@ async function disconnectFromGitHub() {
 }
 
 function showStatus(message, type) {
-  statusDiv.textContent = message;
+  statusDiv.replaceChildren();
+
+  const iconName = type === 'success' ? ICONS.CHECK : type === 'error' ? ICONS.ERROR : ICONS.INFO;
+  statusDiv.innerHTML = createIcon(iconName, { size: 'inline' });
+  statusDiv.appendChild(document.createTextNode(' ' + message));
+
   statusDiv.className = `status ${type}`;
-  statusDiv.style.display = 'block';
+  statusDiv.style.display = 'flex';
 }
 
 downloadBtn.addEventListener('click', downloadMarkdown);

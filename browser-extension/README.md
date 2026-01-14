@@ -4,14 +4,14 @@ A browser extension that captures any webpage as Markdown and syncs it directly 
 
 ## Features
 
-- 💾 **One-Click Capture**: Click the extension icon to save any webpage
-- 📝 **Markdown Conversion**: Automatically converts HTML to clean Markdown
-- 🔗 **Preserves Links**: Keeps all hyperlinks and images intact
-- 📊 **Smart Extraction**: Removes navigation, ads, and other clutter
-- ☁️ **GitHub Sync**: Automatically sync clips to your GitHub repository
-- ⚡ **Instant Download**: Option to download locally to your Downloads folder
-- 🔐 **Secure OAuth**: Connect via GitHub OAuth (no PAT needed)
-- 👥 **Multi-User**: Each user gets their own folder in the repository
+- **One-Click Capture**: Click the extension icon to save any webpage
+- **Markdown Conversion**: Automatically converts HTML to clean Markdown
+- **Preserves Links**: Keeps all hyperlinks and images intact
+- **Smart Extraction**: Removes navigation, ads, and other clutter
+- **GitHub Sync**: Automatically sync clips to your GitHub repository
+- **Instant Download**: Option to download locally to your Downloads folder
+- **Secure OAuth**: Connect via GitHub OAuth (no PAT needed)
+- **Multi-User**: Each user gets their own folder in the repository
 
 ## Installation
 
@@ -53,7 +53,7 @@ A browser extension that captures any webpage as Markdown and syncs it directly 
 
 1. **Click the extension icon** to open the popup
 
-2. **Click "🔗 Connect to GitHub"**
+2. **Click "Connect to GitHub"**
 
 3. **Authorize the application** on GitHub
    - You'll be redirected to GitHub
@@ -74,8 +74,8 @@ A browser extension that captures any webpage as Markdown and syncs it directly 
    - Preview of converted Markdown
 
 4. **Choose your action**:
-   - **💾 Download**: Save locally to your Downloads folder
-   - **☁️ Send to GitHub**: Commit directly to the repository
+   - **Download**: Save locally to your Downloads folder
+   - **Send to GitHub**: Commit directly to the repository
 
 5. **Done!** Your clip is synced to `webclips/{your-username}/{filename}.md`
 
