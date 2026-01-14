@@ -352,7 +352,7 @@ async function loadAndDisplayJulesProfile(uid) {
 
         const promptPreview = (session.prompt || 'No prompt text').substring(0, 150);
         const displayPrompt = promptPreview.length < (session.prompt || '').length ? promptPreview + '...' : promptPreview;
-        const createdAt = session.createTime ? new Date(session.createTime).toLocaleDateString() : 'Unknown';
+        const createdAt = session.createTime ? new Date(session.createTime).toLocaleString() : 'Unknown';
         const prUrl = session.outputs?.[0]?.pullRequest?.url;
         const sessionId = session.name?.split('sessions/')[1] || session.id?.split('sessions/')[1] || session.id;
         const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
