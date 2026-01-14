@@ -1,7 +1,7 @@
 const CONFIG = {
   github: {
-    clientId: 'Ov23li5DWLIT2xCt7qQo',
-    redirectUri: 'https://prompt-sharing-f8eeb.firebaseapp.com/oauth-callback.html',
+    clientId: 'Ov23liz8g6qMlD1izTFe',
+    redirectUri: 'https://promptroot.ai/oauth-callback.html',
     scopes: ['repo'],
     targetRepo: {
       owner: 'promptroot',
@@ -12,8 +12,8 @@ const CONFIG = {
   },
   
   firebase: {
-    projectId: 'prompt-sharing-f8eeb',
-    functionsUrl: 'https://us-central1-prompt-sharing-f8eeb.cloudfunctions.net',
+    projectId: 'promptroot-b02a2',
+    functionsUrl: 'https://us-central1-promptroot-b02a2.cloudfunctions.net',
     
     endpoints: {
       oauthExchange: '/githubOAuthExchange',
