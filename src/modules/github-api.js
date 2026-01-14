@@ -151,15 +151,6 @@ export async function listPromptsViaTrees(owner, repo, branch, path = 'prompts',
   
   return { data: files, etag: result.etag };
 }
-    type: 'file',
-    name: n.path.split('/').pop(),
-    path: n.path,
-    sha: n.sha,
-    download_url: `https://raw.githubusercontent.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${encodeURIComponent(branch)}/${encodePathPreservingSlashes(n.path)}`
-  }));
-  
-  return { files, etag: result.etag, notModified: false };
-}
 
 export async function fetchRawFile(owner, repo, branch, path) {
   const encodedPath = encodePathPreservingSlashes(path);
