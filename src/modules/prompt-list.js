@@ -16,6 +16,9 @@ let listEl = null;
 let searchEl = null;
 let submenuEl = null;
 let selectFileCallback = null;
+let cachedFiles = null;
+let cachedItemsWithTags = null;
+let cachedFuseInstance = null;
 
 export function setSelectFileCallback(callback) {
   selectFileCallback = callback;
@@ -48,7 +51,7 @@ export function initPromptList() {
   if (searchClearBtn && searchEl) {
     searchClearBtn.addEventListener('click', () => {
       searchEl.value = '';
-      searchClearBtn.style.display = 'none';
+      searchClearBtn.classList.add('hidden');
       searchEl.focus();
       renderList(files, currentOwner, currentRepo, currentBranch);
     });
@@ -73,6 +76,9 @@ export function destroyPromptList() {
   currentRepo = null;
   currentBranch = null;
   selectFileCallback = null;
+  cachedFiles = null;
+  cachedItemsWithTags = null;
+  cachedFuseInstance = null;
 }
 
 export function getFiles() {
@@ -169,8 +175,8 @@ function createSubmenu() {
     return item;
   };
   
-  submenuEl.appendChild(makeMenuItem('Prompt (blank)', '📝', 'create-prompt'));
-  submenuEl.appendChild(makeMenuItem('Conversation (template)', '💬', 'create-conversation'));
+  submenuEl.appendChild(makeMenuItem('Prompt (blank)', '<span class="icon icon-inline" aria-hidden="true">edit_note</span>', 'create-prompt'));
+  submenuEl.appendChild(makeMenuItem('Conversation (template)', '<span class="icon icon-inline" aria-hidden="true">chat_bubble</span>', 'create-conversation'));
   
   document.body.appendChild(submenuEl);
 }
@@ -369,7 +375,9 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       toggle.type = 'button';
       const isForced = forcedExpanded.has(entry.path);
       const isExpanded = isForced || expandedState.has(entry.path);
-      toggle.textContent = isExpanded ? '▾' : '▸';
+      toggle.innerHTML = isExpanded 
+        ? '<span class="icon" aria-hidden="true">expand_more</span>'
+        : '<span class="icon" aria-hidden="true">chevron_right</span>';
       toggle.dataset.action = 'toggle-dir';
       toggle.dataset.path = entry.path;
 
@@ -381,15 +389,17 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       iconsContainer.className = 'folder-icons';
 
       const ghIcon = document.createElement('span');
-      ghIcon.className = 'github-folder-icon';
-      ghIcon.textContent = '🗂️';
+      ghIcon.className = 'github-folder-icon icon icon-inline';
+      ghIcon.textContent = 'folder';
+      ghIcon.setAttribute('aria-hidden', 'true');
       ghIcon.title = 'Open directory on GitHub';
       ghIcon.dataset.action = 'open-github';
       ghIcon.dataset.path = entry.path;
 
       const addIcon = document.createElement('span');
-      addIcon.className = 'add-file-icon';
-      addIcon.textContent = '+';
+      addIcon.className = 'add-file-icon icon icon-inline';
+      addIcon.textContent = 'add';
+      addIcon.setAttribute('aria-hidden', 'true');
       addIcon.title = 'Create new file in this directory';
       addIcon.dataset.action = 'show-submenu';
       addIcon.dataset.path = entry.path;
@@ -479,27 +489,35 @@ export function renderList(items, owner, repo, branch) {
   const q = searchEl && searchEl.value ? searchEl.value.trim() : '';
   const searchActive = Boolean(q);
 
+  // Ensure items is an array
+  if (!Array.isArray(items)) {
+    console.error('renderList received non-array items:', items);
+    items = [];
+  }
+
   let filtered = [];
   if (!q) {
     filtered = items.slice();
   } else {
-    const itemsWithTags = items.map(item => {
-      const tags = [];
-      for (const tagKey in TAG_DEFINITIONS) {
-        const tag = TAG_DEFINITIONS[tagKey];
-        if (tag.keywords.some(kw => new RegExp(kw, 'i').test(item.name))) {
-          tags.push(tag.label);
+    if (cachedFiles !== items) {
+      cachedFiles = items;
+      cachedItemsWithTags = items.map(item => {
+        const tags = [];
+        for (const tagKey in TAG_DEFINITIONS) {
+          const tag = TAG_DEFINITIONS[tagKey];
+          if (tag.keywords.some(kw => new RegExp(kw, 'i').test(item.name))) {
+            tags.push(tag.label);
+          }
         }
-      }
-      return { ...item, tags };
-    });
-
-    const fuse = new Fuse(itemsWithTags, {
-      keys: ['name', 'path', 'tags'],
-      includeScore: true,
-      threshold: 0.4,
-    });
-    filtered = fuse.search(q).map(result => result.item);
+        return { ...item, tags };
+      });
+      cachedFuseInstance = new Fuse(cachedItemsWithTags, {
+        keys: ['name', 'path', 'tags'],
+        includeScore: true,
+        threshold: 0.4,
+      });
+    }
+    filtered = cachedFuseInstance.search(q).map(result => result.item);
   }
 
   if (!filtered.length) {
@@ -529,12 +547,35 @@ export function renderList(items, owner, repo, branch) {
 export async function loadList(owner, repo, branch, cacheKey) {
   try {
     const cached = sessionStorage.getItem(cacheKey);
+    const now = Date.now();
+    const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+    
     if (cached) {
-      const parsed = JSON.parse(cached);
-      files = Array.isArray(parsed) ? parsed : (parsed.files || []);
-      renderList(files, owner, repo, branch);
-      refreshList(owner, repo, branch, cacheKey).catch(() => {});
-      return files;
+      let cacheData;
+      try {
+        cacheData = JSON.parse(cached);
+        if (!cacheData || typeof cacheData !== 'object' || Array.isArray(cacheData) || !Array.isArray(cacheData.files)) {
+          console.warn('Old cache format detected, clearing cache');
+          sessionStorage.removeItem(cacheKey);
+          cacheData = null;
+        }
+      } catch (e) {
+        console.warn('Corrupted cache data detected, clearing cache', e);
+        sessionStorage.removeItem(cacheKey);
+        cacheData = null;
+      }
+      
+      if (cacheData) {
+        const cacheAge = now - (cacheData.timestamp || 0);
+        files = cacheData.files || [];
+        renderList(files, owner, repo, branch);
+        
+        if (cacheAge > CACHE_DURATION) {
+          refreshList(owner, repo, branch, cacheKey).catch(() => {});
+        }
+        
+        return files;
+      }
     }
 
     await refreshList(owner, repo, branch, cacheKey);
@@ -550,18 +591,61 @@ export async function loadList(owner, repo, branch, cacheKey) {
 }
 
 export async function refreshList(owner, repo, branch, cacheKey) {
-  let data;
+  let result;
   const folder = getPromptFolder(branch);
-  try {
-    data = await listPromptsViaContents(owner, repo, branch, folder);
-  } catch (e) {
-    if (e.status === 403 || e.status === 404) {
-      data = await listPromptsViaTrees(owner, repo, branch, folder);
-    } else {
-      throw e;
+  
+  // Get cached ETag if available
+  const cached = sessionStorage.getItem(cacheKey);
+  let cachedETag = null;
+  let parsedCache = null;
+  
+  if (cached) {
+    try {
+      parsedCache = JSON.parse(cached);
+      // Validate cache structure - handle migration from old formats
+      if (!parsedCache || typeof parsedCache !== 'object' || Array.isArray(parsedCache)) {
+        console.warn('Old cache format detected, clearing cache');
+        sessionStorage.removeItem(cacheKey);
+        parsedCache = null;
+      } else {
+        cachedETag = parsedCache.etag || null;
+      }
+    } catch (e) {
+      console.warn('Corrupted cache data detected, clearing cache', e);
+      sessionStorage.removeItem(cacheKey);
     }
   }
-  files = (data || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
-  sessionStorage.setItem(cacheKey, JSON.stringify(files));
+  
+  try {
+    result = await listPromptsViaTrees(owner, repo, branch, folder, cachedETag);
+    
+    // If not modified, keep using cached data (0 API calls used!)
+    if (result.notModified && parsedCache) {
+      // Update timestamp to extend cache validity
+      parsedCache.timestamp = Date.now();
+      sessionStorage.setItem(cacheKey, JSON.stringify(parsedCache));
+      return;
+    }
+    
+    // New data received
+    files = (result.files || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
+  } catch (e) {
+    console.warn('Trees API failed, using Contents fallback');
+    try {
+      const data = await listPromptsViaContents(owner, repo, branch, folder);
+      files = (data || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
+      result = { files, etag: null }; // Contents API doesn't provide ETag
+    } catch (contentsError) {
+      console.error('Both API strategies failed:', contentsError);
+      throw contentsError;
+    }
+  }
+  
+  const cacheData = {
+    files,
+    etag: result.etag,
+    timestamp: Date.now()
+  };
+  sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
   renderList(files, owner, repo, branch);
 }

@@ -9,6 +9,9 @@ import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js
 let allSessionsCache = [];
 let sessionNextPageToken = null;
 let isSessionsLoading = false;
+let cachedSessions = null;
+let cachedSearchData = null;
+let cachedFuseInstance = null;
 
 function waitForComponents() {
   if (document.querySelector('header')) {
@@ -71,18 +74,20 @@ function renderAllSessions(sessions) {
   if (!searchTerm) {
     filteredSessions = sessions;
   } else {
-    const sessionsWithSearchableFields = sessions.map(s => ({
-      ...s,
-      promptText: s.prompt || s.displayName || '',
-      sessionId: s.name?.split('/').pop() || ''
-    }));
-    
-    const fuse = new Fuse(sessionsWithSearchableFields, {
-      keys: ['promptText', 'sessionId'],
-      includeScore: true,
-      threshold: 0.4,
-    });
-    filteredSessions = fuse.search(searchTerm).map(result => result.item);
+    if (cachedSessions !== sessions) {
+      cachedSessions = sessions;
+      cachedSearchData = sessions.map(s => ({
+        ...s,
+        promptText: s.prompt || s.displayName || '',
+        sessionId: s.name?.split('/').pop() || ''
+      }));
+      cachedFuseInstance = new Fuse(cachedSearchData, {
+        keys: ['promptText', 'sessionId'],
+        includeScore: true,
+        threshold: 0.4,
+      });
+    }
+    filteredSessions = cachedFuseInstance.search(searchTerm).map(result => result.item);
   }
   
   if (filteredSessions.length === 0 && searchTerm) {
@@ -92,14 +97,15 @@ function renderAllSessions(sessions) {
   
   allSessionsList.innerHTML = filteredSessions.map(session => {
     const state = session.state || 'UNKNOWN';
-    const stateEmoji = {
-      'COMPLETED': '✅',
-      'FAILED': '❌',
-      'IN_PROGRESS': '⏳',
-      'PLANNING': '⏳',
-      'QUEUED': '⏸️',
-      'AWAITING_USER_FEEDBACK': '💬'
-    }[state] || '❓';
+    const stateIcons = {
+      'COMPLETED': 'check_circle',
+      'FAILED': 'cancel',
+      'IN_PROGRESS': 'schedule',
+      'PLANNING': 'schedule',
+      'QUEUED': 'pause_circle',
+      'AWAITING_USER_FEEDBACK': 'chat_bubble'
+    };
+    const stateIcon = stateIcons[state] || 'help';
     
     const stateLabel = {
       'COMPLETED': 'COMPLETED',
@@ -123,9 +129,9 @@ function renderAllSessions(sessions) {
         <div class="session-meta">${createdAt}</div>
         <div class="session-prompt">${displayPrompt}</div>
         <div class="session-row" onclick="event.stopPropagation();">
-          <span class="session-pill">${stateEmoji} ${stateLabel}</span>
-          ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" style="color:var(--accent); text-decoration:none;">🔗 View PR</a>` : ''}
-          <span class="session-hint">💡 Click to view session</span>
+          <span class="session-pill"><span class="icon icon-inline" aria-hidden="true">${stateIcon}</span> ${stateLabel}</span>
+          ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" style="color:var(--accent); text-decoration:none;"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a>` : ''}
+          <span class="session-hint"><span class="icon icon-inline" aria-hidden="true">info</span> Click to view session</span>
         </div>
       </div>
     `;

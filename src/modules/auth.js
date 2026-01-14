@@ -1,5 +1,8 @@
 // ===== Firebase Authentication Module =====
 
+import { clearJulesKeyCache } from './jules-api.js';
+import { showToast } from './toast.js';
+
 let currentUser = null;
 
 export function getCurrentUser() {
@@ -16,7 +19,7 @@ export function setCurrentUser(user) {
 export async function signInWithGitHub() {
   try {
     if (!window.auth) {
-      alert('Authentication not ready. Please refresh the page.');
+      showToast('Authentication not ready. Please refresh the page.', 'error');
       return;
     }
     const provider = new firebase.auth.GithubAuthProvider();
@@ -35,19 +38,23 @@ export async function signInWithGitHub() {
     }
   } catch (error) {
     console.error('Sign-in failed:', error);
-    alert('Failed to sign in. Please try again.');
+    showToast('Failed to sign in. Please try again.', 'error');
   }
 }
 
 export async function signOutUser() {
   try {
     if (window.auth) {
+      // Clear Jules API key cache on logout
+      if (window.auth.currentUser) {
+        clearJulesKeyCache(window.auth.currentUser.uid);
+      }
       await window.auth.signOut();
       localStorage.removeItem('github_access_token');
     }
   } catch (error) {
     console.error('Sign-out failed:', error);
-    alert('Failed to sign out.');
+    showToast('Failed to sign out.', 'error');
   }
 }
 

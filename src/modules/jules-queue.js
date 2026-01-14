@@ -5,6 +5,8 @@ import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
+import { showToast } from './toast.js';
+import { showConfirm } from './confirm-modal.js';
 
 let queueCache = [];
 
@@ -172,7 +174,7 @@ function setupSubtasksEventDelegation() {
 async function openEditQueueModal(docId) {
   const item = queueCache.find(i => i.id === docId);
   if (!item) {
-    alert('Queue item not found');
+    showToast('Queue item not found', 'error');
     return;
   }
 
@@ -189,7 +191,7 @@ async function openEditQueueModal(docId) {
       <div class="modal-dialog" style="max-width: 700px;">
         <div class="modal-header">
           <h2 class="modal-title">Edit Queue Item</h2>
-          <button class="btn-icon close-modal" id="closeEditQueueModal" title="Close">✕</button>
+          <button class="btn-icon close-modal" id="closeEditQueueModal" title="Close"><span class="icon" aria-hidden="true">close</span></button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -347,13 +349,16 @@ function convertToSubtasks() {
 /**
  * Convert subtasks to single prompt
  */
-function convertToSingle() {
+async function convertToSingle() {
   const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => textarea.value);
   
   if (currentSubtasks.length > 1) {
-    if (!confirm('This will combine all subtasks into a single prompt. Continue?')) {
-      return;
-    }
+    const confirmed = await showConfirm('This will combine all subtasks into a single prompt. Continue?', {
+      title: 'Convert to Single Prompt',
+      confirmText: 'Convert',
+      confirmStyle: 'warn'
+    });
+    if (!confirmed) return;
   }
   
   const promptGroup = document.getElementById('editPromptGroup');
@@ -404,7 +409,7 @@ function renderSubtasksList(subtasks) {
     <div class="form-group subtask-item" data-index="${index}">
       <div class="subtask-item-header">
         <label class="form-label">Subtask ${index + 1}:</label>
-        <button type="button" class="remove-subtask-btn" data-index="${index}" title="Remove this subtask">✕</button>
+        <button type="button" class="remove-subtask-btn" data-index="${index}" title="Remove this subtask"><span class="icon" aria-hidden="true">close</span></button>
       </div>
       <textarea class="form-control edit-subtask-content" rows="5">${escapeHtml(subtask.fullContent || '')}</textarea>
     </div>
@@ -446,15 +451,18 @@ function addNewSubtask() {
 /**
  * Remove a subtask by index
  */
-function removeSubtask(index) {
+async function removeSubtask(index) {
   const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => ({
     fullContent: textarea.value
   }));
   
   if (currentSubtasks.length <= 1) {
-    if (!confirm('This is the last subtask. Removing it will leave no subtasks. Continue?')) {
-      return;
-    }
+    const confirmed = await showConfirm('This is the last subtask. Removing it will leave no subtasks. Continue?', {
+      title: 'Remove Last Subtask',
+      confirmText: 'Remove',
+      confirmStyle: 'warn'
+    });
+    if (!confirmed) return;
   }
   
   // Remove the subtask at the specified index
@@ -468,14 +476,17 @@ function removeSubtask(index) {
 }
 
 // Close modal handler function (defined outside so it can be referenced in event handlers)
-function closeEditModal(force = false) {
+async function closeEditModal(force = false) {
   const modal = document.getElementById('editQueueItemModal');
   if (!modal) return;
   
   if (!force && editModalState.hasUnsavedChanges) {
-    if (!confirm('You have unsaved changes. Are you sure you want to close?')) {
-      return;
-    }
+    const confirmed = await showConfirm('You have unsaved changes. Are you sure you want to close?', {
+      title: 'Unsaved Changes',
+      confirmText: 'Close Anyway',
+      confirmStyle: 'warn'
+    });
+    if (!confirmed) return;
   }
   modal.style.display = 'none';
   editModalState.hasUnsavedChanges = false;
@@ -489,13 +500,13 @@ function closeEditModal(force = false) {
 async function saveQueueItemEdit(docId, closeModalCallback) {
   const item = queueCache.find(i => i.id === docId);
   if (!item) {
-    alert('Queue item not found');
+    showToast('Queue item not found', 'error');
     return;
   }
   
   const user = window.auth?.currentUser;
   if (!user) {
-    alert('Not signed in');
+    showToast('Not signed in', 'error');
     return;
   }
 
@@ -538,14 +549,14 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
 
     await updateJulesQueueItem(user.uid, item.id, updates);
     
-    statusBar.showMessage('Queue item updated successfully', { timeout: 3000 });
+    showToast('Queue item updated successfully', 'success');
     editModalState.hasUnsavedChanges = false;
     closeModalCallback(true);
     
     // Reload the queue
     await loadQueuePage();
   } catch (err) {
-    alert('Failed to update queue item: ' + err.message);
+    showToast('Failed to update queue item: ' + err.message, 'error');
   }
 }
 
@@ -610,7 +621,7 @@ function renderQueueList(items) {
         `;
       }).join('');
 
-      const repoDisplay = item.sourceId ? `<div class="queue-repo">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+      const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
       
       return `
         <div class="queue-card queue-item" data-docid="${item.id}">
@@ -622,7 +633,7 @@ function renderQueueList(items) {
               <div class="queue-title">
                 Subtasks Batch <span class="queue-status">${status}</span>
                 <span class="queue-status">(${remainingCount} remaining)</span>
-                <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item">✏️</button>
+                <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item"><span class="icon icon-inline" aria-hidden="true">edit</span></button>
               </div>
               <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
               ${repoDisplay}
@@ -636,7 +647,7 @@ function renderQueueList(items) {
     }
 
     const promptPreview = (item.prompt || '').substring(0, 200);
-    const repoDisplay = item.sourceId ? `<div class="queue-repo">📦 ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+    const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
     
     return `
       <div class="queue-card queue-item" data-docid="${item.id}">
@@ -647,7 +658,7 @@ function renderQueueList(items) {
           <div class="queue-content">
             <div class="queue-title">
               Single Prompt <span class="queue-status">${status}</span>
-              <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item">✏️</button>
+              <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item"><span class="icon icon-inline" aria-hidden="true">edit</span></button>
             </div>
             <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
             ${repoDisplay}
@@ -784,17 +795,22 @@ function getSelectedQueueIds() {
 
 async function deleteSelectedQueueItems() {
   const user = window.auth?.currentUser;
-  if (!user) { alert('Not signed in'); return; }
+  if (!user) { showToast('Not signed in', 'error'); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0 && Object.keys(subtaskSelections).length === 0) {
-    alert('No items selected');
+    showToast('No items selected', 'warn');
     return;
   }
   
   const totalCount = queueSelections.length + Object.values(subtaskSelections).reduce((sum, arr) => sum + arr.length, 0);
-  if (!confirm(`Delete ${totalCount} selected item(s)?`)) return;
+  const confirmed = await showConfirm(`Delete ${totalCount} selected item(s)?`, {
+    title: 'Delete Items',
+    confirmText: 'Delete',
+    confirmStyle: 'error'
+  });
+  if (!confirmed) return;
   
   try {
     for (const id of queueSelections) {
@@ -807,10 +823,10 @@ async function deleteSelectedQueueItems() {
       await deleteSelectedSubtasks(docId, indices);
     }
     
-    alert('Deleted selected items');
+    showToast(`Deleted ${totalCount} ${totalCount === 1 ? 'item' : 'items'}`, 'success');
     await loadQueuePage();
   } catch (err) {
-    alert('Failed to delete selected items: ' + err.message);
+    showToast('Failed to delete selected items: ' + err.message, 'error');
   }
 }
 
@@ -824,12 +840,12 @@ function sortByCreatedAt(ids) {
 
 async function runSelectedQueueItems() {
   const user = window.auth?.currentUser;
-  if (!user) { alert('Not signed in'); return; }
+  if (!user) { showToast('Not signed in', 'error'); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0 && Object.keys(subtaskSelections).length === 0) {
-    alert('No items selected');
+    showToast('No items selected', 'warn');
     return;
   }
 
