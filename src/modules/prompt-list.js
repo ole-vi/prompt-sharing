@@ -480,6 +480,11 @@ export function updateActiveItem() {
 }
 
 export function renderList(items, owner, repo, branch) {
+  if (!Array.isArray(items)) {
+    console.warn('renderList received non-array items:', items);
+    items = [];
+  }
+  
   loadExpandedState(owner, repo, branch);
   const q = searchEl && searchEl.value ? searchEl.value.trim() : '';
   const searchActive = Boolean(q);
