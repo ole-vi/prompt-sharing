@@ -2,7 +2,7 @@ const CONFIG = {
   github: {
     clientId: 'Ov23liz8g6qMlD1izTFe',
     redirectUri: 'https://promptroot.ai/oauth-callback.html',
-    scopes: ['repo'],
+    scopes: ['public_repo'],
     targetRepo: {
       owner: 'promptroot',
       repo: 'promptroot',

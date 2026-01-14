@@ -23,6 +23,7 @@ export async function signInWithGitHub() {
       return;
     }
     const provider = new firebase.auth.GithubAuthProvider();
+    provider.addScope('public_repo');  // Allow write access to public repos
     const result = await window.auth.signInWithPopup(provider);
     
     if (result.credential && result.credential.accessToken) {
