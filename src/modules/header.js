@@ -81,9 +81,37 @@ export async function loadHeader() {
         }
       }
     };
+    const setupFeedbackButtons = () => {
+      const feedbackBtn = document.getElementById('feedbackBtn');
+      const mobileFeedbackBtn = document.getElementById('mobileFeedbackBtn');
+      
+      const openFeedback = () => {
+        const owner = 'promptroot';
+        const repo = 'promptroot';
+        const title = encodeURIComponent('[Feedback] ');
+        const body = encodeURIComponent(
+          '## Issue\n\n' +
+          '## Screenshot\n\n' +
+          '## Steps to Recreate\n\n' 
+        );
+        const labels = encodeURIComponent('feedback');
+        
+        const url = `https://github.com/${owner}/${repo}/issues/new?title=${title}&body=${body}&labels=${labels}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
+      };
+      
+      if (feedbackBtn) {
+        feedbackBtn.addEventListener('click', openFeedback);
+      }
+      if (mobileFeedbackBtn) {
+        mobileFeedbackBtn.addEventListener('click', openFeedback);
+      }
+    };
+    
     queueMicrotask(() => {
       setupUserMenu();
       setupMobileSidebar();
+      setupFeedbackButtons();
     });
   } catch (error) {
     console.error('Failed to load header:', error);

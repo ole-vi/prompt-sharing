@@ -26,12 +26,12 @@
   
   /* Header */
   header { padding: 12px 16px; }
-  #mobileMenuBtn { display: block; }
+  #mobileMenuBtn { display: block !important; }
   #headerContainer { padding: 12px 16px !important; }
   .header-left { flex: 0 0 auto !important; min-width: auto !important; }
   .branding-link { gap: 8px !important; }
   .branding-link .site-title { font-size: 18px !important; }
-  .branding-link .site-tagline { display: none !important; }
+  .branding-link .site-tagline { font-size: 9px !important; white-space: normal !important; line-height: 1.2 !important; max-width: 120px !important; }
   #headerNav { display: none !important; }
   .header-right { flex: 0 0 auto !important; min-width: auto !important; }
   
