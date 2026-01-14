@@ -128,11 +128,11 @@ function renderAllSessions(sessions) {
       <div class="session-card" onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
         <div class="session-meta">${createdAt}</div>
         <div class="session-prompt">${displayPrompt}</div>
-        <div class="session-row" onclick="event.stopPropagation();">
+        <div class="session-row">
           <span class="session-pill"><span class="icon icon-inline" aria-hidden="true">${stateIcon}</span> ${stateLabel}</span>
-          ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" style="color:var(--accent); text-decoration:none;"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a>` : ''}
+          ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" onclick="event.stopPropagation()"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a>` : ''}
           <span class="session-hint"><span class="icon icon-inline" aria-hidden="true">info</span> Click to view session</span>
-          <button class="btn-icon" onclick="event.stopPropagation(); window.viewPrompt_${sessionId.replace(/[^a-zA-Z0-9]/g, '_')}()" title="View full prompt" style="margin-left: auto; padding: 4px; font-size: 16px; opacity: 0.6;"><span class="icon" aria-hidden="true" style="font-size: 16px;">visibility</span></button>
+          <button class="btn-icon session-view-btn" onclick="event.stopPropagation(); window.viewPrompt_${sessionId.replace(/[^a-zA-Z0-9]/g, '_')}()" title="View full prompt"><span class="icon" aria-hidden="true">visibility</span></button>
         </div>
       </div>
     `;
@@ -190,8 +190,8 @@ function createPromptViewerModal() {
         <h3 id="promptViewerTitle">Session Prompt</h3>
         <button class="btn-icon close-modal" id="promptViewerClose" title="Close">✕</button>
       </div>
-      <div class="modal-body" style="flex: 1; overflow-y: auto;">
-        <pre id="promptViewerText" style="white-space: pre-wrap; word-wrap: break-word; font-family: ui-monospace, monospace; font-size: 13px; line-height: 1.6; color: var(--text); background: var(--bg); padding: 16px; border-radius: 8px; margin: 0;"></pre>
+      <div class="modal-body prompt-viewer-body">
+        <pre id="promptViewerText" class="prompt-viewer-text"></pre>
       </div>
       <div class="modal-buttons">
         <button id="promptViewerCopy" class="btn primary"><span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy Prompt</button>
