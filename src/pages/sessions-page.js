@@ -1,8 +1,3 @@
-/**
- * Sessions Page Initialization
- * Handles Jules sessions listing and search functionality
- */
-
 import { waitForFirebase } from '../shared-init.js';
 import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js';
 import { showPromptViewer, attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
@@ -139,7 +134,6 @@ function renderAllSessions(sessions) {
     `;
   }).join('');
   
-  // Attach prompt viewer handlers using shared module
   attachPromptViewerHandlers(filteredSessions);
 }
 
@@ -180,7 +174,6 @@ async function initApp() {
   waitForFirebase(() => {
     loadSessions();
     
-    // Set up search functionality with clear button
     const searchInput = document.getElementById('sessionSearchInput');
     const searchClear = document.getElementById('sessionSearchClear');
     if (searchInput) {
@@ -206,13 +199,11 @@ async function initApp() {
       toggleClear();
     }
     
-    // Set up load more button
     const loadMoreBtn = document.getElementById('loadMoreSessionsBtn');
     if (loadMoreBtn) {
       loadMoreBtn.addEventListener('click', loadSessionsPage);
     }
 
-    // Refresh sessions when auth state changes (e.g., after sign-in)
     if (window.auth && typeof window.auth.onAuthStateChanged === 'function') {
       window.auth.onAuthStateChanged(() => {
         loadSessions();
