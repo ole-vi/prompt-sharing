@@ -84,7 +84,7 @@ Analyze the PromptRoot repository and provide detailed answers to help understan
 - Are there any architecture diagrams or design docs?
 - What are the key files a new contributor should read first?
 - Who are the key maintainers to reach out to?
-- How does this project relate to Planet and myPlanet?
+- Are there other related repositories or companion projects worth knowing about?
 
 ## Output Format
 

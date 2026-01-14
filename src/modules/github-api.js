@@ -4,12 +4,57 @@ export function setViaProxy(proxyFn) {
   viaProxy = proxyFn;
 }
 
+const TOKEN_MAX_AGE = 60 * 24 * 60 * 60 * 1000; // 60 days
+
+async function getGitHubAccessToken() {
+  try {
+    const user = window.auth?.currentUser;
+    if (!user) return null;
+
+    const isGitHubAuth = user.providerData.some(p => p.providerId === 'github.com');
+    if (!isGitHubAuth) return null;
+
+    const tokenDataStr = localStorage.getItem('github_access_token');
+    if (!tokenDataStr) return null;
+
+    const parsed = JSON.parse(tokenDataStr);
+    const isObject = parsed !== null && typeof parsed === 'object';
+    const token = isObject ? parsed.token : undefined;
+    const timestamp = isObject ? parsed.timestamp : undefined;
+    
+    // Validate token is a non-empty string and timestamp is valid
+    if (typeof token !== 'string' || !token || !Number.isFinite(timestamp)) {
+      localStorage.removeItem('github_access_token');
+      return null;
+    }
+    
+    // Validate timestamp is not in the future and not expired
+    const now = Date.now();
+    if (timestamp > now || now - timestamp > TOKEN_MAX_AGE) {
+      localStorage.removeItem('github_access_token');
+      return null;
+    }
+
+    return token;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchJSON(url) {
   try {
+    const headers = { 'Accept': 'application/vnd.github+json' };
+    
+    const token = await getGitHubAccessToken();
+    if (token && typeof token === 'string' && token.length > 0) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const res = await fetch(viaProxy(url), {
       cache: 'no-store',
-      headers: { 'Accept': 'application/vnd.github+json' }
+      headers
     });
+    
     if (!res.ok) return null;
     return res.json();
   } catch (e) {
@@ -101,11 +146,10 @@ export async function listPromptsViaTrees(owner, repo, branch, path = 'prompts',
     type: 'file',
     name: n.path.split('/').pop(),
     path: n.path,
-    sha: n.sha,
-    download_url: `https://raw.githubusercontent.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${encodeURIComponent(branch)}/${encodePathPreservingSlashes(n.path)}`
+    sha: n.sha
   }));
   
-  return { files, etag: result.etag, notModified: false };
+  return { data: files, etag: result.etag };
 }
 
 export async function fetchRawFile(owner, repo, branch, path) {

@@ -19,7 +19,8 @@ function initApp() {
     downloadBtn.addEventListener('click', async () => {
       try {
         downloadBtn.disabled = true;
-        downloadBtn.textContent = '⏳ Preparing download...';
+        const originalDownloadLabel = downloadBtn.innerHTML;
+        downloadBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span> Preparing download...';
 
         // Import JSZip dynamically (ESM via CDN)
         const JSZip = (await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm')).default;
@@ -66,16 +67,16 @@ function initApp() {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        downloadBtn.textContent = '✅ Downloaded!';
+        downloadBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Downloaded!';
         setTimeout(() => {
-          downloadBtn.textContent = '⬇️ Download Extension';
+          downloadBtn.innerHTML = originalDownloadLabel;
           downloadBtn.disabled = false;
         }, 2000);
       } catch (error) {
         console.error('Download failed:', error);
-        downloadBtn.textContent = '❌ Download failed';
+        downloadBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">error</span> Download failed';
         setTimeout(() => {
-          downloadBtn.textContent = '⬇️ Download Extension';
+          downloadBtn.innerHTML = originalDownloadLabel;
           downloadBtn.disabled = false;
         }, 2000);
       }

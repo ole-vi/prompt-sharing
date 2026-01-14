@@ -23,7 +23,19 @@ export async function signInWithGitHub() {
       return;
     }
     const provider = new firebase.auth.GithubAuthProvider();
-    await window.auth.signInWithPopup(provider);
+    const result = await window.auth.signInWithPopup(provider);
+    
+    if (result.credential && result.credential.accessToken) {
+      const tokenData = {
+        token: result.credential.accessToken,
+        timestamp: Date.now()
+      };
+      localStorage.setItem('github_access_token', JSON.stringify(tokenData));
+    } else {
+      console.warn('GitHub sign-in succeeded but no access token was returned. Falling back to unauthenticated GitHub requests.', {
+        hasCredential: !!result.credential
+      });
+    }
   } catch (error) {
     console.error('Sign-in failed:', error);
     showToast('Failed to sign in. Please try again.', 'error');
@@ -38,6 +50,7 @@ export async function signOutUser() {
         clearJulesKeyCache(window.auth.currentUser.uid);
       }
       await window.auth.signOut();
+      localStorage.removeItem('github_access_token');
     }
   } catch (error) {
     console.error('Sign-out failed:', error);

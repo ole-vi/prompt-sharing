@@ -21,6 +21,7 @@ let emptyEl = null;
 let actionsEl = null;
 let copyBtn = null;
 let copenBtn = null;
+let originalCopenLabel = null;
 let rawBtn = null;
 let ghBtn = null;
 let editBtn = null;
@@ -37,6 +38,7 @@ export function initPromptRenderer() {
   actionsEl = document.getElementById('actions');
   copyBtn = document.getElementById('copyBtn');
   copenBtn = document.getElementById('copenBtn');
+  if (copenBtn) originalCopenLabel = copenBtn.innerHTML;
   rawBtn = document.getElementById('rawBtn');
   ghBtn = document.getElementById('ghBtn');
   editBtn = document.getElementById('editBtn');
@@ -297,14 +299,14 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   const moreRawBtn = document.getElementById('moreRawBtn');
   
   if (isGistContent && gistUrl) {
-    editBtn.textContent = '✏️ Edit Link';
+    editBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
     editBtn.title = 'Edit the gist link';
-    if (moreEditBtn) moreEditBtn.textContent = '✏️ Edit Link';
+    if (moreEditBtn) moreEditBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
     
-    ghBtn.textContent = '🗂️ View on Gist';
+    ghBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on Gist';
     ghBtn.title = 'Open the gist on GitHub';
     ghBtn.href = gistUrl;
-    if (moreGhBtn) moreGhBtn.textContent = '🗂️ View on Gist';
+    if (moreGhBtn) moreGhBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on Gist';
     
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
@@ -317,15 +319,15 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     rawBtn.removeAttribute('download');
     rawBtn.title = 'Open gist content in new tab';
   } else if (isCodexContent && codexUrl) {
-    editBtn.textContent = '✏️ Edit Link';
+    editBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
     editBtn.title = 'Edit the codex link';
-    if (moreEditBtn) moreEditBtn.textContent = '✏️ Edit Link';
+    if (moreEditBtn) moreEditBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
     
-    ghBtn.textContent = '💬 View on Codex';
+    ghBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">chat_bubble</span> View on Codex';
     ghBtn.title = 'Open the conversation on Codex';
     ghBtn.href = codexUrl;
     ghBtn.target = '_blank';
-    if (moreGhBtn) moreGhBtn.textContent = '💬 View on Codex';
+    if (moreGhBtn) moreGhBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">chat_bubble</span> View on Codex';
     
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
@@ -339,14 +341,14 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     rawBtn.removeAttribute('download');
     rawBtn.title = 'Open raw link in new tab';
   } else {
-    editBtn.textContent = '✏️ Edit on GitHub';
+    editBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub';
     editBtn.title = 'Edit the file on GitHub';
-    if (moreEditBtn) moreEditBtn.textContent = '✏️ Edit on GitHub';
+    if (moreEditBtn) moreEditBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub';
     
-    ghBtn.textContent = '🗂️ View on GitHub';
+    ghBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub';
     ghBtn.title = 'Open the file on GitHub';
     ghBtn.href = `https://github.com/${owner}/${repo}/blob/${branch}/${f.path}`;
-    if (moreGhBtn) moreGhBtn.textContent = '🗂️ View on GitHub';
+    if (moreGhBtn) moreGhBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub';
     
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
@@ -359,11 +361,11 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
 
   if (isCodexContent) {
     copyBtn.classList.add('hidden');
-    shareBtn.textContent = '🔗 Copy link';
+    shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
   } else {
     copyBtn.classList.remove('hidden');
-    copyBtn.textContent = '📋 Copy prompt';
-    shareBtn.textContent = '🔗 Copy link';
+    copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy prompt';
+    shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
   }
 
   // Update title and content
@@ -393,7 +395,7 @@ function enhanceCodeBlocks() {
   pres.forEach((pre) => {
     if (pre.querySelector('.copy-code-btn')) return;
     const btn = document.createElement('button');
-    btn.textContent = '📋';
+    btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">content_copy</span>';
     btn.className = 'copy-code-btn';
     btn.dataset.action = 'copy-code';
     btn.title = 'Copy code';
@@ -413,11 +415,11 @@ function enhanceCodeBlocks() {
           const code = pre.innerText;
           try {
             await navigator.clipboard.writeText(code);
-            const originalText = btn.textContent;
-            btn.textContent = '✓';
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span>';
             btn.classList.add('copied');
             setTimeout(() => {
-              btn.textContent = originalText;
+              btn.innerHTML = originalHTML;
               btn.classList.remove('copied');
             }, 900);
           } catch {}
@@ -436,15 +438,15 @@ async function handleCopyPrompt() {
     const isCodex = getCurrentPromptText() && CODEX_URL_REGEX.test(getCurrentPromptText().trim());
     if (isCodex) {
       contentToCopy = getCurrentPromptText();
-      buttonText = '📋 Copy link';
+      buttonText = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy link';
     } else {
       contentToCopy = getCurrentPromptText();
-      buttonText = '📋 Copy prompt';
+      buttonText = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy prompt';
     }
 
     await navigator.clipboard.writeText(contentToCopy);
-    copyBtn.textContent = 'Copied';
-    setTimeout(() => (copyBtn.textContent = buttonText), 1000);
+    copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied';
+    setTimeout(() => (copyBtn.innerHTML = buttonText), 1000);
   } catch {
     showToast('Clipboard blocked. Select and copy manually.', 'warn');
   }
@@ -460,8 +462,8 @@ async function handleCopenPrompt(target) {
 
     // Copy to clipboard
     await navigator.clipboard.writeText(promptText);
-    copenBtn.textContent = 'Copied!';
-    setTimeout(() => (copenBtn.textContent = '📋⤴ ▼'), 1000);
+    copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied!';
+    setTimeout(() => (copenBtn.innerHTML = originalCopenLabel), 1000);
 
     // Open appropriate tab based on target
     let url;
@@ -492,11 +494,11 @@ async function handleCopenPrompt(target) {
 async function handleShareLink() {
   try {
     await navigator.clipboard.writeText(location.href);
-    shareBtn.textContent = 'Link copied';
+    shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Link copied';
   } catch {
     showToast('Could not copy link.', 'warn');
   } finally {
-    const originalText = '🔗 Copy link';
-    setTimeout(() => (shareBtn.textContent = originalText), 1000);
+    const originalText = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
+    setTimeout(() => (shareBtn.innerHTML = originalText), 1000);
   }
 }

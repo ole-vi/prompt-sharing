@@ -26,9 +26,9 @@
       </div>
       <div class="search-wrapper">
         <input id="search" placeholder="Search prompts..." />
-        <button id="searchClear" class="search-clear hidden" title="Clear search">✕</button>
+        <button id="searchClear" class="search-clear hidden" title="Clear search"><span class="icon" aria-hidden="true">close</span></button>
       </div>
-      <button class="btn" id="freeInputBtn" title="Send a custom prompt to Jules">✏️ Free Input</button>
+      <button class="btn" id="freeInputBtn" title="Send a custom prompt to Jules"><span class="icon icon-inline" aria-hidden="true">edit_note</span> Free Input</button>
       <div id="list"></div>
     </aside>
 
@@ -77,15 +77,15 @@
         </div>
         
         <div class="actions-right">
-          <button id="freeInputSplitBtn" class="btn" title="Split into Subtasks">✂️</button>
+          <button id="freeInputSplitBtn" class="btn" title="Split into Subtasks"><span class="icon icon-inline" aria-hidden="true">content_cut</span></button>
           <div class="menu-anchor">
-            <button id="freeInputCopenBtn" class="btn" title="Copy prompt and open in new tab">📋⤴ ▼</button>
+            <button id="freeInputCopenBtn" class="btn" title="Copy prompt and open in new tab"><span class="icon icon-inline" aria-hidden="true">open_in_new</span> ▼</button>
             <div id="freeInputCopenMenu" class="menu-panel menu-panel-sm menu-panel--above" style="display:none;">
-              <div class="custom-dropdown-item" data-target="blank">🌐 Blank</div>
-              <div class="custom-dropdown-item" data-target="claude">🤖 Claude</div>
-              <div class="custom-dropdown-item" data-target="codex">💬 Codex</div>
-              <div class="custom-dropdown-item" data-target="gemini">✨ Gemini</div>
-              <div class="custom-dropdown-item" data-target="chatgpt">🟢 ChatGPT</div>
+              <div class="custom-dropdown-item" data-target="blank"><span class="icon icon-inline" aria-hidden="true">public</span> Blank</div>
+              <div class="custom-dropdown-item" data-target="claude"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Claude</div>
+              <div class="custom-dropdown-item" data-target="codex"><span class="icon icon-inline" aria-hidden="true">forum</span> Codex</div>
+              <div class="custom-dropdown-item" data-target="gemini"><span class="icon icon-inline" aria-hidden="true">auto_awesome</span> Gemini</div>
+              <div class="custom-dropdown-item" data-target="chatgpt"><span class="icon icon-inline" aria-hidden="true">chat</span> ChatGPT</div>
             </div>
           </div>
           <button id="freeInputCancelBtn" class="btn">Cancel</button>
@@ -97,30 +97,30 @@
       <h1 id="title" class="hidden"></h1>
       <div id="meta" class="hidden"></div>
       <div id="actions" class="hidden">
-        <button class="btn" id="copyBtn" title="Copy the entire prompt">📋 Copy</button>
+        <button class="btn" id="copyBtn" title="Copy the entire prompt"><span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy</button>
         <div class="menu-anchor">
-          <button class="btn" id="copenBtn" title="Copy prompt and open in new tab">📋⤴ Copen ▼</button>
+          <button class="btn" id="copenBtn" title="Copy prompt and open in new tab"><span class="icon icon-inline" aria-hidden="true">open_in_new</span> copen ▼</button>
           <div id="copenMenu" class="menu-panel menu-panel-sm menu-panel--below-left" style="display:none;">
-            <div class="custom-dropdown-item" data-target="blank">🌐 Blank</div>
-            <div class="custom-dropdown-item" data-target="claude">🤖 Claude</div>
-            <div class="custom-dropdown-item" data-target="codex">💬 Codex</div>
-            <div class="custom-dropdown-item" data-target="gemini">✨ Gemini</div>
-            <div class="custom-dropdown-item" data-target="chatgpt">🟢 ChatGPT</div>
+            <div class="custom-dropdown-item" data-target="blank"><span class="icon icon-inline" aria-hidden="true">public</span> Blank</div>
+            <div class="custom-dropdown-item" data-target="claude"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Claude</div>
+            <div class="custom-dropdown-item" data-target="codex"><span class="icon icon-inline" aria-hidden="true">forum</span> Codex</div>
+            <div class="custom-dropdown-item" data-target="gemini"><span class="icon icon-inline" aria-hidden="true">auto_awesome</span> Gemini</div>
+            <div class="custom-dropdown-item" data-target="chatgpt"><span class="icon icon-inline" aria-hidden="true">chat</span> ChatGPT</div>
           </div>
         </div>
-        <button class="btn" id="julesBtn" title="Try this prompt in Jules">⚡ Try in Jules</button>
-        <button class="btn" id="shareBtn" title="Copy a link to this prompt">🔗 Copy link</button>
+        <button class="btn" id="julesBtn" title="Try this prompt in Jules"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Try in Jules</button>
+        <button class="btn" id="shareBtn" title="Copy a link to this prompt"><span class="icon icon-inline" aria-hidden="true">link</span> Copy link</button>
         <div class="menu-anchor">
           <button class="btn" id="moreBtn" title="More actions">⋯ More</button>
           <div id="moreMenu" class="menu-panel menu-panel-md menu-panel--below-right" style="display:none;">
-            <div class="custom-dropdown-item" id="moreEditBtn">✏️ Edit on GitHub</div>
-            <div class="custom-dropdown-item" id="moreGhBtn">🗂️ View on GitHub</div>
-            <div class="custom-dropdown-item" id="moreRawBtn">📄 Open raw</div>
+            <div class="custom-dropdown-item" id="moreEditBtn"><span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub</div>
+            <div class="custom-dropdown-item" id="moreGhBtn"><span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub</div>
+            <div class="custom-dropdown-item" id="moreRawBtn"><span class="icon icon-inline" aria-hidden="true">description</span> Open raw</div>
           </div>
         </div>
-        <a class="btn" id="editBtn" target="_blank" rel="noopener" title="Edit the file on GitHub" style="display:none;">✏️ Edit on GitHub</a>
-        <a class="btn" id="ghBtn" target="_blank" rel="noopener" title="Open the file on GitHub" style="display:none;">🗂️ View on GitHub</a>
-        <a class="btn" id="rawBtn" target="_blank" rel="noopener" title="Open raw markdown" style="display:none;">📄 Open raw</a>
+        <a class="btn" id="editBtn" target="_blank" rel="noopener" title="Edit the file on GitHub" style="display:none;"><span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub</a>
+        <a class="btn" id="ghBtn" target="_blank" rel="noopener" title="Open the file on GitHub" style="display:none;"><span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub</a>
+        <a class="btn" id="rawBtn" target="_blank" rel="noopener" title="Open the raw file" style="display:none;"><span class="icon icon-inline" aria-hidden="true">description</span> Open raw</a>
       </div>
       <article id="content"></article>
     </main>
@@ -227,13 +227,13 @@
       </div>
     </div>
   </div>
-
+  
   <!-- Subtask Error Modal -->
   <div id="subtaskErrorModal" class="modal">
     <div class="modal-content modal-lg">
       <div class="modal-header">
-        <h3 id="errorModalTitle" class="modal-title">⚠️ Subtask Failed</h3>
-        <button class="btn-icon close-modal" id="errorModalClose" title="Close">✕</button>
+        <h3 id="errorModalTitle" class="modal-title"><span class="icon icon-inline" aria-hidden="true">warning</span> Subtask Failed</h3>
+        <button class="btn-icon close-modal" id="errorModalClose" title="Close"><span class="icon" aria-hidden="true">close</span></button>
       </div>
       <div class="modal-body">
         <div id="errorSubtaskNumber" class="small-text muted-text mb-md"></div>

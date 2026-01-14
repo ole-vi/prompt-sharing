@@ -114,9 +114,7 @@ promptroot/
 │       ├── session-cache.js # Session data caching
 │       └── title.js       # Title extraction from prompts
 ├── prompts/               # Markdown prompt files
-│   ├── planet/           # Planet repo onboarding
-│   ├── myplanet/         # myPlanet repo onboarding
-│   └── promptsync/       # PromptRoot repo onboarding
+│   └── tutorial/         # PromptRoot onboarding + templates
 ├── webclips/             # User web clips from browser extension
 │   └── {username}/       # Each user's synced clips
 ├── browser-extension/    # Web capture browser extension
@@ -345,7 +343,7 @@ These are purely cosmetic and based on keywords in the filename.
 
 ## License
 
-This project is open source. See repository for license details.
+Licensed under the GNU Affero General Public License v3.0 (AGPL-3.0-only). See [LICENSE](LICENSE).
 
 ## Support
 

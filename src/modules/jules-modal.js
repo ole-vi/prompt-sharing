@@ -8,8 +8,8 @@ import { extractTitleFromPrompt } from '../utils/title.js';
 import { RETRY_CONFIG, TIMEOUTS } from '../utils/constants.js';
 import { showToast } from './toast.js';
 
-let lastSelectedSourceId = 'sources/github/open-learning-exchange/myplanet';
-let lastSelectedBranch = 'master';
+let lastSelectedSourceId = 'sources/github/promptroot/promptroot';
+let lastSelectedBranch = 'main';
 
 export function openUrlInBackground(url) {
   const a = document.createElement('a');

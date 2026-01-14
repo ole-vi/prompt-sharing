@@ -81,6 +81,7 @@ export function showFreeInputForm() {
   const splitBtn = document.getElementById('freeInputSplitBtn');
   const copenBtn = document.getElementById('freeInputCopenBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
+  const originalCopenLabel = copenBtn?.innerHTML;
 
   textarea.value = '';
   
@@ -258,9 +259,9 @@ export function showFreeInputForm() {
 
     try {
       await navigator.clipboard.writeText(promptText);
-      copenBtn.textContent = 'Copied!';
+      copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied!';
       setTimeout(() => {
-        copenBtn.textContent = '📋⤴ ▼';
+        copenBtn.innerHTML = originalCopenLabel;
       }, 1000);
 
       let url;
