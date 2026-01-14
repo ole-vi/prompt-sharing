@@ -8,6 +8,7 @@ import { loadJulesProfileInfo, listJulesSessions, getDecryptedJulesKey } from '.
 import { getCache, setCache, clearCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
+import { showPromptViewer, attachPromptViewerHandlers } from './prompt-viewer.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -240,19 +241,24 @@ function showPromptViewer(prompt, sessionId) {
   newCloseBtn.addEventListener('click', closeModal);
   newCloseX.addEventListener('click', closeModal);
   
-  // Close on background click
+  // Close on background click - clear previous handler first
+  modal.onclick = null;
   modal.onclick = (e) => {
     if (e.target === modal) closeModal();
   };
   
-  // Close on Escape key
-  const escHandler = (e) => {
+  // Close on Escape key - remove any existing handler first
+  if (currentEscapeHandler) {
+    document.removeEventListener('keydown', currentEscapeHandler);
+  }
+  currentEscapeHandler = (e) => {
     if (e.key === 'Escape') {
       closeModal();
-      document.removeEventListener('keydown', escHandler);
+      document.removeEventListener('keydown', currentEscapeHandler);
+      currentEscapeHandler = null;
     }
   };
-  document.addEventListener('keydown', escHandler);
+  document.addEventListener('keydown', currentEscapeHandler);
   
   modal.classList.add('show');
   
@@ -358,9 +364,6 @@ async function loadAndDisplayJulesProfile(uid) {
         const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
         const cleanId = sessionId.replace(/[^a-zA-Z0-9]/g, '_');
 
-        // Attach prompt viewer function to window
-        window[`viewPrompt_${cleanId}`] = () => showPromptViewer(session.prompt || 'No prompt text available', sessionId);
-
         const cardHtml = `
           <div class="session-card" onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
             <div class="session-meta">${createdAt}</div>
@@ -375,6 +378,10 @@ async function loadAndDisplayJulesProfile(uid) {
         `;
         return cardHtml;
       }).join('');
+      
+      // Attach prompt viewer handlers using shared module
+      attachPromptViewerHandlers(profileData.sessions);
+      
       sessionsListDiv.innerHTML = `<div class="vlist">${sessionsHtml}</div>`;
     } else {
       sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No recent sessions found.</div>';

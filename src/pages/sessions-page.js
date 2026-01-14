@@ -5,6 +5,7 @@
 
 import { waitForFirebase } from '../shared-init.js';
 import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js';
+import { showPromptViewer, attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -138,12 +139,8 @@ function renderAllSessions(sessions) {
     `;
   }).join('');
   
-  // Attach prompt viewer functions to window for onclick access
-  filteredSessions.forEach(session => {
-    const sessionId = session.name?.split('sessions/')[1] || session.id?.split('sessions/')[1] || session.id;
-    const cleanId = sessionId.replace(/[^a-zA-Z0-9]/g, '_');
-    window[`viewPrompt_${cleanId}`] = () => showPromptViewer(session.prompt || 'No prompt text available', sessionId);
-  });
+  // Attach prompt viewer handlers using shared module
+  attachPromptViewerHandlers(filteredSessions);
 }
 
 async function loadSessions() {
@@ -177,98 +174,6 @@ async function loadSessions() {
   } finally {
     isSessionsLoading = false;
   }
-}
-
-function createPromptViewerModal() {
-  const modal = document.createElement('div');
-  modal.id = 'promptViewerModal';
-  modal.className = 'modal';
-  modal.style.zIndex = '10000';
-  modal.innerHTML = `
-    <div class="modal-content modal-xl">
-      <div class="modal-header">
-        <h3 id="promptViewerTitle">Session Prompt</h3>
-        <button class="btn-icon close-modal" id="promptViewerClose" title="Close">✕</button>
-      </div>
-      <div class="modal-body prompt-viewer-body">
-        <pre id="promptViewerText" class="prompt-viewer-text"></pre>
-      </div>
-      <div class="modal-buttons">
-        <button id="promptViewerCopy" class="btn primary"><span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy Prompt</button>
-        <button id="promptViewerCloseBtn" class="btn">Close</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-  return modal;
-}
-
-function showPromptViewer(prompt, sessionId) {
-  let modal = document.getElementById('promptViewerModal');
-  if (!modal) {
-    modal = createPromptViewerModal();
-  }
-  
-  const promptText = document.getElementById('promptViewerText');
-  const copyBtn = document.getElementById('promptViewerCopy');
-  const closeBtn = document.getElementById('promptViewerCloseBtn');
-  const closeX = document.getElementById('promptViewerClose');
-  
-  promptText.textContent = prompt || 'No prompt text available';
-  
-  // Copy functionality
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(prompt);
-      const originalText = copyBtn.innerHTML;
-      copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check</span> Copied!';
-      copyBtn.disabled = true;
-      setTimeout(() => {
-        copyBtn.innerHTML = originalText;
-        copyBtn.disabled = false;
-      }, 2000);
-    } catch (err) {
-      console.error('Copy failed:', err);
-      alert('Failed to copy prompt to clipboard');
-    }
-  };
-  
-  // Close functionality
-  const closeModal = () => {
-    modal.classList.remove('show');
-  };
-  
-  // Remove old listeners and add new ones
-  const newCopyBtn = copyBtn.cloneNode(true);
-  const newCloseBtn = closeBtn.cloneNode(true);
-  const newCloseX = closeX.cloneNode(true);
-  
-  copyBtn.parentNode.replaceChild(newCopyBtn, copyBtn);
-  closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
-  closeX.parentNode.replaceChild(newCloseX, closeX);
-  
-  newCopyBtn.addEventListener('click', handleCopy);
-  newCloseBtn.addEventListener('click', closeModal);
-  newCloseX.addEventListener('click', closeModal);
-  
-  // Close on background click
-  modal.onclick = (e) => {
-    if (e.target === modal) closeModal();
-  };
-  
-  // Close on Escape key
-  const escHandler = (e) => {
-    if (e.key === 'Escape') {
-      closeModal();
-      document.removeEventListener('keydown', escHandler);
-    }
-  };
-  document.addEventListener('keydown', escHandler);
-  
-  modal.classList.add('show');
-  
-  // Focus the copy button
-  setTimeout(() => newCopyBtn.focus(), 100);
 }
 
 async function initApp() {
