@@ -1,5 +1,7 @@
 // ===== All Constants, Regex Patterns, and Magic Strings =====
 
+import { ICONS, createIconWithText } from './icon-helpers.js';
+
 export const OWNER = "promptroot";
 export const REPO = "promptroot";
 export const BRANCH = "main";
@@ -67,11 +69,11 @@ export const UI_TEXT = {
   LOADING: "Loading...",
   SIGN_IN: "Sign in with GitHub",
   SIGN_OUT: "Sign Out",
-  COPY_PROMPT: "📋 Copy prompt",
+  COPY_PROMPT: createIconWithText(ICONS.COPY, 'Copy prompt'),
   COPIED: "Copied",
-  COPY_LINK: "🔗 Copy link",
+  COPY_LINK: createIconWithText(ICONS.LINK, 'Copy link'),
   LINK_COPIED: "Link copied",
-  TRY_JULES: "⚡ Try in Jules",
+  TRY_JULES: createIconWithText(ICONS.JULES, 'Try in Jules'),
   RUNNING: "Running...",
   SAVE_KEY: "Save & Continue"
 };
