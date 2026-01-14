@@ -190,13 +190,26 @@ export async function loadJulesProfileInfo(uid) {
     throw new Error(ERRORS.JULES_KEY_REQUIRED);
   }
 
-  const [sourcesData, sessionsData] = await Promise.all([
-    listJulesSources(apiKey),
+  const fetchAllSources = async () => {
+    let allSources = [];
+    let pageToken = null;
+    do {
+      const response = await listJulesSources(apiKey, pageToken);
+      if (response.sources) {
+        allSources.push(...response.sources);
+      }
+      pageToken = response.nextPageToken;
+    } while (pageToken);
+    return allSources;
+  };
+
+  const [sources, sessionsData] = await Promise.all([
+    fetchAllSources(),
     listJulesSessions(apiKey)
   ]);
 
   return {
-    sources: sourcesData.sources || [],
+    sources,
     sessions: sessionsData.sessions || []
   };
 }
