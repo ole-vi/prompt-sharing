@@ -149,7 +149,7 @@ export async function listPromptsViaTrees(owner, repo, branch, path = 'prompts',
     sha: n.sha
   }));
   
-  return { data: files, etag: result.etag };
+  return { files, etag: result.etag };
 }
 
 export async function fetchRawFile(owner, repo, branch, path) {

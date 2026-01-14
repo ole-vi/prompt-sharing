@@ -481,7 +481,6 @@ export function updateActiveItem() {
 
 export function renderList(items, owner, repo, branch) {
   if (!Array.isArray(items)) {
-    console.warn('renderList received non-array items:', items);
     items = [];
   }
   
@@ -555,18 +554,23 @@ export async function loadList(owner, repo, branch, cacheKey) {
       try {
         cacheData = JSON.parse(cached);
         if (!cacheData || typeof cacheData !== 'object' || Array.isArray(cacheData) || !Array.isArray(cacheData.files)) {
-          console.warn('Old cache format detected, clearing cache');
           sessionStorage.removeItem(cacheKey);
           cacheData = null;
         }
       } catch (e) {
-        console.warn('Corrupted cache data detected, clearing cache', e);
         sessionStorage.removeItem(cacheKey);
         cacheData = null;
       }
       
       if (cacheData) {
         const cacheAge = now - (cacheData.timestamp || 0);
+        const fileCount = cacheData.files?.length || 0;
+        if (fileCount === 0) {
+          sessionStorage.removeItem(cacheKey);
+          await refreshList(owner, repo, branch, cacheKey);
+          return files;
+        }
+        
         files = cacheData.files || [];
         renderList(files, owner, repo, branch);
         
@@ -602,16 +606,13 @@ export async function refreshList(owner, repo, branch, cacheKey) {
   if (cached) {
     try {
       parsedCache = JSON.parse(cached);
-      // Validate cache structure - handle migration from old formats
       if (!parsedCache || typeof parsedCache !== 'object' || Array.isArray(parsedCache)) {
-        console.warn('Old cache format detected, clearing cache');
         sessionStorage.removeItem(cacheKey);
         parsedCache = null;
       } else {
         cachedETag = parsedCache.etag || null;
       }
     } catch (e) {
-      console.warn('Corrupted cache data detected, clearing cache', e);
       sessionStorage.removeItem(cacheKey);
     }
   }
@@ -619,18 +620,16 @@ export async function refreshList(owner, repo, branch, cacheKey) {
   try {
     result = await listPromptsViaTrees(owner, repo, branch, folder, cachedETag);
     
-    // If not modified, keep using cached data (0 API calls used!)
     if (result.notModified && parsedCache) {
-      // Update timestamp to extend cache validity
       parsedCache.timestamp = Date.now();
       sessionStorage.setItem(cacheKey, JSON.stringify(parsedCache));
       return;
     }
     
     // New data received
-    files = (result.files || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
+    const treeFiles = result?.files || result?.data || [];
+    files = treeFiles.filter(x => x && x.type === 'file' && typeof x.path === 'string');
   } catch (e) {
-    console.warn('Trees API failed, using Contents fallback');
     try {
       const data = await listPromptsViaContents(owner, repo, branch, folder);
       files = (data || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
