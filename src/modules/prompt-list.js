@@ -564,13 +564,6 @@ export async function loadList(owner, repo, branch, cacheKey) {
       
       if (cacheData) {
         const cacheAge = now - (cacheData.timestamp || 0);
-        const fileCount = cacheData.files?.length || 0;
-        if (fileCount === 0) {
-          sessionStorage.removeItem(cacheKey);
-          await refreshList(owner, repo, branch, cacheKey);
-          return files;
-        }
-        
         files = cacheData.files || [];
         renderList(files, owner, repo, branch);
         
