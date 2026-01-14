@@ -185,26 +185,6 @@ button.mobile-nav-item { border: none; background: transparent; cursor: pointer;
 #authStatus { display:flex; align-items:center; gap:6px; font-size:13px; flex-shrink:0; }
 #appVersion { color: var(--muted); font-size: 10px; opacity: 0.7; margin-top: 4px; font-family: monospace; }
 
-/* Icon button for header actions */
-.icon-button { 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  width: 32px; 
-  height: 32px; 
-  border-radius: 50%; 
-  border: none; 
-  background: transparent; 
-  color: var(--muted); 
-  cursor: pointer; 
-  transition: background 0.2s, color 0.2s; 
-  font-size: 18px;
-}
-.icon-button:hover { 
-  background: rgba(77, 217, 255, 0.08); 
-  color: var(--text); 
-}
-
 .site-title { font-size:16px; font-weight:900; letter-spacing:0.4px; line-height:1.2; }
 .site-tagline { color:var(--muted); font-size:10px; margin-top:2px; }
 #dropdownAvatar { width:32px; height:32px; border-radius:50%; }
