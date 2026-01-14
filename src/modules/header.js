@@ -88,11 +88,15 @@ export async function loadHeader() {
       const openFeedback = () => {
         const owner = 'promptroot';
         const repo = 'promptroot';
-        const title = encodeURIComponent('[Feedback] ');
+        const timestamp = Date.now();
+        const title = encodeURIComponent(`[Feedback #${timestamp}] `);
         const body = encodeURIComponent(
           '## Issue\n\n' +
+          'Describe the issue or feature request here.\n\n' +
           '## Screenshot\n\n' +
-          '## Steps to Recreate\n\n' 
+          'Paste screenshot here (Ctrl+V / Cmd+V)\n\n' +
+          '## Steps to Recreate\n\n' +
+          '1. \n2. \n3. \n'
         );
         const labels = encodeURIComponent('feedback');
         
