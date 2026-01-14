@@ -91,12 +91,11 @@ export async function loadHeader() {
         const timestamp = Date.now();
         const title = encodeURIComponent(`[Feedback #${timestamp}] `);
         const body = encodeURIComponent(
-          '## Issue\n\n' +
-          'Describe the issue or feature request here.\n\n' +
-          '## Screenshot\n\n' +
-          'Paste screenshot here (Ctrl+V / Cmd+V)\n\n' +
-          '## Steps to Recreate\n\n' +
-          '1. \n2. \n3. \n'
+          '## Issue\n\n\n' +
+
+          '## Screenshot\n\n\n' +
+
+          '## Steps to Recreate\n\n\n'
         );
         const labels = encodeURIComponent('feedback');
         
