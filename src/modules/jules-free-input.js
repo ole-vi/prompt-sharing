@@ -1,7 +1,7 @@
 import { getCurrentUser } from './auth.js';
 import { checkJulesKey } from './jules-keys.js';
 import { showJulesKeyModal, showSubtaskErrorModal } from './jules-modal.js';
-import { addToJulesQueue } from './jules-queue.js';
+import { addToJulesQueue, handleQueueAction } from './jules-queue.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 
@@ -149,23 +149,13 @@ export function showFreeInputForm() {
               showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
               return;
             } else if (result.action === 'queue') {
-              const user = window.auth?.currentUser;
-              if (!user) {
-                showToast('Please sign in to queue prompts.', 'warn');
-                return;
-              }
-              try {
-                await addToJulesQueue(user.uid, {
-                  type: 'single',
-                  prompt: promptText,
-                  sourceId: _lastSelectedSourceId,
-                  branch: _lastSelectedBranch,
-                  note: 'Queued from Free Input flow'
-                });
-                showToast('Prompt queued successfully!', 'success');
-              } catch (err) {
-                showToast('Failed to queue prompt: ' + err.message, 'error');
-              }
+              await handleQueueAction({
+                type: 'single',
+                prompt: promptText,
+                sourceId: _lastSelectedSourceId,
+                branch: _lastSelectedBranch,
+                note: 'Queued from Free Input flow'
+              });
               return;
             } else if (result.action === 'retry') {
               if (result.shouldDelay) {
@@ -182,23 +172,13 @@ export function showFreeInputForm() {
               showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
               return;
             } else if (result.action === 'queue') {
-              const user = window.auth?.currentUser;
-              if (!user) {
-                showToast('Please sign in to queue prompts.', 'warn');
-                return;
-              }
-              try {
-                await addToJulesQueue(user.uid, {
-                  type: 'single',
-                  prompt: promptText,
-                  sourceId: _lastSelectedSourceId,
-                  branch: _lastSelectedBranch,
-                  note: 'Queued from Free Input flow (final failure)'
-                });
-                showToast('Prompt queued successfully!', 'success');
-              } catch (err) {
-                showToast('Failed to queue prompt: ' + err.message, 'error');
-              }
+              await handleQueueAction({
+                type: 'single',
+                prompt: promptText,
+                sourceId: _lastSelectedSourceId,
+                branch: _lastSelectedBranch,
+                note: 'Queued from Free Input flow (final failure)'
+              });
               return;
             }
 

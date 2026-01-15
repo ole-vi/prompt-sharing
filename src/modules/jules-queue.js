@@ -7,6 +7,22 @@ import { showConfirm } from './confirm-modal.js';
 
 let queueCache = [];
 
+export async function handleQueueAction(queueItemData) {
+  const user = window.auth?.currentUser;
+  if (!user) {
+    showToast('Please sign in to queue prompts.', 'warn');
+    return false;
+  }
+  try {
+    await addToJulesQueue(user.uid, queueItemData);
+    showToast('Prompt queued successfully!', 'success');
+    return true;
+  } catch (err) {
+    showToast('Failed to queue prompt: ' + err.message, 'error');
+    return false;
+  }
+}
+
 export async function addToJulesQueue(uid, queueItem) {
   if (!window.db) throw new Error('Firestore not initialized');
   try {
@@ -692,20 +708,21 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
           if (successfulIndices.length > 0) {
             await deleteSelectedSubtasks(docId, successfulIndices);
           }
-          return;
+          return { successful: successfulIndices.length, skipped: skippedIndices.length };
         } else {
           if (successfulIndices.length > 0) {
             await deleteSelectedSubtasks(docId, successfulIndices);
           }
-          throw new Error('User cancelled');
+          const err = new Error('User cancelled');
+          err.successfulCount = successfulIndices.length;
+          throw err;
         }
       }
     }
   }
 
-  const allToRemove = [...successfulIndices, ...skippedIndices];
-  if (allToRemove.length > 0) {
-    await deleteSelectedSubtasks(docId, allToRemove);
+  if (successfulIndices.length > 0) {
+    await deleteSelectedSubtasks(docId, successfulIndices);
   }
   
   return { successful: successfulIndices.length, skipped: skippedIndices.length };
@@ -856,7 +873,9 @@ async function runSelectedQueueItems() {
   const sortedSubtaskEntries = Object.entries(subtaskSelections).sort(([a], [b]) => 
     (queueCache.find(i => i.id === a)?.createdAt?.seconds || 0) - (queueCache.find(i => i.id === b)?.createdAt?.seconds || 0)
   );
-  const totalSubtasks = Object.values(subtaskSelections).reduce((sum, indices) => sum + indices.length, 0);
+  const totalSubtasks = Object.entries(subtaskSelections)
+    .filter(([docId]) => !queueSelections.includes(docId))
+    .reduce((sum, [, indices]) => sum + indices.length, 0);
   const totalSingles = queueSelections.filter(id => {
     const item = queueCache.find(i => i.id === id);
     return item?.type === 'single';
@@ -888,7 +907,10 @@ async function runSelectedQueueItems() {
       }
     } catch (err) {
       if (err.message === 'User cancelled') {
-        showToast(`Cancelled. Processed ${currentItemNumber} of ${totalItems} ${currentItemNumber === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
+        if (err.successfulCount) {
+          totalSuccessful += err.successfulCount;
+        }
+        showToast(`Cancelled. Processed ${totalSuccessful} of ${totalItems} ${totalSuccessful === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
         statusBar.clear();
         await loadQueuePage();
         return;
@@ -931,7 +953,7 @@ async function runSelectedQueueItems() {
             } else if (result.action === 'queue') {
               retry = false;
             } else {
-              showToast(`Cancelled. Processed ${currentItemNumber - 1} of ${totalItems} ${currentItemNumber - 1 === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
+              showToast(`Cancelled. Processed ${totalSuccessful} of ${totalItems} ${totalSuccessful === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
               statusBar.clear();
               await loadQueuePage();
               return;
@@ -1018,6 +1040,7 @@ async function runSelectedQueueItems() {
                 } catch (e) {
                   console.warn('Failed to persist remaining after skip', e);
                 }
+                statusBar.showMessage('Skipped subtask. Continuing with remaining...', { timeout: 2000 });
                 subtaskRetry = false;
               } else if (result.action === 'queue') {
                 try {
@@ -1044,7 +1067,7 @@ async function runSelectedQueueItems() {
                 } catch (e) {
                   console.warn('Failed to persist error state', e);
                 }
-                showToast(`Cancelled. Processed ${currentItemNumber - 1} of ${totalItems} ${currentItemNumber - 1 === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
+                showToast(`Cancelled. Processed ${totalSuccessful} of ${totalItems} ${totalSuccessful === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
                 statusBar.clear();
                 await loadQueuePage();
                 return;
@@ -1071,7 +1094,7 @@ async function runSelectedQueueItems() {
       }
     } catch (err) {
       if (err.message === 'User cancelled') {
-        showToast(`Cancelled. Processed ${currentItemNumber} of ${totalItems} ${currentItemNumber === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
+        showToast(`Cancelled. Processed ${totalSuccessful} of ${totalItems} ${totalSuccessful === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
         statusBar.clear();
         await loadQueuePage();
         return;
