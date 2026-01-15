@@ -8,7 +8,7 @@ import { loadJulesProfileInfo, listJulesSessions, getDecryptedJulesKey } from '.
 import { getCache, setCache, clearCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
-import { showPromptViewer, attachPromptViewerHandlers } from './prompt-viewer.js';
+import { attachPromptViewerHandlers } from './prompt-viewer.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
