@@ -11,6 +11,18 @@ import { showToast } from './toast.js';
 let lastSelectedSourceId = 'sources/github/promptroot/promptroot';
 let lastSelectedBranch = 'main';
 
+export async function loadSubtaskErrorModal() {
+  try {
+    const response = await fetch('/partials/subtask-error-modal.html');
+    if (response.ok) {
+      const html = await response.text();
+      document.body.insertAdjacentHTML('beforeend', html);
+    }
+  } catch (err) {
+    console.error('Error loading subtask error modal:', err);
+  }
+}
+
 export function openUrlInBackground(url) {
   const a = document.createElement('a');
   a.href = url;
@@ -282,24 +294,28 @@ export function hideJulesEnvModal() {
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 }
 
-export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
+export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
+  let modal = document.getElementById('subtaskErrorModal');
+  if (!modal) {
+    await loadSubtaskErrorModal();
+    modal = document.getElementById('subtaskErrorModal');
+  }
+  
+  const subtaskNumDiv = document.getElementById('errorSubtaskNumber');
+  const messageDiv = document.getElementById('errorMessage');
+  const detailsDiv = document.getElementById('errorDetails');
+  const retryBtn = document.getElementById('subtaskErrorRetryBtn');
+  const skipBtn = document.getElementById('subtaskErrorSkipBtn');
+  const queueBtn = document.getElementById('subtaskErrorQueueBtn');
+  const cancelBtn = document.getElementById('subtaskErrorCancelBtn');
+  const closeBtn = document.getElementById('errorModalClose');
+  const retryDelayCheckbox = document.getElementById('errorRetryDelayCheckbox');
+
+  if (!modal) {
+    return { action: 'cancel', shouldDelay: false };
+  }
+
   return new Promise((resolve) => {
-    const modal = document.getElementById('subtaskErrorModal');
-    const subtaskNumDiv = document.getElementById('errorSubtaskNumber');
-    const messageDiv = document.getElementById('errorMessage');
-    const detailsDiv = document.getElementById('errorDetails');
-    const retryBtn = document.getElementById('subtaskErrorRetryBtn');
-    const skipBtn = document.getElementById('subtaskErrorSkipBtn');
-    const queueBtn = document.getElementById('subtaskErrorQueueBtn');
-    const cancelBtn = document.getElementById('subtaskErrorCancelBtn');
-    const closeBtn = document.getElementById('errorModalClose');
-    const retryDelayCheckbox = document.getElementById('errorRetryDelayCheckbox');
-
-    if (!modal) {
-      resolve({ action: 'cancel', shouldDelay: false });
-      return;
-    }
-
     subtaskNumDiv.textContent = `Subtask ${subtaskNumber} of ${totalSubtasks}`;
     messageDiv.textContent = error.message || String(error);
     detailsDiv.textContent = error.toString();

@@ -5,9 +5,13 @@
 
 import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
 import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly } from '../modules/jules-queue.js';
+import { loadSubtaskErrorModal } from '../modules/jules-modal.js';
 
 // Initialize checkbox mutual exclusivity
 initMutualExclusivity();
+
+// Load the subtask error modal partial
+loadSubtaskErrorModal();
 
 function waitForComponents() {
   if (document.querySelector('header')) {

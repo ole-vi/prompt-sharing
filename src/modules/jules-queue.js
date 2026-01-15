@@ -708,27 +708,63 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
 
   // Import from jules-api module
   const { callRunJulesFunction } = await import('./jules-api.js');
-  const { openUrlInBackground } = await import('./jules-modal.js');
+  const { openUrlInBackground, showSubtaskErrorModal } = await import('./jules-modal.js');
 
-  for (const subtask of toRun) {
-    try {
-      const title = extractTitleFromPrompt(subtask.fullContent);
-      const sessionUrl = await callRunJulesFunction(subtask.fullContent, item.sourceId, item.branch || 'master', title);
-      if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
-        if (openInBackground) {
-          openUrlInBackground(sessionUrl);
+  // Track which subtasks were successfully processed
+  const successfulIndices = [];
+
+  for (let i = 0; i < toRun.length; i++) {
+    const subtask = toRun[i];
+    const originalIndex = sortedIndices[i];
+    let retry = true;
+    
+    while (retry) {
+      try {
+        const title = extractTitleFromPrompt(subtask.fullContent);
+        const sessionUrl = await callRunJulesFunction(subtask.fullContent, item.sourceId, item.branch || 'master', title);
+        if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
+          if (openInBackground) {
+            openUrlInBackground(sessionUrl);
+          } else {
+            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          }
+        }
+        // Mark this subtask as successfully processed
+        successfulIndices.push(originalIndex);
+        await new Promise(r => setTimeout(r, 800));
+        retry = false;
+      } catch (err) {
+        // Show error modal
+        const result = await showSubtaskErrorModal(i + 1, toRun.length, err);
+        
+        if (result.action === 'retry') {
+          if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
+          continue;
+        } else if (result.action === 'skip') {
+          // Mark as successful so it gets removed, then break
+          successfulIndices.push(originalIndex);
+          retry = false;
+        } else if (result.action === 'queue') {
+          // Clean up successful ones and leave the rest
+          if (successfulIndices.length > 0) {
+            await deleteSelectedSubtasks(docId, successfulIndices);
+          }
+          return;
         } else {
-          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          // cancel - clean up successful and stop
+          if (successfulIndices.length > 0) {
+            await deleteSelectedSubtasks(docId, successfulIndices);
+          }
+          return; // Don't throw, just return cleanly
         }
       }
-      await new Promise(r => setTimeout(r, 800));
-    } catch (err) {
-      statusBar.showMessage(`Error running subtask: ${err.message}`, { timeout: 6000 });
-      throw err;
     }
   }
 
-  await deleteSelectedSubtasks(docId, indices);
+  // Clean up all successfully processed subtasks
+  if (successfulIndices.length > 0) {
+    await deleteSelectedSubtasks(docId, successfulIndices);
+  }
 }
 
 function attachQueueModalHandlers() {
@@ -872,7 +908,7 @@ async function runSelectedQueueItems() {
 
   // Import from jules-api module
   const { callRunJulesFunction } = await import('./jules-api.js');
-  const { openUrlInBackground } = await import('./jules-modal.js');
+  const { openUrlInBackground, showSubtaskErrorModal } = await import('./jules-modal.js');
 
   const sortedSubtaskEntries = Object.entries(subtaskSelections).sort(([a], [b]) => 
     (queueCache.find(i => i.id === a)?.createdAt?.seconds || 0) - (queueCache.find(i => i.id === b)?.createdAt?.seconds || 0)
@@ -892,16 +928,40 @@ async function runSelectedQueueItems() {
 
     try {
       if (item.type === 'single') {
-        const title = extractTitleFromPrompt(item.prompt || '');
-        const sessionUrl = await callRunJulesFunction(item.prompt || '', item.sourceId, item.branch || 'master', title);
-        if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
-          if (openInBackground) {
-            openUrlInBackground(sessionUrl);
-          } else {
-            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+        let retry = true;
+        while (retry) {
+          try {
+            const title = extractTitleFromPrompt(item.prompt || '');
+            const sessionUrl = await callRunJulesFunction(item.prompt || '', item.sourceId, item.branch || 'master', title);
+            if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
+              if (openInBackground) {
+                openUrlInBackground(sessionUrl);
+              } else {
+                window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+              }
+            }
+            await deleteFromJulesQueue(user.uid, id);
+            retry = false;
+          } catch (singleErr) {
+            const result = await showSubtaskErrorModal(1, 1, singleErr);
+            if (result.action === 'retry') {
+              if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
+              continue;
+            } else if (result.action === 'skip') {
+              await deleteFromJulesQueue(user.uid, id);
+              retry = false;
+            } else if (result.action === 'queue') {
+              // Already in queue, just leave it
+              retry = false;
+            } else {
+              // cancel
+              statusBar.clearProgress();
+              statusBar.clearAction();
+              await loadQueuePage();
+              return;
+            }
           }
         }
-        await deleteFromJulesQueue(user.uid, id);
       } else if (item.type === 'subtasks') {
         let remaining = Array.isArray(item.remaining) ? item.remaining.slice() : [];
 
@@ -925,54 +985,97 @@ async function runSelectedQueueItems() {
           }
 
           const s = remaining[0];
-          try {
-            const title = extractTitleFromPrompt(s.fullContent);
-            const sessionUrl = await callRunJulesFunction(s.fullContent, item.sourceId, item.branch || 'master', title);
-            if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
-              if (openInBackground) {
-                openUrlInBackground(sessionUrl);
+          let subtaskRetry = true;
+          while (subtaskRetry) {
+            try {
+              const title = extractTitleFromPrompt(s.fullContent);
+              const sessionUrl = await callRunJulesFunction(s.fullContent, item.sourceId, item.branch || 'master', title);
+              if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
+                if (openInBackground) {
+                  openUrlInBackground(sessionUrl);
+                } else {
+                  window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+                }
+              }
+
+              // remove the completed subtask from remaining
+              remaining.shift();
+
+              // persist progress after each successful subtask
+              try {
+                await updateJulesQueueItem(user.uid, id, {
+                  remaining,
+                  status: remaining.length === 0 ? 'done' : 'in-progress',
+                  updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+              } catch (e) {
+                console.warn('Failed to persist progress for queue item', id, e.message || e);
+              }
+
+              // update status bar progress
+              try {
+                const done = initialCount - remaining.length;
+                const percent = initialCount > 0 ? Math.round((done / initialCount) * 100) : 100;
+                statusBar.setProgress(`${done}/${initialCount}`, percent);
+                statusBar.showMessage(`Processing subtask ${done}/${initialCount}`, { timeout: 0 });
+              } catch (e) {}
+
+              // slight delay between subtasks
+              await new Promise(r => setTimeout(r, 800));
+              subtaskRetry = false;
+            } catch (err) {
+              // Show error modal with options
+              const currentSubtask = initialCount - remaining.length + 1;
+              const result = await showSubtaskErrorModal(currentSubtask, initialCount, err);
+              
+              if (result.action === 'retry') {
+                if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
+                continue;
+              } else if (result.action === 'skip') {
+                remaining.shift();
+                try {
+                  await updateJulesQueueItem(user.uid, id, {
+                    remaining,
+                    status: remaining.length === 0 ? 'done' : 'in-progress',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+                } catch (e) {
+                  console.warn('Failed to persist progress after skip', e);
+                }
+                subtaskRetry = false;
+              } else if (result.action === 'queue') {
+                // Persist remaining and exit
+                try {
+                  await updateJulesQueueItem(user.uid, id, {
+                    remaining,
+                    status: 'pending',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+                } catch (e) {
+                  console.warn('Failed to persist queue state', e);
+                }
+                statusBar.showMessage('Remainder queued for later', { timeout: 3000 });
+                statusBar.clearProgress();
+                statusBar.clearAction();
+                await loadQueuePage();
+                return;
               } else {
-                window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+                // cancel - persist error state and stop
+                try {
+                  await updateJulesQueueItem(user.uid, id, {
+                    remaining,
+                    status: 'error',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+                } catch (e) {
+                  console.warn('Failed to persist error state', e);
+                }
+                statusBar.clearProgress();
+                statusBar.clearAction();
+                await loadQueuePage();
+                return;
               }
             }
-
-            // remove the completed subtask from remaining
-            remaining.shift();
-
-            // persist progress after each successful subtask
-            try {
-              await updateJulesQueueItem(user.uid, id, {
-                remaining,
-                status: remaining.length === 0 ? 'done' : 'in-progress',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
-            } catch (e) {
-              console.warn('Failed to persist progress for queue item', id, e.message || e);
-            }
-
-            // update status bar progress
-            try {
-              const done = initialCount - remaining.length;
-              const percent = initialCount > 0 ? Math.round((done / initialCount) * 100) : 100;
-              statusBar.setProgress(`${done}/${initialCount}`, percent);
-              statusBar.showMessage(`Processing subtask ${done}/${initialCount}`, { timeout: 0 });
-            } catch (e) {}
-
-            // slight delay between subtasks
-            await new Promise(r => setTimeout(r, 800));
-          } catch (err) {
-            // If a subtask fails, persist remaining and stop processing this queued item
-            statusBar.showMessage(`Error running queued subtask: ${err.message}`, { timeout: 6000 });
-            try {
-              await updateJulesQueueItem(user.uid, id, {
-                remaining,
-                status: 'error',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
-            } catch (e) {
-              console.warn('Failed to persist error state for queue item', id, e.message || e);
-            }
-            throw err;
           }
         }
 
@@ -982,8 +1085,18 @@ async function runSelectedQueueItems() {
         console.warn('Unknown queue item type', item.type);
       }
     } catch (err) {
-      // stop processing further items to avoid fast repeated failures
-      console.error('Failed running queue item', id, err);
+      // Only catch user cancellation here, all other errors are handled by modal
+      if (err.message === 'User cancelled') {
+        statusBar.clearProgress();
+        statusBar.clearAction();
+        await loadQueuePage();
+        return;
+      }
+      // Unexpected error - log and show
+      console.error('Unexpected error running queue item', id, err);
+      showToast(`Unexpected error: ${err.message}`, 'error');
+      statusBar.clearProgress();
+      statusBar.clearAction();
       await loadQueuePage();
       return;
     }
