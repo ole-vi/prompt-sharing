@@ -1,10 +1,6 @@
-/**
- * Sessions Page Initialization
- * Handles Jules sessions listing and search functionality
- */
-
 import { waitForFirebase } from '../shared-init.js';
 import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js';
+import { attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -118,7 +114,7 @@ function renderAllSessions(sessions) {
     
     const promptPreview = (session.prompt || 'No prompt text').substring(0, 150);
     const displayPrompt = promptPreview.length < (session.prompt || '').length ? promptPreview + '...' : promptPreview;
-    const createdAt = session.createTime ? new Date(session.createTime).toLocaleDateString() : 'Unknown';
+    const createdAt = session.createTime ? new Date(session.createTime).toLocaleString() : 'Unknown';
     const prUrl = session.outputs?.[0]?.pullRequest?.url;
     
     const sessionId = session.name?.split('sessions/')[1] || session.id?.split('sessions/')[1] || session.id;
@@ -128,14 +124,17 @@ function renderAllSessions(sessions) {
       <div class="session-card" onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
         <div class="session-meta">${createdAt}</div>
         <div class="session-prompt">${displayPrompt}</div>
-        <div class="session-row" onclick="event.stopPropagation();">
+        <div class="session-row">
           <span class="session-pill"><span class="icon icon-inline" aria-hidden="true">${stateIcon}</span> ${stateLabel}</span>
-          ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" style="color:var(--accent); text-decoration:none;"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a>` : ''}
+          ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" onclick="event.stopPropagation()"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a>` : ''}
           <span class="session-hint"><span class="icon icon-inline" aria-hidden="true">info</span> Click to view session</span>
+          <button class="btn-icon session-view-btn" onclick="event.stopPropagation(); window.viewPrompt_${sessionId.replace(/[^a-zA-Z0-9]/g, '_')}()" title="View full prompt"><span class="icon" aria-hidden="true">visibility</span></button>
         </div>
       </div>
     `;
   }).join('');
+  
+  attachPromptViewerHandlers(filteredSessions);
 }
 
 async function loadSessions() {
@@ -175,7 +174,6 @@ async function initApp() {
   waitForFirebase(() => {
     loadSessions();
     
-    // Set up search functionality with clear button
     const searchInput = document.getElementById('sessionSearchInput');
     const searchClear = document.getElementById('sessionSearchClear');
     if (searchInput) {
@@ -201,13 +199,11 @@ async function initApp() {
       toggleClear();
     }
     
-    // Set up load more button
     const loadMoreBtn = document.getElementById('loadMoreSessionsBtn');
     if (loadMoreBtn) {
       loadMoreBtn.addEventListener('click', loadSessionsPage);
     }
 
-    // Refresh sessions when auth state changes (e.g., after sign-in)
     if (window.auth && typeof window.auth.onAuthStateChanged === 'function') {
       window.auth.onAuthStateChanged(() => {
         loadSessions();

@@ -109,6 +109,10 @@ a:hover { text-decoration: underline; }
 .session-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
 .session-pill { font-size:12px; padding:4px 8px; background:rgba(77,217,255,0.1); border-radius:4px; color:var(--accent); }
 .session-hint { font-size:11px; color:var(--muted); margin-left:auto; }
+.session-view-btn { padding:4px; font-size:16px; opacity:0.6; }
+.session-view-btn .icon { font-size:16px; }
+.prompt-viewer-body { flex:1; overflow-y:auto; }
+.prompt-viewer-text { white-space:pre-wrap; word-wrap:break-word; font-family:ui-monospace, monospace; font-size:13px; line-height:1.6; color:var(--text); background:var(--bg); padding:16px; border-radius:8px; margin:0; }
 
 /* Queue list cards */
 .queue-card { padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.02); }
