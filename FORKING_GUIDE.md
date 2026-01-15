@@ -82,21 +82,21 @@ gcloud --version
 cd ~/projects  # or C:\Users\YourName\projects on Windows
 
 # Clone your fork (replace YOUR_USERNAME with your GitHub username)
-git clone https://github.com/YOUR_USERNAME/prompt-sharing.git
+git clone https://github.com/YOUR_USERNAME/promptroot.git
 
 # Navigate into the project
 cd promptroot
 
 # Add upstream remote (to pull updates from original repo)
-git remote add upstream https://github.com/JesseWarrenDevelopment/prompt-sharing.git
+git remote add upstream https://github.com/promptroot/promptroot.git
 
 # Verify remotes
 git remote -v
 # Should show:
-# origin    https://github.com/YOUR_USERNAME/prompt-sharing.git (fetch)
-# origin    https://github.com/YOUR_USERNAME/prompt-sharing.git (push)
-# upstream  https://github.com/JesseWarrenDevelopment/prompt-sharing.git (fetch)
-# upstream  https://github.com/JesseWarrenDevelopment/prompt-sharing.git (push)
+# origin    https://github.com/YOUR_USERNAME/promptroot.git (fetch)
+# origin    https://github.com/YOUR_USERNAME/promptroot.git (push)
+# upstream  https://github.com/JesseWarrenDevelopment/promptroot.git (fetch)
+# upstream  https://github.com/JesseWarrenDevelopment/promptroot.git (push)
 ```
 
 ---
