@@ -467,9 +467,9 @@ Find this section (around line 7-15):
 ```javascript
 const firebaseConfig = {
   apiKey: "AIzaSyXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxX",
-  authDomain: "prompt-sharing-f8eeb.firebaseapp.com",
-  projectId: "prompt-sharing-f8eeb",
-  storageBucket: "prompt-sharing-f8eeb.appspot.com",
+  authDomain: "promptroot-f8eeb.firebaseapp.com",
+  projectId: "promptroot-f8eeb",
+  storageBucket: "promptroot-f8eeb.appspot.com",
   messagingSenderId: "123456789012",
   appId: "1:123456789012:web:abcdef1234567890abcdef"
 };
@@ -492,11 +492,11 @@ Find this line (near the top):
 ```json
 {
   "projects": {
-    "default": "prompt-sharing-f8eeb"
+    "default": "promptroot-f8eeb"
   },
 ```
 
-Replace `"prompt-sharing-f8eeb"` with your Firebase project ID:
+Replace `"promptroot-f8eeb"` with your Firebase project ID:
 
 ```json
 {
@@ -509,7 +509,7 @@ Find this section (around line 40):
 
 ```json
 "hosting": {
-  "site": "prompt-sharing-f8eeb",
+  "site": "promptroot-f8eeb",
 ```
 
 Replace the site name with your project ID:
@@ -874,7 +874,7 @@ If you want to host documentation on GitHub Pages:
 
 **Your docs will be available at:**
 ```
-https://YOUR_USERNAME.github.io/prompt-sharing/
+https://YOUR_USERNAME.github.io/promptroot/
 ```
 
 #### Step 11.2: Custom Domain for GitHub Pages (Optional)
