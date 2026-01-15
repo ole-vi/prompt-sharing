@@ -1,6 +1,3 @@
-// ===== Jules Queue Module =====
-// Manages Jules queue operations and UI rendering
-
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
@@ -20,7 +17,6 @@ export async function addToJulesQueue(uid, queueItem) {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       status: 'pending'
     });
-    // Clear cache so next load fetches fresh data
     const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
     clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return docRef.id;
@@ -35,7 +31,6 @@ export async function updateJulesQueueItem(uid, docId, updates) {
   try {
     const docRef = window.db.collection('julesQueues').doc(uid).collection('items').doc(docId);
     await docRef.update(updates);
-    // Clear cache so next load fetches fresh data
     const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
     clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return true;
@@ -49,7 +44,6 @@ export async function deleteFromJulesQueue(uid, docId) {
   if (!window.db) throw new Error('Firestore not initialized');
   try {
     await window.db.collection('julesQueues').doc(uid).collection('items').doc(docId).delete();
-    // Clear cache so next load fetches fresh data
     const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
     clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return true;
@@ -78,7 +72,6 @@ export function showJulesQueueModal() {
   }
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1003; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
   
-  // Close modal when clicking on backdrop
   modal.onclick = (e) => {
     if (e.target === modal) {
       hideJulesQueueModal();
@@ -111,9 +104,7 @@ let editModalState = {
   branchSelector: null
 };
 
-// Initialize repo and branch selectors
 async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu) {
-  // Create BranchSelector instance
   const branchSelector = new BranchSelector({
     dropdownBtn: branchDropdownBtn,
     dropdownText: branchDropdownText,
@@ -123,7 +114,6 @@ async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, re
     }
   });
 
-  // Create RepoSelector instance
   const repoSelector = new RepoSelector({
     dropdownBtn: repoDropdownBtn,
     dropdownText: repoDropdownText,
@@ -134,7 +124,6 @@ async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, re
     }
   });
 
-  // Store selectors in state for later access
   editModalState.repoSelector = repoSelector;
   editModalState.branchSelector = branchSelector;
 
@@ -181,7 +170,6 @@ async function openEditQueueModal(docId) {
   editModalState.currentDocId = docId;
   editModalState.hasUnsavedChanges = false;
 
-  // Create modal if it doesn't exist
   let modal = document.getElementById('editQueueItemModal');
   if (!modal) {
     modal = document.createElement('div');
@@ -257,7 +245,6 @@ async function openEditQueueModal(docId) {
     setupSubtasksEventDelegation();
   }
 
-  // Populate the form
   const typeDiv = document.getElementById('editQueueType');
   const promptGroup = document.getElementById('editPromptGroup');
   const subtasksGroup = document.getElementById('editSubtasksGroup');
@@ -278,7 +265,6 @@ async function openEditQueueModal(docId) {
     editModalState.originalData = { prompt: item.prompt || '' };
     editModalState.currentType = 'single';
     
-    // Set up convert to subtasks button
     document.getElementById('convertToSubtasksBtn').onclick = convertToSubtasks;
   } else if (item.type === 'subtasks') {
     typeDiv.textContent = 'Subtasks Batch';
@@ -293,7 +279,6 @@ async function openEditQueueModal(docId) {
     };
     editModalState.currentType = 'subtasks';
     
-    // Set up convert to single button
     document.getElementById('convertToSingleBtn').onclick = convertToSingle;
     updateConvertToSingleButtonVisibility();
   }
@@ -301,13 +286,10 @@ async function openEditQueueModal(docId) {
   editModalState.originalData.sourceId = item.sourceId || '';
   editModalState.originalData.branch = item.branch || 'master';
 
-  // Initialize repo and branch selectors
   await initializeEditRepoAndBranch(item.sourceId, item.branch || 'master', repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu);
 
-  // Show modal
   modal.style.display = 'flex';
 
-  // Track changes
   const trackChanges = () => {
     editModalState.hasUnsavedChanges = true;
   };
@@ -328,20 +310,16 @@ function convertToSubtasks() {
   const subtasksGroup = document.getElementById('editSubtasksGroup');
   const typeDiv = document.getElementById('editQueueType');
   
-  // Switch view
   promptGroup.style.display = 'none';
   subtasksGroup.style.display = 'block';
   typeDiv.textContent = 'Subtasks Batch';
   
-  // Create initial subtask from prompt
   const subtasks = promptContent ? [{ fullContent: promptContent }] : [{ fullContent: '' }];
   renderSubtasksList(subtasks);
   
-  // Update state
   editModalState.currentType = 'subtasks';
   editModalState.hasUnsavedChanges = true;
   
-  // Set up convert to single button
   document.getElementById('convertToSingleBtn').onclick = convertToSingle;
   updateConvertToSingleButtonVisibility();
 }
@@ -366,26 +344,19 @@ async function convertToSingle() {
   const typeDiv = document.getElementById('editQueueType');
   const promptTextarea = document.getElementById('editQueuePrompt');
   
-  // Combine subtasks into single prompt
   const combinedPrompt = currentSubtasks.join('\n\n---\n\n');
   
-  // Switch view
   subtasksGroup.style.display = 'none';
   promptGroup.style.display = 'block';
   typeDiv.textContent = 'Single Prompt';
   promptTextarea.value = combinedPrompt;
   
-  // Update state
   editModalState.currentType = 'single';
   editModalState.hasUnsavedChanges = true;
   
-  // Set up convert to subtasks button
   document.getElementById('convertToSubtasksBtn').onclick = convertToSubtasks;
 }
 
-/**
- * Update visibility of convert to single button based on subtask count
- */
 function updateConvertToSingleButtonVisibility() {
   const convertBtn = document.getElementById('convertToSingleBtn');
   const subtaskCount = document.querySelectorAll('.edit-subtask-content').length;
@@ -395,9 +366,6 @@ function updateConvertToSingleButtonVisibility() {
   }
 }
 
-/**
- * Render subtasks list with add/remove buttons
- */
 function renderSubtasksList(subtasks) {
   const subtasksList = document.getElementById('editQueueSubtasksList');
   if (!subtasksList) {
@@ -424,33 +392,23 @@ function renderSubtasksList(subtasks) {
   updateConvertToSingleButtonVisibility();
 }
 
-/**
- * Add a new empty subtask
- */
 function addNewSubtask() {
   const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => ({
     fullContent: textarea.value
   }));
   
-  // Add new empty subtask
   currentSubtasks.push({ fullContent: '' });
   
-  // Re-render
   renderSubtasksList(currentSubtasks);
   
-  // Mark as changed
   editModalState.hasUnsavedChanges = true;
   
-  // Focus the new textarea
   const textareas = document.querySelectorAll('.edit-subtask-content');
   if (textareas.length > 0) {
     textareas[textareas.length - 1].focus();
   }
 }
 
-/**
- * Remove a subtask by index
- */
 async function removeSubtask(index) {
   const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => ({
     fullContent: textarea.value
@@ -465,17 +423,13 @@ async function removeSubtask(index) {
     if (!confirmed) return;
   }
   
-  // Remove the subtask at the specified index
   currentSubtasks.splice(index, 1);
   
-  // Re-render
   renderSubtasksList(currentSubtasks);
   
-  // Mark as changed
   editModalState.hasUnsavedChanges = true;
 }
 
-// Close modal handler function (defined outside so it can be referenced in event handlers)
 async function closeEditModal(force = false) {
   const modal = document.getElementById('editQueueItemModal');
   if (!modal) return;
@@ -511,7 +465,6 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
   }
 
   try {
-    // Get values from selectors
     const sourceId = editModalState.repoSelector?.getSelectedSourceId();
     const branch = editModalState.branchSelector?.getSelectedBranch();
     
@@ -521,14 +474,12 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    // Determine current type based on what's visible
     const currentType = editModalState.currentType || item.type;
     
     if (currentType === 'single') {
       const promptTextarea = document.getElementById('editQueuePrompt');
       updates.type = 'single';
       updates.prompt = promptTextarea.value;
-      // Remove subtasks fields if converting from subtasks to single
       if (item.type === 'subtasks') {
         updates.remaining = firebase.firestore.FieldValue.delete();
         updates.totalCount = firebase.firestore.FieldValue.delete();
@@ -541,7 +492,6 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
       updates.type = 'subtasks';
       updates.remaining = updatedSubtasks;
       updates.totalCount = updatedSubtasks.length;
-      // Remove prompt field if converting from single to subtasks
       if (item.type === 'single') {
         updates.prompt = firebase.firestore.FieldValue.delete();
       }
@@ -553,7 +503,6 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
     editModalState.hasUnsavedChanges = false;
     closeModalCallback(true);
     
-    // Reload the queue
     await loadQueuePage();
   } catch (err) {
     showToast('Failed to update queue item: ' + err.message, 'error');
@@ -569,7 +518,6 @@ async function loadQueuePage() {
   }
 
   try {
-    // Check cache first
     let items = getCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
     
     if (!items) {
@@ -706,11 +654,9 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
   const sortedIndices = indices.sort((a, b) => a - b);
   const toRun = sortedIndices.map(i => item.remaining[i]).filter(Boolean);
 
-  // Import from jules-api module
   const { callRunJulesFunction } = await import('./jules-api.js');
   const { openUrlInBackground, showSubtaskErrorModal } = await import('./jules-modal.js');
 
-  // Track which subtasks were successfully processed
   const successfulIndices = [];
 
   for (let i = 0; i < toRun.length; i++) {
@@ -729,29 +675,24 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
             window.open(sessionUrl, '_blank', 'noopener,noreferrer');
           }
         }
-        // Mark this subtask as successfully processed
         successfulIndices.push(originalIndex);
         await new Promise(r => setTimeout(r, 800));
         retry = false;
       } catch (err) {
-        // Show error modal
         const result = await showSubtaskErrorModal(i + 1, toRun.length, err);
         
         if (result.action === 'retry') {
           if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
           continue;
         } else if (result.action === 'skip') {
-          // Mark as successful so it gets removed, then break
           successfulIndices.push(originalIndex);
           retry = false;
         } else if (result.action === 'queue') {
-          // Clean up successful ones and leave the rest
           if (successfulIndices.length > 0) {
             await deleteSelectedSubtasks(docId, successfulIndices);
           }
           return;
         } else {
-          // cancel - clean up successful and stop
           if (successfulIndices.length > 0) {
             await deleteSelectedSubtasks(docId, successfulIndices);
           }
@@ -761,7 +702,6 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
     }
   }
 
-  // Clean up all successfully processed subtasks
   if (successfulIndices.length > 0) {
     await deleteSelectedSubtasks(docId, successfulIndices);
   }
@@ -906,7 +846,6 @@ async function runSelectedQueueItems() {
     if (pauseBtn) pauseBtn.disabled = true;
   });
 
-  // Import from jules-api module
   const { callRunJulesFunction } = await import('./jules-api.js');
   const { openUrlInBackground, showSubtaskErrorModal } = await import('./jules-modal.js');
 
@@ -977,10 +916,8 @@ async function runSelectedQueueItems() {
               await deleteFromJulesQueue(user.uid, id);
               retry = false;
             } else if (result.action === 'queue') {
-              // Already in queue, just leave it
               retry = false;
             } else {
-              // cancel
               showToast(`Cancelled. Processed ${currentItemNumber - 1} of ${totalItems} ${currentItemNumber - 1 === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
               statusBar.clear();
               await loadQueuePage();
@@ -1025,10 +962,8 @@ async function runSelectedQueueItems() {
                 }
               }
 
-              // remove the completed subtask from remaining
               remaining.shift();
 
-              // persist progress after each successful subtask
               try {
                 await updateJulesQueueItem(user.uid, id, {
                   remaining,
@@ -1039,7 +974,6 @@ async function runSelectedQueueItems() {
                 console.warn('Failed to persist progress for queue item', id, e.message || e);
               }
 
-              // update status bar progress
               try {
                 const done = initialCount - remaining.length;
                 const percent = initialCount > 0 ? Math.round((done / initialCount) * 100) : 100;
@@ -1047,7 +981,6 @@ async function runSelectedQueueItems() {
                 statusBar.showMessage(`Processing subtask ${done}/${initialCount}`, { timeout: 0 });
               } catch (e) {}
 
-              // slight delay between subtasks
               await new Promise(r => setTimeout(r, 800));
               subtaskRetry = false;
             } catch (err) {
@@ -1069,7 +1002,6 @@ async function runSelectedQueueItems() {
                 }
                 subtaskRetry = false;
               } else if (result.action === 'queue') {
-                // Persist remaining and exit
                 try {
                   await updateJulesQueueItem(user.uid, id, {
                     remaining,
@@ -1085,7 +1017,6 @@ async function runSelectedQueueItems() {
                 await loadQueuePage();
                 return;
               } else {
-                // cancel - persist error state and stop
                 try {
                   await updateJulesQueueItem(user.uid, id, {
                     remaining,
@@ -1104,20 +1035,17 @@ async function runSelectedQueueItems() {
           }
         }
 
-        // all subtasks succeeded
         await deleteFromJulesQueue(user.uid, id);
       } else {
         console.warn('Unknown queue item type', item.type);
       }
     } catch (err) {
-      // Only catch user cancellation here, all other errors are handled by modal
       if (err.message === 'User cancelled') {
         showToast(`Cancelled. Processed ${currentItemNumber} of ${totalItems} ${currentItemNumber === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
         statusBar.clear();
         await loadQueuePage();
         return;
       }
-      // Unexpected error - log and show
       console.error('Unexpected error running queue item', id, err);
       showToast(`Unexpected error: ${err.message}`, 'error');
       statusBar.clearProgress();

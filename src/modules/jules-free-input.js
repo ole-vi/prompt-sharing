@@ -1,6 +1,3 @@
-// ===== Jules Free Input Module =====
-// Free input form functionality
-
 import { getCurrentUser } from './auth.js';
 import { checkJulesKey } from './jules-keys.js';
 import { showJulesKeyModal, showSubtaskErrorModal } from './jules-modal.js';
@@ -8,7 +5,6 @@ import { addToJulesQueue } from './jules-queue.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 
-// Module state
 let _lastSelectedSourceId = null;
 let _lastSelectedBranch = null;
 
