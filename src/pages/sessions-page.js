@@ -1,6 +1,6 @@
 import { waitForFirebase } from '../shared-init.js';
 import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js';
-import { showPromptViewer, attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
+import { attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
