@@ -4,12 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Privacy Policy - PromptRoot</title>
-  <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
-  <link rel="stylesheet" href="src/styles.css" />
+  <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+  <link rel="stylesheet" href="/src/styles.css" />
+  <script src="/src/font-init.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-  <script src="src/firebase-init.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
+  <script src="/src/firebase-init.js"></script>
 </head>
 <body data-page="privacy">
   <div class="wrap">
@@ -124,19 +126,20 @@
       </section>
 
       <div style="margin-top: 48px; text-align: center;">
-        <a href="index.html" class="btn">Back to Home</a>
+        <a href="/index.html" class="btn">Back to Home</a>
       </div>
     </main>
   </div>
 
   <footer>
     <div style="text-align: center;">
-      <a href="privacy.html" style="color: var(--muted); text-decoration: none;">Privacy Policy</a>
+      <a href="/privacy.html" style="color: var(--muted); text-decoration: none;">Privacy Policy</a>
       <span style="margin: 0 12px;">•</span>
       <a href="https://github.com/promptroot/promptroot" target="_blank" rel="noopener" style="color: var(--muted); text-decoration: none;">GitHub</a>
     </div>
   </footer>
 
-  <script type="module" src="src/shared-init.js"></script>
+  <script type="module" src="/src/shared-init.js"></script>
+  <script type="module" src="/src/pages/privacy-page.js"></script>
 </body>
 </html>
