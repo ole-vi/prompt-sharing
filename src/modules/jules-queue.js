@@ -914,11 +914,28 @@ async function runSelectedQueueItems() {
     (queueCache.find(i => i.id === a)?.createdAt?.seconds || 0) - (queueCache.find(i => i.id === b)?.createdAt?.seconds || 0)
   );
 
+  // Calculate total items to process for progress tracking
+  const totalSubtasks = Object.values(subtaskSelections).reduce((sum, indices) => sum + indices.length, 0);
+  const totalSingles = queueSelections.filter(id => {
+    const item = queueCache.find(i => i.id === id);
+    return item?.type === 'single';
+  }).length;
+  const totalFullSubtaskQueues = queueSelections.filter(id => {
+    const item = queueCache.find(i => i.id === id);
+    return item?.type === 'subtasks';
+  }).reduce((sum, id) => {
+    const item = queueCache.find(i => i.id === id);
+    return sum + (item?.remaining?.length || 0);
+  }, 0);
+  const totalItems = totalSubtasks + totalSingles + totalFullSubtaskQueues;
+  let currentItemNumber = 0;
+
   for (const [docId, indices] of sortedSubtaskEntries) {
     if (paused) break;
     if (queueSelections.includes(docId)) continue;
     
     await runSelectedSubtasks(docId, indices.slice().sort((a, b) => a - b), suppressPopups, openInBackground);
+    currentItemNumber += indices.length;
   }
   
   for (const id of sortByCreatedAt(queueSelections)) {
@@ -928,6 +945,7 @@ async function runSelectedQueueItems() {
 
     try {
       if (item.type === 'single') {
+        currentItemNumber++;
         let retry = true;
         while (retry) {
           try {
@@ -943,7 +961,7 @@ async function runSelectedQueueItems() {
             await deleteFromJulesQueue(user.uid, id);
             retry = false;
           } catch (singleErr) {
-            const result = await showSubtaskErrorModal(1, 1, singleErr);
+            const result = await showSubtaskErrorModal(currentItemNumber, totalItems, singleErr);
             if (result.action === 'retry') {
               if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
               continue;
@@ -955,6 +973,7 @@ async function runSelectedQueueItems() {
               retry = false;
             } else {
               // cancel
+              statusBar.showMessage('Cancelled', { timeout: 2000 });
               statusBar.clearProgress();
               statusBar.clearAction();
               await loadQueuePage();
@@ -984,6 +1003,7 @@ async function runSelectedQueueItems() {
             return;
           }
 
+          currentItemNumber++;
           const s = remaining[0];
           let subtaskRetry = true;
           while (subtaskRetry) {
@@ -1024,9 +1044,7 @@ async function runSelectedQueueItems() {
               await new Promise(r => setTimeout(r, 800));
               subtaskRetry = false;
             } catch (err) {
-              // Show error modal with options
-              const currentSubtask = initialCount - remaining.length + 1;
-              const result = await showSubtaskErrorModal(currentSubtask, initialCount, err);
+              const result = await showSubtaskErrorModal(currentItemNumber, totalItems, err);
               
               if (result.action === 'retry') {
                 if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
@@ -1070,6 +1088,7 @@ async function runSelectedQueueItems() {
                 } catch (e) {
                   console.warn('Failed to persist error state', e);
                 }
+                statusBar.showMessage('Cancelled', { timeout: 2000 });
                 statusBar.clearProgress();
                 statusBar.clearAction();
                 await loadQueuePage();
@@ -1087,6 +1106,7 @@ async function runSelectedQueueItems() {
     } catch (err) {
       // Only catch user cancellation here, all other errors are handled by modal
       if (err.message === 'User cancelled') {
+        statusBar.showMessage('Cancelled', { timeout: 2000 });
         statusBar.clearProgress();
         statusBar.clearAction();
         await loadQueuePage();

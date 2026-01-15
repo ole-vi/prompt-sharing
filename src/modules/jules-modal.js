@@ -316,7 +316,7 @@ export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error)
   }
 
   return new Promise((resolve) => {
-    subtaskNumDiv.textContent = `Subtask ${subtaskNumber} of ${totalSubtasks}`;
+    subtaskNumDiv.textContent = `Task ${subtaskNumber} of ${totalSubtasks}`;
     messageDiv.textContent = error.message || String(error);
     detailsDiv.textContent = error.toString();
 
