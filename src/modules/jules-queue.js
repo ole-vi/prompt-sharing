@@ -755,7 +755,7 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
           if (successfulIndices.length > 0) {
             await deleteSelectedSubtasks(docId, successfulIndices);
           }
-          return; // Don't throw, just return cleanly
+          throw new Error('User cancelled');
         }
       }
     }
@@ -913,8 +913,6 @@ async function runSelectedQueueItems() {
   const sortedSubtaskEntries = Object.entries(subtaskSelections).sort(([a], [b]) => 
     (queueCache.find(i => i.id === a)?.createdAt?.seconds || 0) - (queueCache.find(i => i.id === b)?.createdAt?.seconds || 0)
   );
-
-  // Calculate total items to process for progress tracking
   const totalSubtasks = Object.values(subtaskSelections).reduce((sum, indices) => sum + indices.length, 0);
   const totalSingles = queueSelections.filter(id => {
     const item = queueCache.find(i => i.id === id);
@@ -934,8 +932,18 @@ async function runSelectedQueueItems() {
     if (paused) break;
     if (queueSelections.includes(docId)) continue;
     
-    await runSelectedSubtasks(docId, indices.slice().sort((a, b) => a - b), suppressPopups, openInBackground);
-    currentItemNumber += indices.length;
+    try {
+      await runSelectedSubtasks(docId, indices.slice().sort((a, b) => a - b), suppressPopups, openInBackground);
+      currentItemNumber += indices.length;
+    } catch (err) {
+      if (err.message === 'User cancelled') {
+        showToast(`Cancelled. Processed ${currentItemNumber} of ${totalItems} ${currentItemNumber === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
+        statusBar.clear();
+        await loadQueuePage();
+        return;
+      }
+      throw err;
+    }
   }
   
   for (const id of sortByCreatedAt(queueSelections)) {
@@ -973,9 +981,8 @@ async function runSelectedQueueItems() {
               retry = false;
             } else {
               // cancel
-              statusBar.showMessage('Cancelled', { timeout: 2000 });
-              statusBar.clearProgress();
-              statusBar.clearAction();
+              showToast(`Cancelled. Processed ${currentItemNumber - 1} of ${totalItems} ${currentItemNumber - 1 === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
+              statusBar.clear();
               await loadQueuePage();
               return;
             }
@@ -1088,9 +1095,8 @@ async function runSelectedQueueItems() {
                 } catch (e) {
                   console.warn('Failed to persist error state', e);
                 }
-                statusBar.showMessage('Cancelled', { timeout: 2000 });
-                statusBar.clearProgress();
-                statusBar.clearAction();
+                showToast(`Cancelled. Processed ${currentItemNumber - 1} of ${totalItems} ${currentItemNumber - 1 === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
+                statusBar.clear();
                 await loadQueuePage();
                 return;
               }
@@ -1106,9 +1112,8 @@ async function runSelectedQueueItems() {
     } catch (err) {
       // Only catch user cancellation here, all other errors are handled by modal
       if (err.message === 'User cancelled') {
-        statusBar.showMessage('Cancelled', { timeout: 2000 });
-        statusBar.clearProgress();
-        statusBar.clearAction();
+        showToast(`Cancelled. Processed ${currentItemNumber} of ${totalItems} ${currentItemNumber === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
+        statusBar.clear();
         await loadQueuePage();
         return;
       }
