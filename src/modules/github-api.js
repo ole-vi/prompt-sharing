@@ -65,6 +65,12 @@ export async function fetchJSON(url) {
 export async function fetchJSONWithETag(url, etag = null) {
   try {
     const headers = { 'Accept': 'application/vnd.github+json' };
+    
+    const token = await getGitHubAccessToken();
+    if (token && typeof token === 'string' && token.length > 0) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     if (etag) {
       headers['If-None-Match'] = etag;
     }

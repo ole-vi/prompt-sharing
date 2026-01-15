@@ -49,25 +49,20 @@ function saveBranchToStorage(branch, owner, repo) {
         repo,
         timestamp: Date.now()
       }));
-    } catch (error) {
-      console.error('Failed to save branch to storage:', error);
-    }
+    } catch (error) {}
   }
 }
 
-function loadBranchFromStorage(owner, repo) {
+export function loadBranchFromStorage(owner, repo) {
   try {
     const stored = localStorage.getItem('selectedBranch');
     if (stored) {
       const data = JSON.parse(stored);
-      // Only return if it matches the current repo
       if (data.owner === owner && data.repo === repo) {
         return data.branch;
       }
     }
-  } catch (error) {
-    console.error('Failed to load branch from storage:', error);
-  }
+  } catch (error) {}
   return null;
 }
 
@@ -138,9 +133,9 @@ async function handleBranchChange(e) {
     return;
   }
 
+  const oldBranch = currentBranch;
   currentBranch = branchSelect.value;
   
-  // Save to localStorage
   saveBranchToStorage(currentBranch, currentOwner, currentRepo);
 
   const qs = new URLSearchParams(location.search);
@@ -151,7 +146,8 @@ async function handleBranchChange(e) {
   const newUrl = `${location.pathname}?${qs.toString()}${slug ? '#p=' + encodeURIComponent(slug) : ''}`;
   history.replaceState(null, '', newUrl);
 
-  sessionStorage.clear();
+  const oldCacheKey = STORAGE_KEYS.promptsCache(currentOwner, currentRepo, oldBranch);
+  sessionStorage.removeItem(oldCacheKey);
   window.dispatchEvent(new CustomEvent('branchChanged', { detail: { branch: currentBranch } }));
 }
 
