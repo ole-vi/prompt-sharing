@@ -170,7 +170,7 @@ function createSubmenu() {
   const makeMenuItem = (label, emoji, dataAction) => {
     const item = document.createElement('div');
     item.className = 'folder-submenu-item';
-    item.textContent = `${emoji} ${label}`;
+    item.innerHTML = `${emoji} ${label}`;
     item.dataset.action = dataAction;
     return item;
   };
