@@ -658,6 +658,7 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
   const { openUrlInBackground, showSubtaskErrorModal } = await import('./jules-modal.js');
 
   const successfulIndices = [];
+  const skippedIndices = [];
 
   for (let i = 0; i < toRun.length; i++) {
     const subtask = toRun[i];
@@ -685,7 +686,7 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
           if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
           continue;
         } else if (result.action === 'skip') {
-          successfulIndices.push(originalIndex);
+          skippedIndices.push(originalIndex);
           retry = false;
         } else if (result.action === 'queue') {
           if (successfulIndices.length > 0) {
@@ -702,9 +703,12 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
     }
   }
 
-  if (successfulIndices.length > 0) {
-    await deleteSelectedSubtasks(docId, successfulIndices);
+  const allToRemove = [...successfulIndices, ...skippedIndices];
+  if (allToRemove.length > 0) {
+    await deleteSelectedSubtasks(docId, allToRemove);
   }
+  
+  return { successful: successfulIndices.length, skipped: skippedIndices.length };
 }
 
 function attachQueueModalHandlers() {
@@ -866,14 +870,22 @@ async function runSelectedQueueItems() {
   }, 0);
   const totalItems = totalSubtasks + totalSingles + totalFullSubtaskQueues;
   let currentItemNumber = 0;
+  let totalSkipped = 0;
+  let totalSuccessful = 0;
 
   for (const [docId, indices] of sortedSubtaskEntries) {
     if (paused) break;
     if (queueSelections.includes(docId)) continue;
     
     try {
-      await runSelectedSubtasks(docId, indices.slice().sort((a, b) => a - b), suppressPopups, openInBackground);
+      const result = await runSelectedSubtasks(docId, indices.slice().sort((a, b) => a - b), suppressPopups, openInBackground);
       currentItemNumber += indices.length;
+      if (result && result.skipped > 0) {
+        totalSkipped += result.skipped;
+      }
+      if (result && result.successful > 0) {
+        totalSuccessful += result.successful;
+      }
     } catch (err) {
       if (err.message === 'User cancelled') {
         showToast(`Cancelled. Processed ${currentItemNumber} of ${totalItems} ${currentItemNumber === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
@@ -906,6 +918,7 @@ async function runSelectedQueueItems() {
               }
             }
             await deleteFromJulesQueue(user.uid, id);
+            totalSuccessful++;
             retry = false;
           } catch (singleErr) {
             const result = await showSubtaskErrorModal(currentItemNumber, totalItems, singleErr);
@@ -913,7 +926,7 @@ async function runSelectedQueueItems() {
               if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
               continue;
             } else if (result.action === 'skip') {
-              await deleteFromJulesQueue(user.uid, id);
+              totalSkipped++;
               retry = false;
             } else if (result.action === 'queue') {
               retry = false;
@@ -927,8 +940,10 @@ async function runSelectedQueueItems() {
         }
       } else if (item.type === 'subtasks') {
         let remaining = Array.isArray(item.remaining) ? item.remaining.slice() : [];
+        const skippedSubtasks = [];
 
         const initialCount = remaining.length;
+        let subtaskNumber = 0;
         while (remaining.length > 0) {
           if (paused) {
             try {
@@ -948,6 +963,7 @@ async function runSelectedQueueItems() {
           }
 
           currentItemNumber++;
+          subtaskNumber++;
           const s = remaining[0];
           let subtaskRetry = true;
           while (subtaskRetry) {
@@ -963,6 +979,7 @@ async function runSelectedQueueItems() {
               }
 
               remaining.shift();
+              totalSuccessful++;
 
               try {
                 await updateJulesQueueItem(user.uid, id, {
@@ -984,21 +1001,22 @@ async function runSelectedQueueItems() {
               await new Promise(r => setTimeout(r, 800));
               subtaskRetry = false;
             } catch (err) {
-              const result = await showSubtaskErrorModal(currentItemNumber, totalItems, err);
+              const result = await showSubtaskErrorModal(subtaskNumber, initialCount, err);
               
               if (result.action === 'retry') {
                 if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
                 continue;
               } else if (result.action === 'skip') {
-                remaining.shift();
+                totalSkipped++;
+                skippedSubtasks.push(remaining.shift());
                 try {
                   await updateJulesQueueItem(user.uid, id, {
-                    remaining,
-                    status: remaining.length === 0 ? 'done' : 'in-progress',
+                    remaining: [...skippedSubtasks, ...remaining],
+                    status: 'pending',
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                   });
                 } catch (e) {
-                  console.warn('Failed to persist progress after skip', e);
+                  console.warn('Failed to persist remaining after skip', e);
                 }
                 subtaskRetry = false;
               } else if (result.action === 'queue') {
@@ -1035,7 +1053,19 @@ async function runSelectedQueueItems() {
           }
         }
 
-        await deleteFromJulesQueue(user.uid, id);
+        if (skippedSubtasks.length > 0 && remaining.length === 0) {
+          try {
+            await updateJulesQueueItem(user.uid, id, {
+              remaining: skippedSubtasks,
+              status: 'pending',
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          } catch (e) {
+            console.warn('Failed to save skipped subtasks', e);
+          }
+        } else if (skippedSubtasks.length === 0 && remaining.length === 0) {
+          await deleteFromJulesQueue(user.uid, id);
+        }
       } else {
         console.warn('Unknown queue item type', item.type);
       }
@@ -1055,8 +1085,12 @@ async function runSelectedQueueItems() {
     }
   }
 
-  statusBar.showMessage('Completed running selected items', { timeout: 4000 });
-  statusBar.clearProgress();
+  if (totalSkipped > 0) {
+    showToast(`Completed ${totalSuccessful} ${totalSuccessful === 1 ? 'task' : 'tasks'}, skipped ${totalSkipped}`, 'success');
+  } else {
+    showToast('Completed running selected items', 'success');
+  }
+  statusBar.clear();
   statusBar.clearAction();
   await loadQueuePage();
 }
