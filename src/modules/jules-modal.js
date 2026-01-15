@@ -294,7 +294,7 @@ export function hideJulesEnvModal() {
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 }
 
-export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
+export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error, hideQueueButton = false) {
   let modal = document.getElementById('subtaskErrorModal');
   if (!modal) {
     await loadSubtaskErrorModal();
@@ -313,6 +313,12 @@ export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error)
 
   if (!modal) {
     return { action: 'cancel', shouldDelay: false };
+  }
+
+  if (hideQueueButton && queueBtn) {
+    queueBtn.style.display = 'none';
+  } else if (queueBtn) {
+    queueBtn.style.display = '';
   }
 
   return new Promise((resolve) => {

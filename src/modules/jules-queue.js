@@ -680,7 +680,7 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
         await new Promise(r => setTimeout(r, 800));
         retry = false;
       } catch (err) {
-        const result = await showSubtaskErrorModal(i + 1, toRun.length, err);
+        const result = await showSubtaskErrorModal(i + 1, toRun.length, err, true);
         
         if (result.action === 'retry') {
           if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
@@ -921,7 +921,7 @@ async function runSelectedQueueItems() {
             totalSuccessful++;
             retry = false;
           } catch (singleErr) {
-            const result = await showSubtaskErrorModal(currentItemNumber, totalItems, singleErr);
+            const result = await showSubtaskErrorModal(currentItemNumber, totalItems, singleErr, true);
             if (result.action === 'retry') {
               if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
               continue;
@@ -1001,7 +1001,7 @@ async function runSelectedQueueItems() {
               await new Promise(r => setTimeout(r, 800));
               subtaskRetry = false;
             } catch (err) {
-              const result = await showSubtaskErrorModal(subtaskNumber, initialCount, err);
+              const result = await showSubtaskErrorModal(subtaskNumber, initialCount, err, true);
               
               if (result.action === 'retry') {
                 if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
