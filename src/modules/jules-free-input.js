@@ -147,8 +147,10 @@ export function showFreeInputForm() {
             const result = await showSubtaskErrorModal(1, 1, error);
 
             if (result.action === 'cancel') {
+              showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
               return;
             } else if (result.action === 'skip') {
+              showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
               return;
             } else if (result.action === 'queue') {
               const user = window.auth?.currentUser;
@@ -177,7 +179,13 @@ export function showFreeInputForm() {
           } else {
             const result = await showSubtaskErrorModal(1, 1, error);
 
-            if (result.action === 'queue') {
+            if (result.action === 'cancel') {
+              showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
+              return;
+            } else if (result.action === 'skip') {
+              showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
+              return;
+            } else if (result.action === 'queue') {
               const user = window.auth?.currentUser;
               if (!user) {
                 showToast('Please sign in to queue prompts.', 'warn');
