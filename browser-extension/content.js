@@ -45,7 +45,9 @@
       '#comments',
       '.sidebar',
       'iframe',
-      'noscript'
+      'noscript',
+      '.icon',
+      '.material-symbols-outlined'
     ];
     
     unwantedSelectors.forEach(selector => {

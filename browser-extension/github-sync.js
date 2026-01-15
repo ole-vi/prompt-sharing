@@ -65,9 +65,10 @@ const GitHubSync = (function() {
     const base64Content = btoa(unescape(encodeURIComponent(content)));
     const apiUrl = `https://api.github.com/repos/${repo.owner}/${repo.repo}/contents/${path}`;
 
+    // Check if file exists to get its SHA
     let sha = null;
     try {
-      const getResponse = await fetch(apiUrl, {
+      const getResponse = await fetch(apiUrl + `?ref=${repo.branch}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/vnd.github+json',
@@ -79,15 +80,19 @@ const GitHubSync = (function() {
         const fileData = await getResponse.json();
         sha = fileData.sha;
       }
+      // 404 means file doesn't exist, which is fine - we'll create it
     } catch (error) {
+      // Ignore errors - assume file doesn't exist
+      console.log('File check error (will create new file):', error);
     }
 
     const requestBody = {
-      message: `Add web clip: ${path.split('/').pop()}`,
+      message: sha ? `Update web clip: ${path.split('/').pop()}` : `Add web clip: ${path.split('/').pop()}`,
       content: base64Content,
       branch: repo.branch
     };
 
+    // Only include sha when updating existing file
     if (sha) {
       requestBody.sha = sha;
     }
