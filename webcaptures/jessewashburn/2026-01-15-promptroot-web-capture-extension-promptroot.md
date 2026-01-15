@@ -2,7 +2,7 @@
 
 **Source:** [https://promptroot.ai/pages/webcapture/webcapture.html](https://promptroot.ai/pages/webcapture/webcapture.html)
 
-**Captured:** 1/15/2026, 2:01:37 AM
+**Captured:** 1/15/2026, 2:08:24 AM
 
 ---
 
@@ -12,11 +12,11 @@
 
 A browser extension that converts any webpage to clean Markdown and syncs it directly to your GitHub repository.
 
-downloadDownload ExtensionCompatible with Chrome, Edge, Brave, and other Chromium browsers
+⬇️Download ExtensionCompatible with Chrome, Edge, Brave, and other Chromium browsers
 
 ### auto_awesome Features
 
-saveOne-Click CaptureClick the extension icon to save any webpage instantlyedit_noteMarkdown ConversionAutomatically converts HTML to clean, readable MarkdowncloudGitHub SyncAutomatically sync captures to your GitHub repositorylockSecure OAuthConnect via GitHub OAuth - no personal access tokens neededcontent_cutSmart ExtractionRemoves navigation, ads, and clutter - keeps only the content### inventory_2 Installation Instructions
+[save]One-Click CaptureClick the extension icon to save any webpage instantly📝Markdown ConversionAutomatically converts HTML to clean, readable Markdown[cloud]GitHub SyncAutomatically sync captures to your GitHub repository🔒Secure OAuthConnect via GitHub OAuth - no personal access tokens needed[content_cut]Smart ExtractionRemoves navigation, ads, and clutter - keeps only the content### inventory_2 Installation Instructions
 
 #### Chrome / Edge / Brave
 
@@ -46,8 +46,8 @@ saveOne-Click CaptureClick the extension icon to save any webpage instantlyedit_
 1. **Navigate to any webpage** you want to capture
 2. **Click the extension icon** in your browser toolbar
 3. **Choose your action:**
-              Click "photo_camera Capture Page" to convert to Markdown and download locally
-                Click "cloud Sync to GitHub" to save directly to your repository (requires authentication)
+              Click "📷 Capture Page" to convert to Markdown and download locally
+                Click "[cloud] Sync to GitHub" to save directly to your repository (requires authentication)
 4. **View your captures** in the `webclips/` folder of your repository
 
 ### link GitHub Setup
@@ -56,7 +56,7 @@ To sync captures directly to GitHub, you'll need to authenticate the extension w
 
 
 1. Open the extension popup (click the extension icon)
-2. Click "lock Connect to GitHub"
+2. Click "🔒 Connect to GitHub"
 3. Authorize the PromptRoot app on GitHub
 4. You're all set! The extension will now sync captures to your repository automatically
 
