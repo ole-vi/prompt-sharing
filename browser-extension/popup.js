@@ -45,6 +45,12 @@ async function extractContent() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     
+    // Inject content script on-demand
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['content.js']
+    });
+    
     chrome.tabs.sendMessage(tab.id, { action: 'extractContent' }, (response) => {
       if (chrome.runtime.lastError) {
         showStatus('Error: Could not connect to page. Try refreshing.', 'error');
