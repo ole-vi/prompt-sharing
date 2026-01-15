@@ -9,7 +9,8 @@ const CACHE_KEYS = {
   BRANCHES: 'branches_v2',
   CURRENT_BRANCH: 'current_branch',
   CURRENT_REPO: 'current_repo',
-  USER_PROFILE: 'user_profile'
+  USER_PROFILE: 'user_profile',
+  USER_AVATAR: 'user_avatar'
 };
 
 // Map keys to specific cache durations
@@ -17,6 +18,7 @@ const KEY_DURATIONS = {
   JULES_ACCOUNT: CACHE_DURATIONS.session,
   QUEUE_ITEMS: CACHE_DURATIONS.session,
   BRANCHES: CACHE_DURATIONS.session,
+  USER_AVATAR: CACHE_DURATIONS.session,
   DEFAULT: CACHE_DURATIONS.short
 };
 

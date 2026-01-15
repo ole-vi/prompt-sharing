@@ -2,6 +2,7 @@
 
 import { clearJulesKeyCache } from './jules-api.js';
 import { showToast } from './toast.js';
+import { setCache, getCache } from '../utils/session-cache.js';
 
 let currentUser = null;
 
@@ -80,18 +81,33 @@ export async function updateAuthUI(user) {
     const displayName = user.displayName || user.email || 'User';
     
     if (userAvatar && user.photoURL) {
-      userDisplay.style.display = 'flex';
-      userAvatar.classList.add('hidden');
-      userAvatar.onload = () => {
+      // Check cache first
+      const cachedAvatar = getCache('USER_AVATAR', user.uid);
+      const avatarUrl = cachedAvatar || user.photoURL;
+      
+      // If using cached avatar, show immediately without loading state
+      if (cachedAvatar) {
+        userAvatar.src = avatarUrl;
+        userAvatar.alt = displayName;
         userAvatar.classList.remove('hidden');
         userDisplay.style.display = 'none';
-      };
-      userAvatar.onerror = () => {
-        userAvatar.classList.add('hidden');
+      } else {
+        // First load: show loading state
         userDisplay.style.display = 'flex';
-      };
-      userAvatar.src = user.photoURL;
-      userAvatar.alt = displayName;
+        userAvatar.classList.add('hidden');
+        userAvatar.onload = () => {
+          userAvatar.classList.remove('hidden');
+          userDisplay.style.display = 'none';
+          // Cache the avatar URL after successful load
+          setCache('USER_AVATAR', user.photoURL, user.uid);
+        };
+        userAvatar.onerror = () => {
+          userAvatar.classList.add('hidden');
+          userDisplay.style.display = 'flex';
+        };
+        userAvatar.src = user.photoURL;
+        userAvatar.alt = displayName;
+      }
     } else {
       userAvatar.classList.add('hidden');
       userDisplay.style.display = 'flex';
@@ -104,7 +120,9 @@ export async function updateAuthUI(user) {
       }
     }
     if (dropdownAvatar && user.photoURL) {
-      dropdownAvatar.src = user.photoURL;
+      // Use cached avatar for dropdown too
+      const cachedAvatar = getCache('USER_AVATAR', user.uid);
+      dropdownAvatar.src = cachedAvatar || user.photoURL;
       dropdownAvatar.alt = displayName;
       dropdownAvatar.style.display = 'block';
     }
