@@ -85,7 +85,7 @@ cd ~/projects  # or C:\Users\YourName\projects on Windows
 git clone https://github.com/YOUR_USERNAME/prompt-sharing.git
 
 # Navigate into the project
-cd prompt-sharing
+cd promptroot
 
 # Add upstream remote (to pull updates from original repo)
 git remote add upstream https://github.com/JesseWarrenDevelopment/prompt-sharing.git
