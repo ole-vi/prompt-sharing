@@ -2,8 +2,8 @@
  * Privacy Policy Page
  */
 
-import { initSharedComponents } from '../shared-init.js';
+import { initializeSharedComponents } from '../shared-init.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  initSharedComponents();
+  initializeSharedComponents();
 });
