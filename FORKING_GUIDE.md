@@ -70,7 +70,7 @@ gcloud --version
 
 ### Step 1: Fork on GitHub
 
-1. Go to https://github.com/JesseWarrenDevelopment/prompt-sharing
+1. Go to https://github.com/promptroot/promptroot
 2. Click the **Fork** button in the top-right corner
 3. Choose your account as the destination
 4. Wait for GitHub to create your fork (this takes ~30 seconds)
