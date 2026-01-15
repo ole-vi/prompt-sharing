@@ -7,13 +7,12 @@ window.firebaseError = null;
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBBM7OVM3-jwHky-1P_6JL4RAmzhebuDPg",
-  authDomain: "prompt-sharing-f8eeb.firebaseapp.com",
-  projectId: "prompt-sharing-f8eeb",
-  storageBucket: "prompt-sharing-f8eeb.firebasestorage.app",
-  messagingSenderId: "840037476057",
-  appId: "1:840037476057:web:a8ca03b1defe94071e80c8",
-  measurementId: "G-8QR07NVLML"
+  apiKey: "AIzaSyD_NzQlgmcUfgrqpgTl3Q3pCkfBrO8PcoA",
+  authDomain: "promptroot-b02a2.firebaseapp.com",
+  projectId: "promptroot-b02a2",
+  storageBucket: "promptroot-b02a2.firebasestorage.app",
+  messagingSenderId: "494845853842",
+  appId: "1:494845853842:web:6c97aec4822be003fc264b"
 };
 
 // Initialize Firebase when modular SDK is available
