@@ -156,6 +156,7 @@ export function showFreeInputForm() {
                 branch: _lastSelectedBranch,
                 note: 'Queued from Free Input flow'
               });
+              showFreeInputForm();
               return;
             } else if (result.action === 'retry') {
               if (result.shouldDelay) {
@@ -179,6 +180,7 @@ export function showFreeInputForm() {
                 branch: _lastSelectedBranch,
                 note: 'Queued from Free Input flow (final failure)'
               });
+              showFreeInputForm();
               return;
             }
 
@@ -309,7 +311,7 @@ export function showFreeInputForm() {
         note: 'Queued from Free Input'
       });
       showToast('Prompt queued successfully!', 'success');
-      hideFreeInputForm();
+      showFreeInputForm();
     } catch (err) {
       showToast('Failed to queue prompt: ' + err.message, 'error');
     }
