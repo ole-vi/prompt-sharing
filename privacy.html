@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy - PromptRoot</title>
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+  <link rel="stylesheet" href="src/styles.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="src/firebase-init.js"></script>
+</head>
+<body data-page="privacy">
+  <div class="wrap">
+    <main class="card pad-lg" style="max-width: 900px; margin: 40px auto;">
+      <h1>Privacy Policy</h1>
+      <p class="muted-text">Last updated: January 15, 2026</p>
+
+      <section style="margin-top: 32px;">
+        <h2>Overview</h2>
+        <p>PromptRoot ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our web application and browser extension.</p>
+      </section>
+
+      <section style="margin-top: 32px;">
+        <h2>Information We Collect</h2>
+        
+        <h3 style="margin-top: 20px;">1. Authentication Information</h3>
+        <p>When you connect your GitHub account:</p>
+        <ul>
+          <li><strong>GitHub OAuth tokens:</strong> Stored locally in your browser to authenticate API requests</li>
+          <li><strong>GitHub username:</strong> Used to organize files in repository folder structures</li>
+          <li><strong>GitHub user ID:</strong> Used for authentication and authorization</li>
+        </ul>
+
+        <h3 style="margin-top: 20px;">2. Website Content (Browser Extension Only)</h3>
+        <p>When you explicitly use the browser extension to capture a webpage:</p>
+        <ul>
+          <li><strong>Webpage text, images, and links:</strong> Captured and converted to Markdown format</li>
+          <li><strong>Page URL and title:</strong> Included in the capture metadata</li>
+          <li><strong>Timestamp:</strong> Recording when the capture was made</li>
+        </ul>
+
+        <h3 style="margin-top: 20px;">3. Usage Information</h3>
+        <ul>
+          <li><strong>Repository preferences:</strong> Your selected GitHub repositories, branches, and folder paths</li>
+          <li><strong>Application settings:</strong> Stored locally in your browser</li>
+        </ul>
+      </section>
+
+      <section style="margin-top: 32px;">
+        <h2>How We Use Your Information</h2>
+        <ul>
+          <li><strong>Authentication:</strong> GitHub OAuth tokens authenticate your access to commit content to your repositories</li>
+          <li><strong>Content capture:</strong> Webpage content is processed locally and either downloaded or sent directly to your GitHub repository</li>
+          <li><strong>File organization:</strong> Your username organizes captures in repository folders</li>
+          <li><strong>Preferences:</strong> Settings are stored locally to remember your configuration</li>
+        </ul>
+      </section>
+
+      <section style="margin-top: 32px;">
+        <h2>Data Storage and Security</h2>
+        <ul>
+          <li><strong>Local storage:</strong> All authentication tokens and preferences are stored locally in your browser</li>
+          <li><strong>No external servers:</strong> We do not store your data on our servers</li>
+          <li><strong>Encrypted transmission:</strong> All communication with GitHub uses HTTPS encryption</li>
+          <li><strong>GitHub storage:</strong> Captured content is committed directly to your GitHub repository under your control</li>
+        </ul>
+      </section>
+
+      <section style="margin-top: 32px;">
+        <h2>Third-Party Services</h2>
+        <p>PromptRoot integrates with the following third-party services:</p>
+        <ul>
+          <li><strong>GitHub:</strong> For authentication and storing captured content. See <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener">GitHub Privacy Policy</a></li>
+          <li><strong>Firebase:</strong> For OAuth callback handling only. See <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Firebase Privacy Policy</a></li>
+        </ul>
+      </section>
+
+      <section style="margin-top: 32px;">
+        <h2>Data Sharing</h2>
+        <p><strong>We do not sell, trade, or transfer your information to third parties.</strong> Your data is only shared with:</p>
+        <ul>
+          <li><strong>GitHub:</strong> When you explicitly choose to commit captured content to your repository</li>
+          <li><strong>No other parties:</strong> We do not share your data with advertisers, marketers, or any other third parties</li>
+        </ul>
+      </section>
+
+      <section style="margin-top: 32px;">
+        <h2>Your Rights and Choices</h2>
+        <ul>
+          <li><strong>Access:</strong> Your data is stored locally in your browser and in your GitHub repository, both accessible to you at any time</li>
+          <li><strong>Deletion:</strong> Disconnect your GitHub account or uninstall the extension to remove locally stored data</li>
+          <li><strong>Control:</strong> You have full control over what content is captured and where it is stored</li>
+          <li><strong>Opt-out:</strong> Simply disconnect your GitHub account or stop using the service</li>
+        </ul>
+      </section>
+
+      <section style="margin-top: 32px;">
+        <h2>Browser Extension Permissions</h2>
+        <p>Our browser extension requests the following permissions:</p>
+        <ul>
+          <li><strong>activeTab:</strong> To access the current tab's content when you click to capture</li>
+          <li><strong>scripting:</strong> To inject content extraction scripts for converting HTML to Markdown</li>
+          <li><strong>storage:</strong> To store your GitHub authentication tokens and preferences locally</li>
+          <li><strong>tabs:</strong> To retrieve the current tab's URL and title</li>
+          <li><strong>Host permissions:</strong> To communicate with GitHub API and Firebase OAuth endpoints</li>
+        </ul>
+      </section>
+
+      <section style="margin-top: 32px;">
+        <h2>Children's Privacy</h2>
+        <p>PromptRoot is not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13.</p>
+      </section>
+
+      <section style="margin-top: 32px;">
+        <h2>Changes to This Policy</h2>
+        <p>We may update this Privacy Policy from time to time. Changes will be posted on this page with an updated "Last updated" date. Continued use of PromptRoot after changes constitutes acceptance of the updated policy.</p>
+      </section>
+
+      <section style="margin-top: 32px;">
+        <h2>Contact Us</h2>
+        <p>If you have questions about this Privacy Policy, please contact us through <a href="https://github.com/promptroot/promptroot" target="_blank" rel="noopener">our GitHub repository</a>.</p>
+      </section>
+
+      <div style="margin-top: 48px; text-align: center;">
+        <a href="index.html" class="btn">Back to Home</a>
+      </div>
+    </main>
+  </div>
+
+  <footer>
+    <div style="text-align: center;">
+      <a href="privacy.html" style="color: var(--muted); text-decoration: none;">Privacy Policy</a>
+      <span style="margin: 0 12px;">•</span>
+      <a href="https://github.com/promptroot/promptroot" target="_blank" rel="noopener" style="color: var(--muted); text-decoration: none;">GitHub</a>
+    </div>
+  </footer>
+
+  <script type="module" src="src/shared-init.js"></script>
+</body>
+</html>
