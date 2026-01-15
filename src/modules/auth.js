@@ -81,24 +81,19 @@ export async function updateAuthUI(user) {
     const displayName = user.displayName || user.email || 'User';
     
     if (userAvatar && user.photoURL) {
-      // Check cache first
       const cachedAvatar = getCache('USER_AVATAR', user.uid);
       const avatarUrl = cachedAvatar || user.photoURL;
-      
-      // If using cached avatar, show immediately without loading state
       if (cachedAvatar) {
         userAvatar.src = avatarUrl;
         userAvatar.alt = displayName;
         userAvatar.classList.remove('hidden');
         userDisplay.style.display = 'none';
       } else {
-        // First load: show loading state
         userDisplay.style.display = 'flex';
         userAvatar.classList.add('hidden');
         userAvatar.onload = () => {
           userAvatar.classList.remove('hidden');
           userDisplay.style.display = 'none';
-          // Cache the avatar URL after successful load
           setCache('USER_AVATAR', user.photoURL, user.uid);
         };
         userAvatar.onerror = () => {
