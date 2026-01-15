@@ -1,6 +1,10 @@
 /* Material Symbols Outlined Icon Font */
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
 
+body {
+  visibility: hidden;
+}
+
 /* Base variables, reset, and global styles */
 :root {
   --bg: #0a0e1a;
