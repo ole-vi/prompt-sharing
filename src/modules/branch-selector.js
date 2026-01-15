@@ -133,9 +133,9 @@ async function handleBranchChange(e) {
     return;
   }
 
+  const oldBranch = currentBranch;
   currentBranch = branchSelect.value;
   
-  // Save to localStorage
   saveBranchToStorage(currentBranch, currentOwner, currentRepo);
 
   const qs = new URLSearchParams(location.search);
@@ -146,7 +146,8 @@ async function handleBranchChange(e) {
   const newUrl = `${location.pathname}?${qs.toString()}${slug ? '#p=' + encodeURIComponent(slug) : ''}`;
   history.replaceState(null, '', newUrl);
 
-  sessionStorage.clear();
+  const oldCacheKey = STORAGE_KEYS.promptsCache(currentOwner, currentRepo, oldBranch);
+  sessionStorage.removeItem(oldCacheKey);
   window.dispatchEvent(new CustomEvent('branchChanged', { detail: { branch: currentBranch } }));
 }
 
