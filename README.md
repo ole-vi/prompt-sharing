@@ -25,10 +25,11 @@ To test the app locally, you must serve it over HTTP (not open the HTML file dir
 
 ```bash
 # From the repo root
-python -m http.server 8888
+npm start
+# Or manually: python -m http.server 3000
 ```
 
-Then open **`http://localhost:8888/pages/home/index.html`** in your browser. 
+Then open **`http://localhost:3000/`** in your browser. 
 
 **Important:** Opening `index.html` directly (via `file://` URL) will not work with Firebase authentication. The app must be served over HTTP for GitHub OAuth to function.
 
@@ -76,8 +77,8 @@ Guidelines:
 
 ```
 promptroot/
+├── index.html             # Home page (root)
 ├── pages/                 # Routed pages
-│   ├── home/index.html    # Home / Prompt Library
 │   ├── jules/jules.html   # Jules account management & sessions
 │   ├── queue/queue.html   # Jules task queue management
 │   ├── sessions/sessions.html # Full list of Jules sessions
@@ -96,8 +97,13 @@ promptroot/
 │   ├── styles.css         # Aggregated stylesheet importing modular CSS
 │   ├── modules/           # Feature modules (ES6)
 │   │   ├── auth.js        # GitHub OAuth & auth state management
-│   │   ├── jules.js       # Jules integration, modals, queue system
+│   │   ├── jules-modal.js # Main Jules modal UI
+│   │   ├── jules-queue.js # Queue system for batch processing
+│   │   ├── jules-subtask-modal.js # Subtask splitting UI
+│   │   ├── jules-account.js # Account management
+│   │   ├── jules-keys.js  # API key storage
 │   │   ├── jules-api.js   # Jules API client (sources, sessions, activities)
+│   │   ├── jules-free-input.js # Free input handling
 │   │   ├── github-api.js  # GitHub API calls & Gist handling
 │   │   ├── prompt-list.js # Sidebar tree navigation & rendering
 │   │   ├── prompt-renderer.js # Markdown rendering & display
@@ -105,14 +111,20 @@ promptroot/
 │   │   ├── subtask-manager.js # Prompt splitting & parsing
 │   │   ├── header.js      # Shared header component
 │   │   ├── navbar.js      # Shared navigation component
-│   │   └── status-bar.js  # Status notifications
+│   │   ├── sidebar.js     # Sidebar component
+│   │   ├── status-bar.js  # Status notifications
+│   │   ├── toast.js       # Toast notifications
+│   │   └── ... (+ other UI components)
 │   └── utils/             # Shared utilities
 │       ├── constants.js   # Config, regex patterns, storage keys
 │       ├── slug.js        # URL-safe slug generation
 │       ├── url-params.js  # URL parameter parsing
 │       ├── dom-helpers.js # DOM manipulation helpers
 │       ├── session-cache.js # Session data caching
-│       └── title.js       # Title extraction from prompts
+│       ├── title.js       # Title extraction from prompts
+│       ├── checkbox-helpers.js # Checkbox utilities
+│       ├── icon-helpers.js # Icon utilities
+│       └── validation.js  # Input validation
 ├── prompts/               # Markdown prompt files
 │   └── tutorial/         # PromptRoot onboarding + templates
 ├── webclips/             # User web clips from browser extension
@@ -120,7 +132,9 @@ promptroot/
 ├── browser-extension/    # Web capture browser extension
 │   ├── manifest.json     # Extension configuration
 │   ├── content.js        # Page content extraction
-│   ├── popup.html/js     # Extension UI
+│   ├── popup.html        # Extension UI
+│   ├── popup.js          # Extension logic
+│   ├── popup.css         # Extension styles
 │   ├── config.js         # OAuth configuration
 │   ├── github-auth.js    # GitHub OAuth flow
 │   ├── github-sync.js    # GitHub sync logic
@@ -355,13 +369,13 @@ For issues, questions, or feature requests, please open an issue on GitHub.
 
 ```bash
 cd promptroot
-python -m http.server 8888
-# Visit http://localhost:8888/pages/home/index.html
+npm start
+# Visit http://localhost:3000/
 ```
 
 Routing notes:
-- Hosting redirects `/` to `/pages/home/index.html` via `firebase.json`.
-- Legacy root pages have been removed; use `/pages/*` paths.
+- Root `/` serves `index.html` (home page)
+- All other pages use `/pages/{pagename}/{pagename}.html` structure
 
 The dev setup loads modules directly without compilation. Changes are reflected immediately (reload browser).
 
@@ -370,13 +384,13 @@ The dev setup loads modules directly without compilation. Changes are reflected 
 Each module in `src/modules/` handles one major feature area:
 
 - **auth.js**: Firebase authentication, GitHub OAuth flow, user state management
-- **jules.js**: Complete Jules integration including:
-  - API key encryption and storage
-  - "Try in Jules" workflow with repository/branch selection
-  - Queue system for batch processing
-  - Subtask splitting and management
-  - User profile modal with sessions history
-  - All Jules-related modals and UI
+- **Jules Integration Modules**: Complete Jules integration split across specialized modules:
+  - **jules-modal.js**: Main "Try in Jules" modal UI and workflow
+  - **jules-queue.js**: Queue system for batch processing
+  - **jules-subtask-modal.js**: Subtask splitting and management UI
+  - **jules-account.js**: User account management
+  - **jules-keys.js**: API key encryption and secure storage
+  - **jules-free-input.js**: Free input handling
 - **jules-api.js**: Jules API client wrapper:
   - List connected sources (repositories)
   - Retrieve sessions with filtering and pagination
