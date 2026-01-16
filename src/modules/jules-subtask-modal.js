@@ -12,6 +12,7 @@ import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
+import { JULES_MESSAGES } from '../utils/constants.js';
 
 // Module state
 let currentFullPrompt = '';
@@ -75,18 +76,18 @@ export function showSubtaskSplitModal(promptText) {
   queueBtn.onclick = async () => {
     const user = window.auth?.currentUser;
     if (!user) {
-      showToast('Please sign in to queue subtasks.', 'warn');
+      showToast(JULES_MESSAGES.SIGN_IN_REQUIRED_SUBTASKS, 'warn');
       return;
     }
 
     const { sourceId, branch } = getLastSelectedSource();
     if (!sourceId) {
-      showToast('Please select a repository first.', 'warn');
+      showToast(JULES_MESSAGES.SELECT_REPO_FIRST, 'warn');
       return;
     }
 
     if (!branch) {
-      showToast('Please select a branch first.', 'warn');
+      showToast(JULES_MESSAGES.SELECT_BRANCH_FIRST, 'warn');
       return;
     }
 
@@ -99,10 +100,10 @@ export function showSubtaskSplitModal(promptText) {
           branch: branch,
           note: 'Queued from Split Dialog (no subtasks)'
         });
-        showToast('Prompt queued successfully!', 'success');
+        showToast(JULES_MESSAGES.QUEUED, 'success');
         hideSubtaskSplitModal();
       } catch (err) {
-        showToast('Failed to queue prompt: ' + err.message, 'error');
+        showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
       }
       return;
     }
@@ -139,9 +140,9 @@ export function showSubtaskSplitModal(promptText) {
       hideSubtaskSplitModal();
       const { showFreeInputForm } = await import('./jules-free-input.js');
       showFreeInputForm();
-      showToast(`${remaining.length} ${remaining.length === 1 ? 'subtask' : 'subtasks'} queued successfully!`, 'success');
+      showToast(JULES_MESSAGES.subtasksQueued(remaining.length), 'success');
     } catch (err) {
-      showToast('Failed to queue subtasks: ' + err.message, 'error');
+      showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
     }
   };
 }
@@ -296,7 +297,7 @@ async function submitSubtasks(subtasks) {
                 }
               }
             } catch (finalError) {
-              showToast('Failed to submit task after multiple retries. Please try again later.', 'error');
+              showToast(JULES_MESSAGES.FINAL_RETRY_FAILED, 'error');
             }
           }
           return;
@@ -420,7 +421,7 @@ async function submitSubtasks(subtasks) {
             const user = window.auth?.currentUser;
             if (!user) {
               statusBar?.clear?.();
-              showToast('Please sign in to queue subtasks.', 'warn');
+              showToast(JULES_MESSAGES.SIGN_IN_REQUIRED_SUBTASKS, 'warn');
               return;
             }
             const remaining = sequenced.slice(i).map(s => ({ fullContent: s.fullContent, sequenceInfo: s.sequenceInfo }));
@@ -435,10 +436,10 @@ async function submitSubtasks(subtasks) {
                 note: 'Queued remaining subtasks'
               });
               statusBar?.clear?.();
-              showToast(`Queued ${remaining.length} remaining ${remaining.length === 1 ? 'subtask' : 'subtasks'}`, 'success');
+              showToast(JULES_MESSAGES.remainingQueued(remaining.length), 'success');
             } catch (err) {
               statusBar?.clear?.();
-              showToast('Failed to queue subtasks: ' + err.message, 'error');
+              showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
             }
             return;
           } else if (result.action === 'retry') {
@@ -455,14 +456,14 @@ async function submitSubtasks(subtasks) {
 
           if (result.action === 'cancel') {
             statusBar?.clear?.();
-            showToast(`Cancelled. Submitted ${successCount} of ${totalCount} ${successCount === 1 ? 'subtask' : 'subtasks'} before cancellation.`, 'warn');
+            showToast(JULES_MESSAGES.subtasksCancelled(successCount, totalCount), 'warn');
             return;
           } else {
             if (result.action === 'queue') {
               const user = window.auth?.currentUser;
               if (!user) {
                 statusBar?.clear?.();
-                showToast('Please sign in to queue subtasks.', 'warn');
+                showToast(JULES_MESSAGES.SIGN_IN_REQUIRED_SUBTASKS, 'warn');
                 return;
               }
               const remaining = sequenced.slice(i).map(s => ({ fullContent: s.fullContent, sequenceInfo: s.sequenceInfo }));
@@ -477,10 +478,10 @@ async function submitSubtasks(subtasks) {
                   note: 'Queued remaining subtasks (final failure)'
                 });
                 statusBar?.clear?.();
-                showToast(`Queued ${remaining.length} remaining ${remaining.length === 1 ? 'subtask' : 'subtasks'}`, 'success');
+                showToast(JULES_MESSAGES.remainingQueued(remaining.length), 'success');
               } catch (err) {
                 statusBar?.clear?.();
-                showToast('Failed to queue subtasks: ' + err.message, 'error');
+                showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
               }
               return;
             }

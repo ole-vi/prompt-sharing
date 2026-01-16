@@ -5,11 +5,23 @@ import { encryptAndStoreKey } from './jules-keys.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { addToJulesQueue } from './jules-queue.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
-import { RETRY_CONFIG, TIMEOUTS } from '../utils/constants.js';
+import { RETRY_CONFIG, TIMEOUTS, JULES_MESSAGES } from '../utils/constants.js';
 import { showToast } from './toast.js';
 
 let lastSelectedSourceId = 'sources/github/promptroot/promptroot';
 let lastSelectedBranch = 'main';
+
+export async function loadSubtaskErrorModal() {
+  try {
+    const response = await fetch('/partials/subtask-error-modal.html');
+    if (response.ok) {
+      const html = await response.text();
+      document.body.insertAdjacentHTML('beforeend', html);
+    }
+  } catch (err) {
+    console.error('Error loading subtask error modal:', err);
+  }
+}
 
 export function openUrlInBackground(url) {
   const a = document.createElement('a');
@@ -149,7 +161,7 @@ export async function showJulesEnvModal(promptText) {
     
     const user = window.auth?.currentUser;
     if (!user) {
-      showToast('Please sign in to queue prompts.', 'warn');
+      showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
       return;
     }
     
@@ -161,10 +173,10 @@ export async function showJulesEnvModal(promptText) {
         branch: selectedBranch,
         note: 'Queued from Try in Jules modal'
       });
-      showToast('Prompt queued successfully!', 'success');
+      showToast(JULES_MESSAGES.QUEUED, 'success');
       hideJulesEnvModal();
     } catch (err) {
-      showToast('Failed to queue prompt: ' + err.message, 'error');
+      showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
     }
   };
   
@@ -203,13 +215,15 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
         const result = await showSubtaskErrorModal(1, 1, error);
 
         if (result.action === 'cancel') {
+          showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
           return;
         } else if (result.action === 'skip') {
+          showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
           return;
         } else if (result.action === 'queue') {
           const user = window.auth?.currentUser;
           if (!user) {
-            showToast('Please sign in to queue prompts.', 'warn');
+            showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
             return;
           }
           try {
@@ -220,9 +234,9 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
               branch: lastSelectedBranch,
               note: 'Queued from Try in Jules flow (partial retries)'
             });
-            showToast('Prompt queued. You can restart it later from your Jules queue.', 'success');
+            showToast(JULES_MESSAGES.QUEUED, 'success');
           } catch (err) {
-            showToast('Failed to queue prompt: ' + err.message, 'error');
+            showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
           }
           return;
         } else if (result.action === 'retry') {
@@ -233,10 +247,16 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
       } else {
         const result = await showSubtaskErrorModal(1, 1, error);
 
-        if (result.action === 'queue') {
+        if (result.action === 'cancel') {
+          showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
+          return;
+        } else if (result.action === 'skip') {
+          showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
+          return;
+        } else if (result.action === 'queue') {
           const user = window.auth?.currentUser;
           if (!user) {
-            showToast('Please sign in to queue prompts.', 'warn');
+            showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
             return;
           }
           try {
@@ -247,9 +267,9 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
               branch: lastSelectedBranch,
               note: 'Queued from Try in Jules flow (final failure)'
             });
-            showToast('Prompt queued. You can restart it later from your Jules queue.', 'success');
+            showToast(JULES_MESSAGES.QUEUED, 'success');
           } catch (err) {
-            showToast('Failed to queue prompt: ' + err.message, 'error');
+            showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
           }
           return;
         }
@@ -264,7 +284,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
               window.open(sessionUrl, '_blank', 'noopener,noreferrer');
             }
           } catch (finalError) {
-            showToast('Failed to submit task after multiple retries. Please try again later.', 'error');
+            showToast(JULES_MESSAGES.FINAL_RETRY_FAILED, 'error');
           }
         }
         return;
@@ -282,25 +302,35 @@ export function hideJulesEnvModal() {
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
 }
 
-export function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error) {
+export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error, hideQueueButton = false) {
+  let modal = document.getElementById('subtaskErrorModal');
+  if (!modal) {
+    await loadSubtaskErrorModal();
+    modal = document.getElementById('subtaskErrorModal');
+  }
+  
+  const subtaskNumDiv = document.getElementById('errorSubtaskNumber');
+  const messageDiv = document.getElementById('errorMessage');
+  const detailsDiv = document.getElementById('errorDetails');
+  const retryBtn = document.getElementById('subtaskErrorRetryBtn');
+  const skipBtn = document.getElementById('subtaskErrorSkipBtn');
+  const queueBtn = document.getElementById('subtaskErrorQueueBtn');
+  const cancelBtn = document.getElementById('subtaskErrorCancelBtn');
+  const closeBtn = document.getElementById('errorModalClose');
+  const retryDelayCheckbox = document.getElementById('errorRetryDelayCheckbox');
+
+  if (!modal) {
+    return { action: 'cancel', shouldDelay: false };
+  }
+
+  if (hideQueueButton && queueBtn) {
+    queueBtn.style.display = 'none';
+  } else if (queueBtn) {
+    queueBtn.style.display = '';
+  }
+
   return new Promise((resolve) => {
-    const modal = document.getElementById('subtaskErrorModal');
-    const subtaskNumDiv = document.getElementById('errorSubtaskNumber');
-    const messageDiv = document.getElementById('errorMessage');
-    const detailsDiv = document.getElementById('errorDetails');
-    const retryBtn = document.getElementById('subtaskErrorRetryBtn');
-    const skipBtn = document.getElementById('subtaskErrorSkipBtn');
-    const queueBtn = document.getElementById('subtaskErrorQueueBtn');
-    const cancelBtn = document.getElementById('subtaskErrorCancelBtn');
-    const closeBtn = document.getElementById('errorModalClose');
-    const retryDelayCheckbox = document.getElementById('errorRetryDelayCheckbox');
-
-    if (!modal) {
-      resolve({ action: 'cancel', shouldDelay: false });
-      return;
-    }
-
-    subtaskNumDiv.textContent = `Subtask ${subtaskNumber} of ${totalSubtasks}`;
+    subtaskNumDiv.textContent = `Task ${subtaskNumber} of ${totalSubtasks}`;
     messageDiv.textContent = error.message || String(error);
     detailsDiv.textContent = error.toString();
 

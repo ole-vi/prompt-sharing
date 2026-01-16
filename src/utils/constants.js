@@ -64,6 +64,52 @@ export const ERRORS = {
   CLIPBOARD_BLOCKED: "Clipboard blocked. Select and copy manually."
 };
 
+// Jules toast messages
+export const JULES_MESSAGES = {
+  // Success messages
+  QUEUED: "Prompt queued successfully!",
+  QUEUE_UPDATED: "Queue item updated successfully",
+  COMPLETED_RUNNING: "Completed running selected items",
+  
+  // Warning messages
+  SIGN_IN_REQUIRED: "Please sign in to queue prompts.",
+  SIGN_IN_REQUIRED_SUBTASKS: "Please sign in to queue subtasks.",
+  NOT_SIGNED_IN: "Not signed in",
+  NO_ITEMS_SELECTED: "No items selected",
+  SELECT_REPO_FIRST: "Please select a repository first.",
+  SELECT_BRANCH_FIRST: "Please select a branch first.",
+  LOGIN_REQUIRED: "Login required to use Jules.",
+  NOT_LOGGED_IN: "Not logged in.",
+  
+  // Info messages
+  QUEUE_NOT_FOUND: "Queue item not found",
+  
+  // Cancellation messages
+  cancelled: (processed, total) => 
+    `Cancelled. Processed ${processed} of ${total} ${processed === 1 ? 'task' : 'tasks'} before cancellation.`,
+  
+  // Skip messages
+  SKIPPED_SUBTASK: "Skipped subtask. Continuing with remaining...",
+  
+  // Success with count messages
+  deleted: (count) => `Deleted ${count} ${count === 1 ? 'item' : 'items'}`,
+  completedWithSkipped: (successful, skipped) => 
+    `Completed ${successful} ${successful === 1 ? 'task' : 'tasks'}, skipped ${skipped}`,
+  subtasksQueued: (count) => `${count} ${count === 1 ? 'subtask' : 'subtasks'} queued successfully!`,
+  remainingQueued: (count) => `Queued ${count} remaining ${count === 1 ? 'subtask' : 'subtasks'}`,
+  subtasksCancelled: (successful, total) => 
+    `Cancelled. Submitted ${successful} of ${total} ${successful === 1 ? 'subtask' : 'subtasks'} before cancellation.`,
+  
+  // Error messages
+  QUEUE_FAILED: (error) => `Failed to queue prompt: ${error}`,
+  QUEUE_UPDATE_FAILED: (error) => `Failed to update queue item: ${error}`,
+  DELETE_FAILED: (error) => `Failed to delete selected items: ${error}`,
+  UNEXPECTED_ERROR: (error) => `Unexpected error: ${error}`,
+  GENERAL_ERROR: "An error occurred. Please try again.",
+  ERROR_WITH_MESSAGE: (message) => `An error occurred: ${message}`,
+  FINAL_RETRY_FAILED: "Failed to submit task after multiple retries. Please try again later."
+};
+
 // UI text
 export const UI_TEXT = {
   LOADING: "Loading...",

@@ -1,0 +1,30 @@
+<!-- Subtask Error Modal -->
+<div id="subtaskErrorModal" class="modal">
+  <div class="modal-content modal-lg">
+    <div class="modal-header">
+      <h3 id="errorModalTitle" class="modal-title"><span class="icon icon-inline" aria-hidden="true">warning</span> Task Failed</h3>
+      <button class="btn-icon close-modal" id="errorModalClose" title="Close"><span class="icon" aria-hidden="true">close</span></button>
+    </div>
+    <div class="modal-body">
+      <div id="errorSubtaskNumber" class="small-text muted-text mb-md"></div>
+      <div class="error-banner">
+        <div id="errorMessage" style="flex:1;"></div>
+      </div>
+      <div class="error-details">
+        <div id="errorDetails" style="word-break: break-word;"></div>
+      </div>
+      <div class="mb-md">
+        <label class="small-text" style="display:flex; align-items:center; gap:6px;">
+          <input id="errorRetryDelayCheckbox" type="checkbox" checked />
+          <span>Wait 5 seconds before retry</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-buttons">
+      <button id="subtaskErrorCancelBtn" class="btn">Cancel All</button>
+      <button id="subtaskErrorSkipBtn" class="btn warn">Skip This</button>
+      <button id="subtaskErrorQueueBtn" class="btn primary">Queue Remainder</button>
+      <button id="subtaskErrorRetryBtn" class="btn success">Retry</button>
+    </div>
+  </div>
+</div>
