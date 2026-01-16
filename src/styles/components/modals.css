@@ -41,6 +41,21 @@
 
 /* Specific modal layering */
 #subtaskPreviewModal { z-index: 1002; }
+#promptViewerModal { z-index: 2000; }
+
+.prompt-viewer-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+  color: var(--text);
+  background: #0a0d1a;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  overflow-x: auto;
+  margin: 0;
+}
 
 /* Modal overlay and dialog structure */
 .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1001; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
