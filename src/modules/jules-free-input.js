@@ -1,14 +1,11 @@
-// ===== Jules Free Input Module =====
-// Free input form functionality
-
 import { getCurrentUser } from './auth.js';
 import { checkJulesKey } from './jules-keys.js';
 import { showJulesKeyModal, showSubtaskErrorModal } from './jules-modal.js';
-import { addToJulesQueue } from './jules-queue.js';
+import { addToJulesQueue, handleQueueAction } from './jules-queue.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
+import { JULES_MESSAGES } from '../utils/constants.js';
 
-// Module state
 let _lastSelectedSourceId = null;
 let _lastSelectedBranch = null;
 
@@ -147,27 +144,20 @@ export function showFreeInputForm() {
             const result = await showSubtaskErrorModal(1, 1, error);
 
             if (result.action === 'cancel') {
+              showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
               return;
             } else if (result.action === 'skip') {
+              showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
               return;
             } else if (result.action === 'queue') {
-              const user = window.auth?.currentUser;
-              if (!user) {
-                showToast('Please sign in to queue prompts.', 'warn');
-                return;
-              }
-              try {
-                await addToJulesQueue(user.uid, {
-                  type: 'single',
-                  prompt: promptText,
-                  sourceId: _lastSelectedSourceId,
-                  branch: _lastSelectedBranch,
-                  note: 'Queued from Free Input flow'
-                });
-                showToast('Prompt queued successfully!', 'success');
-              } catch (err) {
-                showToast('Failed to queue prompt: ' + err.message, 'error');
-              }
+              await handleQueueAction({
+                type: 'single',
+                prompt: promptText,
+                sourceId: _lastSelectedSourceId,
+                branch: _lastSelectedBranch,
+                note: 'Queued from Free Input flow'
+              });
+              showFreeInputForm();
               return;
             } else if (result.action === 'retry') {
               if (result.shouldDelay) {
@@ -177,24 +167,21 @@ export function showFreeInputForm() {
           } else {
             const result = await showSubtaskErrorModal(1, 1, error);
 
-            if (result.action === 'queue') {
-              const user = window.auth?.currentUser;
-              if (!user) {
-                showToast('Please sign in to queue prompts.', 'warn');
-                return;
-              }
-              try {
-                await addToJulesQueue(user.uid, {
-                  type: 'single',
-                  prompt: promptText,
-                  sourceId: _lastSelectedSourceId,
-                  branch: _lastSelectedBranch,
-                  note: 'Queued from Free Input flow (final failure)'
-                });
-                showToast('Prompt queued successfully!', 'success');
-              } catch (err) {
-                showToast('Failed to queue prompt: ' + err.message, 'error');
-              }
+            if (result.action === 'cancel') {
+              showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
+              return;
+            } else if (result.action === 'skip') {
+              showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
+              return;
+            } else if (result.action === 'queue') {
+              await handleQueueAction({
+                type: 'single',
+                prompt: promptText,
+                sourceId: _lastSelectedSourceId,
+                branch: _lastSelectedBranch,
+                note: 'Queued from Free Input flow (final failure)'
+              });
+              showFreeInputForm();
               return;
             }
 
@@ -208,7 +195,7 @@ export function showFreeInputForm() {
                   window.open(sessionUrl, '_blank', 'noopener,noreferrer');
                 }
               } catch (finalError) {
-                showToast('Failed to submit task after multiple retries. Please try again later.', 'error');
+                showToast(JULES_MESSAGES.FINAL_RETRY_FAILED, 'error');
               }
             }
             return;
@@ -325,7 +312,7 @@ export function showFreeInputForm() {
         note: 'Queued from Free Input'
       });
       showToast('Prompt queued successfully!', 'success');
-      hideFreeInputForm();
+      showFreeInputForm();
     } catch (err) {
       showToast('Failed to queue prompt: ' + err.message, 'error');
     }

@@ -161,17 +161,27 @@ src/
 ├── modules/          # Feature modules
 │   ├── auth.js
 │   ├── branch-selector.js
+│   ├── confirm-modal.js
+│   ├── dropdown.js
 │   ├── github-api.js
 │   ├── header.js
+│   ├── jules-account.js
 │   ├── jules-api.js
-│   ├── jules.js
+│   ├── jules-free-input.js
+│   ├── jules-keys.js
+│   ├── jules-modal.js
+│   ├── jules-queue.js
+│   ├── jules-subtask-modal.js
 │   ├── navbar.js
 │   ├── page-init.js
 │   ├── prompt-list.js
 │   ├── prompt-renderer.js
+│   ├── prompt-viewer.js
 │   ├── repo-branch-selector.js
+│   ├── sidebar.js
 │   ├── status-bar.js
-│   └── subtask-manager.js
+│   ├── subtask-manager.js
+│   └── toast.js
 └── utils/            # Shared utilities
     ├── checkbox-helpers.js
     ├── constants.js

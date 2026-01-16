@@ -1,14 +1,28 @@
-// ===== Jules Queue Module =====
-// Manages Jules queue operations and UI rendering
-
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
+import { JULES_MESSAGES } from '../utils/constants.js';
 
 let queueCache = [];
+
+export async function handleQueueAction(queueItemData) {
+  const user = window.auth?.currentUser;
+  if (!user) {
+    showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
+    return false;
+  }
+  try {
+    await addToJulesQueue(user.uid, queueItemData);
+    showToast(JULES_MESSAGES.QUEUED, 'success');
+    return true;
+  } catch (err) {
+    showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
+    return false;
+  }
+}
 
 export async function addToJulesQueue(uid, queueItem) {
   if (!window.db) throw new Error('Firestore not initialized');
@@ -20,7 +34,6 @@ export async function addToJulesQueue(uid, queueItem) {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       status: 'pending'
     });
-    // Clear cache so next load fetches fresh data
     const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
     clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return docRef.id;
@@ -35,7 +48,6 @@ export async function updateJulesQueueItem(uid, docId, updates) {
   try {
     const docRef = window.db.collection('julesQueues').doc(uid).collection('items').doc(docId);
     await docRef.update(updates);
-    // Clear cache so next load fetches fresh data
     const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
     clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return true;
@@ -49,7 +61,6 @@ export async function deleteFromJulesQueue(uid, docId) {
   if (!window.db) throw new Error('Firestore not initialized');
   try {
     await window.db.collection('julesQueues').doc(uid).collection('items').doc(docId).delete();
-    // Clear cache so next load fetches fresh data
     const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
     clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return true;
@@ -78,7 +89,6 @@ export function showJulesQueueModal() {
   }
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1003; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
   
-  // Close modal when clicking on backdrop
   modal.onclick = (e) => {
     if (e.target === modal) {
       hideJulesQueueModal();
@@ -111,9 +121,7 @@ let editModalState = {
   branchSelector: null
 };
 
-// Initialize repo and branch selectors
 async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu) {
-  // Create BranchSelector instance
   const branchSelector = new BranchSelector({
     dropdownBtn: branchDropdownBtn,
     dropdownText: branchDropdownText,
@@ -123,7 +131,6 @@ async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, re
     }
   });
 
-  // Create RepoSelector instance
   const repoSelector = new RepoSelector({
     dropdownBtn: repoDropdownBtn,
     dropdownText: repoDropdownText,
@@ -134,7 +141,6 @@ async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, re
     }
   });
 
-  // Store selectors in state for later access
   editModalState.repoSelector = repoSelector;
   editModalState.branchSelector = branchSelector;
 
@@ -174,14 +180,13 @@ function setupSubtasksEventDelegation() {
 async function openEditQueueModal(docId) {
   const item = queueCache.find(i => i.id === docId);
   if (!item) {
-    showToast('Queue item not found', 'error');
+    showToast(JULES_MESSAGES.QUEUE_NOT_FOUND, 'error');
     return;
   }
 
   editModalState.currentDocId = docId;
   editModalState.hasUnsavedChanges = false;
 
-  // Create modal if it doesn't exist
   let modal = document.getElementById('editQueueItemModal');
   if (!modal) {
     modal = document.createElement('div');
@@ -257,7 +262,6 @@ async function openEditQueueModal(docId) {
     setupSubtasksEventDelegation();
   }
 
-  // Populate the form
   const typeDiv = document.getElementById('editQueueType');
   const promptGroup = document.getElementById('editPromptGroup');
   const subtasksGroup = document.getElementById('editSubtasksGroup');
@@ -278,7 +282,6 @@ async function openEditQueueModal(docId) {
     editModalState.originalData = { prompt: item.prompt || '' };
     editModalState.currentType = 'single';
     
-    // Set up convert to subtasks button
     document.getElementById('convertToSubtasksBtn').onclick = convertToSubtasks;
   } else if (item.type === 'subtasks') {
     typeDiv.textContent = 'Subtasks Batch';
@@ -293,7 +296,6 @@ async function openEditQueueModal(docId) {
     };
     editModalState.currentType = 'subtasks';
     
-    // Set up convert to single button
     document.getElementById('convertToSingleBtn').onclick = convertToSingle;
     updateConvertToSingleButtonVisibility();
   }
@@ -301,13 +303,10 @@ async function openEditQueueModal(docId) {
   editModalState.originalData.sourceId = item.sourceId || '';
   editModalState.originalData.branch = item.branch || 'master';
 
-  // Initialize repo and branch selectors
   await initializeEditRepoAndBranch(item.sourceId, item.branch || 'master', repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu);
 
-  // Show modal
   modal.style.display = 'flex';
 
-  // Track changes
   const trackChanges = () => {
     editModalState.hasUnsavedChanges = true;
   };
@@ -328,20 +327,16 @@ function convertToSubtasks() {
   const subtasksGroup = document.getElementById('editSubtasksGroup');
   const typeDiv = document.getElementById('editQueueType');
   
-  // Switch view
   promptGroup.style.display = 'none';
   subtasksGroup.style.display = 'block';
   typeDiv.textContent = 'Subtasks Batch';
   
-  // Create initial subtask from prompt
   const subtasks = promptContent ? [{ fullContent: promptContent }] : [{ fullContent: '' }];
   renderSubtasksList(subtasks);
   
-  // Update state
   editModalState.currentType = 'subtasks';
   editModalState.hasUnsavedChanges = true;
   
-  // Set up convert to single button
   document.getElementById('convertToSingleBtn').onclick = convertToSingle;
   updateConvertToSingleButtonVisibility();
 }
@@ -366,26 +361,19 @@ async function convertToSingle() {
   const typeDiv = document.getElementById('editQueueType');
   const promptTextarea = document.getElementById('editQueuePrompt');
   
-  // Combine subtasks into single prompt
   const combinedPrompt = currentSubtasks.join('\n\n---\n\n');
   
-  // Switch view
   subtasksGroup.style.display = 'none';
   promptGroup.style.display = 'block';
   typeDiv.textContent = 'Single Prompt';
   promptTextarea.value = combinedPrompt;
   
-  // Update state
   editModalState.currentType = 'single';
   editModalState.hasUnsavedChanges = true;
   
-  // Set up convert to subtasks button
   document.getElementById('convertToSubtasksBtn').onclick = convertToSubtasks;
 }
 
-/**
- * Update visibility of convert to single button based on subtask count
- */
 function updateConvertToSingleButtonVisibility() {
   const convertBtn = document.getElementById('convertToSingleBtn');
   const subtaskCount = document.querySelectorAll('.edit-subtask-content').length;
@@ -395,9 +383,6 @@ function updateConvertToSingleButtonVisibility() {
   }
 }
 
-/**
- * Render subtasks list with add/remove buttons
- */
 function renderSubtasksList(subtasks) {
   const subtasksList = document.getElementById('editQueueSubtasksList');
   if (!subtasksList) {
@@ -424,33 +409,23 @@ function renderSubtasksList(subtasks) {
   updateConvertToSingleButtonVisibility();
 }
 
-/**
- * Add a new empty subtask
- */
 function addNewSubtask() {
   const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => ({
     fullContent: textarea.value
   }));
   
-  // Add new empty subtask
   currentSubtasks.push({ fullContent: '' });
   
-  // Re-render
   renderSubtasksList(currentSubtasks);
   
-  // Mark as changed
   editModalState.hasUnsavedChanges = true;
   
-  // Focus the new textarea
   const textareas = document.querySelectorAll('.edit-subtask-content');
   if (textareas.length > 0) {
     textareas[textareas.length - 1].focus();
   }
 }
 
-/**
- * Remove a subtask by index
- */
 async function removeSubtask(index) {
   const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => ({
     fullContent: textarea.value
@@ -465,17 +440,13 @@ async function removeSubtask(index) {
     if (!confirmed) return;
   }
   
-  // Remove the subtask at the specified index
   currentSubtasks.splice(index, 1);
   
-  // Re-render
   renderSubtasksList(currentSubtasks);
   
-  // Mark as changed
   editModalState.hasUnsavedChanges = true;
 }
 
-// Close modal handler function (defined outside so it can be referenced in event handlers)
 async function closeEditModal(force = false) {
   const modal = document.getElementById('editQueueItemModal');
   if (!modal) return;
@@ -500,18 +471,17 @@ async function closeEditModal(force = false) {
 async function saveQueueItemEdit(docId, closeModalCallback) {
   const item = queueCache.find(i => i.id === docId);
   if (!item) {
-    showToast('Queue item not found', 'error');
+    showToast(JULES_MESSAGES.QUEUE_NOT_FOUND, 'error');
     return;
   }
   
   const user = window.auth?.currentUser;
   if (!user) {
-    showToast('Not signed in', 'error');
+    showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error');
     return;
   }
 
   try {
-    // Get values from selectors
     const sourceId = editModalState.repoSelector?.getSelectedSourceId();
     const branch = editModalState.branchSelector?.getSelectedBranch();
     
@@ -521,14 +491,12 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    // Determine current type based on what's visible
     const currentType = editModalState.currentType || item.type;
     
     if (currentType === 'single') {
       const promptTextarea = document.getElementById('editQueuePrompt');
       updates.type = 'single';
       updates.prompt = promptTextarea.value;
-      // Remove subtasks fields if converting from subtasks to single
       if (item.type === 'subtasks') {
         updates.remaining = firebase.firestore.FieldValue.delete();
         updates.totalCount = firebase.firestore.FieldValue.delete();
@@ -541,7 +509,6 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
       updates.type = 'subtasks';
       updates.remaining = updatedSubtasks;
       updates.totalCount = updatedSubtasks.length;
-      // Remove prompt field if converting from single to subtasks
       if (item.type === 'single') {
         updates.prompt = firebase.firestore.FieldValue.delete();
       }
@@ -549,14 +516,13 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
 
     await updateJulesQueueItem(user.uid, item.id, updates);
     
-    showToast('Queue item updated successfully', 'success');
+    showToast(JULES_MESSAGES.QUEUE_UPDATED, 'success');
     editModalState.hasUnsavedChanges = false;
     closeModalCallback(true);
     
-    // Reload the queue
     await loadQueuePage();
   } catch (err) {
-    showToast('Failed to update queue item: ' + err.message, 'error');
+    showToast(JULES_MESSAGES.QUEUE_UPDATE_FAILED(err.message), 'error');
   }
 }
 
@@ -569,7 +535,6 @@ async function loadQueuePage() {
   }
 
   try {
-    // Check cache first
     let items = getCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
     
     if (!items) {
@@ -706,29 +671,62 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
   const sortedIndices = indices.sort((a, b) => a - b);
   const toRun = sortedIndices.map(i => item.remaining[i]).filter(Boolean);
 
-  // Import from jules-api module
   const { callRunJulesFunction } = await import('./jules-api.js');
-  const { openUrlInBackground } = await import('./jules-modal.js');
+  const { openUrlInBackground, showSubtaskErrorModal } = await import('./jules-modal.js');
 
-  for (const subtask of toRun) {
-    try {
-      const title = extractTitleFromPrompt(subtask.fullContent);
-      const sessionUrl = await callRunJulesFunction(subtask.fullContent, item.sourceId, item.branch || 'master', title);
-      if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
-        if (openInBackground) {
-          openUrlInBackground(sessionUrl);
+  const successfulIndices = [];
+  const skippedIndices = [];
+
+  for (let i = 0; i < toRun.length; i++) {
+    const subtask = toRun[i];
+    const originalIndex = sortedIndices[i];
+    let retry = true;
+    
+    while (retry) {
+      try {
+        const title = extractTitleFromPrompt(subtask.fullContent);
+        const sessionUrl = await callRunJulesFunction(subtask.fullContent, item.sourceId, item.branch || 'master', title);
+        if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
+          if (openInBackground) {
+            openUrlInBackground(sessionUrl);
+          } else {
+            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          }
+        }
+        successfulIndices.push(originalIndex);
+        await new Promise(r => setTimeout(r, 800));
+        retry = false;
+      } catch (err) {
+        const result = await showSubtaskErrorModal(i + 1, toRun.length, err, true);
+        
+        if (result.action === 'retry') {
+          if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
+          continue;
+        } else if (result.action === 'skip') {
+          skippedIndices.push(originalIndex);
+          retry = false;
+        } else if (result.action === 'queue') {
+          if (successfulIndices.length > 0) {
+            await deleteSelectedSubtasks(docId, successfulIndices);
+          }
+          return { successful: successfulIndices.length, skipped: skippedIndices.length };
         } else {
-          window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+          if (successfulIndices.length > 0) {
+            await deleteSelectedSubtasks(docId, successfulIndices);
+          }
+          const err = new Error('User cancelled');
+          err.successfulCount = successfulIndices.length;
+          throw err;
         }
       }
-      await new Promise(r => setTimeout(r, 800));
-    } catch (err) {
-      statusBar.showMessage(`Error running subtask: ${err.message}`, { timeout: 6000 });
-      throw err;
     }
   }
 
-  await deleteSelectedSubtasks(docId, indices);
+  if (successfulIndices.length > 0) {
+    await deleteSelectedSubtasks(docId, successfulIndices);
+  }
+  
+  return { successful: successfulIndices.length, skipped: skippedIndices.length };
 }
 
 function attachQueueModalHandlers() {
@@ -795,7 +793,7 @@ function getSelectedQueueIds() {
 
 async function deleteSelectedQueueItems() {
   const user = window.auth?.currentUser;
-  if (!user) { showToast('Not signed in', 'error'); return; }
+  if (!user) { showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error'); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
@@ -823,10 +821,10 @@ async function deleteSelectedQueueItems() {
       await deleteSelectedSubtasks(docId, indices);
     }
     
-    showToast(`Deleted ${totalCount} ${totalCount === 1 ? 'item' : 'items'}`, 'success');
+    showToast(JULES_MESSAGES.deleted(totalCount), 'success');
     await loadQueuePage();
   } catch (err) {
-    showToast('Failed to delete selected items: ' + err.message, 'error');
+    showToast(JULES_MESSAGES.DELETE_FAILED(err.message), 'error');
   }
 }
 
@@ -840,7 +838,7 @@ function sortByCreatedAt(ids) {
 
 async function runSelectedQueueItems() {
   const user = window.auth?.currentUser;
-  if (!user) { showToast('Not signed in', 'error'); return; }
+  if (!user) { showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error'); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
@@ -870,19 +868,56 @@ async function runSelectedQueueItems() {
     if (pauseBtn) pauseBtn.disabled = true;
   });
 
-  // Import from jules-api module
   const { callRunJulesFunction } = await import('./jules-api.js');
-  const { openUrlInBackground } = await import('./jules-modal.js');
+  const { openUrlInBackground, showSubtaskErrorModal } = await import('./jules-modal.js');
 
   const sortedSubtaskEntries = Object.entries(subtaskSelections).sort(([a], [b]) => 
     (queueCache.find(i => i.id === a)?.createdAt?.seconds || 0) - (queueCache.find(i => i.id === b)?.createdAt?.seconds || 0)
   );
+  const totalSubtasks = Object.entries(subtaskSelections)
+    .filter(([docId]) => !queueSelections.includes(docId))
+    .reduce((sum, [, indices]) => sum + indices.length, 0);
+  const totalSingles = queueSelections.filter(id => {
+    const item = queueCache.find(i => i.id === id);
+    return item?.type === 'single';
+  }).length;
+  const totalFullSubtaskQueues = queueSelections.filter(id => {
+    const item = queueCache.find(i => i.id === id);
+    return item?.type === 'subtasks';
+  }).reduce((sum, id) => {
+    const item = queueCache.find(i => i.id === id);
+    return sum + (item?.remaining?.length || 0);
+  }, 0);
+  const totalItems = totalSubtasks + totalSingles + totalFullSubtaskQueues;
+  let currentItemNumber = 0;
+  let totalSkipped = 0;
+  let totalSuccessful = 0;
 
   for (const [docId, indices] of sortedSubtaskEntries) {
     if (paused) break;
     if (queueSelections.includes(docId)) continue;
     
-    await runSelectedSubtasks(docId, indices.slice().sort((a, b) => a - b), suppressPopups, openInBackground);
+    try {
+      const result = await runSelectedSubtasks(docId, indices.slice().sort((a, b) => a - b), suppressPopups, openInBackground);
+      currentItemNumber += indices.length;
+      if (result && result.skipped > 0) {
+        totalSkipped += result.skipped;
+      }
+      if (result && result.successful > 0) {
+        totalSuccessful += result.successful;
+      }
+    } catch (err) {
+      if (err.message === 'User cancelled') {
+        if (err.successfulCount) {
+          totalSuccessful += err.successfulCount;
+        }
+        showToast(JULES_MESSAGES.cancelled(totalSuccessful, totalItems), 'warn');
+        statusBar.clear();
+        await loadQueuePage();
+        return;
+      }
+      throw err;
+    }
   }
   
   for (const id of sortByCreatedAt(queueSelections)) {
@@ -892,20 +927,46 @@ async function runSelectedQueueItems() {
 
     try {
       if (item.type === 'single') {
-        const title = extractTitleFromPrompt(item.prompt || '');
-        const sessionUrl = await callRunJulesFunction(item.prompt || '', item.sourceId, item.branch || 'master', title);
-        if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
-          if (openInBackground) {
-            openUrlInBackground(sessionUrl);
-          } else {
-            window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+        currentItemNumber++;
+        let retry = true;
+        while (retry) {
+          try {
+            const title = extractTitleFromPrompt(item.prompt || '');
+            const sessionUrl = await callRunJulesFunction(item.prompt || '', item.sourceId, item.branch || 'master', title);
+            if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
+              if (openInBackground) {
+                openUrlInBackground(sessionUrl);
+              } else {
+                window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+              }
+            }
+            await deleteFromJulesQueue(user.uid, id);
+            totalSuccessful++;
+            retry = false;
+          } catch (singleErr) {
+            const result = await showSubtaskErrorModal(currentItemNumber, totalItems, singleErr, true);
+            if (result.action === 'retry') {
+              if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
+              continue;
+            } else if (result.action === 'skip') {
+              totalSkipped++;
+              retry = false;
+            } else if (result.action === 'queue') {
+              retry = false;
+            } else {
+              showToast(JULES_MESSAGES.cancelled(totalSuccessful, totalItems), 'warn');
+              statusBar.clear();
+              await loadQueuePage();
+              return;
+            }
           }
         }
-        await deleteFromJulesQueue(user.uid, id);
       } else if (item.type === 'subtasks') {
         let remaining = Array.isArray(item.remaining) ? item.remaining.slice() : [];
+        const skippedSubtasks = [];
 
         const initialCount = remaining.length;
+        let subtaskNumber = 0;
         while (remaining.length > 0) {
           if (paused) {
             try {
@@ -924,73 +985,138 @@ async function runSelectedQueueItems() {
             return;
           }
 
+          currentItemNumber++;
+          subtaskNumber++;
           const s = remaining[0];
-          try {
-            const title = extractTitleFromPrompt(s.fullContent);
-            const sessionUrl = await callRunJulesFunction(s.fullContent, item.sourceId, item.branch || 'master', title);
-            if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
-              if (openInBackground) {
-                openUrlInBackground(sessionUrl);
+          let subtaskRetry = true;
+          while (subtaskRetry) {
+            try {
+              const title = extractTitleFromPrompt(s.fullContent);
+              const sessionUrl = await callRunJulesFunction(s.fullContent, item.sourceId, item.branch || 'master', title);
+              if (sessionUrl && !suppressPopups && item.autoOpen !== false) {
+                if (openInBackground) {
+                  openUrlInBackground(sessionUrl);
+                } else {
+                  window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+                }
+              }
+
+              remaining.shift();
+              totalSuccessful++;
+
+              try {
+                await updateJulesQueueItem(user.uid, id, {
+                  remaining,
+                  status: remaining.length === 0 ? 'done' : 'in-progress',
+                  updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+              } catch (e) {
+                console.warn('Failed to persist progress for queue item', id, e.message || e);
+              }
+
+              try {
+                const done = initialCount - remaining.length;
+                const percent = initialCount > 0 ? Math.round((done / initialCount) * 100) : 100;
+                statusBar.setProgress(`${done}/${initialCount}`, percent);
+                statusBar.showMessage(`Processing subtask ${done}/${initialCount}`, { timeout: 0 });
+              } catch (e) {}
+
+              await new Promise(r => setTimeout(r, 800));
+              subtaskRetry = false;
+            } catch (err) {
+              const result = await showSubtaskErrorModal(subtaskNumber, initialCount, err, true);
+              
+              if (result.action === 'retry') {
+                if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
+                continue;
+              } else if (result.action === 'skip') {
+                totalSkipped++;
+                skippedSubtasks.push(remaining.shift());
+                try {
+                  await updateJulesQueueItem(user.uid, id, {
+                    remaining: [...skippedSubtasks, ...remaining],
+                    status: 'pending',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+                } catch (e) {
+                  console.warn('Failed to persist remaining after skip', e);
+                }
+                statusBar.showMessage(JULES_MESSAGES.SKIPPED_SUBTASK, { timeout: 2000 });
+                subtaskRetry = false;
+              } else if (result.action === 'queue') {
+                try {
+                  await updateJulesQueueItem(user.uid, id, {
+                    remaining,
+                    status: 'pending',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+                } catch (e) {
+                  console.warn('Failed to persist queue state', e);
+                }
+                statusBar.showMessage('Remainder queued for later', { timeout: 3000 });
+                statusBar.clearProgress();
+                statusBar.clearAction();
+                await loadQueuePage();
+                return;
               } else {
-                window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+                try {
+                  await updateJulesQueueItem(user.uid, id, {
+                    remaining,
+                    status: 'error',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+                } catch (e) {
+                  console.warn('Failed to persist error state', e);
+                }
+                showToast(JULES_MESSAGES.cancelled(totalSuccessful, totalItems), 'warn');
+                statusBar.clear();
+                await loadQueuePage();
+                return;
               }
             }
-
-            // remove the completed subtask from remaining
-            remaining.shift();
-
-            // persist progress after each successful subtask
-            try {
-              await updateJulesQueueItem(user.uid, id, {
-                remaining,
-                status: remaining.length === 0 ? 'done' : 'in-progress',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
-            } catch (e) {
-              console.warn('Failed to persist progress for queue item', id, e.message || e);
-            }
-
-            // update status bar progress
-            try {
-              const done = initialCount - remaining.length;
-              const percent = initialCount > 0 ? Math.round((done / initialCount) * 100) : 100;
-              statusBar.setProgress(`${done}/${initialCount}`, percent);
-              statusBar.showMessage(`Processing subtask ${done}/${initialCount}`, { timeout: 0 });
-            } catch (e) {}
-
-            // slight delay between subtasks
-            await new Promise(r => setTimeout(r, 800));
-          } catch (err) {
-            // If a subtask fails, persist remaining and stop processing this queued item
-            statusBar.showMessage(`Error running queued subtask: ${err.message}`, { timeout: 6000 });
-            try {
-              await updateJulesQueueItem(user.uid, id, {
-                remaining,
-                status: 'error',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
-            } catch (e) {
-              console.warn('Failed to persist error state for queue item', id, e.message || e);
-            }
-            throw err;
           }
         }
 
-        // all subtasks succeeded
-        await deleteFromJulesQueue(user.uid, id);
+        if (skippedSubtasks.length > 0 && remaining.length === 0) {
+          try {
+            await updateJulesQueueItem(user.uid, id, {
+              remaining: skippedSubtasks,
+              status: 'pending',
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          } catch (e) {
+            console.warn('Failed to save skipped subtasks', e);
+          }
+        } else if (skippedSubtasks.length === 0 && remaining.length === 0) {
+          await deleteFromJulesQueue(user.uid, id);
+        }
       } else {
         console.warn('Unknown queue item type', item.type);
       }
     } catch (err) {
-      // stop processing further items to avoid fast repeated failures
-      console.error('Failed running queue item', id, err);
+      if (err.message === 'User cancelled') {
+        showToast(JULES_MESSAGES.cancelled(totalSuccessful, totalItems), 'warn');
+        statusBar.clear();
+        await loadQueuePage();
+        return;
+      }
+      console.error('Unexpected error running queue item', id, err);
+      showToast(JULES_MESSAGES.UNEXPECTED_ERROR(err.message), 'error');
+      statusBar.clearProgress();
+      statusBar.clearAction();
       await loadQueuePage();
       return;
     }
   }
 
-  statusBar.showMessage('Completed running selected items', { timeout: 4000 });
-  statusBar.clearProgress();
+  if (totalSkipped > 0 && totalSuccessful === 0) {
+    showToast(JULES_MESSAGES.cancelled(0, totalItems), 'warn');
+  } else if (totalSkipped > 0) {
+    showToast(JULES_MESSAGES.completedWithSkipped(totalSuccessful, totalSkipped), 'success');
+  } else {
+    showToast(JULES_MESSAGES.COMPLETED_RUNNING, 'success');
+  }
+  statusBar.clear();
   statusBar.clearAction();
   await loadQueuePage();
 }
