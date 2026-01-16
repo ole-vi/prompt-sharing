@@ -3,8 +3,9 @@
 
 import { loadHeader } from './modules/header.js';
 import { initAuthStateListener } from './modules/auth.js';
-import { initBranchSelector, loadBranches } from './modules/branch-selector.js';
+import { initBranchSelector, loadBranches, loadBranchFromStorage } from './modules/branch-selector.js';
 import { OWNER, REPO, BRANCH } from './utils/constants.js';
+import { parseParams } from './utils/url-params.js';
 import statusBar from './modules/status-bar.js';
 
 let isInitialized = false;
@@ -144,7 +145,12 @@ async function initializeSharedComponents(activePage) {
     waitForFirebase(() => {
       initAuthStateListener();
 
-      initBranchSelector(OWNER, REPO, BRANCH);
+      const params = parseParams();
+      const currentOwner = params.owner || OWNER;
+      const currentRepo = params.repo || REPO;
+      const currentBranch = params.branch || loadBranchFromStorage(currentOwner, currentRepo) || BRANCH;
+
+      initBranchSelector(currentOwner, currentRepo, currentBranch);
 
       loadBranches().catch(error => {
         console.error('Failed to load branches:', error);
@@ -152,7 +158,7 @@ async function initializeSharedComponents(activePage) {
 
       const repoPill = document.getElementById('repoPill');
       if (repoPill) {
-        repoPill.innerHTML = `<strong>${OWNER}/${REPO}</strong>`;
+        repoPill.innerHTML = `<strong>${currentOwner}/${currentRepo}</strong>`;
       }
 
       fetchVersion();
