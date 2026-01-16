@@ -100,7 +100,7 @@ npm run deploy  # Deploy to production Firebase
 ## Common Development Workflows
 
 ### Creating a New Page
-1. Create HTML file in `pages/{page-name}/index.html`
+1. Create HTML file in `pages/{page-name}/{page-name}.html`
 2. Create initialization module `src/modules/{page-name}-page.js`
 3. Import shared-init.js and page-specific modules
 4. Add page styles in `src/styles/pages/{page-name}.css` if needed
