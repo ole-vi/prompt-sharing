@@ -3,29 +3,57 @@
  * Shared modal for viewing and copying Jules session prompts
  */
 
+import { createElement } from '../utils/dom-helpers.js';
+import { showToast } from './toast.js';
+
 let currentEscapeHandler = null;
 let promptViewerHandlers = new Map();
 
 function createPromptViewerModal() {
-  const modal = document.createElement('div');
+  const modal = createElement('div', 'modal');
   modal.id = 'promptViewerModal';
-  modal.className = 'modal';
-  modal.style.zIndex = '10000';
-  modal.innerHTML = `
-    <div class="modal-content modal-xl">
-      <div class="modal-header">
-        <h3 id="promptViewerTitle">Session Prompt</h3>
-        <button class="btn-icon close-modal" id="promptViewerClose" title="Close">✕</button>
-      </div>
-      <div class="modal-body prompt-viewer-body">
-        <pre id="promptViewerText" class="prompt-viewer-text"></pre>
-      </div>
-      <div class="modal-buttons">
-        <button id="promptViewerCopy" class="btn primary"><span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy Prompt</button>
-        <button id="promptViewerCloseBtn" class="btn">Close</button>
-      </div>
-    </div>
-  `;
+
+  const content = createElement('div', 'modal-content modal-xl');
+
+  // Header
+  const header = createElement('div', 'modal-header');
+  const title = createElement('h3', '', 'Session Prompt');
+  title.id = 'promptViewerTitle';
+
+  const closeX = createElement('button', 'btn-icon close-modal', '✕');
+  closeX.id = 'promptViewerClose';
+  closeX.title = 'Close';
+
+  header.appendChild(title);
+  header.appendChild(closeX);
+
+  // Body
+  const body = createElement('div', 'modal-body prompt-viewer-body');
+  const pre = createElement('pre', 'prompt-viewer-text');
+  pre.id = 'promptViewerText';
+  body.appendChild(pre);
+
+  // Buttons
+  const buttons = createElement('div', 'modal-buttons');
+
+  const copyBtn = createElement('button', 'btn primary');
+  copyBtn.id = 'promptViewerCopy';
+  const icon = createElement('span', 'icon icon-inline', 'content_copy');
+  icon.setAttribute('aria-hidden', 'true');
+  copyBtn.appendChild(icon);
+  copyBtn.append(' Copy Prompt');
+
+  const closeBtn = createElement('button', 'btn', 'Close');
+  closeBtn.id = 'promptViewerCloseBtn';
+
+  buttons.appendChild(copyBtn);
+  buttons.appendChild(closeBtn);
+
+  content.appendChild(header);
+  content.appendChild(body);
+  content.appendChild(buttons);
+
+  modal.appendChild(content);
   document.body.appendChild(modal);
   return modal;
 }
@@ -50,13 +78,14 @@ export function showPromptViewer(prompt, sessionId) {
       const originalText = copyBtn.innerHTML;
       copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check</span> Copied!';
       copyBtn.disabled = true;
+      showToast('Prompt copied to clipboard', 'success');
       setTimeout(() => {
         copyBtn.innerHTML = originalText;
         copyBtn.disabled = false;
       }, 2000);
     } catch (err) {
       console.error('Copy failed:', err);
-      alert('Failed to copy prompt to clipboard');
+      showToast('Failed to copy prompt to clipboard', 'error');
     }
   };
   
