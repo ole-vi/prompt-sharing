@@ -41,7 +41,7 @@ function createPromptViewerModal() {
   const icon = createElement('span', 'icon icon-inline', 'content_copy');
   icon.setAttribute('aria-hidden', 'true');
   copyBtn.appendChild(icon);
-  copyBtn.appendChild(document.createTextNode(' Copy Prompt'));
+  copyBtn.append(' Copy Prompt');
 
   const closeBtn = createElement('button', 'btn', 'Close');
   closeBtn.id = 'promptViewerCloseBtn';
@@ -78,6 +78,7 @@ export function showPromptViewer(prompt, sessionId) {
       const originalText = copyBtn.innerHTML;
       copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check</span> Copied!';
       copyBtn.disabled = true;
+      showToast('Prompt copied to clipboard', 'success');
       setTimeout(() => {
         copyBtn.innerHTML = originalText;
         copyBtn.disabled = false;

@@ -41,12 +41,14 @@
 
 /* Specific modal layering */
 #subtaskPreviewModal { z-index: 1002; }
-#promptViewerModal { z-index: 2000; }
+
+/* Prompt viewer modal styles */
+#promptViewerModal { z-index: 10000; }
 
 .prompt-viewer-text {
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: var(--font-mono);
   font-size: 13px;
   color: var(--text);
   background: #0a0d1a;
