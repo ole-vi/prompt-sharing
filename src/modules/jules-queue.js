@@ -4,21 +4,22 @@ import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
+import { JULES_MESSAGES } from '../utils/constants.js';
 
 let queueCache = [];
 
 export async function handleQueueAction(queueItemData) {
   const user = window.auth?.currentUser;
   if (!user) {
-    showToast('Please sign in to queue prompts.', 'warn');
+    showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
     return false;
   }
   try {
     await addToJulesQueue(user.uid, queueItemData);
-    showToast('Prompt queued successfully!', 'success');
+    showToast(JULES_MESSAGES.QUEUED, 'success');
     return true;
   } catch (err) {
-    showToast('Failed to queue prompt: ' + err.message, 'error');
+    showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
     return false;
   }
 }
@@ -179,7 +180,7 @@ function setupSubtasksEventDelegation() {
 async function openEditQueueModal(docId) {
   const item = queueCache.find(i => i.id === docId);
   if (!item) {
-    showToast('Queue item not found', 'error');
+    showToast(JULES_MESSAGES.QUEUE_NOT_FOUND, 'error');
     return;
   }
 
@@ -470,13 +471,13 @@ async function closeEditModal(force = false) {
 async function saveQueueItemEdit(docId, closeModalCallback) {
   const item = queueCache.find(i => i.id === docId);
   if (!item) {
-    showToast('Queue item not found', 'error');
+    showToast(JULES_MESSAGES.QUEUE_NOT_FOUND, 'error');
     return;
   }
   
   const user = window.auth?.currentUser;
   if (!user) {
-    showToast('Not signed in', 'error');
+    showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error');
     return;
   }
 
@@ -515,13 +516,13 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
 
     await updateJulesQueueItem(user.uid, item.id, updates);
     
-    showToast('Queue item updated successfully', 'success');
+    showToast(JULES_MESSAGES.QUEUE_UPDATED, 'success');
     editModalState.hasUnsavedChanges = false;
     closeModalCallback(true);
     
     await loadQueuePage();
   } catch (err) {
-    showToast('Failed to update queue item: ' + err.message, 'error');
+    showToast(JULES_MESSAGES.QUEUE_UPDATE_FAILED(err.message), 'error');
   }
 }
 
@@ -792,7 +793,7 @@ function getSelectedQueueIds() {
 
 async function deleteSelectedQueueItems() {
   const user = window.auth?.currentUser;
-  if (!user) { showToast('Not signed in', 'error'); return; }
+  if (!user) { showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error'); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
@@ -820,10 +821,10 @@ async function deleteSelectedQueueItems() {
       await deleteSelectedSubtasks(docId, indices);
     }
     
-    showToast(`Deleted ${totalCount} ${totalCount === 1 ? 'item' : 'items'}`, 'success');
+    showToast(JULES_MESSAGES.deleted(totalCount), 'success');
     await loadQueuePage();
   } catch (err) {
-    showToast('Failed to delete selected items: ' + err.message, 'error');
+    showToast(JULES_MESSAGES.DELETE_FAILED(err.message), 'error');
   }
 }
 
@@ -837,7 +838,7 @@ function sortByCreatedAt(ids) {
 
 async function runSelectedQueueItems() {
   const user = window.auth?.currentUser;
-  if (!user) { showToast('Not signed in', 'error'); return; }
+  if (!user) { showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error'); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
@@ -910,7 +911,7 @@ async function runSelectedQueueItems() {
         if (err.successfulCount) {
           totalSuccessful += err.successfulCount;
         }
-        showToast(`Cancelled. Processed ${totalSuccessful} of ${totalItems} ${totalSuccessful === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
+        showToast(JULES_MESSAGES.cancelled(totalSuccessful, totalItems), 'warn');
         statusBar.clear();
         await loadQueuePage();
         return;
@@ -953,7 +954,7 @@ async function runSelectedQueueItems() {
             } else if (result.action === 'queue') {
               retry = false;
             } else {
-              showToast(`Cancelled. Processed ${totalSuccessful} of ${totalItems} ${totalSuccessful === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
+              showToast(JULES_MESSAGES.cancelled(totalSuccessful, totalItems), 'warn');
               statusBar.clear();
               await loadQueuePage();
               return;
@@ -1040,7 +1041,7 @@ async function runSelectedQueueItems() {
                 } catch (e) {
                   console.warn('Failed to persist remaining after skip', e);
                 }
-                statusBar.showMessage('Skipped subtask. Continuing with remaining...', { timeout: 2000 });
+                statusBar.showMessage(JULES_MESSAGES.SKIPPED_SUBTASK, { timeout: 2000 });
                 subtaskRetry = false;
               } else if (result.action === 'queue') {
                 try {
@@ -1067,7 +1068,7 @@ async function runSelectedQueueItems() {
                 } catch (e) {
                   console.warn('Failed to persist error state', e);
                 }
-                showToast(`Cancelled. Processed ${totalSuccessful} of ${totalItems} ${totalSuccessful === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
+                showToast(JULES_MESSAGES.cancelled(totalSuccessful, totalItems), 'warn');
                 statusBar.clear();
                 await loadQueuePage();
                 return;
@@ -1094,13 +1095,13 @@ async function runSelectedQueueItems() {
       }
     } catch (err) {
       if (err.message === 'User cancelled') {
-        showToast(`Cancelled. Processed ${totalSuccessful} of ${totalItems} ${totalSuccessful === 1 ? 'task' : 'tasks'} before cancellation.`, 'warn');
+        showToast(JULES_MESSAGES.cancelled(totalSuccessful, totalItems), 'warn');
         statusBar.clear();
         await loadQueuePage();
         return;
       }
       console.error('Unexpected error running queue item', id, err);
-      showToast(`Unexpected error: ${err.message}`, 'error');
+      showToast(JULES_MESSAGES.UNEXPECTED_ERROR(err.message), 'error');
       statusBar.clearProgress();
       statusBar.clearAction();
       await loadQueuePage();
@@ -1108,10 +1109,12 @@ async function runSelectedQueueItems() {
     }
   }
 
-  if (totalSkipped > 0) {
-    showToast(`Completed ${totalSuccessful} ${totalSuccessful === 1 ? 'task' : 'tasks'}, skipped ${totalSkipped}`, 'success');
+  if (totalSkipped > 0 && totalSuccessful === 0) {
+    showToast(JULES_MESSAGES.cancelled(0, totalItems), 'warn');
+  } else if (totalSkipped > 0) {
+    showToast(JULES_MESSAGES.completedWithSkipped(totalSuccessful, totalSkipped), 'success');
   } else {
-    showToast('Completed running selected items', 'success');
+    showToast(JULES_MESSAGES.COMPLETED_RUNNING, 'success');
   }
   statusBar.clear();
   statusBar.clearAction();

@@ -4,6 +4,7 @@ import { showJulesKeyModal, showSubtaskErrorModal } from './jules-modal.js';
 import { addToJulesQueue, handleQueueAction } from './jules-queue.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
+import { JULES_MESSAGES } from '../utils/constants.js';
 
 let _lastSelectedSourceId = null;
 let _lastSelectedBranch = null;
@@ -143,10 +144,10 @@ export function showFreeInputForm() {
             const result = await showSubtaskErrorModal(1, 1, error);
 
             if (result.action === 'cancel') {
-              showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
+              showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
               return;
             } else if (result.action === 'skip') {
-              showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
+              showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
               return;
             } else if (result.action === 'queue') {
               await handleQueueAction({
@@ -167,10 +168,10 @@ export function showFreeInputForm() {
             const result = await showSubtaskErrorModal(1, 1, error);
 
             if (result.action === 'cancel') {
-              showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
+              showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
               return;
             } else if (result.action === 'skip') {
-              showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
+              showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
               return;
             } else if (result.action === 'queue') {
               await handleQueueAction({
@@ -194,7 +195,7 @@ export function showFreeInputForm() {
                   window.open(sessionUrl, '_blank', 'noopener,noreferrer');
                 }
               } catch (finalError) {
-                showToast('Failed to submit task after multiple retries. Please try again later.', 'error');
+                showToast(JULES_MESSAGES.FINAL_RETRY_FAILED, 'error');
               }
             }
             return;

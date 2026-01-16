@@ -5,7 +5,7 @@ import { encryptAndStoreKey } from './jules-keys.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { addToJulesQueue } from './jules-queue.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
-import { RETRY_CONFIG, TIMEOUTS } from '../utils/constants.js';
+import { RETRY_CONFIG, TIMEOUTS, JULES_MESSAGES } from '../utils/constants.js';
 import { showToast } from './toast.js';
 
 let lastSelectedSourceId = 'sources/github/promptroot/promptroot';
@@ -161,7 +161,7 @@ export async function showJulesEnvModal(promptText) {
     
     const user = window.auth?.currentUser;
     if (!user) {
-      showToast('Please sign in to queue prompts.', 'warn');
+      showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
       return;
     }
     
@@ -173,10 +173,10 @@ export async function showJulesEnvModal(promptText) {
         branch: selectedBranch,
         note: 'Queued from Try in Jules modal'
       });
-      showToast('Prompt queued successfully!', 'success');
+      showToast(JULES_MESSAGES.QUEUED, 'success');
       hideJulesEnvModal();
     } catch (err) {
-      showToast('Failed to queue prompt: ' + err.message, 'error');
+      showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
     }
   };
   
@@ -215,15 +215,15 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
         const result = await showSubtaskErrorModal(1, 1, error);
 
         if (result.action === 'cancel') {
-          showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
+          showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
           return;
         } else if (result.action === 'skip') {
-          showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
+          showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
           return;
         } else if (result.action === 'queue') {
           const user = window.auth?.currentUser;
           if (!user) {
-            showToast('Please sign in to queue prompts.', 'warn');
+            showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
             return;
           }
           try {
@@ -234,9 +234,9 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
               branch: lastSelectedBranch,
               note: 'Queued from Try in Jules flow (partial retries)'
             });
-            showToast('Prompt queued successfully!', 'success');
+            showToast(JULES_MESSAGES.QUEUED, 'success');
           } catch (err) {
-            showToast('Failed to queue prompt: ' + err.message, 'error');
+            showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
           }
           return;
         } else if (result.action === 'retry') {
@@ -248,15 +248,15 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
         const result = await showSubtaskErrorModal(1, 1, error);
 
         if (result.action === 'cancel') {
-          showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
+          showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
           return;
         } else if (result.action === 'skip') {
-          showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
+          showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
           return;
         } else if (result.action === 'queue') {
           const user = window.auth?.currentUser;
           if (!user) {
-            showToast('Please sign in to queue prompts.', 'warn');
+            showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
             return;
           }
           try {
@@ -267,9 +267,9 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
               branch: lastSelectedBranch,
               note: 'Queued from Try in Jules flow (final failure)'
             });
-            showToast('Prompt queued successfully!', 'success');
+            showToast(JULES_MESSAGES.QUEUED, 'success');
           } catch (err) {
-            showToast('Failed to queue prompt: ' + err.message, 'error');
+            showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
           }
           return;
         }
@@ -284,7 +284,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
               window.open(sessionUrl, '_blank', 'noopener,noreferrer');
             }
           } catch (finalError) {
-            showToast('Failed to submit task after multiple retries. Please try again later.', 'error');
+            showToast(JULES_MESSAGES.FINAL_RETRY_FAILED, 'error');
           }
         }
         return;
