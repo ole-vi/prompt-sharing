@@ -41,6 +41,6 @@
     "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://avatars.githubusercontent.com https://*.githubusercontent.com; connect-src 'self' https://api.github.com https://*.cloudfunctions.net https://*.firebaseapp.com"
   },
   "externally_connectable": {
-    "matches": ["https://prompt-sharing-f8eeb.firebaseapp.com/*"]
+    "matches": ["https://promptroot-b02a2.firebaseapp.com/*"]
   }
 }

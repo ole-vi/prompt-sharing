@@ -1,6 +1,6 @@
 {
   "projects": {
-    "default": "prompt-sharing-f8eeb"
+    "default": "promptroot-b02a2"
   },
   "emulators": {
     "ui": {
@@ -48,7 +48,7 @@
     }
   ],
   "hosting": {
-    "site": "prompt-sharing-f8eeb",
+    "site": "promptroot-b02a2",
     "public": ".",
     "ignore": [
       "firebase.json",

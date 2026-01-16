@@ -252,7 +252,7 @@ export async function callRunJulesFunction(promptText, sourceId, branch = 'maste
 
 async function runJulesAPI(promptText, sourceId, branch, title, user) {
   const token = await user.getIdToken(true);
-  const functionUrl = 'https://runjuleshttp-n7gaasoeoq-uc.a.run.app';
+  const functionUrl = 'https://runjuleshttp-fjbc67s6eq-uc.a.run.app';
 
   const payload = { promptText: promptText || '', sourceId: sourceId, branch: branch, title: title };
   

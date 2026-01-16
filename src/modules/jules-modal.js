@@ -215,8 +215,10 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
         const result = await showSubtaskErrorModal(1, 1, error);
 
         if (result.action === 'cancel') {
+          showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
           return;
         } else if (result.action === 'skip') {
+          showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
           return;
         } else if (result.action === 'queue') {
           const user = window.auth?.currentUser;
@@ -232,7 +234,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
               branch: lastSelectedBranch,
               note: 'Queued from Try in Jules flow (partial retries)'
             });
-            showToast('Prompt queued. You can restart it later from your Jules queue.', 'success');
+            showToast('Prompt queued successfully!', 'success');
           } catch (err) {
             showToast('Failed to queue prompt: ' + err.message, 'error');
           }
@@ -245,7 +247,13 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
       } else {
         const result = await showSubtaskErrorModal(1, 1, error);
 
-        if (result.action === 'queue') {
+        if (result.action === 'cancel') {
+          showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
+          return;
+        } else if (result.action === 'skip') {
+          showToast('Cancelled. Processed 0 of 1 tasks before cancellation.', 'warn');
+          return;
+        } else if (result.action === 'queue') {
           const user = window.auth?.currentUser;
           if (!user) {
             showToast('Please sign in to queue prompts.', 'warn');
@@ -259,7 +267,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
               branch: lastSelectedBranch,
               note: 'Queued from Try in Jules flow (final failure)'
             });
-            showToast('Prompt queued. You can restart it later from your Jules queue.', 'success');
+            showToast('Prompt queued successfully!', 'success');
           } catch (err) {
             showToast('Failed to queue prompt: ' + err.message, 'error');
           }
