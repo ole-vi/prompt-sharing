@@ -1,9 +1,9 @@
 <!-- Subtask Error Modal -->
-<div id="subtaskErrorModal" class="modal">
+<div id="subtaskErrorModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="errorModalTitle">
   <div class="modal-content modal-lg">
     <div class="modal-header">
       <h3 id="errorModalTitle" class="modal-title"><span class="icon icon-inline" aria-hidden="true">warning</span> Task Failed</h3>
-      <button class="btn-icon close-modal" id="errorModalClose" title="Close"><span class="icon" aria-hidden="true">close</span></button>
+      <button class="btn-icon close-modal" id="errorModalClose" title="Close" aria-label="Close"><span class="icon" aria-hidden="true">close</span></button>
     </div>
     <div class="modal-body">
       <div id="errorSubtaskNumber" class="small-text muted-text mb-md"></div>
