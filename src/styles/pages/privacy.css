@@ -1,0 +1,19 @@
+/* Page: Privacy Policy */
+
+.privacy-container {
+  max-width: 900px;
+  margin: 40px auto;
+}
+
+.privacy-section {
+  margin-top: 32px;
+}
+
+.privacy-heading {
+  margin-top: 20px;
+}
+
+.privacy-footer-area {
+  margin-top: 48px;
+  text-align: center;
+}

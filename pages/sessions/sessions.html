@@ -59,14 +59,14 @@
   </div>
 
   <footer>
-    <div style="text-align: center;">
-      <a href="https://github.com/promptroot/promptroot/blob/main/README.md" target="_blank" rel="noopener" style="color: var(--muted); text-decoration: none;">Help</a>
-      <span style="margin: 0 12px;">•</span>
-      <button id="footerFeedbackBtn" style="color: var(--muted); text-decoration: none; background: none; border: none; cursor: pointer; font: inherit; padding: 0;">Feedback</button>
-      <span style="margin: 0 12px;">•</span>
-      <a href="../../pages/privacy/privacy.html" style="color: var(--muted); text-decoration: none;">Privacy Policy</a>
-      <span style="margin: 0 12px;">•</span>
-      <a href="https://github.com/promptroot/promptroot" target="_blank" rel="noopener" style="color: var(--muted); text-decoration: none;">GitHub</a>
+    <div class="footer-content">
+      <a href="https://github.com/promptroot/promptroot/blob/main/README.md" target="_blank" rel="noopener" class="footer-link">Help</a>
+      <span class="footer-separator">•</span>
+      <button id="footerFeedbackBtn" class="footer-btn">Feedback</button>
+      <span class="footer-separator">•</span>
+      <a href="../../pages/privacy/privacy.html" class="footer-link">Privacy Policy</a>
+      <span class="footer-separator">•</span>
+      <a href="https://github.com/promptroot/promptroot" target="_blank" rel="noopener" class="footer-link">GitHub</a>
     </div>
   </footer>
 
@@ -74,11 +74,11 @@
   <script type="module" src="../../src/pages/sessions-page.js"></script>
 
   <!-- Status Bar -->
-  <div id="statusBar" style="display:none;" aria-live="polite">
+  <div id="statusBar" class="hidden" aria-live="polite">
     <div class="status-inner">
-      <div class="status-msg" style="flex:1;">Ready</div>
-      <div class="status-progress" style="display:none;"></div>
-      <button class="status-action btn" style="display:none;">Action</button>
+      <div class="status-msg flex-1">Ready</div>
+      <div class="status-progress hidden"></div>
+      <button class="status-action btn hidden">Action</button>
     </div>
   </div>
 </body>

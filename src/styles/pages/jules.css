@@ -1,2 +1,13 @@
 /* Page: Jules */
 /* Add any jules-specific overrides here. */
+
+.jules-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.jules-title {
+  margin: 0;
+}

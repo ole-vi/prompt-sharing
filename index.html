@@ -85,7 +85,7 @@
           <button id="freeInputSplitBtn" class="btn" title="Split into Subtasks"><span class="icon icon-inline" aria-hidden="true">content_cut</span></button>
           <div class="menu-anchor">
             <button id="freeInputCopenBtn" class="btn" title="Copy prompt and open in new tab"><span class="icon icon-inline" aria-hidden="true">open_in_new</span> ▼</button>
-            <div id="freeInputCopenMenu" class="menu-panel menu-panel-sm menu-panel--above" style="display:none;">
+            <div id="freeInputCopenMenu" class="menu-panel menu-panel-sm menu-panel--above d-none">
               <div class="custom-dropdown-item" data-target="blank"><span class="icon icon-inline" aria-hidden="true">public</span> Blank</div>
               <div class="custom-dropdown-item" data-target="claude"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Claude</div>
               <div class="custom-dropdown-item" data-target="codex"><span class="icon icon-inline" aria-hidden="true">forum</span> Codex</div>
@@ -105,7 +105,7 @@
         <button class="btn" id="copyBtn" title="Copy the entire prompt"><span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy</button>
         <div class="menu-anchor">
           <button class="btn" id="copenBtn" title="Copy prompt and open in new tab"><span class="icon icon-inline" aria-hidden="true">open_in_new</span> copen ▼</button>
-          <div id="copenMenu" class="menu-panel menu-panel-sm menu-panel--below-left" style="display:none;">
+          <div id="copenMenu" class="menu-panel menu-panel-sm menu-panel--below-left d-none">
             <div class="custom-dropdown-item" data-target="blank"><span class="icon icon-inline" aria-hidden="true">public</span> Blank</div>
             <div class="custom-dropdown-item" data-target="claude"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Claude</div>
             <div class="custom-dropdown-item" data-target="codex"><span class="icon icon-inline" aria-hidden="true">forum</span> Codex</div>
@@ -117,15 +117,15 @@
         <button class="btn" id="shareBtn" title="Copy a link to this prompt"><span class="icon icon-inline" aria-hidden="true">link</span> Copy link</button>
         <div class="menu-anchor">
           <button class="btn" id="moreBtn" title="More actions">⋯ More</button>
-          <div id="moreMenu" class="menu-panel menu-panel-md menu-panel--below-right" style="display:none;">
+          <div id="moreMenu" class="menu-panel menu-panel-md menu-panel--below-right d-none">
             <div class="custom-dropdown-item" id="moreEditBtn"><span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub</div>
             <div class="custom-dropdown-item" id="moreGhBtn"><span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub</div>
             <div class="custom-dropdown-item" id="moreRawBtn"><span class="icon icon-inline" aria-hidden="true">description</span> Open raw</div>
           </div>
         </div>
-        <a class="btn" id="editBtn" target="_blank" rel="noopener" title="Edit the file on GitHub" style="display:none;"><span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub</a>
-        <a class="btn" id="ghBtn" target="_blank" rel="noopener" title="Open the file on GitHub" style="display:none;"><span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub</a>
-        <a class="btn" id="rawBtn" target="_blank" rel="noopener" title="Open the raw file" style="display:none;"><span class="icon icon-inline" aria-hidden="true">description</span> Open raw</a>
+        <a class="btn d-none" id="editBtn" target="_blank" rel="noopener" title="Edit the file on GitHub"><span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub</a>
+        <a class="btn d-none" id="ghBtn" target="_blank" rel="noopener" title="Open the file on GitHub"><span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub</a>
+        <a class="btn d-none" id="rawBtn" target="_blank" rel="noopener" title="Open the raw file"><span class="icon icon-inline" aria-hidden="true">description</span> Open raw</a>
       </div>
       <article id="content" class="scrollable-list list-lg"></article>
     </main>
@@ -150,7 +150,7 @@
       <h2>Choose Repository</h2>
       <p>Select a connected repository to open in Jules.</p>
       
-      <div id="favoriteReposContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
+      <div id="favoriteReposContainer" class="favorite-repos-container"></div>
       
       <div id="allReposContainer" class="mb-md">
         <div class="form-row">
@@ -199,17 +199,17 @@
       <h2>Break into Subtasks</h2>
       
       <!-- Subtask list for editing -->
-      <div id="splitEditPanel" class="panel mb-md split-panel" style="max-height:400px; overflow-y:auto;">
-        <div id="splitEditList" class="pad-lg" style="padding:8px;"></div>
+      <div id="splitEditPanel" class="panel mb-md split-panel split-scroll-container">
+        <div id="splitEditList" class="pad-lg"></div>
       </div>
 
-      <div style="margin-bottom: 12px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px;">
-        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
-          <input id="splitSuppressPopupsCheckbox" type="checkbox" style="cursor: pointer;" data-exclusive-group="split" />
+      <div class="split-panel-config">
+        <label class="label-flex">
+          <input id="splitSuppressPopupsCheckbox" type="checkbox" class="cursor-pointer" data-exclusive-group="split" />
           <span>Suppress popups</span>
         </label>
-        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; margin-top: 8px;">
-          <input id="splitOpenInBackgroundCheckbox" type="checkbox" style="cursor: pointer;" data-exclusive-group="split" />
+        <label class="label-flex mt-8">
+          <input id="splitOpenInBackgroundCheckbox" type="checkbox" class="cursor-pointer" data-exclusive-group="split" />
           <span>Open in background</span>
         </label>
       </div>
@@ -244,14 +244,14 @@
   </div>
 
   <footer>
-    <div style="text-align: center;">
-      <a href="https://github.com/promptroot/promptroot/blob/main/README.md" target="_blank" rel="noopener" style="color: var(--muted); text-decoration: none;">Help</a>
-      <span style="margin: 0 12px;">•</span>
-      <button id="footerFeedbackBtn" style="color: var(--muted); text-decoration: none; background: none; border: none; cursor: pointer; font: inherit; padding: 0;">Feedback</button>
-      <span style="margin: 0 12px;">•</span>
-      <a href="../../pages/privacy/privacy.html" style="color: var(--muted); text-decoration: none;">Privacy Policy</a>
-      <span style="margin: 0 12px;">•</span>
-      <a href="https://github.com/promptroot/promptroot" target="_blank" rel="noopener" style="color: var(--muted); text-decoration: none;">GitHub</a>
+    <div class="footer-content">
+      <a href="https://github.com/promptroot/promptroot/blob/main/README.md" target="_blank" rel="noopener" class="footer-link">Help</a>
+      <span class="footer-separator">•</span>
+      <button id="footerFeedbackBtn" class="footer-btn">Feedback</button>
+      <span class="footer-separator">•</span>
+      <a href="../../pages/privacy/privacy.html" class="footer-link">Privacy Policy</a>
+      <span class="footer-separator">•</span>
+      <a href="https://github.com/promptroot/promptroot" target="_blank" rel="noopener" class="footer-link">GitHub</a>
     </div>
   </footer>
 

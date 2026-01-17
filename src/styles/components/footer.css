@@ -1,3 +1,18 @@
 /* Footer */
-footer { max-width: 1100px; margin: 20px auto 80px; color: var(--muted); font-size: 13px; padding: 0 16px 40px; }
+footer { max-width: 1100px; margin: 20px auto 80px; color: var(--muted); font-size: 13px; padding: 0 16px 40px; text-align: center; }
 footer code { background: #0b0f21; padding: 1px 4px; border-radius: 4px; font-size: 12px; }
+
+.footer-content { text-align: center; }
+.footer-link { color: var(--muted); text-decoration: none; }
+.footer-link:hover { text-decoration: underline; }
+.footer-separator { margin: 0 12px; }
+.footer-btn {
+  color: var(--muted);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+.footer-btn:hover { text-decoration: underline; }
