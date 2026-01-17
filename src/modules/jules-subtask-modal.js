@@ -11,7 +11,7 @@ import { callRunJulesFunction } from './jules-api.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
-import statusBar from './status-bar.js';
+import { showMessage, clear, setProgress, clearAction, setAction } from './status-bar.js';
 import { JULES_MESSAGES } from '../utils/constants.js';
 
 // Module state
@@ -326,7 +326,7 @@ async function submitSubtasks(subtasks) {
   );
 
   if (!proceed) {
-    statusBar?.clear?.();
+    clear();
     return;
   }
 
@@ -335,11 +335,11 @@ async function submitSubtasks(subtasks) {
   let paused = false;
   const user = window.auth ? window.auth.currentUser : null;
 
-  statusBar?.showMessage?.(`Processing ${totalCount} subtasks...`, { timeout: 0 });
-  statusBar?.setAction?.('Pause', () => {
+  showMessage(`Processing ${totalCount} subtasks...`, { timeout: 0 });
+  setAction('Pause', () => {
     paused = true;
-    statusBar?.showMessage?.('Pausing after current subtask...', { timeout: 3000 });
-    statusBar?.clearAction?.();
+    showMessage('Pausing after current subtask...', { timeout: 3000 });
+    clearAction();
   });
   
   for (let i = 0; i < sequenced.length; i++) {
@@ -366,8 +366,8 @@ async function submitSubtasks(subtasks) {
 
         // update status bar progress
         const percent = totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 100;
-        statusBar?.setProgress?.(`${successCount}/${totalCount}`, percent);
-        statusBar?.showMessage?.(`Processing subtask ${successCount}/${totalCount}`, { timeout: 0 });
+        setProgress(`${successCount}/${totalCount}`, percent);
+        showMessage(`Processing subtask ${successCount}/${totalCount}`, { timeout: 0 });
 
         // if user requested pause, queue remaining subtasks and stop
         if (paused) {
@@ -383,15 +383,15 @@ async function submitSubtasks(subtasks) {
                 totalCount,
                 note: 'Paused by user'
               });
-              statusBar?.showMessage?.(`Paused and queued ${remaining.length} remaining subtasks`, { timeout: 4000 });
+              showMessage(`Paused and queued ${remaining.length} remaining subtasks`, { timeout: 4000 });
             } catch (err) {
               console.warn('Failed to queue remaining subtasks on pause', err.message || err);
-              statusBar?.showMessage?.('Paused but failed to save remaining subtasks', { timeout: 4000 });
+              showMessage('Paused but failed to save remaining subtasks', { timeout: 4000 });
             }
           } else {
-            statusBar?.showMessage?.('Paused', { timeout: 3000 });
+            showMessage('Paused', { timeout: 3000 });
           }
-          statusBar?.clear?.();
+          clear();
           // Only reload queue page if we're actually on that page
           const { loadQueuePage } = await import('../pages/queue-page.js');
           if (document.getElementById('allQueueList')) {
@@ -410,17 +410,17 @@ async function submitSubtasks(subtasks) {
           );
 
           if (result.action === 'cancel') {
-            statusBar?.clear?.();
+            clear();
             showToast(`Cancelled. Submitted ${successCount} of ${totalCount} ${successCount === 1 ? 'subtask' : 'subtasks'} before cancellation.`, 'warn');
             return;
           } else if (result.action === 'skip') {
             skippedCount++;
             submitted = true;
-            statusBar?.showMessage?.(`Skipped subtask. Continuing with remaining...`, { timeout: 2000 });
+            showMessage(`Skipped subtask. Continuing with remaining...`, { timeout: 2000 });
           } else if (result.action === 'queue') {
             const user = window.auth?.currentUser;
             if (!user) {
-              statusBar?.clear?.();
+              clear();
               showToast(JULES_MESSAGES.SIGN_IN_REQUIRED_SUBTASKS, 'warn');
               return;
             }
@@ -435,10 +435,10 @@ async function submitSubtasks(subtasks) {
                 totalCount,
                 note: 'Queued remaining subtasks'
               });
-              statusBar?.clear?.();
+              clear();
               showToast(JULES_MESSAGES.remainingQueued(remaining.length), 'success');
             } catch (err) {
-              statusBar?.clear?.();
+              clear();
               showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
             }
             return;
@@ -455,14 +455,14 @@ async function submitSubtasks(subtasks) {
           );
 
           if (result.action === 'cancel') {
-            statusBar?.clear?.();
+            clear();
             showToast(JULES_MESSAGES.subtasksCancelled(successCount, totalCount), 'warn');
             return;
           } else {
             if (result.action === 'queue') {
               const user = window.auth?.currentUser;
               if (!user) {
-                statusBar?.clear?.();
+                clear();
                 showToast(JULES_MESSAGES.SIGN_IN_REQUIRED_SUBTASKS, 'warn');
                 return;
               }
@@ -477,17 +477,17 @@ async function submitSubtasks(subtasks) {
                   totalCount,
                   note: 'Queued remaining subtasks (final failure)'
                 });
-                statusBar?.clear?.();
+                clear();
                 showToast(JULES_MESSAGES.remainingQueued(remaining.length), 'success');
               } catch (err) {
-                statusBar?.clear?.();
+                clear();
                 showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
               }
               return;
             }
             skippedCount++;
             submitted = true;
-            statusBar?.showMessage?.(`Skipped subtask. Continuing with remaining...`, { timeout: 2000 });
+            showMessage(`Skipped subtask. Continuing with remaining...`, { timeout: 2000 });
           }
         }
       }
@@ -498,7 +498,7 @@ async function submitSubtasks(subtasks) {
     }
   }
 
-  statusBar?.clear?.();
+  clear();
   
   const summary = `✓ Completed!\n\n` +
     `Successful: ${successCount}/${totalCount}\n` +

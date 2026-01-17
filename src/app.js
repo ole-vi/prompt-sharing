@@ -4,7 +4,7 @@ import { OWNER, REPO, BRANCH, STORAGE_KEYS } from './utils/constants.js';
 import { parseParams, getHashParam } from './utils/url-params.js';
 import { initJulesKeyModalListeners } from './modules/jules-modal.js';
 import { handleTryInJules } from './modules/jules-api.js';
-import statusBar from './modules/status-bar.js';
+import { init as initStatusBar } from './modules/status-bar.js';
 import { initPromptList, loadList, loadExpandedState, renderList, setSelectFileCallback, setRepoContext } from './modules/prompt-list.js';
 import { initPromptRenderer, selectBySlug, selectFile, setHandleTryInJulesCallback } from './modules/prompt-renderer.js';
 import { setCurrentBranch, setCurrentRepo, loadBranchFromStorage } from './modules/branch-selector.js';
@@ -31,7 +31,7 @@ export function initApp() {
   initJulesKeyModalListeners();
   
   // Init status bar
-  statusBar.init();
+  initStatusBar();
 
   // Set repo context for prompt list
   setRepoContext(currentOwner, currentRepo, currentBranch);
