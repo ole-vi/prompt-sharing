@@ -97,7 +97,20 @@ function handleDocumentClick(event) {
 
   if (target === julesBtn) {
     if (handleTryInJulesCallback) {
-      handleTryInJulesCallback(currentPromptText);
+      const originalHTML = julesBtn.innerHTML;
+      const originalPointerEvents = julesBtn.style.pointerEvents;
+
+      try {
+        julesBtn.innerHTML = '<span class="icon icon-inline spin" aria-hidden="true">refresh</span> Loading...';
+        julesBtn.style.pointerEvents = 'none';
+
+        await handleTryInJulesCallback(currentPromptText);
+      } catch (err) {
+        console.error('Error in Jules callback:', err);
+      } finally {
+        julesBtn.innerHTML = originalHTML;
+        julesBtn.style.pointerEvents = originalPointerEvents;
+      }
     }
     return;
   }
