@@ -1055,6 +1055,7 @@ function attachQueueModalHandlers() {
       const checked = selectAll.checked;
       document.querySelectorAll('.queue-checkbox').forEach(cb => cb.checked = checked);
       document.querySelectorAll('.subtask-checkbox').forEach(cb => cb.checked = checked);
+      updateScheduleButton();
     };
   }
 
@@ -1066,6 +1067,13 @@ function attachQueueModalHandlers() {
       document.querySelectorAll(`.subtask-checkbox[data-docid="${docId}"]`).forEach(subtaskCb => {
         subtaskCb.checked = checked;
       });
+      updateScheduleButton();
+    };
+  });
+  
+  document.querySelectorAll('.subtask-checkbox').forEach(subtaskCb => {
+    subtaskCb.onclick = () => {
+      updateScheduleButton();
     };
   });
 
@@ -1080,12 +1088,96 @@ function attachQueueModalHandlers() {
 
   const runHandler = async () => { await runSelectedQueueItems(); };
   const deleteHandler = async () => { await deleteSelectedQueueItems(); };
-  const scheduleHandler = async () => { await showScheduleModal(); };
+  const scheduleHandler = async () => {
+    if (scheduleBtn.dataset.mode === 'unschedule') {
+      await unscheduleSelectedQueueItems();
+    } else {
+      await showScheduleModal();
+    }
+  };
 
   if (runBtn) runBtn.onclick = runHandler;
   if (deleteBtn) deleteBtn.onclick = deleteHandler;
   if (scheduleBtn) scheduleBtn.onclick = scheduleHandler;
   if (closeBtn) closeBtn.onclick = hideJulesQueueModal;
+  
+  updateScheduleButton();
+}
+
+function updateScheduleButton() {
+  const scheduleBtn = document.getElementById('queueScheduleBtn');
+  if (!scheduleBtn) return;
+  
+  const { queueSelections, subtaskSelections } = getSelectedQueueIds();
+  const hasSelections = queueSelections.length > 0 || Object.keys(subtaskSelections).length > 0;
+  
+  if (!hasSelections) {
+    scheduleBtn.textContent = 'Schedule';
+    scheduleBtn.dataset.mode = 'schedule';
+    return;
+  }
+  
+  const allScheduled = queueSelections.every(docId => {
+    const item = queueCache.find(i => i.id === docId);
+    return item && item.status === 'scheduled';
+  });
+  
+  if (allScheduled && queueSelections.length > 0 && Object.keys(subtaskSelections).length === 0) {
+    scheduleBtn.textContent = 'Unschedule';
+    scheduleBtn.dataset.mode = 'unschedule';
+  } else {
+    scheduleBtn.textContent = 'Schedule';
+    scheduleBtn.dataset.mode = 'schedule';
+  }
+}
+
+async function unscheduleSelectedQueueItems() {
+  const user = window.auth?.currentUser;
+  if (!user) {
+    showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error');
+    return;
+  }
+  
+  const { queueSelections } = getSelectedQueueIds();
+  
+  if (queueSelections.length === 0) {
+    showToast('No items selected', 'warn');
+    return;
+  }
+  
+  const itemText = queueSelections.length === 1 ? 'item' : 'items';
+  const confirmed = await showConfirm(`Unschedule ${queueSelections.length} selected ${itemText}?`, {
+    title: 'Unschedule Items',
+    confirmText: 'Unschedule',
+    confirmStyle: 'warn'
+  });
+  
+  if (!confirmed) return;
+  
+  try {
+    const batch = firebase.firestore().batch();
+    
+    for (const docId of queueSelections) {
+      const docRef = firebase.firestore().collection('julesQueues').doc(user.uid).collection('items').doc(docId);
+      batch.update(docRef, {
+        status: 'pending',
+        scheduledAt: firebase.firestore.FieldValue.delete(),
+        scheduledTimeZone: firebase.firestore.FieldValue.delete(),
+        activatedAt: firebase.firestore.FieldValue.delete(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    
+    await batch.commit();
+    
+    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
+    clearCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
+    
+    showToast(`${queueSelections.length} ${itemText} unscheduled`, 'success');
+    await loadQueuePage();
+  } catch (err) {
+    showToast(`Failed to unschedule: ${err.message}`, 'error');
+  }
 }
 
 function getSelectedQueueIds() {
