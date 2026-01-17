@@ -1138,7 +1138,6 @@ function attachQueueModalHandlers() {
     };
   });
 
-  // Attach edit handlers
   document.querySelectorAll('.edit-queue-item').forEach(editBtn => {
     editBtn.onclick = (e) => {
       e.stopPropagation();
