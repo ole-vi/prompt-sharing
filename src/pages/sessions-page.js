@@ -1,6 +1,7 @@
 import { waitForFirebase } from '../shared-init.js';
 import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js';
 import { attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
+import { debounce } from '../utils/debounce.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -186,7 +187,17 @@ async function initApp() {
           }
         }
       };
-      searchInput.addEventListener('input', () => { toggleClear(); renderAllSessions(allSessionsCache); });
+      
+      const debouncedRender = debounce(() => {
+        renderAllSessions(allSessionsCache);
+      }, 300);
+      
+      searchInput.addEventListener('input', () => { 
+        // Immediate UI updates
+        toggleClear(); 
+        // Debounced search
+        debouncedRender();
+      });
       if (searchClear && !searchClear.dataset.bound) {
         searchClear.dataset.bound = 'true';
         searchClear.addEventListener('click', () => {
