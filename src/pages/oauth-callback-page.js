@@ -2,6 +2,7 @@
  * OAuth Callback Page Handler
  * Processes GitHub OAuth callbacks for both web app and browser extension
  */
+import { createElement } from '../utils/dom-helpers.js';
 
 (async function() {
   const statusDiv = document.getElementById('status');
@@ -67,7 +68,9 @@
     const spinner = document.querySelector('.spinner');
     spinner.style.display = 'none';
     messageEl.style.display = 'none';
-    statusDiv.innerHTML = `<div class="error">${message}</div>`;
+
+    const errorDiv = createElement('div', 'error', message);
+    statusDiv.replaceChildren(errorDiv);
   }
 
   function showSuccess(message) {
@@ -75,6 +78,8 @@
     const spinner = document.querySelector('.spinner');
     spinner.style.display = 'none';
     messageEl.style.display = 'none';
-    statusDiv.innerHTML = `<div class="success">${message}</div>`;
+
+    const successDiv = createElement('div', 'success', message);
+    statusDiv.replaceChildren(successDiv);
   }
 })();

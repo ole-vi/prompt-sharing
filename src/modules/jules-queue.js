@@ -5,6 +5,7 @@ import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { JULES_MESSAGES } from '../utils/constants.js';
+import { createElement, createIcon } from '../utils/dom-helpers.js';
 
 let queueCache = [];
 
@@ -189,61 +190,147 @@ async function openEditQueueModal(docId) {
 
   let modal = document.getElementById('editQueueItemModal');
   if (!modal) {
-    modal = document.createElement('div');
+
+    modal = createElement('div', 'modal-overlay');
     modal.id = 'editQueueItemModal';
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-      <div class="modal-dialog" style="max-width: 700px;">
-        <div class="modal-header">
-          <h2 class="modal-title">Edit Queue Item</h2>
-          <button class="btn-icon close-modal" id="closeEditQueueModal" title="Close"><span class="icon" aria-hidden="true">close</span></button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-section-label">Type:</label>
-            <div id="editQueueType" class="form-text"></div>
-          </div>
-          <div class="form-group" id="editPromptGroup">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <label class="form-section-label" style="margin-bottom: 0;">Prompt:</label>
-              <button type="button" id="convertToSubtasksBtn" class="btn btn-secondary" style="font-size: 12px; padding: 4px 12px;">Split into Subtasks</button>
-            </div>
-            <textarea id="editQueuePrompt" class="form-control" rows="10" style="font-family: monospace; font-size: 13px;"></textarea>
-          </div>
-          <div class="form-group" id="editSubtasksGroup" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <label class="form-section-label" style="margin-bottom: 0;">Subtasks:</label>
-              <button type="button" id="convertToSingleBtn" class="btn btn-secondary" style="font-size: 12px; padding: 4px 12px; display: none;">Convert to Single Prompt</button>
-            </div>
-            <div id="editQueueSubtasksList"></div>
-          </div>
-          <div class="form-group">
-            <label class="form-section-label">Repository:</label>
-            <div id="editQueueRepoDropdown" class="custom-dropdown">
-              <button id="editQueueRepoDropdownBtn" class="custom-dropdown-btn w-full" type="button">
-                <span id="editQueueRepoDropdownText">Loading...</span>
-                <span class="custom-dropdown-caret" aria-hidden="true">▼</span>
-              </button>
-              <div id="editQueueRepoDropdownMenu" class="custom-dropdown-menu" role="menu"></div>
-            </div>
-          </div>
-          <div class="form-group space-below">
-            <label class="form-section-label">Branch:</label>
-            <div id="editQueueBranchDropdown" class="custom-dropdown">
-              <button id="editQueueBranchDropdownBtn" class="custom-dropdown-btn w-full" type="button">
-                <span id="editQueueBranchDropdownText">Loading branches...</span>
-                <span class="custom-dropdown-caret" aria-hidden="true">▼</span>
-              </button>
-              <div id="editQueueBranchDropdownMenu" class="custom-dropdown-menu" role="menu"></div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button id="cancelEditQueue" class="btn">Cancel</button>
-          <button id="saveEditQueue" class="btn primary">Save</button>
-        </div>
-      </div>
-    `;
+
+    const dialog = createElement('div', 'modal-dialog');
+    dialog.style.maxWidth = '700px';
+
+    // Header
+    const header = createElement('div', 'modal-header');
+    header.appendChild(createElement('h2', 'modal-title', 'Edit Queue Item'));
+
+    const closeBtn = createElement('button', 'btn-icon close-modal');
+    closeBtn.id = 'closeEditQueueModal';
+    closeBtn.title = 'Close';
+    closeBtn.appendChild(createIcon('close'));
+    header.appendChild(closeBtn);
+
+    // Body
+    const body = createElement('div', 'modal-body');
+
+    // Type Section
+    const typeGroup = createElement('div', 'form-group');
+    typeGroup.appendChild(createElement('label', 'form-section-label', 'Type:'));
+    const typeText = createElement('div', 'form-text');
+    typeText.id = 'editQueueType';
+    typeGroup.appendChild(typeText);
+    body.appendChild(typeGroup);
+
+    // Prompt Group
+    const promptGroup = createElement('div', 'form-group');
+    promptGroup.id = 'editPromptGroup';
+    const promptHeader = createElement('div');
+    promptHeader.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;';
+    const promptLabel = createElement('label', 'form-section-label', 'Prompt:');
+    promptLabel.style.marginBottom = '0';
+    promptHeader.appendChild(promptLabel);
+
+    const splitBtn = createElement('button', 'btn btn-secondary', 'Split into Subtasks');
+    splitBtn.type = 'button';
+    splitBtn.id = 'convertToSubtasksBtn';
+    splitBtn.style.cssText = 'font-size: 12px; padding: 4px 12px;';
+    promptHeader.appendChild(splitBtn);
+    promptGroup.appendChild(promptHeader);
+
+    const promptTextarea = createElement('textarea', 'form-control');
+    promptTextarea.id = 'editQueuePrompt';
+    promptTextarea.rows = 10;
+    promptTextarea.style.cssText = 'font-family: monospace; font-size: 13px;';
+    promptGroup.appendChild(promptTextarea);
+    body.appendChild(promptGroup);
+
+    // Subtasks Group
+    const subtasksGroup = createElement('div', 'form-group');
+    subtasksGroup.id = 'editSubtasksGroup';
+    subtasksGroup.style.display = 'none';
+
+    const subtasksHeader = createElement('div');
+    subtasksHeader.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;';
+    const subtasksLabel = createElement('label', 'form-section-label', 'Subtasks:');
+    subtasksLabel.style.marginBottom = '0';
+    subtasksHeader.appendChild(subtasksLabel);
+
+    const convertBtn = createElement('button', 'btn btn-secondary', 'Convert to Single Prompt');
+    convertBtn.type = 'button';
+    convertBtn.id = 'convertToSingleBtn';
+    convertBtn.style.cssText = 'font-size: 12px; padding: 4px 12px; display: none;';
+    subtasksHeader.appendChild(convertBtn);
+    subtasksGroup.appendChild(subtasksHeader);
+
+    const subtasksList = createElement('div');
+    subtasksList.id = 'editQueueSubtasksList';
+    subtasksGroup.appendChild(subtasksList);
+    body.appendChild(subtasksGroup);
+
+    // Repository Dropdown
+    const repoGroup = createElement('div', 'form-group');
+    repoGroup.appendChild(createElement('label', 'form-section-label', 'Repository:'));
+
+    const repoDropdown = createElement('div', 'custom-dropdown');
+    repoDropdown.id = 'editQueueRepoDropdown';
+
+    const repoBtn = createElement('button', 'custom-dropdown-btn w-full');
+    repoBtn.id = 'editQueueRepoDropdownBtn';
+    repoBtn.type = 'button';
+    const repoText = createElement('span', '', 'Loading...');
+    repoText.id = 'editQueueRepoDropdownText';
+    repoBtn.appendChild(repoText);
+    const repoCaret = createElement('span', 'custom-dropdown-caret', '▼');
+    repoCaret.setAttribute('aria-hidden', 'true');
+    repoBtn.appendChild(repoCaret);
+    repoDropdown.appendChild(repoBtn);
+
+    const repoMenu = createElement('div', 'custom-dropdown-menu');
+    repoMenu.id = 'editQueueRepoDropdownMenu';
+    repoMenu.setAttribute('role', 'menu');
+    repoDropdown.appendChild(repoMenu);
+
+    repoGroup.appendChild(repoDropdown);
+    body.appendChild(repoGroup);
+
+    // Branch Dropdown
+    const branchGroup = createElement('div', 'form-group space-below');
+    branchGroup.appendChild(createElement('label', 'form-section-label', 'Branch:'));
+
+    const branchDropdown = createElement('div', 'custom-dropdown');
+    branchDropdown.id = 'editQueueBranchDropdown';
+
+    const branchBtn = createElement('button', 'custom-dropdown-btn w-full');
+    branchBtn.id = 'editQueueBranchDropdownBtn';
+    branchBtn.type = 'button';
+    const branchText = createElement('span', '', 'Loading branches...');
+    branchText.id = 'editQueueBranchDropdownText';
+    branchBtn.appendChild(branchText);
+    const branchCaret = createElement('span', 'custom-dropdown-caret', '▼');
+    branchCaret.setAttribute('aria-hidden', 'true');
+    branchBtn.appendChild(branchCaret);
+    branchDropdown.appendChild(branchBtn);
+
+    const branchMenu = createElement('div', 'custom-dropdown-menu');
+    branchMenu.id = 'editQueueBranchDropdownMenu';
+    branchMenu.setAttribute('role', 'menu');
+    branchDropdown.appendChild(branchMenu);
+
+    branchGroup.appendChild(branchDropdown);
+    body.appendChild(branchGroup);
+
+    // Footer
+    const footer = createElement('div', 'modal-footer');
+    const cancelBtn = createElement('button', 'btn', 'Cancel');
+    cancelBtn.id = 'cancelEditQueue';
+    const saveBtn = createElement('button', 'btn primary', 'Save');
+    saveBtn.id = 'saveEditQueue';
+
+    footer.appendChild(cancelBtn);
+    footer.appendChild(saveBtn);
+
+    dialog.appendChild(header);
+    dialog.appendChild(body);
+    dialog.appendChild(footer);
+    modal.appendChild(dialog);
+
     document.body.appendChild(modal);
     
     document.getElementById('closeEditQueueModal').onclick = () => closeEditModal();
@@ -259,7 +346,6 @@ async function openEditQueueModal(docId) {
       await saveQueueItemEdit(editModalState.currentDocId, closeEditModal);
     };    
     setupSubtasksEventDelegation();    
-    setupSubtasksEventDelegation();
   }
 
   const typeDiv = document.getElementById('editQueueType');
@@ -390,20 +476,33 @@ function renderSubtasksList(subtasks) {
     return;
   }
   
-  subtasksList.innerHTML = subtasks.map((subtask, index) => `
-    <div class="form-group subtask-item" data-index="${index}">
-      <div class="subtask-item-header">
-        <label class="form-label">Subtask ${index + 1}:</label>
-        <button type="button" class="remove-subtask-btn" data-index="${index}" title="Remove this subtask"><span class="icon" aria-hidden="true">close</span></button>
-      </div>
-      <textarea class="form-control edit-subtask-content" rows="5">${escapeHtml(subtask.fullContent || '')}</textarea>
-    </div>
-  `).join('');
+  subtasksList.replaceChildren();
+
+  subtasks.forEach((subtask, index) => {
+      const itemDiv = createElement('div', 'form-group subtask-item');
+      itemDiv.dataset.index = index;
+
+      const header = createElement('div', 'subtask-item-header');
+      header.appendChild(createElement('label', 'form-label', `Subtask ${index + 1}:`));
+
+      const removeBtn = createElement('button', 'remove-subtask-btn');
+      removeBtn.type = 'button';
+      removeBtn.dataset.index = index;
+      removeBtn.title = 'Remove this subtask';
+      removeBtn.appendChild(createIcon('close'));
+      header.appendChild(removeBtn);
+
+      const textarea = createElement('textarea', 'form-control edit-subtask-content');
+      textarea.rows = 5;
+      textarea.value = subtask.fullContent || '';
+
+      itemDiv.appendChild(header);
+      itemDiv.appendChild(textarea);
+      subtasksList.appendChild(itemDiv);
+  });
   
-  const addButton = document.createElement('button');
+  const addButton = createElement('button', 'btn btn-secondary add-subtask-btn', '+ Add Subtask');
   addButton.type = 'button';
-  addButton.className = 'btn btn-secondary add-subtask-btn';
-  addButton.textContent = '+ Add Subtask';
   subtasksList.appendChild(addButton);
   
   updateConvertToSingleButtonVisibility();
@@ -530,7 +629,7 @@ async function loadQueuePage() {
   const user = window.auth?.currentUser;
   const listDiv = document.getElementById('allQueueList');
   if (!user) {
-    listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Please sign in to view your queue.</div>';
+    listDiv.replaceChildren(createElement('div', 'panel text-center pad-xl muted-text', 'Please sign in to view your queue.'));
     return;
   }
 
@@ -538,7 +637,7 @@ async function loadQueuePage() {
     let items = getCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
     
     if (!items) {
-      listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Loading queue...</div>';
+      listDiv.replaceChildren(createElement('div', 'panel text-center pad-xl muted-text', 'Loading queue...'));
       items = await listJulesQueue(user.uid);
       setCache(CACHE_KEYS.QUEUE_ITEMS, items, user.uid);
     }
@@ -547,7 +646,7 @@ async function loadQueuePage() {
     renderQueueList(items);
     attachQueueModalHandlers();
   } catch (err) {
-    listDiv.innerHTML = `<div class="panel text-center pad-xl">Failed to load queue: ${err.message}</div>`;
+    listDiv.replaceChildren(createElement('div', 'panel text-center pad-xl', `Failed to load queue: ${err.message}`));
   }
 }
 
@@ -561,78 +660,108 @@ function renderQueueList(items) {
   const listDiv = document.getElementById('allQueueList');
   if (!listDiv) return;
   if (!items || items.length === 0) {
-    listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">No queued items.</div>';
+    listDiv.replaceChildren(createElement('div', 'panel text-center pad-xl muted-text', 'No queued items.'));
     return;
   }
 
-  listDiv.innerHTML = items.map(item => {
+  listDiv.replaceChildren();
+
+  items.forEach(item => {
     const created = item.createdAt ? new Date(item.createdAt.seconds ? item.createdAt.seconds * 1000 : item.createdAt).toLocaleString() : 'Unknown';
     const status = item.status || 'pending';
-    const remainingCount = Array.isArray(item.remaining) ? item.remaining.length : 0;
+
+    const card = createElement('div', 'queue-card queue-item');
+    card.dataset.docid = item.id;
+
+    const row = createElement('div', 'queue-row');
+
+    const checkboxCol = createElement('div', 'queue-checkbox-col');
+    const checkbox = createElement('input', 'queue-checkbox');
+    checkbox.type = 'checkbox';
+    checkbox.dataset.docid = item.id;
+    checkboxCol.appendChild(checkbox);
+
+    const content = createElement('div', 'queue-content');
+
+    const titleDiv = createElement('div', 'queue-title');
     
     if (item.type === 'subtasks' && Array.isArray(item.remaining) && item.remaining.length > 0) {
-      const subtasksHtml = item.remaining.map((subtask, index) => {
-        const preview = (subtask.fullContent || '').substring(0, 150);
-        return `
-          <div class="queue-subtask">
-            <div class="queue-subtask-index">
-              <input class="subtask-checkbox" type="checkbox" data-docid="${item.id}" data-index="${index}" />
-            </div>
-            <div class="queue-subtask-content">
-              <div class="queue-subtask-meta">Subtask ${index + 1} of ${item.remaining.length}</div>
-              <div class="queue-subtask-text">${escapeHtml(preview)}${preview.length >= 150 ? '...' : ''}</div>
-            </div>
-          </div>
-        `;
-      }).join('');
+        const remainingCount = item.remaining.length;
+        titleDiv.appendChild(document.createTextNode(`Subtasks Batch `));
 
-      const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
-      
-      return `
-        <div class="queue-card queue-item" data-docid="${item.id}">
-          <div class="queue-row">
-            <div class="queue-checkbox-col">
-              <input class="queue-checkbox" type="checkbox" data-docid="${item.id}" />
-            </div>
-            <div class="queue-content">
-              <div class="queue-title">
-                Subtasks Batch <span class="queue-status">${status}</span>
-                <span class="queue-status">(${remainingCount} remaining)</span>
-                <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item"><span class="icon icon-inline" aria-hidden="true">edit</span></button>
-              </div>
-              <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
-              ${repoDisplay}
-            </div>
-          </div>
-          <div class="queue-subtasks">
-            ${subtasksHtml}
-          </div>
-        </div>
-      `;
+        const statusSpan = createElement('span', 'queue-status', status);
+        titleDiv.appendChild(statusSpan);
+        titleDiv.appendChild(document.createTextNode(' '));
+        const countSpan = createElement('span', 'queue-status', `(${remainingCount} remaining)`);
+        titleDiv.appendChild(countSpan);
+    } else {
+        titleDiv.appendChild(document.createTextNode(`Single Prompt `));
+        const statusSpan = createElement('span', 'queue-status', status);
+        titleDiv.appendChild(statusSpan);
     }
 
-    const promptPreview = (item.prompt || '').substring(0, 200);
-    const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+    const editBtn = createElement('button', 'btn-icon edit-queue-item');
+    editBtn.dataset.docid = item.id;
+    editBtn.title = 'Edit queue item';
+    editBtn.appendChild(createIcon('edit', 'icon icon-inline'));
+    titleDiv.appendChild(editBtn);
+
+    content.appendChild(titleDiv);
+
+    const metaDiv = createElement('div', 'queue-meta');
+    metaDiv.appendChild(document.createTextNode(`Created: ${created} • ID: `));
+    const monoSpan = createElement('span', 'mono', item.id);
+    metaDiv.appendChild(monoSpan);
+    content.appendChild(metaDiv);
+
+    if (item.sourceId) {
+        const repoDisplay = createElement('div', 'queue-repo');
+        repoDisplay.appendChild(createIcon('inventory_2', 'icon icon-inline'));
+        repoDisplay.appendChild(document.createTextNode(` ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})`));
+        content.appendChild(repoDisplay);
+    }
+
+    if (item.type === 'subtasks' && Array.isArray(item.remaining) && item.remaining.length > 0) {
+         // Subtasks are rendered in a separate container below the row.
+    } else {
+        const promptPreview = (item.prompt || '').substring(0, 200);
+        const promptDiv = createElement('div', 'queue-prompt', promptPreview + (promptPreview.length >= 200 ? '...' : ''));
+        content.appendChild(promptDiv);
+    }
+
+    row.appendChild(checkboxCol);
+    row.appendChild(content);
+    card.appendChild(row);
     
-    return `
-      <div class="queue-card queue-item" data-docid="${item.id}">
-        <div class="queue-row">
-          <div class="queue-checkbox-col">
-            <input class="queue-checkbox" type="checkbox" data-docid="${item.id}" />
-          </div>
-          <div class="queue-content">
-            <div class="queue-title">
-              Single Prompt <span class="queue-status">${status}</span>
-              <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item"><span class="icon icon-inline" aria-hidden="true">edit</span></button>
-            </div>
-            <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
-            ${repoDisplay}
-            <div class="queue-prompt">${escapeHtml(promptPreview)}${promptPreview.length >= 200 ? '...' : ''}</div>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
+    if (item.type === 'subtasks' && Array.isArray(item.remaining) && item.remaining.length > 0) {
+        const subtasksContainer = createElement('div', 'queue-subtasks');
+        item.remaining.forEach((subtask, index) => {
+             const preview = (subtask.fullContent || '').substring(0, 150);
+             const subDiv = createElement('div', 'queue-subtask');
+
+             const indexDiv = createElement('div', 'queue-subtask-index');
+             const subCb = createElement('input', 'subtask-checkbox');
+             subCb.type = 'checkbox';
+             subCb.dataset.docid = item.id;
+             subCb.dataset.index = index;
+             indexDiv.appendChild(subCb);
+
+             const subContent = createElement('div', 'queue-subtask-content');
+             const subMeta = createElement('div', 'queue-subtask-meta', `Subtask ${index + 1} of ${item.remaining.length}`);
+             const subText = createElement('div', 'queue-subtask-text', preview + (preview.length >= 150 ? '...' : ''));
+
+             subContent.appendChild(subMeta);
+             subContent.appendChild(subText);
+
+             subDiv.appendChild(indexDiv);
+             subDiv.appendChild(subContent);
+             subtasksContainer.appendChild(subDiv);
+        });
+        card.appendChild(subtasksContainer);
+    }
+
+    listDiv.appendChild(card);
+  });
 }
 
 async function deleteSelectedSubtasks(docId, indices) {

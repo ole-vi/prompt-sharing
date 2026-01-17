@@ -3,6 +3,8 @@
  * Handles extension download functionality
  */
 
+import { createIcon } from '../utils/dom-helpers.js';
+
 function waitForComponents() {
   if (document.querySelector('header')) {
     initApp();
@@ -16,11 +18,16 @@ function initApp() {
   const downloadBtn = document.getElementById('downloadExtensionBtn');
   if (downloadBtn && !downloadBtn.dataset.bound) {
     downloadBtn.dataset.bound = 'true';
+
     downloadBtn.addEventListener('click', async () => {
+      const originalChildren = Array.from(downloadBtn.childNodes).map(n => n.cloneNode(true));
+
       try {
         downloadBtn.disabled = true;
-        const originalDownloadLabel = downloadBtn.innerHTML;
-        downloadBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span> Preparing download...';
+        downloadBtn.replaceChildren(
+            createIcon('hourglass_top', 'icon icon-inline'),
+            document.createTextNode(' Preparing download...')
+        );
 
         // Download pre-built zip file
         const a = document.createElement('a');
@@ -30,16 +37,23 @@ function initApp() {
         a.click();
         document.body.removeChild(a);
 
-        downloadBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Downloaded!';
+        downloadBtn.replaceChildren(
+            createIcon('check_circle', 'icon icon-inline'),
+            document.createTextNode(' Downloaded!')
+        );
+
         setTimeout(() => {
-          downloadBtn.innerHTML = originalDownloadLabel;
+          downloadBtn.replaceChildren(...originalChildren);
           downloadBtn.disabled = false;
         }, 2000);
       } catch (error) {
         console.error('Download failed:', error);
-        downloadBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">error</span> Download failed';
+        downloadBtn.replaceChildren(
+            createIcon('error', 'icon icon-inline'),
+            document.createTextNode(' Download failed')
+        );
         setTimeout(() => {
-          downloadBtn.innerHTML = originalDownloadLabel;
+          downloadBtn.replaceChildren(...originalChildren);
           downloadBtn.disabled = false;
         }, 2000);
       }

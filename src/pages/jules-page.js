@@ -9,6 +9,7 @@ import { showJulesKeyModal } from '../modules/jules-modal.js';
 import { deleteStoredJulesKey, checkJulesKey } from '../modules/jules-keys.js';
 import { showToast } from '../modules/toast.js';
 import { showConfirm } from '../modules/confirm-modal.js';
+import { createIcon } from '../utils/dom-helpers.js';
 
 function waitForComponents() {
   if (document.querySelector('header')) {
@@ -45,10 +46,19 @@ async function loadJulesInfo() {
     const hasKey = await checkJulesKey(user.uid);
     
     if (julesKeyStatus) {
-      julesKeyStatus.innerHTML = hasKey 
-        ? '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Saved'
-        : '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
-      julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+      if (hasKey) {
+          julesKeyStatus.replaceChildren(
+            createIcon('check_circle', 'icon icon-inline'),
+            document.createTextNode(' Saved')
+          );
+          julesKeyStatus.style.color = 'var(--accent)';
+      } else {
+          julesKeyStatus.replaceChildren(
+            createIcon('cancel', 'icon icon-inline'),
+            document.createTextNode(' Not saved')
+          );
+          julesKeyStatus.style.color = 'var(--muted)';
+      }
     }
     
     loadingDiv.classList.add('hidden');
@@ -115,11 +125,17 @@ function initApp() {
         if (deleted) {
           const julesKeyStatus = document.getElementById('julesKeyStatus');
           if (julesKeyStatus) {
-            julesKeyStatus.innerHTML = '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
+            julesKeyStatus.replaceChildren(
+                createIcon('cancel', 'icon icon-inline'),
+                document.createTextNode(' Not saved')
+            );
             julesKeyStatus.style.color = 'var(--muted)';
           }
           
-          resetJulesKeyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key';
+          resetJulesKeyBtn.replaceChildren(
+            createIcon('delete', 'icon icon-inline'),
+            document.createTextNode(' Delete Jules API Key')
+          );
           resetJulesKeyBtn.disabled = false;
           
           const noJulesKeySection = document.getElementById('noJulesKeySection');
@@ -135,7 +151,10 @@ function initApp() {
         }
       } catch (error) {
         showToast('Failed to delete API key: ' + error.message, 'error');
-        resetJulesKeyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key';
+        resetJulesKeyBtn.replaceChildren(
+            createIcon('delete', 'icon icon-inline'),
+            document.createTextNode(' Delete Jules API Key')
+        );
         resetJulesKeyBtn.disabled = false;
       }
     };

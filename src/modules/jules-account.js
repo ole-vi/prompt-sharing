@@ -9,6 +9,7 @@ import { getCache, setCache, clearCache, CACHE_KEYS } from '../utils/session-cac
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { attachPromptViewerHandlers } from './prompt-viewer.js';
+import { createElement, createIcon } from '../utils/dom-helpers.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -39,10 +40,19 @@ export function showUserProfileModal() {
 
   checkJulesKey(user.uid).then(async (hasKey) => {
     if (julesKeyStatus) {
-      julesKeyStatus.innerHTML = hasKey 
-        ? '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Saved'
-        : '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
-      julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+      if (hasKey) {
+          julesKeyStatus.replaceChildren(
+            createIcon('check_circle', 'icon icon-inline'),
+            document.createTextNode(' Saved')
+          );
+          julesKeyStatus.style.color = 'var(--accent)';
+      } else {
+          julesKeyStatus.replaceChildren(
+            createIcon('cancel', 'icon icon-inline'),
+            document.createTextNode(' Not saved')
+          );
+          julesKeyStatus.style.color = 'var(--muted)';
+      }
     }
     
     if (hasKey) {
@@ -78,14 +88,23 @@ export function showUserProfileModal() {
       
       try {
         resetBtn.disabled = true;
-        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span> Deleting...';
+        resetBtn.replaceChildren(
+            createIcon('hourglass_top', 'icon icon-inline'),
+            document.createTextNode(' Deleting...')
+        );
         const deleted = await deleteStoredJulesKey(user.uid);
         if (deleted) {
           if (julesKeyStatus) {
-            julesKeyStatus.innerHTML = '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
+            julesKeyStatus.replaceChildren(
+                createIcon('cancel', 'icon icon-inline'),
+                document.createTextNode(' Not saved')
+            );
             julesKeyStatus.style.color = 'var(--muted)';
           }
-          resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key';
+          resetBtn.replaceChildren(
+              createIcon('delete', 'icon icon-inline'),
+              document.createTextNode(' Delete Jules API Key')
+          );
           resetBtn.disabled = false;
           
           if (addBtn) addBtn.style.display = 'block';
@@ -98,7 +117,10 @@ export function showUserProfileModal() {
         }
       } catch (error) {
         showToast('Failed to reset API key: ' + error.message, 'error');
-        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">refresh</span> Reset Jules API Key';
+        resetBtn.replaceChildren(
+            createIcon('refresh', 'icon icon-inline'),
+            document.createTextNode(' Reset Jules API Key')
+        );
         resetBtn.disabled = false;
       }
     };
@@ -180,15 +202,21 @@ async function loadAndDisplayJulesProfile(uid) {
     let profileData = getCache(CACHE_KEYS.JULES_ACCOUNT, uid);
     
     if (!profileData) {
-      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sources...</div>';
-      sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
+      sourcesListDiv.replaceChildren(createElement('div', '', 'Loading sources...'));
+      sourcesListDiv.firstChild.style.cssText = 'color:var(--muted); font-size:13px;';
+
+      sessionsListDiv.replaceChildren(createElement('div', '', 'Loading sessions...'));
+      sessionsListDiv.firstChild.style.cssText = 'color:var(--muted); font-size:13px;';
       
       profileData = await loadJulesProfileInfo(uid);
       setCache(CACHE_KEYS.JULES_ACCOUNT, profileData, uid);
     }
 
     if (profileData.sources && profileData.sources.length > 0) {
-      const sourcesHtml = profileData.sources.map((source, index) => {
+      // Build VList manually using DOM elements
+      const vList = createElement('div', 'vlist');
+
+      profileData.sources.forEach((source, index) => {
         const repoName = source.githubRepo?.name || source.name || source.id;
         const githubPath = repoName.includes('github/')
           ? repoName.split('github/')[1]
@@ -200,47 +228,89 @@ async function loadAndDisplayJulesProfile(uid) {
           ? `(${branches.length} ${branches.length === 1 ? 'branch' : 'branches'})`
           : '(no branches)';
 
-        const branchesHtml = branches.length > 0
-          ? `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted);">
-               <div style="margin-bottom:4px; color:var(--text);"><span class="icon icon-inline" aria-hidden="true">account_tree</span> Branches (${branches.length}):</div>
-               ${branches.map(b => `<div style="padding:3px 0 3px 8px; cursor:pointer;"
-                  onclick="window.open('https://github.com/${githubPath}/tree/${encodeURIComponent(b.displayName || b.name)}', '_blank')">
-                  • ${b.displayName || b.name}
-                </div>`).join('')}
-             </div>`
-          : `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted); font-style:italic;">No branches found</div>`;
+        // Card Container
+        const card = createElement('div', 'queue-card');
 
-        const cardHtml = `
-          <div class="queue-card">
-            <div class="queue-row">
-              <div class="queue-content">
-                <div class="queue-title" style="cursor:pointer; user-select:none;"
-                    onclick="(function(){
-                      const el = document.getElementById('${sourceId}-branches');
-                      const arrow = document.getElementById('${sourceId}-arrow');
-                      if (el.style.display === 'none') { el.style.display = 'block'; arrow.textContent = '▼'; }
-                      else { el.style.display = 'none'; arrow.textContent = '▶'; }
-                    })()">
-                  <span id="${sourceId}-arrow" style="display:inline-block; width:12px; font-size:10px; margin-right:6px;">▶</span>
-                  <span class="icon icon-inline" aria-hidden="true">folder</span> ${githubPath}
-                  <span class="queue-status">${branchSummaryText}</span>
-                </div>
-              </div>
-            </div>
-            ${branchesHtml}
-          </div>
-        `;
-        return cardHtml;
-      }).join('');
-      sourcesListDiv.innerHTML = `<div class="vlist">${sourcesHtml}</div>`;
+        // Row
+        const row = createElement('div', 'queue-row');
+        const content = createElement('div', 'queue-content');
+        const title = createElement('div', 'queue-title');
+        title.style.cssText = 'cursor:pointer; user-select:none;';
+
+        // Arrow
+        const arrow = createElement('span', '', '▶');
+        arrow.id = `${sourceId}-arrow`;
+        arrow.style.cssText = 'display:inline-block; width:12px; font-size:10px; margin-right:6px;';
+
+        // Folder Icon
+        const folderIcon = createIcon('folder', 'icon icon-inline');
+
+        // Status Text
+        const statusSpan = createElement('span', 'queue-status', branchSummaryText);
+
+        title.appendChild(arrow);
+        title.appendChild(folderIcon);
+        title.appendChild(document.createTextNode(` ${githubPath} `));
+        title.appendChild(statusSpan);
+
+        content.appendChild(title);
+        row.appendChild(content);
+        card.appendChild(row);
+
+        // Branches Section
+        const branchesDiv = createElement('div');
+        branchesDiv.id = `${sourceId}-branches`;
+        branchesDiv.style.cssText = 'display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted);';
+
+        if (branches.length > 0) {
+          const branchesTitle = createElement('div');
+          branchesTitle.style.cssText = 'margin-bottom:4px; color:var(--text);';
+          branchesTitle.appendChild(createIcon('account_tree', 'icon icon-inline'));
+          branchesTitle.appendChild(document.createTextNode(` Branches (${branches.length}):`));
+          branchesDiv.appendChild(branchesTitle);
+
+          branches.forEach(b => {
+             const branchItem = createElement('div', '', `• ${b.displayName || b.name}`);
+             branchItem.style.cssText = 'padding:3px 0 3px 8px; cursor:pointer;';
+             branchItem.onclick = () => window.open(`https://github.com/${githubPath}/tree/${encodeURIComponent(b.displayName || b.name)}`, '_blank');
+             branchesDiv.appendChild(branchItem);
+          });
+        } else {
+            branchesDiv.style.fontStyle = 'italic';
+            branchesDiv.textContent = 'No branches found';
+        }
+
+        card.appendChild(branchesDiv);
+
+        // Toggle Handler
+        title.onclick = () => {
+            if (branchesDiv.style.display === 'none') {
+                branchesDiv.style.display = 'block';
+                arrow.textContent = '▼';
+            } else {
+                branchesDiv.style.display = 'none';
+                arrow.textContent = '▶';
+            }
+        };
+
+        vList.appendChild(card);
+      });
+
+      sourcesListDiv.replaceChildren(vList);
     } else {
-      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No connected repositories found.<br><small>Connect repos in the Jules UI.</small></div>';
+      sourcesListDiv.replaceChildren(createElement('div', '', 'No connected repositories found.'));
+      const small = createElement('small', '', 'Connect repos in the Jules UI.');
+      sourcesListDiv.firstChild.appendChild(document.createElement('br'));
+      sourcesListDiv.firstChild.appendChild(small);
+      sourcesListDiv.firstChild.style.cssText = 'color:var(--muted); font-size:13px; text-align:center; padding:16px;';
     }
 
     if (profileData.sessions && profileData.sessions.length > 0) {
-      const sessionsHtml = profileData.sessions.map(session => {
+      const vList = createElement('div', 'vlist');
+
+      profileData.sessions.forEach(session => {
         const state = session.state || 'UNKNOWN';
-        const stateIcon = {
+        const stateIconName = {
           'COMPLETED': 'check_circle',
           'FAILED': 'cancel',
           'IN_PROGRESS': 'schedule',
@@ -249,7 +319,7 @@ async function loadAndDisplayJulesProfile(uid) {
           'AWAITING_USER_FEEDBACK': 'chat_bubble'
         }[state] || 'help';
 
-        const stateLabel = {
+        const stateLabelText = {
           'COMPLETED': 'COMPLETED',
           'FAILED': 'FAILED',
           'IN_PROGRESS': 'IN PROGRESS',
@@ -266,44 +336,72 @@ async function loadAndDisplayJulesProfile(uid) {
         const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
         const cleanId = sessionId.replace(/[^a-zA-Z0-9]/g, '_');
 
-        const cardHtml = `
-          <div class="session-card" onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
-            <div class="session-meta">${createdAt}</div>
-            <div class="session-prompt">${displayPrompt}</div>
-            <div class="session-row">
-              <span class="session-pill"><span class="icon icon-inline" aria-hidden="true">${stateIcon}</span> ${stateLabel}</span>
-              ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" onclick="event.stopPropagation()"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a>` : ''}
-              <span class="session-hint"><span class="icon icon-inline" aria-hidden="true">info</span> Click to view session</span>
-              <button class="btn-icon session-view-btn" onclick="event.stopPropagation(); window.viewPrompt_${cleanId}()" title="View full prompt"><span class="icon" aria-hidden="true">visibility</span></button>
-            </div>
-          </div>
-        `;
-        return cardHtml;
-      }).join('');
+        const card = createElement('div', 'session-card');
+        card.onclick = () => window.open(sessionUrl, '_blank', 'noopener');
+
+        const metaDiv = createElement('div', 'session-meta', createdAt);
+        const promptDiv = createElement('div', 'session-prompt', displayPrompt);
+        const rowDiv = createElement('div', 'session-row');
+
+        // State Pill
+        const pill = createElement('span', 'session-pill');
+        pill.appendChild(createIcon(stateIconName, 'icon icon-inline'));
+        pill.appendChild(document.createTextNode(` ${stateLabelText}`));
+        rowDiv.appendChild(pill);
+
+        if (prUrl) {
+            const prLink = createElement('a', 'small-text', ' View PR');
+            prLink.href = prUrl;
+            prLink.target = '_blank';
+            prLink.rel = 'noopener';
+            prLink.prepend(createIcon('link', 'icon icon-inline'));
+            prLink.onclick = (e) => e.stopPropagation();
+            rowDiv.appendChild(document.createTextNode(' '));
+            rowDiv.appendChild(prLink);
+        }
+
+        const hint = createElement('span', 'session-hint', ' Click to view session');
+        hint.prepend(createIcon('info', 'icon icon-inline'));
+        rowDiv.appendChild(hint);
+
+        const viewBtn = createElement('button', 'btn-icon session-view-btn');
+        viewBtn.title = 'View full prompt';
+        viewBtn.onclick = (e) => {
+             e.stopPropagation();
+             window[`viewPrompt_${cleanId}`]();
+        };
+        viewBtn.appendChild(createIcon('visibility'));
+        rowDiv.appendChild(viewBtn);
+
+        card.appendChild(metaDiv);
+        card.appendChild(promptDiv);
+        card.appendChild(rowDiv);
+        vList.appendChild(card);
+      });
       
       // Attach prompt viewer handlers using shared module
       attachPromptViewerHandlers(profileData.sessions);
       
-      sessionsListDiv.innerHTML = `<div class="vlist">${sessionsHtml}</div>`;
+      sessionsListDiv.replaceChildren(vList);
     } else {
-      sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No recent sessions found.</div>';
+        sessionsListDiv.replaceChildren(createElement('div', '', 'No recent sessions found.'));
+        sessionsListDiv.firstChild.style.cssText = 'color:var(--muted); font-size:13px; text-align:center; padding:16px;';
     }
 
     loadBtn.disabled = false;
-    loadBtn.innerHTML = '<span class="icon" aria-hidden="true">sync</span>';
+    loadBtn.replaceChildren(createIcon('sync'));
     
     attachViewAllSessionsHandler();
 
   } catch (error) {
-    sourcesListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
-      Failed to load sources: ${error.message}
-    </div>`;
-    sessionsListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
-      Failed to load sessions: ${error.message}
-    </div>`;
+    sourcesListDiv.replaceChildren(createElement('div', '', `Failed to load sources: ${error.message}`));
+    sourcesListDiv.firstChild.style.cssText = 'color:#e74c3c; font-size:13px; text-align:center; padding:16px;';
+
+    sessionsListDiv.replaceChildren(createElement('div', '', `Failed to load sessions: ${error.message}`));
+    sessionsListDiv.firstChild.style.cssText = 'color:#e74c3c; font-size:13px; text-align:center; padding:16px;';
 
     loadBtn.disabled = false;
-    loadBtn.innerHTML = '<span class="icon" aria-hidden="true">sync</span>';
+    loadBtn.replaceChildren(createIcon('sync'));
   }
 }
 
@@ -363,11 +461,13 @@ async function loadSessionsPage() {
         loadMoreSection.style.display = 'none';
       }
     } else if (allSessionsCache.length === 0) {
-      allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions found</div>';
+        allSessionsList.replaceChildren(createElement('div', '', 'No sessions found'));
+        allSessionsList.firstChild.style.cssText = 'color:var(--muted); text-align:center; padding:24px;';
     }
   } catch (error) {
     if (allSessionsCache.length === 0) {
-      allSessionsList.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">Failed to load sessions: ${error.message}</div>`;
+        allSessionsList.replaceChildren(createElement('div', '', `Failed to load sessions: ${error.message}`));
+        allSessionsList.firstChild.style.cssText = 'color:#e74c3c; text-align:center; padding:24px;';
     }
     loadMoreBtn.disabled = false;
     loadMoreBtn.textContent = 'Load More';
@@ -388,7 +488,8 @@ function renderAllSessions(sessions) {
     : sessions;
   
   if (filteredSessions.length === 0) {
-    allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions match your search</div>';
+    allSessionsList.replaceChildren(createElement('div', '', 'No sessions match your search'));
+    allSessionsList.firstChild.style.cssText = 'color:var(--muted); text-align:center; padding:24px;';
     return;
   }
   
@@ -401,7 +502,7 @@ function renderAllSessions(sessions) {
     'CANCELLED': 'block'
   };
   
-  const stateLabel = {
+  const stateLabels = {
     'PLANNING': 'IN PROGRESS',
     'IN_PROGRESS': 'IN PROGRESS',
     'AWAITING_USER_FEEDBACK': 'AWAITING USER FEEDBACK',
@@ -409,16 +510,18 @@ function renderAllSessions(sessions) {
     'FAILED': 'FAILED',
     'CANCELLED': 'CANCELLED'
   };
+
+  const fragment = document.createDocumentFragment();
   
-  allSessionsList.innerHTML = filteredSessions.map(session => {
+  filteredSessions.forEach(session => {
     if (session.parentTask) {
-      return '';
+      return;
     }
     
     const sessionId = session.name?.split('/').pop() || '';
     const state = session.state || 'UNKNOWN';
-    const icon = stateIcons[state] || 'help';
-    const label = stateLabel[state] || state.replace(/_/g, ' ');
+    const iconName = stateIcons[state] || 'help';
+    const labelText = stateLabels[state] || state.replace(/_/g, ' ');
     
     const promptText = session.prompt || session.displayName || sessionId;
     const displayTitle = promptText.length > 100 ? promptText.substring(0, 100) + '...' : promptText;
@@ -427,31 +530,66 @@ function renderAllSessions(sessions) {
     const updateTime = session.updateTime ? new Date(session.updateTime).toLocaleString() : 'Unknown';
     
     const prUrl = session.githubPrUrl || null;
-    const prLink = prUrl 
-      ? `<div style="margin-top:4px;" onclick="event.stopPropagation();"><a href="${prUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none;"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a></div>`
-      : '';
     
     const subtaskCount = session.childTasks?.length || 0;
-    const subtaskInfo = subtaskCount > 0 
-      ? `<div style="font-size:11px; color:var(--muted); margin-top:4px;"><span class="icon icon-inline" aria-hidden="true">list_alt</span> ${subtaskCount} subtask${subtaskCount > 1 ? 's' : ''}</div>`
-      : '';
+
+    const card = createElement('div');
+    card.style.cssText = 'padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.03); cursor:pointer; transition:all 0.2s;';
+    card.onmouseover = () => { card.style.borderColor = 'var(--accent)'; card.style.background = 'rgba(255,255,255,0.06)'; };
+    card.onmouseout = () => { card.style.borderColor = 'var(--border)'; card.style.background = 'rgba(255,255,255,0.03)'; };
+    card.onclick = () => window.open(`https://jules.google.com/session/${sessionId}`, '_blank');
+
+    const topRow = createElement('div');
+    topRow.style.cssText = 'display:flex; justify-content:space-between; align-items:start; margin-bottom:6px;';
+
+    const titleDiv = createElement('div', '', displayTitle);
+    titleDiv.style.cssText = 'font-weight:600; font-size:13px; flex:1; margin-right:8px;';
+
+    const badgeDiv = createElement('div');
+    badgeDiv.style.cssText = 'font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(255,255,255,0.1); white-space:nowrap; margin-left:8px; display:flex; align-items:center;';
+    badgeDiv.appendChild(createIcon(iconName, 'icon icon-inline'));
+    badgeDiv.appendChild(document.createTextNode(' ' + labelText));
+
+    topRow.appendChild(titleDiv);
+    topRow.appendChild(badgeDiv);
+
+    const createdDiv = createElement('div', '', `Created: ${createTime}`);
+    createdDiv.style.cssText = 'font-size:11px; color:var(--muted); margin-bottom:2px;';
+
+    const updatedDiv = createElement('div', '', `Updated: ${updateTime}`);
+    updatedDiv.style.cssText = 'font-size:11px; color:var(--muted);';
+
+    card.appendChild(topRow);
+    card.appendChild(createdDiv);
+    card.appendChild(updatedDiv);
+
+    if (subtaskCount > 0) {
+        const subtaskDiv = createElement('div');
+        subtaskDiv.style.cssText = 'font-size:11px; color:var(--muted); margin-top:4px;';
+        subtaskDiv.appendChild(createIcon('list_alt', 'icon icon-inline'));
+        subtaskDiv.appendChild(document.createTextNode(` ${subtaskCount} subtask${subtaskCount > 1 ? 's' : ''}`));
+        card.appendChild(subtaskDiv);
+    }
+
+    if (prUrl) {
+        const prDiv = createElement('div');
+        prDiv.style.marginTop = '4px';
+        prDiv.onclick = (e) => e.stopPropagation();
+
+        const link = createElement('a', '', ' View PR');
+        link.href = prUrl;
+        link.target = '_blank';
+        link.style.cssText = 'font-size:11px; color:var(--accent); text-decoration:none;';
+        link.prepend(createIcon('link', 'icon icon-inline'));
+
+        prDiv.appendChild(link);
+        card.appendChild(prDiv);
+    }
     
-    return `<div style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.03); cursor:pointer; transition:all 0.2s;"
-                 onmouseover="this.style.borderColor='var(--accent)'; this.style.background='rgba(255,255,255,0.06)'"
-                 onmouseout="this.style.borderColor='var(--border)'; this.style.background='rgba(255,255,255,0.03)'"
-                 onclick="window.open('https://jules.google.com/session/${sessionId}', '_blank')">
-      <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:6px;">
-        <div style="font-weight:600; font-size:13px; flex:1; margin-right:8px;">${displayTitle}</div>
-        <div style="font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(255,255,255,0.1); white-space:nowrap; margin-left:8px; display:flex; align-items:center;">
-          <span class="icon icon-inline" aria-hidden="true">${icon}</span> ${label}
-        </div>
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-bottom:2px;">Created: ${createTime}</div>
-      <div style="font-size:11px; color:var(--muted);">Updated: ${updateTime}</div>
-      ${subtaskInfo}
-      ${prLink}
-    </div>`;
-  }).filter(html => html).join('');
+    fragment.appendChild(card);
+  });
+
+  allSessionsList.replaceChildren(fragment);
 }
 
 export async function loadProfileDirectly(user) {
@@ -470,10 +608,19 @@ export async function loadProfileDirectly(user) {
   const hasKey = await checkJulesKey(user.uid);
   
   if (julesKeyStatus) {
-    julesKeyStatus.innerHTML = hasKey
-      ? '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Saved'
-      : '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
-    julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+    if (hasKey) {
+        julesKeyStatus.replaceChildren(
+            createIcon('check_circle', 'icon icon-inline'),
+            document.createTextNode(' Saved')
+        );
+        julesKeyStatus.style.color = 'var(--accent)';
+    } else {
+        julesKeyStatus.replaceChildren(
+            createIcon('cancel', 'icon icon-inline'),
+            document.createTextNode(' Not saved')
+        );
+        julesKeyStatus.style.color = 'var(--muted)';
+    }
   }
   
   if (hasKey) {
@@ -498,7 +645,8 @@ export async function loadProfileDirectly(user) {
   }
 
   if (resetBtn) {
-    const originalResetLabel = resetBtn.innerHTML;
+    const originalChildren = Array.from(resetBtn.childNodes).map(n => n.cloneNode(true));
+
     resetBtn.onclick = async () => {
       const confirmed = await showConfirm(`This will delete your stored Jules API key. You'll need to enter a new one next time.`, {
         title: 'Delete API Key',
@@ -509,14 +657,22 @@ export async function loadProfileDirectly(user) {
       
       try {
         resetBtn.disabled = true;
-        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span> Deleting...';
+        resetBtn.replaceChildren(
+            createIcon('hourglass_top', 'icon icon-inline'),
+            document.createTextNode(' Deleting...')
+        );
+
         const deleted = await deleteStoredJulesKey(user.uid);
         if (deleted) {
           if (julesKeyStatus) {
-            julesKeyStatus.innerHTML = '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
+            julesKeyStatus.replaceChildren(
+                createIcon('cancel', 'icon icon-inline'),
+                document.createTextNode(' Not saved')
+            );
             julesKeyStatus.style.color = 'var(--muted)';
           }
-          resetBtn.innerHTML = originalResetLabel;
+
+          resetBtn.replaceChildren(...originalChildren);
           resetBtn.disabled = false;
           
           if (addBtn) addBtn.style.display = 'block';
@@ -529,7 +685,7 @@ export async function loadProfileDirectly(user) {
         }
       } catch (error) {
         showToast('Failed to reset API key: ' + error.message, 'error');
-        resetBtn.innerHTML = originalResetLabel;
+        resetBtn.replaceChildren(...originalChildren);
         resetBtn.disabled = false;
       }
     };

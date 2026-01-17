@@ -1,7 +1,7 @@
 import { slugify } from '../utils/slug.js';
 import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './github-api.js';
 import { CODEX_URL_REGEX } from '../utils/constants.js';
-import { setElementDisplay } from '../utils/dom-helpers.js';
+import { setElementDisplay, createIcon, createElement } from '../utils/dom-helpers.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
 
@@ -21,7 +21,7 @@ let emptyEl = null;
 let actionsEl = null;
 let copyBtn = null;
 let copenBtn = null;
-let originalCopenLabel = null;
+let originalCopenChildren = null;
 let rawBtn = null;
 let ghBtn = null;
 let editBtn = null;
@@ -38,7 +38,9 @@ export function initPromptRenderer() {
   actionsEl = document.getElementById('actions');
   copyBtn = document.getElementById('copyBtn');
   copenBtn = document.getElementById('copenBtn');
-  if (copenBtn) originalCopenLabel = copenBtn.innerHTML;
+  if (copenBtn) {
+    originalCopenChildren = Array.from(copenBtn.childNodes).map(n => n.cloneNode(true));
+  }
   rawBtn = document.getElementById('rawBtn');
   ghBtn = document.getElementById('ghBtn');
   editBtn = document.getElementById('editBtn');
@@ -158,7 +160,7 @@ async function handleBranchChanged() {
   setElementDisplay(metaEl, false);
   setElementDisplay(actionsEl, false);
   setElementDisplay(emptyEl, false);
-  if (contentEl) contentEl.innerHTML = '';
+  if (contentEl) contentEl.replaceChildren();
   setCurrentSlug(null);
   currentPromptText = null;
   updateActiveItem();
@@ -186,6 +188,14 @@ export async function selectBySlug(slug, files, owner, repo, branch) {
   } catch (error) {
     console.error('Error selecting file by slug:', error);
   }
+}
+
+function updateButton(btn, iconName, text) {
+    if (!btn) return;
+    btn.replaceChildren(
+        createIcon(iconName, 'icon icon-inline'),
+        document.createTextNode(` ${text}`)
+    );
 }
 
 export async function selectFile(f, pushHash, owner, repo, branch) {
@@ -297,14 +307,14 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   const moreRawBtn = document.getElementById('moreRawBtn');
   
   if (isGistContent && gistUrl) {
-    editBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
+    updateButton(editBtn, 'edit', 'Edit Link');
     editBtn.title = 'Edit the gist link';
-    if (moreEditBtn) moreEditBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
+    updateButton(moreEditBtn, 'edit', 'Edit Link');
     
-    ghBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on Gist';
+    updateButton(ghBtn, 'folder', 'View on Gist');
     ghBtn.title = 'Open the gist on GitHub';
     ghBtn.href = gistUrl;
-    if (moreGhBtn) moreGhBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on Gist';
+    updateButton(moreGhBtn, 'folder', 'View on Gist');
     
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
@@ -317,15 +327,15 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     rawBtn.removeAttribute('download');
     rawBtn.title = 'Open gist content in new tab';
   } else if (isCodexContent && codexUrl) {
-    editBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
+    updateButton(editBtn, 'edit', 'Edit Link');
     editBtn.title = 'Edit the codex link';
-    if (moreEditBtn) moreEditBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
+    updateButton(moreEditBtn, 'edit', 'Edit Link');
     
-    ghBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">chat_bubble</span> View on Codex';
+    updateButton(ghBtn, 'chat_bubble', 'View on Codex');
     ghBtn.title = 'Open the conversation on Codex';
     ghBtn.href = codexUrl;
     ghBtn.target = '_blank';
-    if (moreGhBtn) moreGhBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">chat_bubble</span> View on Codex';
+    updateButton(moreGhBtn, 'chat_bubble', 'View on Codex');
     
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
@@ -339,14 +349,14 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     rawBtn.removeAttribute('download');
     rawBtn.title = 'Open raw link in new tab';
   } else {
-    editBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub';
+    updateButton(editBtn, 'edit', 'Edit on GitHub');
     editBtn.title = 'Edit the file on GitHub';
-    if (moreEditBtn) moreEditBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub';
+    updateButton(moreEditBtn, 'edit', 'Edit on GitHub');
     
-    ghBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub';
+    updateButton(ghBtn, 'folder', 'View on GitHub');
     ghBtn.title = 'Open the file on GitHub';
     ghBtn.href = `https://github.com/${owner}/${repo}/blob/${branch}/${f.path}`;
-    if (moreGhBtn) moreGhBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub';
+    updateButton(moreGhBtn, 'folder', 'View on GitHub');
     
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
@@ -359,11 +369,11 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
 
   if (isCodexContent) {
     copyBtn.classList.add('hidden');
-    shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
+    updateButton(shareBtn, 'link', 'Copy link');
   } else {
     copyBtn.classList.remove('hidden');
-    copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy prompt';
-    shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
+    updateButton(copyBtn, 'content_copy', 'Copy prompt');
+    updateButton(shareBtn, 'link', 'Copy link');
   }
 
   // Update title and content
@@ -393,7 +403,7 @@ function enhanceCodeBlocks() {
   pres.forEach((pre) => {
     if (pre.querySelector('.copy-code-btn')) return;
     const btn = document.createElement('button');
-    btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">content_copy</span>';
+    btn.appendChild(createIcon('content_copy', 'icon icon-inline'));
     btn.className = 'copy-code-btn';
     btn.dataset.action = 'copy-code';
     btn.title = 'Copy code';
@@ -413,11 +423,13 @@ function enhanceCodeBlocks() {
           const code = pre.innerText;
           try {
             await navigator.clipboard.writeText(code);
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span>';
+            const originalChildren = Array.from(btn.childNodes).map(n => n.cloneNode(true));
+
+            btn.replaceChildren(createIcon('check_circle', 'icon icon-inline'));
+
             btn.classList.add('copied');
             setTimeout(() => {
-              btn.innerHTML = originalHTML;
+              btn.replaceChildren(...originalChildren);
               btn.classList.remove('copied');
             }, 900);
           } catch {}
@@ -431,20 +443,30 @@ function enhanceCodeBlocks() {
 async function handleCopyPrompt() {
   try {
     let contentToCopy;
-    let buttonText;
+    let iconName;
+    let text;
 
     const isCodex = getCurrentPromptText() && CODEX_URL_REGEX.test(getCurrentPromptText().trim());
     if (isCodex) {
       contentToCopy = getCurrentPromptText();
-      buttonText = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy link';
+      iconName = 'content_copy';
+      text = 'Copy link';
     } else {
       contentToCopy = getCurrentPromptText();
-      buttonText = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy prompt';
+      iconName = 'content_copy';
+      text = 'Copy prompt';
     }
 
     await navigator.clipboard.writeText(contentToCopy);
-    copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied';
-    setTimeout(() => (copyBtn.innerHTML = buttonText), 1000);
+
+    copyBtn.replaceChildren(
+        createIcon('check_circle', 'icon icon-inline'),
+        document.createTextNode(' Copied')
+    );
+
+    setTimeout(() => {
+        updateButton(copyBtn, iconName, text);
+    }, 1000);
   } catch {
     showToast('Clipboard blocked. Select and copy manually.', 'warn');
   }
@@ -460,8 +482,19 @@ async function handleCopenPrompt(target) {
 
     // Copy to clipboard
     await navigator.clipboard.writeText(promptText);
-    copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied!';
-    setTimeout(() => (copenBtn.innerHTML = originalCopenLabel), 1000);
+
+    copenBtn.replaceChildren(
+        createIcon('check_circle', 'icon icon-inline'),
+        document.createTextNode(' Copied!')
+    );
+
+    setTimeout(() => {
+        if (originalCopenChildren) {
+            copenBtn.replaceChildren(...originalCopenChildren.map(n => n.cloneNode(true)));
+        } else {
+            // Fallback if original wasn't captured? It should be in init.
+        }
+    }, 1000);
 
     // Open appropriate tab based on target
     let url;
@@ -492,11 +525,15 @@ async function handleCopenPrompt(target) {
 async function handleShareLink() {
   try {
     await navigator.clipboard.writeText(location.href);
-    shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Link copied';
+    shareBtn.replaceChildren(
+        createIcon('check_circle', 'icon icon-inline'),
+        document.createTextNode(' Link copied')
+    );
   } catch {
     showToast('Could not copy link.', 'warn');
   } finally {
-    const originalText = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
-    setTimeout(() => (shareBtn.innerHTML = originalText), 1000);
+    setTimeout(() => {
+        updateButton(shareBtn, 'link', 'Copy link');
+    }, 1000);
   }
 }
