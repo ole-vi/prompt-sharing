@@ -1120,3 +1120,28 @@ async function runSelectedQueueItems() {
   statusBar.clearAction();
   await loadQueuePage();
 }
+
+export function destroyJulesQueue() {
+  const selectAll = document.getElementById('queueSelectAll');
+  const runBtn = document.getElementById('queueRunBtn');
+  const deleteBtn = document.getElementById('queueDeleteBtn');
+  const closeBtn = document.getElementById('closeQueueBtn');
+  const modal = document.getElementById('julesQueueModal');
+  const pauseBtn = document.getElementById('queuePauseBtn');
+
+  if (selectAll) selectAll.onclick = null;
+  if (runBtn) runBtn.onclick = null;
+  if (deleteBtn) deleteBtn.onclick = null;
+  if (closeBtn) closeBtn.onclick = null;
+  if (modal) modal.onclick = null;
+  if (pauseBtn) pauseBtn.onclick = null;
+
+  document.querySelectorAll('.queue-checkbox').forEach(el => el.onclick = null);
+  document.querySelectorAll('.edit-queue-item').forEach(el => el.onclick = null);
+  document.querySelectorAll('.subtask-checkbox').forEach(el => el.onclick = null);
+
+  const editModal = document.getElementById('editQueueItemModal');
+  if (editModal && editModal.parentNode) {
+    editModal.parentNode.removeChild(editModal);
+  }
+}

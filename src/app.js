@@ -2,18 +2,42 @@
 
 import { OWNER, REPO, BRANCH, STORAGE_KEYS } from './utils/constants.js';
 import { parseParams, getHashParam } from './utils/url-params.js';
-import { initJulesKeyModalListeners } from './modules/jules-modal.js';
+import { initJulesKeyModalListeners, destroyJulesKeyModalListeners } from './modules/jules-modal.js';
 import { handleTryInJules } from './modules/jules-api.js';
 import statusBar from './modules/status-bar.js';
-import { initPromptList, loadList, loadExpandedState, renderList, setSelectFileCallback, setRepoContext } from './modules/prompt-list.js';
-import { initPromptRenderer, selectBySlug, selectFile, setHandleTryInJulesCallback } from './modules/prompt-renderer.js';
-import { setCurrentBranch, setCurrentRepo, loadBranchFromStorage } from './modules/branch-selector.js';
-import { initSidebar } from './modules/sidebar.js';
+import { initPromptList, destroyPromptList, loadList, loadExpandedState, renderList, setSelectFileCallback, setRepoContext } from './modules/prompt-list.js';
+import { initPromptRenderer, destroyPromptRenderer, selectBySlug, selectFile, setHandleTryInJulesCallback } from './modules/prompt-renderer.js';
+import { setCurrentBranch, setCurrentRepo, loadBranchFromStorage, destroyBranchSelector, loadBranches } from './modules/branch-selector.js';
+import { initSidebar, destroySidebar } from './modules/sidebar.js';
+import { destroyJulesQueue } from './modules/jules-queue.js';
 
 // App state
 let currentOwner = OWNER;
 let currentRepo = REPO;
 let currentBranch = BRANCH;
+
+export function destroyAllModules() {
+  try { destroyPromptList(); } catch (e) { console.error(e); }
+  try { destroyPromptRenderer(); } catch (e) { console.error(e); }
+  try { destroyBranchSelector(); } catch (e) { console.error(e); }
+  try { destroySidebar(); } catch (e) { console.error(e); }
+  try { destroyJulesKeyModalListeners(); } catch (e) { console.error(e); }
+  try { destroyJulesQueue(); } catch (e) { console.error(e); }
+  try { statusBar.destroy(); } catch (e) { console.error(e); }
+}
+
+export function initModules() {
+  setSelectFileCallback(selectFile);
+  setHandleTryInJulesCallback(handleTryInJules);
+
+  initPromptList();
+  initPromptRenderer();
+  initJulesKeyModalListeners();
+  statusBar.init();
+  initSidebar();
+
+  setRepoContext(currentOwner, currentRepo, currentBranch);
+}
 
 export function initApp() {
   const params = parseParams();
@@ -21,29 +45,13 @@ export function initApp() {
   if (params.repo) currentRepo = params.repo;
   currentBranch = params.branch || loadBranchFromStorage(currentOwner, currentRepo) || currentBranch;
 
-  // Set up callbacks to avoid circular dependencies
-  setSelectFileCallback(selectFile);
-  setHandleTryInJulesCallback(handleTryInJules);
-
-  // Initialize modules
-  initPromptList();
-  initPromptRenderer();
-  initJulesKeyModalListeners();
-  
-  // Init status bar
-  statusBar.init();
-
-  // Set repo context for prompt list
-  setRepoContext(currentOwner, currentRepo, currentBranch);
+  initModules();
 
   // Load prompts
   loadPrompts();
 
   // Setup event listeners
   setupEventListeners();
-  
-  // Initialize sidebar toggle
-  initSidebar();
 }
 
 async function loadPrompts() {
@@ -61,6 +69,8 @@ async function loadPrompts() {
 
 function setupEventListeners() {
   window.addEventListener('hashchange', async () => {
+    destroyAllModules();
+    initModules();
     try {
       const p = parseParams();
       const prevOwner = currentOwner;

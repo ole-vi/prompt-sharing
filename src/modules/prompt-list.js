@@ -14,6 +14,7 @@ let currentRepo = null;
 let currentBranch = null;
 let listEl = null;
 let searchEl = null;
+let searchClearBtn = null;
 let submenuEl = null;
 let selectFileCallback = null;
 let cachedFiles = null;
@@ -30,31 +31,35 @@ export function setRepoContext(owner, repo, branch) {
   currentBranch = branch;
 }
 
+function handleSearchInput() {
+  renderList(files, currentOwner, currentRepo, currentBranch);
+  if (searchClearBtn) {
+    if (searchEl.value) {
+      searchClearBtn.classList.remove('hidden');
+    } else {
+      searchClearBtn.classList.add('hidden');
+    }
+  }
+}
+
+function handleSearchClear() {
+  searchEl.value = '';
+  searchClearBtn.classList.add('hidden');
+  searchEl.focus();
+  renderList(files, currentOwner, currentRepo, currentBranch);
+}
+
 export function initPromptList() {
   listEl = document.getElementById('list');
   searchEl = document.getElementById('search');
-  const searchClearBtn = document.getElementById('searchClear');
+  searchClearBtn = document.getElementById('searchClear');
   
   if (searchEl) {
-    searchEl.addEventListener('input', () => {
-      renderList(files, currentOwner, currentRepo, currentBranch);
-      if (searchClearBtn) {
-        if (searchEl.value) {
-          searchClearBtn.classList.remove('hidden');
-        } else {
-          searchClearBtn.classList.add('hidden');
-        }
-      }
-    });
+    searchEl.addEventListener('input', handleSearchInput);
   }
   
   if (searchClearBtn && searchEl) {
-    searchClearBtn.addEventListener('click', () => {
-      searchEl.value = '';
-      searchClearBtn.classList.add('hidden');
-      searchEl.focus();
-      renderList(files, currentOwner, currentRepo, currentBranch);
-    });
+    searchClearBtn.addEventListener('click', handleSearchClear);
   }
   createSubmenu();
   document.addEventListener('click', handleDocumentClick);
@@ -63,10 +68,23 @@ export function initPromptList() {
 
 export function destroyPromptList() {
   document.removeEventListener('click', handleDocumentClick);
+  if (listEl) {
+    listEl.removeEventListener('click', handleListClick);
+  }
+  if (searchEl) {
+    searchEl.removeEventListener('input', handleSearchInput);
+  }
+  if (searchClearBtn) {
+    searchClearBtn.removeEventListener('click', handleSearchClear);
+  }
+
   if (submenuEl && submenuEl.parentNode) {
     submenuEl.parentNode.removeChild(submenuEl);
   }
   submenuEl = null;
+  listEl = null;
+  searchEl = null;
+  searchClearBtn = null;
   files = [];
   expandedState.clear();
   openSubmenus.clear();

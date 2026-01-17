@@ -383,87 +383,168 @@ export function hideSubtaskErrorModal() {
   }
 }
 
-export function initJulesKeyModalListeners() {
-  const keyModal = document.getElementById('julesKeyModal');
-  const envModal = document.getElementById('julesEnvModal');
-  const profileModal = document.getElementById('userProfileModal');
-  const sessionsHistoryModal = document.getElementById('julesSessionsHistoryModal');
-  const errorModal = document.getElementById('subtaskErrorModal');
-  const keyInput = document.getElementById('julesKeyInput');
+let globalKeydownHandler = null;
+let keyModalClickHandler = null;
+let envModalClickHandler = null;
+let profileModalClickHandler = null;
+let sessionsHistoryModalClickHandler = null;
+let errorModalClickHandler = null;
+let keyInputKeypressHandler = null;
 
-  document.addEventListener('keydown', async (e) => {
-    if (e.key === 'Escape') {
-      if (keyModal && keyModal.style.display === 'flex') {
-        hideJulesKeyModal();
-      }
-      if (envModal && envModal.style.display === 'flex') {
-        hideJulesEnvModal();
-      }
-      const freeInputSection = document.getElementById('freeInputSection');
-      if (freeInputSection && !freeInputSection.classList.contains('hidden')) {
-        const { hideFreeInputForm } = await import('./jules-free-input.js?v=' + Date.now());
-        hideFreeInputForm();
-      }
-      if (profileModal && profileModal.style.display === 'flex') {
-        const { hideUserProfileModal } = await import('./jules-account.js');
-        hideUserProfileModal();
-      }
-      if (sessionsHistoryModal && sessionsHistoryModal.style.display === 'flex') {
-        const { hideJulesSessionsHistoryModal } = await import('./jules-account.js');
-        hideJulesSessionsHistoryModal();
-      }
+let keyModal = null;
+let envModal = null;
+let profileModal = null;
+let sessionsHistoryModal = null;
+let errorModal = null;
+let keyInput = null;
+
+async function handleGlobalKeydown(e) {
+  if (e.key === 'Escape') {
+    if (keyModal && keyModal.style.display === 'flex') {
+      hideJulesKeyModal();
     }
-  });
+    if (envModal && envModal.style.display === 'flex') {
+      hideJulesEnvModal();
+    }
+    const freeInputSection = document.getElementById('freeInputSection');
+    if (freeInputSection && !freeInputSection.classList.contains('hidden')) {
+      const { hideFreeInputForm } = await import('./jules-free-input.js?v=' + Date.now());
+      hideFreeInputForm();
+    }
+    if (profileModal && profileModal.style.display === 'flex') {
+      const { hideUserProfileModal } = await import('./jules-account.js');
+      hideUserProfileModal();
+    }
+    if (sessionsHistoryModal && sessionsHistoryModal.style.display === 'flex') {
+      const { hideJulesSessionsHistoryModal } = await import('./jules-account.js');
+      hideJulesSessionsHistoryModal();
+    }
+  }
+}
+
+function handleKeyModalClick(e) {
+  if (e.target === keyModal) {
+    hideJulesKeyModal();
+  }
+}
+
+function handleEnvModalClick(e) {
+  if (e.target === envModal) {
+    hideJulesEnvModal();
+  }
+}
+
+async function handleProfileModalClick(e) {
+  if (e.target === profileModal) {
+    const { hideUserProfileModal } = await import('./jules-account.js');
+    hideUserProfileModal();
+  }
+}
+
+async function handleSessionsHistoryModalClick(e) {
+  if (e.target === sessionsHistoryModal) {
+    const { hideJulesSessionsHistoryModal } = await import('./jules-account.js');
+    hideJulesSessionsHistoryModal();
+  }
+}
+
+function handleErrorModalClick(e) {
+  if (e.target === errorModal) {
+    e.preventDefault();
+  }
+}
+
+function handleKeyInputKeypress(e) {
+  if (e.key === 'Enter') {
+    document.getElementById('julesSaveBtn').click();
+  }
+}
+
+export function initJulesKeyModalListeners() {
+  keyModal = document.getElementById('julesKeyModal');
+  envModal = document.getElementById('julesEnvModal');
+  profileModal = document.getElementById('userProfileModal');
+  sessionsHistoryModal = document.getElementById('julesSessionsHistoryModal');
+  errorModal = document.getElementById('subtaskErrorModal');
+  keyInput = document.getElementById('julesKeyInput');
+
+  globalKeydownHandler = handleGlobalKeydown;
+  document.addEventListener('keydown', globalKeydownHandler);
 
   if (keyModal) {
-    keyModal.addEventListener('click', (e) => {
-      if (e.target === keyModal) {
-        hideJulesKeyModal();
-      }
-    });
+    keyModalClickHandler = handleKeyModalClick;
+    keyModal.addEventListener('click', keyModalClickHandler);
   }
 
   if (envModal) {
-    envModal.addEventListener('click', (e) => {
-      if (e.target === envModal) {
-        hideJulesEnvModal();
-      }
-    });
+    envModalClickHandler = handleEnvModalClick;
+    envModal.addEventListener('click', envModalClickHandler);
   }
 
   if (profileModal) {
-    profileModal.addEventListener('click', async (e) => {
-      if (e.target === profileModal) {
-        const { hideUserProfileModal } = await import('./jules-account.js');
-        hideUserProfileModal();
-      }
-    });
+    profileModalClickHandler = handleProfileModalClick;
+    profileModal.addEventListener('click', profileModalClickHandler);
   }
   
   if (sessionsHistoryModal) {
-    sessionsHistoryModal.addEventListener('click', async (e) => {
-      if (e.target === sessionsHistoryModal) {
-        const { hideJulesSessionsHistoryModal } = await import('./jules-account.js');
-        hideJulesSessionsHistoryModal();
-      }
-    });
+    sessionsHistoryModalClickHandler = handleSessionsHistoryModalClick;
+    sessionsHistoryModal.addEventListener('click', sessionsHistoryModalClickHandler);
   }
 
   if (errorModal) {
-    errorModal.addEventListener('click', (e) => {
-      if (e.target === errorModal) {
-        e.preventDefault();
-      }
-    });
+    errorModalClickHandler = handleErrorModalClick;
+    errorModal.addEventListener('click', errorModalClickHandler);
   }
 
   if (keyInput) {
-    keyInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('julesSaveBtn').click();
-      }
-    });
+    keyInputKeypressHandler = handleKeyInputKeypress;
+    keyInput.addEventListener('keypress', keyInputKeypressHandler);
   }
+}
+
+export function destroyJulesKeyModalListeners() {
+  if (globalKeydownHandler) {
+    document.removeEventListener('keydown', globalKeydownHandler);
+  }
+
+  if (keyModal && keyModalClickHandler) {
+    keyModal.removeEventListener('click', keyModalClickHandler);
+  }
+
+  if (envModal && envModalClickHandler) {
+    envModal.removeEventListener('click', envModalClickHandler);
+  }
+
+  if (profileModal && profileModalClickHandler) {
+    profileModal.removeEventListener('click', profileModalClickHandler);
+  }
+
+  if (sessionsHistoryModal && sessionsHistoryModalClickHandler) {
+    sessionsHistoryModal.removeEventListener('click', sessionsHistoryModalClickHandler);
+  }
+
+  if (errorModal && errorModalClickHandler) {
+    errorModal.removeEventListener('click', errorModalClickHandler);
+  }
+
+  if (keyInput && keyInputKeypressHandler) {
+    keyInput.removeEventListener('keypress', keyInputKeypressHandler);
+  }
+
+  keyModal = null;
+  envModal = null;
+  profileModal = null;
+  sessionsHistoryModal = null;
+  errorModal = null;
+  keyInput = null;
+
+  globalKeydownHandler = null;
+  keyModalClickHandler = null;
+  envModalClickHandler = null;
+  profileModalClickHandler = null;
+  sessionsHistoryModalClickHandler = null;
+  errorModalClickHandler = null;
+  keyInputKeypressHandler = null;
 }
 
 export { lastSelectedSourceId, lastSelectedBranch };
