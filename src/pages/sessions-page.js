@@ -1,6 +1,7 @@
 import { waitForFirebase } from '../shared-init.js';
 import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js';
 import { attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
+import { logger } from '../utils/logger.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -163,7 +164,7 @@ async function loadSessions() {
     loadingDiv.classList.add('hidden');
     sessionsList.classList.remove('hidden');
   } catch (err) {
-    console.error('Sessions loading error:', err);
+    logger.error('Sessions loading error:', err);
     loadingDiv.classList.add('hidden');
   } finally {
     isSessionsLoading = false;

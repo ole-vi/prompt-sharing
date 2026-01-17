@@ -1,3 +1,5 @@
+import { logger } from '../utils/logger.js';
+
 export async function loadNavbar(activePage) {
   try {
     const response = await fetch('./navbar.html');
@@ -17,6 +19,6 @@ export async function loadNavbar(activePage) {
       }
     }
   } catch (error) {
-    console.error('Failed to load navbar:', error);
+    logger.error('Failed to load navbar:', error);
   }
 }

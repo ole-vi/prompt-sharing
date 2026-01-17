@@ -4,6 +4,7 @@ import { CODEX_URL_REGEX } from '../utils/constants.js';
 import { setElementDisplay } from '../utils/dom-helpers.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
+import { logger } from '../utils/logger.js';
 
 let cacheRaw = new Map();
 let currentPromptText = null;
@@ -184,7 +185,7 @@ export async function selectBySlug(slug, files, owner, repo, branch) {
       showFreeInputForm();
     }
   } catch (error) {
-    console.error('Error selecting file by slug:', error);
+    logger.error('Error selecting file by slug:', error);
   }
 }
 
@@ -252,7 +253,7 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
           cached.body = gistBody;
           cached.rawGistUrl = finalRawUrl;
         } catch (err) {
-          console.error('Failed to refetch gist:', err);
+          logger.error('Failed to refetch gist:', err);
           raw = cached.body || `Error loading gist: ${err.message}`;
         }
       } else if (cached.codexUrl) {
@@ -276,7 +277,7 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
         raw = gistBody;
         cacheRaw.set(slug, { body: gistBody, gistUrl: trimmed, rawGistUrl });
       } catch (err) {
-        console.error('Failed to fetch gist:', err);
+        logger.error('Failed to fetch gist:', err);
         raw = text;
         cacheRaw.set(slug, { body: text, gistUrl: trimmed, error: err.message });
       }

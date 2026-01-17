@@ -1,5 +1,6 @@
 // ===== URL Parameter Parsing =====
 import { validateOwner, validateRepo, validateBranch } from './validation.js';
+import { logger } from './logger.js';
 
 export function parseParams() {
   const out = {};
@@ -28,7 +29,7 @@ export function parseParams() {
         if (validator(value)) {
           out[key] = value;
         } else {
-          console.warn(`Invalid value for parameter '${key}':`, value);
+          logger.warn(`Invalid value for parameter '${key}':`, value);
         }
       } else {
         out[key] = value;

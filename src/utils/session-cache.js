@@ -1,5 +1,6 @@
 // Session storage cache utilities
 import { CACHE_DURATIONS } from './constants.js';
+import { logger } from './logger.js';
 
 const CACHE_KEYS = {
   JULES_ACCOUNT: 'jules_account_info',
@@ -35,7 +36,7 @@ export function setCache(key, data, userId = null) {
     };
     sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
   } catch (error) {
-    console.error('Error setting cache:', error);
+    logger.error('Error setting cache:', error);
   }
 }
 
@@ -63,7 +64,7 @@ export function getCache(key, userId = null) {
     sessionStorage.removeItem(cacheKey);
     return null;
   } catch (error) {
-    console.error('Error getting cache:', error);
+    logger.error('Error getting cache:', error);
     return null;
   }
 }
@@ -73,7 +74,7 @@ export function clearCache(key, userId = null) {
     const cacheKey = getCacheKey(key, userId);
     sessionStorage.removeItem(cacheKey);
   } catch (error) {
-    console.error('Error clearing cache:', error);
+    logger.error('Error clearing cache:', error);
   }
 }
 
@@ -81,7 +82,7 @@ export function clearAllCache() {
   try {
     sessionStorage.clear();
   } catch (error) {
-    console.error('Error clearing all cache:', error);
+    logger.error('Error clearing all cache:', error);
   }
 }
 

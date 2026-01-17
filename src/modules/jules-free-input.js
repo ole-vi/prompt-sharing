@@ -5,6 +5,7 @@ import { addToJulesQueue, handleQueueAction } from './jules-queue.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { JULES_MESSAGES } from '../utils/constants.js';
+import { logger } from '../utils/logger.js';
 
 let _lastSelectedSourceId = null;
 let _lastSelectedBranch = null;
@@ -232,7 +233,7 @@ export function showFreeInputForm() {
       const { showSubtaskSplitModal } = await import('./jules-subtask-modal.js');
       showSubtaskSplitModal(promptText);
     } catch (error) {
-      console.error('Error showing modal:', error);
+      logger.error('Error showing modal:', error);
       showToast('Failed to process prompt: ' + error.message, 'error');
     }
   };

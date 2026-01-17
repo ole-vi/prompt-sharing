@@ -13,6 +13,7 @@ import { showConfirm } from './confirm-modal.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { JULES_MESSAGES } from '../utils/constants.js';
+import { logger } from '../utils/logger.js';
 
 // Module state
 let currentFullPrompt = '';
@@ -23,22 +24,22 @@ let currentSubtasks = [];
  * @param {string} promptText - The full prompt text to analyze and split
  */
 export function showSubtaskSplitModal(promptText) {
-  console.log('showSubtaskSplitModal called with promptText:', promptText);
+  logger.log('showSubtaskSplitModal called with promptText:', promptText);
   currentFullPrompt = promptText;
   
   const modal = document.getElementById('subtaskSplitModal');
-  console.log('Modal element:', modal);
+  logger.log('Modal element:', modal);
   const confirmBtn = document.getElementById('splitConfirmBtn');
   const queueBtn = document.getElementById('splitQueueBtn');
   const cancelBtn = document.getElementById('splitCancelBtn');
 
   const analysis = analyzePromptStructure(promptText);
-  console.log('Analysis result:', analysis);
+  logger.log('Analysis result:', analysis);
   currentSubtasks = analysis.subtasks;
   
-  console.log('Setting modal display to flex');
+  logger.log('Setting modal display to flex');
   modal.classList.add('show');
-  console.log('Modal should now be visible');
+  logger.log('Modal should now be visible');
 
   renderSplitEdit(currentSubtasks, promptText);
 
@@ -385,7 +386,7 @@ async function submitSubtasks(subtasks) {
               });
               statusBar?.showMessage?.(`Paused and queued ${remaining.length} remaining subtasks`, { timeout: 4000 });
             } catch (err) {
-              console.warn('Failed to queue remaining subtasks on pause', err.message || err);
+              logger.warn('Failed to queue remaining subtasks on pause', err.message || err);
               statusBar?.showMessage?.('Paused but failed to save remaining subtasks', { timeout: 4000 });
             }
           } else {

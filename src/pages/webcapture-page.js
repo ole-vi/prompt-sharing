@@ -3,6 +3,8 @@
  * Handles extension download functionality
  */
 
+import { logger } from '../utils/logger.js';
+
 function waitForComponents() {
   if (document.querySelector('header')) {
     initApp();
@@ -36,7 +38,7 @@ function initApp() {
           downloadBtn.disabled = false;
         }, 2000);
       } catch (error) {
-        console.error('Download failed:', error);
+        logger.error('Download failed:', error);
         downloadBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">error</span> Download failed';
         setTimeout(() => {
           downloadBtn.innerHTML = originalDownloadLabel;
