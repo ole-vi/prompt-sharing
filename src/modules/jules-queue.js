@@ -557,7 +557,6 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// Scheduling functionality
 async function getUserTimeZone() {
   const user = window.auth?.currentUser;
   if (!user) return 'America/New_York';
@@ -571,7 +570,6 @@ async function getUserTimeZone() {
     console.warn('Failed to fetch user timezone preference', err);
   }
   
-  // Fallback to session cache
   const cached = getCache(CACHE_KEYS.USER_PROFILE, user.uid);
   if (cached?.preferredTimeZone) {
     return cached.preferredTimeZone;
@@ -590,7 +588,6 @@ async function saveUserTimeZone(timeZone) {
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     
-    // Update session cache
     const cached = getCache(CACHE_KEYS.USER_PROFILE, user.uid) || {};
     setCache(CACHE_KEYS.USER_PROFILE, { ...cached, preferredTimeZone: timeZone }, user.uid);
   } catch (err) {
@@ -630,83 +627,85 @@ async function showScheduleModal() {
     return;
   }
   
-  // Get user's preferred timezone
   const userTimeZone = await getUserTimeZone();
   
   let modal = document.getElementById('scheduleQueueModal');
   if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'scheduleQueueModal';
-    modal.className = 'modal-overlay';
-    
-    const timeZones = getCommonTimeZones();
-    const timeZoneOptions = timeZones.map(tz => 
-      `<option value="${tz.value}" ${tz.value === userTimeZone ? 'selected' : ''}>${tz.label}</option>`
-    ).join('');
-    
-    modal.innerHTML = `
-      <div class="modal-dialog" style="max-width: 500px;">
-        <div class="modal-header">
-          <h2 class="modal-title">Schedule Queue Items</h2>
-          <button class="btn-icon close-modal" id="closeScheduleModal" title="Close"><span class="icon" aria-hidden="true">close</span></button>
-        </div>
-        <div class="modal-body">
-          <p class="form-help-text">Schedule selected items to run automatically at a specific time.</p>
-          <div class="form-group">
-            <label class="form-label">Date:</label>
-            <input type="date" id="scheduleDate" class="form-control" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Time:</label>
-            <input type="time" id="scheduleTime" class="form-control" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Time Zone:</label>
-            <select id="scheduleTimeZone" class="form-control">
-              ${timeZoneOptions}
-            </select>
-          </div>
-          <div id="scheduleError" class="form-error hidden"></div>
-        </div>
-        <div class="modal-footer">
-          <button id="cancelSchedule" class="btn">Cancel</button>
-          <button id="confirmSchedule" class="btn primary">Schedule</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    
-    // Set minimum date to today
-    const dateInput = document.getElementById('scheduleDate');
+    await loadScheduleModal();
+    modal = document.getElementById('scheduleQueueModal');
+    if (!modal) {
+      console.error('Failed to load schedule modal');
+      return;
+    }
+  }
+  
+  populateTimeZoneDropdown(userTimeZone);
+  initializeScheduleModalInputs();
+  attachScheduleModalHandlers();
+  
+  modal.style.display = 'flex';
+}
+
+async function loadScheduleModal() {
+  const container = document.getElementById('scheduleQueueModalContainer');
+  if (!container) {
+    console.error('Schedule modal container not found');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/partials/schedule-queue-modal.html');
+    if (!response.ok) throw new Error('Failed to load modal');
+    const html = await response.text();
+    container.innerHTML = html;
+  } catch (err) {
+    console.error('Error loading schedule modal:', err);
+  }
+}
+
+function populateTimeZoneDropdown(selectedTimeZone) {
+  const tzSelect = document.getElementById('scheduleTimeZone');
+  if (!tzSelect) return;
+  
+  const timeZones = getCommonTimeZones();
+  tzSelect.innerHTML = timeZones.map(tz => 
+    `<option value="${tz.value}" ${tz.value === selectedTimeZone ? 'selected' : ''}>${tz.label}</option>`
+  ).join('');
+}
+
+function initializeScheduleModalInputs() {
+  const dateInput = document.getElementById('scheduleDate');
+  const timeInput = document.getElementById('scheduleTime');
+  
+  if (dateInput) {
     const today = new Date().toISOString().split('T')[0];
     dateInput.min = today;
     dateInput.value = today;
-    
-    // Set default time to next hour
-    const timeInput = document.getElementById('scheduleTime');
+  }
+  
+  if (timeInput) {
     const now = new Date();
     now.setHours(now.getHours() + 1);
     now.setMinutes(0);
     timeInput.value = now.toTimeString().slice(0, 5);
-    
-    document.getElementById('closeScheduleModal').onclick = () => hideScheduleModal();
-    document.getElementById('cancelSchedule').onclick = () => hideScheduleModal();
-    document.getElementById('confirmSchedule').onclick = () => confirmScheduleItems();
-    
-    modal.onclick = (e) => {
-      if (e.target === modal) {
-        hideScheduleModal();
-      }
-    };
-  } else {
-    // Update timezone if modal already exists
-    const tzSelect = document.getElementById('scheduleTimeZone');
-    if (tzSelect) {
-      tzSelect.value = userTimeZone;
-    }
   }
+}
+
+function attachScheduleModalHandlers() {
+  const modal = document.getElementById('scheduleQueueModal');
+  if (!modal) return;
   
-  modal.style.display = 'flex';
+  const closeBtn = document.getElementById('closeScheduleModal');
+  const cancelBtn = document.getElementById('cancelSchedule');
+  const confirmBtn = document.getElementById('confirmSchedule');
+  
+  if (closeBtn) closeBtn.onclick = hideScheduleModal;
+  if (cancelBtn) cancelBtn.onclick = hideScheduleModal;
+  if (confirmBtn) confirmBtn.onclick = confirmScheduleItems;
+  
+  modal.onclick = (e) => {
+    if (e.target === modal) hideScheduleModal();
+  };
 }
 
 function hideScheduleModal() {
@@ -733,7 +732,6 @@ async function confirmScheduleItems() {
   errorDiv.classList.add('hidden');
   errorDiv.textContent = '';
   
-  // Validate inputs
   if (!dateInput.value || !timeInput.value) {
     errorDiv.textContent = 'Date and time are required';
     errorDiv.classList.remove('hidden');
@@ -744,11 +742,9 @@ async function confirmScheduleItems() {
   const selectedTime = timeInput.value;
   const selectedTimeZone = timeZoneSelect.value;
   
-  // Parse the date/time in the selected timezone
   const dateTimeStr = `${selectedDate}T${selectedTime}:00`;
   const scheduledDate = new Date(dateTimeStr);
   
-  // Check if date is in the past
   const now = new Date();
   if (scheduledDate < now) {
     errorDiv.textContent = 'Scheduled time must be in the future';
@@ -756,7 +752,6 @@ async function confirmScheduleItems() {
     return;
   }
   
-  // Save timezone preference
   await saveUserTimeZone(selectedTimeZone);
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
@@ -764,7 +759,6 @@ async function confirmScheduleItems() {
   try {
     const scheduledAt = firebase.firestore.Timestamp.fromDate(scheduledDate);
     
-    // Schedule selected queue items
     for (const docId of queueSelections) {
       await updateJulesQueueItem(user.uid, docId, {
         status: 'scheduled',
@@ -774,8 +768,6 @@ async function confirmScheduleItems() {
       });
     }
     
-    // Note: For subtask selections, we're scheduling the entire queue item
-    // If specific subtasks are selected but the queue item is not, schedule the whole item
     for (const docId of Object.keys(subtaskSelections)) {
       if (!queueSelections.includes(docId)) {
         await updateJulesQueueItem(user.uid, docId, {
@@ -810,7 +802,6 @@ function renderQueueList(items) {
     const status = item.status || 'pending';
     const remainingCount = Array.isArray(item.remaining) ? item.remaining.length : 0;
     
-    // Format scheduled info if applicable
     let scheduledInfo = '';
     if (status === 'scheduled' && item.scheduledAt) {
       const scheduledDate = new Date(item.scheduledAt.seconds * 1000);
@@ -844,7 +835,6 @@ function renderQueueList(items) {
 
       const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
       
-      // Add status badge class
       const statusClass = status === 'scheduled' ? 'queue-status-scheduled' : '';
       
       return `
@@ -874,7 +864,6 @@ function renderQueueList(items) {
     const promptPreview = (item.prompt || '').substring(0, 200);
     const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
     
-    // Add status badge class
     const statusClass = status === 'scheduled' ? 'queue-status-scheduled' : '';
     
     return `
@@ -1164,7 +1153,6 @@ async function runSelectedQueueItems() {
     if (paused) break;
     if (queueSelections.includes(docId)) continue;
     
-    // Skip scheduled items
     const item = queueCache.find(i => i.id === docId);
     if (item?.status === 'scheduled') {
       console.log('Skipping scheduled item:', docId);
@@ -1199,7 +1187,6 @@ async function runSelectedQueueItems() {
     const item = queueCache.find(i => i.id === id);
     if (!item) continue;
     
-    // Skip scheduled items
     if (item.status === 'scheduled') {
       console.log('Skipping scheduled item:', id);
       continue;
