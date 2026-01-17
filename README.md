@@ -379,6 +379,31 @@ Routing notes:
 
 The dev setup loads modules directly without compilation. Changes are reflected immediately (reload browser).
 
+### Testing
+
+Run automated tests:
+
+```bash
+npm test
+```
+
+### Pre-commit Hooks
+
+We recommend setting up pre-commit hooks to ensure code quality.
+
+1. Install `husky` and `lint-staged`:
+   ```bash
+   npm install --save-dev husky lint-staged
+   ```
+2. Initialize husky:
+   ```bash
+   npx husky init
+   ```
+3. Add a hook to run tests before commit:
+   ```bash
+   echo "npm run test:run" > .husky/pre-commit
+   ```
+
 ### Project organization
 
 Each module in `src/modules/` handles one major feature area:
