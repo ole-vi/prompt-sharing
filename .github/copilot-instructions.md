@@ -1,220 +1,139 @@
-# GitHub Copilot Instructions for PromptRoot
+This is a zero-build, vanilla JavaScript single-page application for managing and sharing AI prompts stored as markdown files in GitHub repositories. The application uses Firebase for backend services (Firestore database, Cloud Functions, GitHub OAuth authentication). No build tools, transpilers, or frameworks are used - all code runs directly in modern browsers.
 
-## Project Overview
+## Code Standards
 
-PromptRoot is a zero-build, modular single-page application for sharing and managing AI prompts stored as markdown files in GitHub repositories. Key features include:
-- Prompt library browser with tree navigation
-- Jules AI integration (Google's coding assistant)
-- Browser extension for web capture with GitHub sync
-- GitHub OAuth authentication
-- Firebase backend for user data
+### Required Before Each Commit
+- Test locally: Run `npm start` and verify no console errors in browser DevTools
+- For Firebase Functions: `cd functions && npm run serve` to test with emulators
+- Manually test affected features in browser
+- Verify Firebase authentication if auth-related changes
+- Check that no build artifacts (node_modules, etc.) are committed
 
-## Tech Stack
+### Development Flow
+- **Local dev**: `npm start` (Python HTTP server on port 3000, uses production Firebase)
+- **Docker dev**: `docker-compose up --build` (port 5000, uses Firebase emulators)
+- **Functions**: `cd functions && npm install`, `npm run serve` (test), `npm run deploy` (production)
 
-- **Frontend**: Vanilla JavaScript (ES6 modules), no build step, no framework
-- **Backend**: Firebase Cloud Functions (Node.js 22)
-- **Database**: Firebase Cloud Firestore
-- **Auth**: GitHub OAuth via Firebase Authentication
-- **Libraries**: marked.js (Markdown), Firebase SDK (CDN-loaded)
-- **Hosting**: Firebase Hosting / GitHub Pages
+### Testing
+- No automated test suite - manual testing in browser required
+- Open browser DevTools console and verify no errors
+- Test authentication flows if modifying auth-related code
+- For Functions: check emulator UI at http://localhost:4000
 
-## Core Architectural Rules
+## Architectural Constraints
 
-### Zero-Build Philosophy
-- Plain ES6 modules served directly - NO transpilation, NO build step
-- All JavaScript files must be compatible with modern browsers without compilation
-- Use CDN-loaded libraries (marked.js, Firebase) - no bundlers
+### Zero-Build Philosophy (Critical)
+- NO transpilation, NO build step, NO bundlers
+- Plain ES6 modules served directly to browser
+- All JavaScript must be compatible with modern browsers without compilation
+- Use CDN-loaded libraries only (Firebase SDK, marked.js loaded via script tags in HTML)
+- NO npm packages in frontend code (backend Functions can use npm)
 
-### Module Architecture
-- **Named exports only** - NO default exports
-- **One feature = One module** - strict separation of concerns
-- **No HTML in JavaScript** - use DOM APIs only (createElement, appendChild, etc.)
-- **No inline styles** - all styling must be in CSS files
-- **Module state as private variables** - encapsulate state within modules
+### Module Patterns (Strict)
+- **Named exports only** - NEVER use default exports
+- **One feature per module** - strict separation of concerns
+- **No HTML in JavaScript** - use DOM APIs (createElement, appendChild) only
+- **No inline styles** - use CSS classes only (except dynamic positioning/visibility)
+- **Module state as private variables** - encapsulate within module scope
 
-### JavaScript Patterns
-- Use async/await for all asynchronous operations
-- Constants must be defined in `src/utils/constants.js`
-- DOM helpers must be in `src/utils/dom-helpers.js`
-- Session caching uses sessionStorage to reduce GitHub API calls
+### JavaScript Requirements
+- Use async/await for all asynchronous operations (no callbacks or raw promises)
+- All constants must be in `src/utils/constants.js`
+- All DOM helpers must be in `src/utils/dom-helpers.js`
+- Use sessionStorage for caching API responses
+- Always use relative paths for imports: `import { auth } from './auth.js'`
 
-### CSS Architecture
-- **Modular CSS** - all styles imported via `src/styles.css`
-- **BEM naming convention**: `.component`, `.component--modifier`, `.component__element`
-- **CSS variables** - defined in `src/styles/base.css`
-- Component styles belong in `src/styles/components/`
-- Page-specific styles belong in `src/styles/pages/`
+### CSS Requirements
+- BEM naming convention: `.component`, `.component--modifier`, `.component__element`
+- All styles in CSS files, imported via `src/styles.css`
+- Use CSS variables from `src/styles/base.css`
+- Component styles in `src/styles/components/`
+- Page-specific styles in `src/styles/pages/`
 
-## File Organization
+## Repository Structure
 
 ```
-pages/                  # Page routes (HTML entry points)
-  └── {page}/
-      └── {page}.html
+pages/{page}/{page}.html    # Page routes (HTML entry points)
 src/
-  ├── modules/          # Feature modules (auth, API clients, UI components)
-  │   └── {feature}.js
-  ├── utils/            # Shared utilities
-  │   ├── constants.js  # All magic strings, regex patterns, config
-  │   ├── dom-helpers.js
+  ├── modules/               # Feature modules (auth, APIs, UI components)
+  │   ├── auth.js           # GitHub OAuth & auth state management
+  │   ├── github-api.js     # GitHub REST API wrapper
+  │   ├── jules-api.js      # Jules API client (Google's coding assistant)
+  │   ├── jules-queue.js    # Queue system for batch prompt processing
+  │   ├── prompt-renderer.js # Markdown rendering with marked.js
+  │   ├── prompt-list.js    # Sidebar tree navigation
+  │   └── ...               # Other UI components (modals, dropdowns, etc.)
+  ├── utils/                # Shared utilities (pure functions)
+  │   ├── constants.js      # ALL magic strings, regex patterns, config
+  │   ├── dom-helpers.js    # ALL DOM manipulation helpers
+  │   ├── session-cache.js  # Session caching helpers
   │   └── ...
   └── styles/
-      ├── base.css      # Variables and resets
-      ├── layout.css    # Grid and responsive rules
-      ├── components/   # Component styles
-      └── pages/        # Page-specific overrides
-functions/              # Firebase Cloud Functions
-browser-extension/      # Web capture Chrome extension
-prompts/                # Markdown prompt library
-webclips/               # User-synced web captures
-config/                 # Firebase configuration
+      ├── base.css          # CSS variables and resets
+      ├── layout.css        # Grid and responsive rules
+      ├── components/       # Component styles
+      └── pages/            # Page-specific overrides
+functions/                  # Firebase Cloud Functions (Node.js 22)
+browser-extension/          # Web capture Chrome extension
+prompts/                    # Markdown prompt library
+config/firestore/firestore.rules  # Firestore security rules
 ```
 
-## Development Commands
+## Key Guidelines
 
-### Local Development
-```bash
-npm start              # Python HTTP server on port 3000 (production Firebase)
-# Visit http://localhost:3000
-```
+### Creating New Features
 
-### Docker Development (with Firebase Emulators)
-```bash
-docker-compose up --build
-# App: http://localhost:5000
-# Emulator UI: http://localhost:4000
-```
+**New Page**:
+1. Create `pages/{name}/{name}.html` with `<script type="module" src="../../src/shared-init.js">` and `<script type="module" src="../../src/pages/{name}-page.js">`
+2. Create `src/pages/{name}-page.js` with initialization logic
+3. Add page styles in `src/styles/pages/{name}.css` if needed
 
-### Cloud Functions
-```bash
-cd functions
-npm install
-npm run serve          # Test locally with emulators
-npm run deploy         # Deploy to production Firebase
-```
+**New Module** (feature):
+1. Create `src/modules/{name}.js`
+2. Use named exports only: `export function myFunction() {}`
+3. Private state as module-level variables
+4. Import dependencies: `import { something } from './other.js'`
 
-### Environment Detection
-- **Port 5000**: Development mode - uses Firebase emulators
-- **Port 3000**: Production mode - connects to production Firebase
-- Configured in `src/firebase-init.js` via `window.location.port`
+**New Styles**:
+1. Create `src/styles/components/{name}.css`
+2. Add `@import 'components/{name}.css';` to `src/styles.css`
+3. Use BEM naming: `.my-component`, `.my-component__element`, `.my-component--modifier`
 
-## Common Workflows
-
-### Creating a New Page
-1. Create HTML file: `pages/{page-name}/{page-name}.html`
-2. Create init module: `src/modules/{page-name}-page.js`
-3. Import `shared-init.js` and page-specific modules
-4. Add page styles: `src/styles/pages/{page-name}.css` (if needed)
-
-### Creating a New Module
-1. Create file: `src/modules/{module-name}.js`
-2. Use named exports only (NO default exports)
-3. Keep module state as private variables
-4. Import dependencies from other modules as needed
-
-### Adding Styles
-1. Create component CSS: `src/styles/components/{component}.css`
-2. Add import to `src/styles.css`
-3. Use BEM naming conventions
-
-## Key Modules
-
-| Module | Purpose |
-|--------|---------|
-| `auth.js` | GitHub OAuth & auth state management |
-| `github-api.js` | GitHub REST API wrapper (fetch files, branches, Gists) |
-| `jules-api.js` | Jules API client (sources, sessions, activities) |
-| `jules-queue.js` | Queue system for batch prompt processing |
-| `prompt-renderer.js` | Markdown rendering with marked.js |
-| `prompt-list.js` | Sidebar tree navigation & collapsible folders |
-| `branch-selector.js` | Branch listing & switching |
-| `subtask-manager.js` | Prompt parsing & splitting logic |
-
-## Database Structure
-
-Firestore collections:
-- `julesQueues/{uid}/items` - User's Jules queue items (prompt tasks)
+### Database (Firestore)
+- `julesQueues/{uid}/items` - User's Jules queue items
 - `users/{uid}` - User profile and settings
-- `apiKeys/{uid}` - Encrypted API keys (AES-GCM encryption)
+- `apiKeys/{uid}` - Encrypted API keys (AES-GCM)
+- Security rules in `config/firestore/firestore.rules` - users can only access their own data
 
-Security rules: `config/firestore/firestore.rules`
-- Users can only read/write their own documents
-- Authentication required for all operations
-
-## Important Conventions
-
-### File Naming
-- Use lowercase with hyphens: `my-module.js`, `my-component.css`
+### File Naming Conventions
+- Use lowercase with hyphens: `my-module.js`, `my-component.css`, `my-page.html`
 - Module files: `{feature}.js`
 - Page init files: `{page}-page.js`
 - CSS files: `{component}.css`
 
-### Code Style
-- Use meaningful variable names (no single letters except loop counters)
-- Prefer const over let; avoid var
-- Use template literals for string interpolation
-- Comment only when necessary (code should be self-documenting)
+### Security
+- NEVER commit secrets or API keys
+- Jules API keys encrypted with AES-GCM before Firestore storage
+- All Firestore rules enforce user-only data access
+- Use GitHub OAuth via Firebase for authentication
+- All API calls and hosting over HTTPS only
 
-### Runtime Behaviors
-- **Async Firebase Loading**: Wait for `firebase.apps.length` before initializing
-- **Port-based Config**: Firebase init checks port for emulator vs production
-- **Session Caching**: API responses cached in sessionStorage
-- **Auth State**: Persists in localStorage, checked on every page load
+### What to NEVER Do
+- ❌ Use build tools, bundlers, or transpilers
+- ❌ Use default exports (`export default`)
+- ❌ Add framework dependencies (React, Vue, Angular, etc.)
+- ❌ Write HTML strings in JavaScript (`innerHTML = '<div>...'`)
+- ❌ Use inline styles in JavaScript (`element.style.color = 'red'`)
+- ❌ Commit node_modules or build artifacts
+- ❌ Modify Firestore security rules without understanding implications
+- ❌ Add npm dependencies to frontend (only backend Functions can use npm)
+- ❌ Use global variables (`window.myVar = ...`)
+- ❌ Use callbacks or raw promises (use async/await)
 
-## Testing & Validation
-
-### Before Committing Changes
-1. Test locally: `npm start` or `docker-compose up`
-2. Verify no console errors in browser DevTools
-3. Test affected features manually
-4. Verify Firebase authentication if auth-related changes
-5. Check that no build artifacts are committed
-
-### Firebase Functions
-- Test with emulators: `cd functions && npm run serve`
-- Verify function logs in emulator UI
-- Deploy only after local validation
-
-## Security Guidelines
-
-- **Never commit secrets** - use environment variables
-- **API Key Encryption** - Jules API keys use AES-GCM before Firestore storage
-- **Firestore Rules** - enforce user-only data access
-- **GitHub OAuth** - secure authentication via Firebase
-- **HTTPS Only** - all API calls and hosting over HTTPS
-
-## File Import Rules
-
-- Always use relative paths for local modules: `import { auth } from './auth.js'`
-- CDN libraries loaded in HTML: Firebase SDK, marked.js
-- No npm packages in frontend code (backend Cloud Functions can use npm)
-
-## Important Files to Know
-
-- `src/utils/constants.js` - All magic strings, regex patterns, config
-- `src/firebase-init.js` - Firebase SDK configuration & environment detection
-- `firebase.json` - Firebase hosting & emulator config
-- `config/firestore/firestore.rules` - Firestore security rules
-- `src/shared-init.js` - Shared initialization for all pages
-- `src/styles.css` - CSS aggregator file (import order matters)
-
-## What NOT to Do
-
-- ❌ Don't use build tools, bundlers, or transpilers
-- ❌ Don't use default exports
-- ❌ Don't add framework dependencies (React, Vue, etc.)
-- ❌ Don't write HTML strings in JavaScript
-- ❌ Don't use inline styles
-- ❌ Don't commit node_modules or build artifacts
-- ❌ Don't modify Firestore rules without understanding security implications
-- ❌ Don't add new npm dependencies to frontend (backend only)
-
-## When Working on Issues
-
-1. **Understand context**: Read related modules and understand data flow
-2. **Minimal changes**: Make the smallest possible change to solve the problem
-3. **Test thoroughly**: Manually verify changes work in browser
-4. **Check console**: Ensure no JavaScript errors
-5. **Verify imports**: Ensure all imports use correct relative paths
-6. **Follow patterns**: Match existing code style and architecture
-7. **Document if needed**: Update this file if architectural changes are made
+### When Working on Issues
+1. Read related modules to understand data flow and patterns
+2. Make minimal changes - smallest possible modification to solve the problem
+3. Follow existing patterns - match the style and structure of surrounding code
+4. Test in browser - open DevTools, check console for errors
+5. Verify imports use correct relative paths
+6. Update this file if making architectural changes
