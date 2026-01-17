@@ -557,6 +557,246 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// Scheduling functionality
+async function getUserTimeZone() {
+  const user = window.auth?.currentUser;
+  if (!user) return 'America/New_York';
+  
+  try {
+    const profileDoc = await window.db.collection('userProfiles').doc(user.uid).get();
+    if (profileDoc.exists && profileDoc.data().preferredTimeZone) {
+      return profileDoc.data().preferredTimeZone;
+    }
+  } catch (err) {
+    console.warn('Failed to fetch user timezone preference', err);
+  }
+  
+  // Fallback to session cache
+  const cached = getCache(CACHE_KEYS.USER_PROFILE, user.uid);
+  if (cached?.preferredTimeZone) {
+    return cached.preferredTimeZone;
+  }
+  
+  return 'America/New_York';
+}
+
+async function saveUserTimeZone(timeZone) {
+  const user = window.auth?.currentUser;
+  if (!user) return;
+  
+  try {
+    await window.db.collection('userProfiles').doc(user.uid).set({
+      preferredTimeZone: timeZone,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    
+    // Update session cache
+    const cached = getCache(CACHE_KEYS.USER_PROFILE, user.uid) || {};
+    setCache(CACHE_KEYS.USER_PROFILE, { ...cached, preferredTimeZone: timeZone }, user.uid);
+  } catch (err) {
+    console.warn('Failed to save timezone preference', err);
+  }
+}
+
+function getCommonTimeZones() {
+  return [
+    { value: 'America/New_York', label: 'Eastern Time (ET)' },
+    { value: 'America/Chicago', label: 'Central Time (CT)' },
+    { value: 'America/Denver', label: 'Mountain Time (MT)' },
+    { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+    { value: 'America/Anchorage', label: 'Alaska Time (AKT)' },
+    { value: 'Pacific/Honolulu', label: 'Hawaii Time (HT)' },
+    { value: 'Europe/London', label: 'London (GMT/BST)' },
+    { value: 'Europe/Paris', label: 'Paris (CET/CEST)' },
+    { value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
+    { value: 'Asia/Shanghai', label: 'Shanghai (CST)' },
+    { value: 'Asia/Dubai', label: 'Dubai (GST)' },
+    { value: 'Australia/Sydney', label: 'Sydney (AEDT/AEST)' },
+    { value: 'UTC', label: 'UTC' }
+  ];
+}
+
+async function showScheduleModal() {
+  const user = window.auth?.currentUser;
+  if (!user) {
+    showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
+    return;
+  }
+  
+  const { queueSelections, subtaskSelections } = getSelectedQueueIds();
+  
+  if (queueSelections.length === 0 && Object.keys(subtaskSelections).length === 0) {
+    showToast('No items selected to schedule', 'warn');
+    return;
+  }
+  
+  // Get user's preferred timezone
+  const userTimeZone = await getUserTimeZone();
+  
+  let modal = document.getElementById('scheduleQueueModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'scheduleQueueModal';
+    modal.className = 'modal-overlay';
+    
+    const timeZones = getCommonTimeZones();
+    const timeZoneOptions = timeZones.map(tz => 
+      `<option value="${tz.value}" ${tz.value === userTimeZone ? 'selected' : ''}>${tz.label}</option>`
+    ).join('');
+    
+    modal.innerHTML = `
+      <div class="modal-dialog" style="max-width: 500px;">
+        <div class="modal-header">
+          <h2 class="modal-title">Schedule Queue Items</h2>
+          <button class="btn-icon close-modal" id="closeScheduleModal" title="Close"><span class="icon" aria-hidden="true">close</span></button>
+        </div>
+        <div class="modal-body">
+          <p class="form-help-text">Schedule selected items to run automatically at a specific time.</p>
+          <div class="form-group">
+            <label class="form-label">Date:</label>
+            <input type="date" id="scheduleDate" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Time:</label>
+            <input type="time" id="scheduleTime" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Time Zone:</label>
+            <select id="scheduleTimeZone" class="form-control">
+              ${timeZoneOptions}
+            </select>
+          </div>
+          <div id="scheduleError" class="form-error hidden"></div>
+        </div>
+        <div class="modal-footer">
+          <button id="cancelSchedule" class="btn">Cancel</button>
+          <button id="confirmSchedule" class="btn primary">Schedule</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Set minimum date to today
+    const dateInput = document.getElementById('scheduleDate');
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.min = today;
+    dateInput.value = today;
+    
+    // Set default time to next hour
+    const timeInput = document.getElementById('scheduleTime');
+    const now = new Date();
+    now.setHours(now.getHours() + 1);
+    now.setMinutes(0);
+    timeInput.value = now.toTimeString().slice(0, 5);
+    
+    document.getElementById('closeScheduleModal').onclick = () => hideScheduleModal();
+    document.getElementById('cancelSchedule').onclick = () => hideScheduleModal();
+    document.getElementById('confirmSchedule').onclick = () => confirmScheduleItems();
+    
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        hideScheduleModal();
+      }
+    };
+  } else {
+    // Update timezone if modal already exists
+    const tzSelect = document.getElementById('scheduleTimeZone');
+    if (tzSelect) {
+      tzSelect.value = userTimeZone;
+    }
+  }
+  
+  modal.style.display = 'flex';
+}
+
+function hideScheduleModal() {
+  const modal = document.getElementById('scheduleQueueModal');
+  if (modal) {
+    modal.style.display = 'none';
+    const errorDiv = document.getElementById('scheduleError');
+    if (errorDiv) {
+      errorDiv.classList.add('hidden');
+      errorDiv.textContent = '';
+    }
+  }
+}
+
+async function confirmScheduleItems() {
+  const user = window.auth?.currentUser;
+  if (!user) return;
+  
+  const dateInput = document.getElementById('scheduleDate');
+  const timeInput = document.getElementById('scheduleTime');
+  const timeZoneSelect = document.getElementById('scheduleTimeZone');
+  const errorDiv = document.getElementById('scheduleError');
+  
+  errorDiv.classList.add('hidden');
+  errorDiv.textContent = '';
+  
+  // Validate inputs
+  if (!dateInput.value || !timeInput.value) {
+    errorDiv.textContent = 'Date and time are required';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+  
+  const selectedDate = dateInput.value;
+  const selectedTime = timeInput.value;
+  const selectedTimeZone = timeZoneSelect.value;
+  
+  // Parse the date/time in the selected timezone
+  const dateTimeStr = `${selectedDate}T${selectedTime}:00`;
+  const scheduledDate = new Date(dateTimeStr);
+  
+  // Check if date is in the past
+  const now = new Date();
+  if (scheduledDate < now) {
+    errorDiv.textContent = 'Scheduled time must be in the future';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+  
+  // Save timezone preference
+  await saveUserTimeZone(selectedTimeZone);
+  
+  const { queueSelections, subtaskSelections } = getSelectedQueueIds();
+  
+  try {
+    const scheduledAt = firebase.firestore.Timestamp.fromDate(scheduledDate);
+    
+    // Schedule selected queue items
+    for (const docId of queueSelections) {
+      await updateJulesQueueItem(user.uid, docId, {
+        status: 'scheduled',
+        scheduledAt: scheduledAt,
+        scheduledTimeZone: selectedTimeZone,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    
+    // Note: For subtask selections, we're scheduling the entire queue item
+    // If specific subtasks are selected but the queue item is not, schedule the whole item
+    for (const docId of Object.keys(subtaskSelections)) {
+      if (!queueSelections.includes(docId)) {
+        await updateJulesQueueItem(user.uid, docId, {
+          status: 'scheduled',
+          scheduledAt: scheduledAt,
+          scheduledTimeZone: selectedTimeZone,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    }
+    
+    const totalScheduled = new Set([...queueSelections, ...Object.keys(subtaskSelections)]).size;
+    showToast(`Scheduled ${totalScheduled} item(s) for ${selectedDate} ${selectedTime} ${selectedTimeZone}`, 'success');
+    hideScheduleModal();
+    await loadQueuePage();
+  } catch (err) {
+    errorDiv.textContent = `Failed to schedule items: ${err.message}`;
+    errorDiv.classList.remove('hidden');
+  }
+}
+
 function renderQueueList(items) {
   const listDiv = document.getElementById('allQueueList');
   if (!listDiv) return;
@@ -569,6 +809,22 @@ function renderQueueList(items) {
     const created = item.createdAt ? new Date(item.createdAt.seconds ? item.createdAt.seconds * 1000 : item.createdAt).toLocaleString() : 'Unknown';
     const status = item.status || 'pending';
     const remainingCount = Array.isArray(item.remaining) ? item.remaining.length : 0;
+    
+    // Format scheduled info if applicable
+    let scheduledInfo = '';
+    if (status === 'scheduled' && item.scheduledAt) {
+      const scheduledDate = new Date(item.scheduledAt.seconds * 1000);
+      const timeZone = item.scheduledTimeZone || 'America/New_York';
+      const dateStr = scheduledDate.toLocaleString('en-US', { 
+        timeZone: timeZone,
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      scheduledInfo = `<div class="queue-scheduled-info"><span class="icon icon-inline" aria-hidden="true">schedule</span> Scheduled: ${dateStr} (${timeZone})</div>`;
+    }
     
     if (item.type === 'subtasks' && Array.isArray(item.remaining) && item.remaining.length > 0) {
       const subtasksHtml = item.remaining.map((subtask, index) => {
@@ -588,8 +844,11 @@ function renderQueueList(items) {
 
       const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
       
+      // Add status badge class
+      const statusClass = status === 'scheduled' ? 'queue-status-scheduled' : '';
+      
       return `
-        <div class="queue-card queue-item" data-docid="${item.id}">
+        <div class="queue-card queue-item ${statusClass}" data-docid="${item.id}">
           <div class="queue-row">
             <div class="queue-checkbox-col">
               <input class="queue-checkbox" type="checkbox" data-docid="${item.id}" />
@@ -602,6 +861,7 @@ function renderQueueList(items) {
               </div>
               <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
               ${repoDisplay}
+              ${scheduledInfo}
             </div>
           </div>
           <div class="queue-subtasks">
@@ -614,8 +874,11 @@ function renderQueueList(items) {
     const promptPreview = (item.prompt || '').substring(0, 200);
     const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
     
+    // Add status badge class
+    const statusClass = status === 'scheduled' ? 'queue-status-scheduled' : '';
+    
     return `
-      <div class="queue-card queue-item" data-docid="${item.id}">
+      <div class="queue-card queue-item ${statusClass}" data-docid="${item.id}">
         <div class="queue-row">
           <div class="queue-checkbox-col">
             <input class="queue-checkbox" type="checkbox" data-docid="${item.id}" />
@@ -627,6 +890,7 @@ function renderQueueList(items) {
             </div>
             <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
             ${repoDisplay}
+            ${scheduledInfo}
             <div class="queue-prompt">${escapeHtml(promptPreview)}${promptPreview.length >= 200 ? '...' : ''}</div>
           </div>
         </div>
@@ -733,6 +997,7 @@ function attachQueueModalHandlers() {
   const selectAll = document.getElementById('queueSelectAll');
   const runBtn = document.getElementById('queueRunBtn');
   const deleteBtn = document.getElementById('queueDeleteBtn');
+  const scheduleBtn = document.getElementById('queueScheduleBtn');
   const closeBtn = document.getElementById('closeQueueBtn');
 
   if (selectAll) {
@@ -765,9 +1030,11 @@ function attachQueueModalHandlers() {
 
   const runHandler = async () => { await runSelectedQueueItems(); };
   const deleteHandler = async () => { await deleteSelectedQueueItems(); };
+  const scheduleHandler = async () => { await showScheduleModal(); };
 
   if (runBtn) runBtn.onclick = runHandler;
   if (deleteBtn) deleteBtn.onclick = deleteHandler;
+  if (scheduleBtn) scheduleBtn.onclick = scheduleHandler;
   if (closeBtn) closeBtn.onclick = hideJulesQueueModal;
 }
 
@@ -897,6 +1164,13 @@ async function runSelectedQueueItems() {
     if (paused) break;
     if (queueSelections.includes(docId)) continue;
     
+    // Skip scheduled items
+    const item = queueCache.find(i => i.id === docId);
+    if (item?.status === 'scheduled') {
+      console.log('Skipping scheduled item:', docId);
+      continue;
+    }
+    
     try {
       const result = await runSelectedSubtasks(docId, indices.slice().sort((a, b) => a - b), suppressPopups, openInBackground);
       currentItemNumber += indices.length;
@@ -924,6 +1198,12 @@ async function runSelectedQueueItems() {
     if (paused) break;
     const item = queueCache.find(i => i.id === id);
     if (!item) continue;
+    
+    // Skip scheduled items
+    if (item.status === 'scheduled') {
+      console.log('Skipping scheduled item:', id);
+      continue;
+    }
 
     try {
       if (item.type === 'single') {

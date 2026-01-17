@@ -412,3 +412,51 @@ exports.getGitHubUser = functions.https.onRequest(async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+exports.activateScheduledQueueItems = functions.pubsub.schedule('every 1 minutes').onRun(async (context) => {
+  const db = admin.firestore();
+  const now = admin.firestore.Timestamp.now();
+  
+  console.log('Running scheduled queue activation check at', now.toDate().toISOString());
+  
+  try {
+    const usersSnapshot = await db.collection('julesQueues').listDocuments();
+    let totalActivated = 0;
+    
+    for (const userDoc of usersSnapshot) {
+      try {
+        const scheduledItems = await userDoc.collection('items')
+          .where('status', '==', 'scheduled')
+          .where('scheduledAt', '<=', now)
+          .get();
+        
+        if (scheduledItems.empty) {
+          continue;
+        }
+        
+        console.log(`Found ${scheduledItems.size} scheduled items for user ${userDoc.id}`);
+        
+        const batch = db.batch();
+        scheduledItems.docs.forEach(doc => {
+          batch.update(doc.ref, {
+            status: 'pending',
+            activatedAt: now,
+            updatedAt: now
+          });
+        });
+        
+        await batch.commit();
+        totalActivated += scheduledItems.size;
+        console.log(`Activated ${scheduledItems.size} items for user ${userDoc.id}`);
+      } catch (userErr) {
+        console.error(`Error processing scheduled items for user ${userDoc.id}:`, userErr);
+      }
+    }
+    
+    console.log(`Activation check complete. Total items activated: ${totalActivated}`);
+    return null;
+  } catch (error) {
+    console.error('Error in activateScheduledQueueItems:', error);
+    return null;
+  }
+});
