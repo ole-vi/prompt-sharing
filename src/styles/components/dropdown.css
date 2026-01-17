@@ -60,3 +60,8 @@
 
 /* Generic dropdown item utility for menu items with icons */
 .dropdown-item { display: flex; align-items: center; gap: 8px; }
+
+/* State for open dropdown */
+.custom-dropdown-menu.open {
+  display: block;
+}
