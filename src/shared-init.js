@@ -6,7 +6,7 @@ import { initAuthStateListener } from './modules/auth.js';
 import { initBranchSelector, loadBranches, loadBranchFromStorage } from './modules/branch-selector.js';
 import { OWNER, REPO, BRANCH } from './utils/constants.js';
 import { parseParams } from './utils/url-params.js';
-import statusBar from './modules/status-bar.js';
+import * as statusBar from './modules/status-bar.js';
 
 let isInitialized = false;
 
