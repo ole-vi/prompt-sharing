@@ -1,6 +1,7 @@
 // ===== Main App Initialization =====
 
-import { OWNER, REPO, BRANCH, STORAGE_KEYS } from './utils/constants.js';
+import { STORAGE_KEYS } from './utils/constants.js';
+import { config } from './utils/config.js';
 import { parseParams, getHashParam } from './utils/url-params.js';
 import { initJulesKeyModalListeners } from './modules/jules-modal.js';
 import { handleTryInJules } from './modules/jules-api.js';
@@ -11,17 +12,9 @@ import { setCurrentBranch, setCurrentRepo } from './modules/branch-selector.js';
 import { initSidebar } from './modules/sidebar.js';
 
 // App state
-let currentOwner = OWNER;
-let currentRepo = REPO;
-let currentBranch = BRANCH;
+let { owner: currentOwner, repo: currentRepo, branch: currentBranch } = config;
 
 export function initApp() {
-  // Parse URL params
-  const params = parseParams();
-  if (params.owner) currentOwner = params.owner;
-  if (params.repo) currentRepo = params.repo;
-  if (params.branch) currentBranch = params.branch;
-
   // Set up callbacks to avoid circular dependencies
   setSelectFileCallback(selectFile);
   setHandleTryInJulesCallback(handleTryInJules);

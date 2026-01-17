@@ -4,7 +4,7 @@
 import { loadHeader } from './modules/header.js';
 import { initAuthStateListener } from './modules/auth.js';
 import { initBranchSelector, loadBranches } from './modules/branch-selector.js';
-import { OWNER, REPO, BRANCH } from './utils/constants.js';
+import { config } from './utils/config.js';
 import statusBar from './modules/status-bar.js';
 
 let isInitialized = false;
@@ -68,7 +68,7 @@ async function fetchVersion() {
   
   try {
     // Fetch the latest commit on the branch
-    const latestResponse = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits/${BRANCH}`);
+    const latestResponse = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/commits/${config.branch}`);
     if (!latestResponse.ok) {
       throw new Error(`GitHub API returned ${latestResponse.status}`);
     }
@@ -144,7 +144,7 @@ async function initializeSharedComponents(activePage) {
     waitForFirebase(() => {
       initAuthStateListener();
 
-      initBranchSelector(OWNER, REPO, BRANCH);
+      initBranchSelector(config.owner, config.repo, config.branch);
 
       loadBranches().catch(error => {
         console.error('Failed to load branches:', error);
@@ -152,7 +152,7 @@ async function initializeSharedComponents(activePage) {
 
       const repoPill = document.getElementById('repoPill');
       if (repoPill) {
-        repoPill.innerHTML = `<strong>${OWNER}/${REPO}</strong>`;
+        repoPill.innerHTML = `<strong>${config.owner}/${config.repo}</strong>`;
       }
 
       fetchVersion();

@@ -1,8 +1,5 @@
 // ===== All Constants, Regex Patterns, and Magic Strings =====
 
-export const OWNER = "promptroot";
-export const REPO = "promptroot";
-export const BRANCH = "main";
 export const PRETTY_TITLES = true;
 
 // GitHub API
