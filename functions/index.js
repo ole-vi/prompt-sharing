@@ -434,31 +434,113 @@ exports.activateScheduledQueueItems = onSchedule('every 1 minutes', async (event
     
     console.log(`Found ${scheduledItemsSnapshot.size} scheduled items across all users.`);
     
-    const docs = scheduledItemsSnapshot.docs;
-    const BATCH_SIZE = 500;
     let totalActivated = 0;
     
-    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
-      const batch = db.batch();
-      const chunk = docs.slice(i, i + BATCH_SIZE);
+    for (const doc of scheduledItemsSnapshot.docs) {
+      const userId = doc.ref.parent?.parent?.id;
+      if (!userId) {
+        console.error(`Could not determine user ID for item ${doc.id}`);
+        continue;
+      }
       
-      chunk.forEach(doc => {
-        const userId = doc.ref.parent?.parent?.id || 'unknown';
-        console.log(`Activating scheduled item ${doc.id} for user ${userId}`);
+      const item = doc.data();
+      console.log(`Processing scheduled item ${doc.id} for user ${userId}`);
+      
+      try {
+        const keySnap = await db.doc(`julesKeys/${userId}`).get();
+        if (!keySnap.exists) {
+          console.error(`No Jules API key found for user ${userId}`);
+          await doc.ref.update({
+            status: 'error',
+            error: 'No Jules API key configured',
+            updatedAt: now
+          });
+          continue;
+        }
         
-        batch.update(doc.ref, {
-          status: 'pending',
-          activatedAt: now,
+        const encryptedBase64 = keySnap.data().key;
+        const julesKey = await decryptJulesKeyBase64(encryptedBase64, userId);
+        
+        if (item.type === 'single') {
+          await doc.ref.update({ status: 'in-progress', updatedAt: now });
+          
+          const julesBody = {
+            title: `Scheduled: ${item.prompt?.substring(0, 50) || 'Untitled'}`,
+            prompt: item.prompt,
+            sourceContext: {
+              source: item.sourceId,
+              githubRepoContext: { startingBranch: item.branch || 'master' }
+            }
+          };
+          
+          const r = await fetch("https://jules.googleapis.com/v1alpha/sessions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Goog-Api-Key": julesKey },
+            body: JSON.stringify(julesBody)
+          });
+          
+          const json = await r.json();
+          
+          if (!r.ok || json.error) {
+            throw new Error(json.error?.message || 'Jules API error');
+          }
+          
+          await doc.ref.delete();
+          
+          console.log(`Successfully executed single prompt for item ${doc.id}`);
+          totalActivated++;
+          
+        } else if (item.type === 'subtasks' && Array.isArray(item.remaining) && item.remaining.length > 0) {
+          await doc.ref.update({ status: 'in-progress', updatedAt: now });
+          
+          const subtask = item.remaining[0];
+          const julesBody = {
+            title: `Scheduled: ${subtask.fullContent?.substring(0, 50) || 'Untitled'}`,
+            prompt: subtask.fullContent,
+            sourceContext: {
+              source: item.sourceId,
+              githubRepoContext: { startingBranch: item.branch || 'master' }
+            }
+          };
+          
+          const r = await fetch("https://jules.googleapis.com/v1alpha/sessions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Goog-Api-Key": julesKey },
+            body: JSON.stringify(julesBody)
+          });
+          
+          const json = await r.json();
+          
+          if (!r.ok || json.error) {
+            throw new Error(json.error?.message || 'Jules API error');
+          }
+          
+          const newRemaining = item.remaining.slice(1);
+          if (newRemaining.length === 0) {
+            await doc.ref.delete();
+          } else {
+            await doc.ref.update({
+              remaining: newRemaining,
+              status: 'pending',
+              updatedAt: now
+            });
+          }
+          
+          console.log(`Successfully executed first subtask for item ${doc.id}, ${newRemaining.length} remaining`);
+          totalActivated++;
+        }
+        
+      } catch (err) {
+        console.error(`Error processing item ${doc.id}:`, err);
+        await doc.ref.update({
+          status: 'error',
+          error: err.message,
           updatedAt: now
         });
-      });
-      
-      await batch.commit();
-      totalActivated += chunk.length;
-      console.log(`Activated ${chunk.length} scheduled items in this batch.`);
+      }
     }
     
-    console.log(`Activation check complete. Total items activated: ${totalActivated}`);
+    console.log(`Activation check complete. Total items processed: ${totalActivated}`);
     return null;
   } catch (error) {
     console.error('Error in activateScheduledQueueItems:', error);
