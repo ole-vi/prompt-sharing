@@ -61,7 +61,14 @@ export const ERRORS = {
   GIST_FETCH_FAILED: "Failed to fetch gist content.",
   AUTH_REQUIRED: "Authentication required.",
   JULES_KEY_REQUIRED: "No Jules API key stored. Please save your API key first.",
-  CLIPBOARD_BLOCKED: "Clipboard blocked. Select and copy manually."
+  CLIPBOARD_BLOCKED: "Clipboard blocked. Select and copy manually.",
+  GITHUB_API_ERROR: "GitHub API request failed.",
+  GITHUB_RATE_LIMIT: "GitHub API rate limit exceeded. Please try again later.",
+  NETWORK_ERROR: "Network error. Please check your connection.",
+  FILE_NOT_FOUND: "File not found.",
+  BRANCH_LOAD_FAILED: "Failed to load branches.",
+  REPO_LOAD_FAILED: "Failed to load repositories.",
+  PROMPT_LOAD_FAILED: "Failed to load prompts."
 };
 
 // Jules toast messages

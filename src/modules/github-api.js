@@ -1,3 +1,5 @@
+import { ERRORS } from '../utils/constants.js';
+
 let viaProxy = (url) => url;
 
 export function setViaProxy(proxyFn) {
@@ -42,61 +44,62 @@ async function getGitHubAccessToken() {
 }
 
 export async function fetchJSON(url) {
-  try {
-    const headers = { 'Accept': 'application/vnd.github+json' };
-    
-    const token = await getGitHubAccessToken();
-    if (token && typeof token === 'string' && token.length > 0) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    const res = await fetch(viaProxy(url), {
-      cache: 'no-store',
-      headers
-    });
-    
-    if (!res.ok) return null;
-    return res.json();
-  } catch (e) {
-    return null;
+  const headers = { 'Accept': 'application/vnd.github+json' };
+
+  const token = await getGitHubAccessToken();
+  if (token && typeof token === 'string' && token.length > 0) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
+
+  const res = await fetch(viaProxy(url), {
+    cache: 'no-store',
+    headers
+  });
+
+  if (!res.ok) {
+    if (res.status === 403 || res.status === 429) {
+      throw new Error(ERRORS.GITHUB_RATE_LIMIT);
+    }
+    throw new Error(`${ERRORS.GITHUB_API_ERROR} (${res.status} ${res.statusText})`);
+  }
+
+  return res.json();
 }
 
 export async function fetchJSONWithETag(url, etag = null) {
-  try {
-    const headers = { 'Accept': 'application/vnd.github+json' };
-    
-    const token = await getGitHubAccessToken();
-    if (token && typeof token === 'string' && token.length > 0) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    if (etag) {
-      headers['If-None-Match'] = etag;
-    }
-    
-    const res = await fetch(viaProxy(url), {
-      cache: 'no-store',
-      headers
-    });
-    
-    if (res.status === 304) {
-      return { notModified: true, etag };
-    }
-    
-    if (!res.ok) {
-      const error = new Error(`GitHub API request failed: ${res.status} ${res.statusText}`);
-      error.status = res.status;
-      return { data: null, etag: null, error };
-    }
-    
-    const data = await res.json();
-    const newEtag = res.headers.get('ETag');
-    
-    return { data, etag: newEtag, notModified: false };
-  } catch (e) {
-    return { data: null, etag: null, error: e };
+  const headers = { 'Accept': 'application/vnd.github+json' };
+
+  const token = await getGitHubAccessToken();
+  if (token && typeof token === 'string' && token.length > 0) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
+
+  if (etag) {
+    headers['If-None-Match'] = etag;
+  }
+
+  const res = await fetch(viaProxy(url), {
+    cache: 'no-store',
+    headers
+  });
+
+  if (res.status === 304) {
+    return { notModified: true, etag };
+  }
+
+  if (!res.ok) {
+    if (res.status === 403 || res.status === 429) {
+      throw new Error(ERRORS.GITHUB_RATE_LIMIT);
+    }
+    const error = new Error(`${ERRORS.GITHUB_API_ERROR}: ${res.status} ${res.statusText}`);
+    error.status = res.status;
+    return { data: null, etag: null, error };
+  }
+
+  const data = await res.json();
+  const newEtag = res.headers.get('ETag');
+
+  return { data, etag: newEtag, notModified: false };
 }
 
 function encodePathPreservingSlashes(path) {
@@ -109,8 +112,14 @@ function encodePathPreservingSlashes(path) {
 export async function listPromptsViaContents(owner, repo, branch, path = 'prompts') {
   const encodedPath = encodePathPreservingSlashes(path);
   const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}&ts=${Date.now()}`;
+
+  // fetchJSON now throws on error, which is desired.
   const entries = await fetchJSON(url);
-  if (!Array.isArray(entries)) return [];
+
+  if (!Array.isArray(entries)) {
+    // This might happen if entries is an object (e.g. single file content instead of dir listing)
+    return [];
+  }
 
   const results = [];
   for (const entry of entries) {
@@ -142,7 +151,7 @@ export async function listPromptsViaTrees(owner, repo, branch, path = 'prompts',
     if (result.error) {
       throw result.error;
     }
-    throw new Error('Failed to fetch tree data');
+    throw new Error(ERRORS.GITHUB_API_ERROR);
   }
   
   const escapedPath = path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -162,7 +171,10 @@ export async function fetchRawFile(owner, repo, branch, path) {
   const encodedPath = encodePathPreservingSlashes(path);
   const url = `https://raw.githubusercontent.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${encodeURIComponent(branch)}/${encodedPath}?ts=${Date.now()}`;
   const res = await fetch(url, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+  if (!res.ok) {
+     if (res.status === 404) throw new Error(ERRORS.FILE_NOT_FOUND);
+     throw new Error(`${ERRORS.GITHUB_API_ERROR}: ${res.status}`);
+  }
   return res.text();
 }
 
@@ -188,7 +200,7 @@ export async function resolveGistRawUrl(gistUrl) {
     const apiUrl = `https://api.github.com/gists/${gistId}`;
     const res = await fetch(viaProxy(apiUrl));
     if (!res.ok) {
-      throw new Error(`Failed to fetch gist metadata: ${res.status}`);
+      throw new Error(`${ERRORS.GIST_FETCH_FAILED} (${res.status})`);
     }
     const gistData = await res.json();
     const files = Object.keys(gistData.files);
@@ -213,7 +225,7 @@ export async function fetchGistContent(gistUrl, cache = new Map()) {
     : `${gistUrl}?ts=${Date.now()}`;
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) {
-    throw new Error(`Gist fetch failed: ${res.status} ${res.statusText}`);
+    throw new Error(`${ERRORS.GIST_FETCH_FAILED}: ${res.status} ${res.statusText}`);
   }
   const text = await res.text();
   cache.set(cacheKey, text);
@@ -236,7 +248,7 @@ export async function getBranches(owner, repo) {
 
   for (let page = 1; page <= maxPages; page++) {
     const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=${perPage}&page=${page}&ts=${Date.now()}`;
-    const batch = await fetchJSON(viaProxy(url));
+    const batch = await fetchJSON(viaProxy(url)); // fetchJSON now throws on error
 
     if (!Array.isArray(batch) || batch.length === 0) {
       break;

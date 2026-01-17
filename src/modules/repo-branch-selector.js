@@ -1,5 +1,6 @@
 import { getCurrentUser } from './auth.js';
 import { showToast } from './toast.js';
+import { ERRORS, JULES_MESSAGES } from '../utils/constants.js';
 
 function extractDefaultBranch(source) {
   const defaultBranchObj = source?.githubRepo?.defaultBranch ||
@@ -85,6 +86,7 @@ export class RepoSelector {
       }
     } catch (error) {
       console.error('Failed to load favorites:', error);
+      // Non-critical error, maybe don't toast here to avoid spam on page load
     }
 
     // Try to restore previous selection
@@ -173,14 +175,20 @@ export class RepoSelector {
     
     await new Promise(resolve => setTimeout(resolve, 0));
     
-    if (this.showFavorites && this.favorites && this.favorites.length > 0) {
-      this.dropdownMenu.innerHTML = '';
-      await this.renderFavorites();
-      this.addShowMoreButton();
-    } else {
-      await this.loadAllRepos();
-      this.dropdownMenu.innerHTML = '';
-      this.renderAllRepos();
+    try {
+      if (this.showFavorites && this.favorites && this.favorites.length > 0) {
+        this.dropdownMenu.innerHTML = '';
+        await this.renderFavorites();
+        this.addShowMoreButton();
+      } else {
+        await this.loadAllRepos();
+        this.dropdownMenu.innerHTML = '';
+        this.renderAllRepos();
+      }
+    } catch (error) {
+      console.error('Failed to populate dropdown:', error);
+      this.dropdownMenu.innerHTML = `<div style="padding:12px; text-align:center; color:var(--error); font-size:12px;">Failed to load repositories</div>`;
+      showToast(ERRORS.REPO_LOAD_FAILED || 'Failed to load repositories', 'error');
     }
     
     this.dropdownMenu.style.display = 'block';
@@ -241,6 +249,7 @@ export class RepoSelector {
         } catch (error) {
           showMoreBtn.textContent = 'Failed to load - click to retry';
           showMoreBtn.style.pointerEvents = 'auto';
+          showToast(ERRORS.REPO_LOAD_FAILED || 'Failed to load repositories', 'error');
           return;
         }
       }
@@ -414,6 +423,7 @@ export class RepoSelector {
       }
     } catch (error) {
       console.error('Failed to save favorites:', error);
+      showToast('Failed to save favorites', 'error');
     }
   }
 
@@ -427,9 +437,11 @@ export class RepoSelector {
           favoriteRepos: window.firebase.firestore.FieldValue.arrayUnion(newFavorite)
         }, { merge: true });
         this.favorites = [...this.favorites, newFavorite];
+        showToast('Repository added to favorites', 'success');
       }
     } catch (error) {
       console.error('Failed to add favorite:', error);
+      showToast('Failed to add favorite', 'error');
     }
   }
 
@@ -445,9 +457,11 @@ export class RepoSelector {
           favoriteRepos: window.firebase.firestore.FieldValue.arrayRemove(favoriteToRemove)
         }, { merge: true });
         this.favorites = this.favorites.filter(f => f.id !== sourceId);
+        showToast('Repository removed from favorites', 'success');
       }
     } catch (error) {
       console.error('Failed to remove favorite:', error);
+      showToast('Failed to remove favorite', 'error');
     }
   }
 }
@@ -608,6 +622,7 @@ export class BranchSelector {
         showMoreBtn.textContent = 'Failed to load - click to retry';
         showMoreBtn.style.color = 'var(--muted)';
         showMoreBtn.style.pointerEvents = 'auto';
+        showToast(ERRORS.BRANCH_LOAD_FAILED || 'Failed to load branches', 'error');
       }
     };
     
