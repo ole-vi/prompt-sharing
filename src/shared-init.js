@@ -90,7 +90,6 @@ async function fetchVersion() {
         currentDate = new Date(metaDate);
         currentDateStr = new Date(metaDate).toLocaleDateString('en-CA');
       }
-    } else {
     }
 
     if (currentDate < latestDate) {
@@ -114,7 +113,6 @@ async function fetchVersion() {
     }
     if (currentDate < latestDate) {
       showUpdateBanner(latestDateStr, latestSha);
-    } else {
     }
     
   } catch (error) {
