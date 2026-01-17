@@ -3,7 +3,7 @@
  * Shared modal for viewing and copying Jules session prompts
  */
 
-import { createElement } from '../utils/dom-helpers.js';
+import { createElement, clearElement } from '../utils/dom-helpers.js';
 import { showToast } from './toast.js';
 
 let currentEscapeHandler = null;
@@ -75,13 +75,18 @@ export function showPromptViewer(prompt, sessionId) {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(prompt);
-      const originalText = copyBtn.innerHTML;
-      copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check</span> Copied!';
-      copyBtn.disabled = true;
+      const originalNodes = Array.from(newCopyBtn.childNodes).map(n => n.cloneNode(true));
+
+      clearElement(newCopyBtn);
+      newCopyBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'check'));
+      newCopyBtn.appendChild(document.createTextNode(' Copied!'));
+
+      newCopyBtn.disabled = true;
       showToast('Prompt copied to clipboard', 'success');
       setTimeout(() => {
-        copyBtn.innerHTML = originalText;
-        copyBtn.disabled = false;
+        clearElement(newCopyBtn);
+        originalNodes.forEach(n => newCopyBtn.appendChild(n));
+        newCopyBtn.disabled = false;
       }, 2000);
     } catch (err) {
       console.error('Copy failed:', err);

@@ -11,6 +11,7 @@ import { callRunJulesFunction } from './jules-api.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
+import { createElement, clearElement } from '../utils/dom-helpers.js';
 import statusBar from './status-bar.js';
 import { JULES_MESSAGES } from '../utils/constants.js';
 
@@ -163,54 +164,110 @@ export function hideSubtaskSplitModal() {
  */
 function renderSplitEdit(subtasks, promptText) {
   const editList = document.getElementById('splitEditList');
-  
+  clearElement(editList);
+
   const promptPreview = promptText.length > 200 ? promptText.substring(0, 200) + '...' : promptText;
-  const promptDisplay = `<div style="padding: 12px; margin-bottom: 8px; background: rgba(77,217,255,0.05); border: 1px solid rgba(77,217,255,0.2); border-radius: 6px;">
-    <div style="font-size: 12px; color: var(--text); line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;">${promptPreview}</div>
-  </div>`;
+
+  const promptDisplay = createElement('div', {
+    style: {
+      padding: '12px',
+      marginBottom: '8px',
+      background: 'rgba(77,217,255,0.05)',
+      border: '1px solid rgba(77,217,255,0.2)',
+      borderRadius: '6px'
+    }
+  }, [
+    createElement('div', {
+      style: {
+        fontSize: '12px',
+        color: 'var(--text)',
+        lineHeight: '1.5',
+        whiteSpace: 'pre-wrap',
+        wordWrap: 'break-word'
+      }
+    }, promptPreview)
+  ]);
+
+  editList.appendChild(promptDisplay);
   
   if (!subtasks || subtasks.length === 0) {
-    editList.innerHTML = promptDisplay + '<div style="padding: 16px; text-align: center; color: var(--muted); font-size: 13px;">No subtasks detected. This prompt will be sent as a single task.</div>';
+    editList.appendChild(createElement('div', {
+      style: {
+        padding: '16px',
+        textAlign: 'center',
+        color: 'var(--muted)',
+        fontSize: '13px'
+      }
+    }, 'No subtasks detected. This prompt will be sent as a single task.'));
     return;
   }
   
-  editList.innerHTML = subtasks
-    .map((st, idx) => `
-      <div style="padding: 8px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center;">
-        <input type="checkbox" id="subtask-${idx}" checked style="cursor: pointer;" />
-        <label for="subtask-${idx}" style="flex: 1; cursor: pointer; font-size: 13px;">
-          <strong>Part ${idx + 1}:</strong> ${st.title || `Part ${idx + 1}`}
-        </label>
-        <span style="font-size: 11px; color: var(--muted);">${st.content.length}c</span>
-        <button class="subtask-preview-btn" data-idx="${idx}" style="background: none; border: none; cursor: pointer; color: var(--accent); font-size: 16px; padding: 4px 8px; transition: transform 0.2s; line-height: 1;" title="Preview subtask" onclick="event.stopPropagation();"><span class="icon icon-inline" aria-hidden="true">visibility</span></button>
-      </div>
-    `)
-    .join('');
-
   subtasks.forEach((st, idx) => {
-    const checkbox = document.getElementById(`subtask-${idx}`);
-    checkbox.addEventListener('change', () => {
-      currentSubtasks = subtasks.filter((_, i) => {
-        return document.getElementById(`subtask-${i}`).checked;
-      });
-    });
-  });
-  
-  document.querySelectorAll('.subtask-preview-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const idx = parseInt(btn.dataset.idx);
-      showSubtaskPreview(subtasks[idx], idx + 1);
-    });
-    
-    btn.addEventListener('mouseenter', (e) => {
-      e.target.style.transform = 'scale(1.2)';
-    });
-    
-    btn.addEventListener('mouseleave', (e) => {
-      e.target.style.transform = 'scale(1)';
-    });
+    const row = createElement('div', {
+      style: {
+        padding: '8px',
+        borderBottom: '1px solid var(--border)',
+        display: 'flex',
+        gap: '8px',
+        alignItems: 'center'
+      }
+    }, [
+      createElement('input', {
+        type: 'checkbox',
+        id: `subtask-${idx}`,
+        checked: true,
+        style: { cursor: 'pointer' },
+        onChange: () => {
+          currentSubtasks = subtasks.filter((_, i) => {
+            const cb = document.getElementById(`subtask-${i}`);
+            return cb && cb.checked;
+          });
+        }
+      }),
+      createElement('label', {
+        htmlFor: `subtask-${idx}`,
+        style: {
+          flex: '1',
+          cursor: 'pointer',
+          fontSize: '13px'
+        }
+      }, [
+        createElement('strong', {}, `Part ${idx + 1}:`),
+        ` ${st.title || `Part ${idx + 1}`}`
+      ]),
+      createElement('span', {
+        style: { fontSize: '11px', color: 'var(--muted)' }
+      }, `${st.content.length}c`),
+      createElement('button', {
+        className: 'subtask-preview-btn',
+        'data-idx': idx,
+        style: {
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--accent)',
+          fontSize: '16px',
+          padding: '4px 8px',
+          transition: 'transform 0.2s',
+          lineHeight: '1'
+        },
+        title: 'Preview subtask',
+        onClick: (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          showSubtaskPreview(subtasks[idx], idx + 1);
+        },
+        onMouseEnter: (e) => {
+          e.target.style.transform = 'scale(1.2)';
+        },
+        onMouseLeave: (e) => {
+          e.target.style.transform = 'scale(1)';
+        }
+      }, [
+        createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'visibility')
+      ])
+    ]);
+    editList.appendChild(row);
   });
 }
 

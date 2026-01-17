@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Prompt sharing and management application",
   "scripts": {
-    "start": "python -m http.server 3000"
+    "start": "python -m http.server 3000",
+    "lint:security": "./scripts/check-innerhtml.sh"
   },
   "keywords": [],
   "author": "",

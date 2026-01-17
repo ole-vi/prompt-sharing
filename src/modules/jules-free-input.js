@@ -5,6 +5,7 @@ import { addToJulesQueue, handleQueueAction } from './jules-queue.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { JULES_MESSAGES } from '../utils/constants.js';
+import { createElement, clearElement } from '../utils/dom-helpers.js';
 
 let _lastSelectedSourceId = null;
 let _lastSelectedBranch = null;
@@ -78,7 +79,7 @@ export function showFreeInputForm() {
   const splitBtn = document.getElementById('freeInputSplitBtn');
   const copenBtn = document.getElementById('freeInputCopenBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
-  const originalCopenLabel = copenBtn?.innerHTML;
+  const originalCopenNodes = copenBtn ? Array.from(copenBtn.childNodes).map(n => n.cloneNode(true)) : [];
 
   textarea.value = '';
   
@@ -246,9 +247,13 @@ export function showFreeInputForm() {
 
     try {
       await navigator.clipboard.writeText(promptText);
-      copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied!';
+      clearElement(copenBtn);
+      copenBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'check_circle'));
+      copenBtn.appendChild(document.createTextNode(' Copied!'));
+
       setTimeout(() => {
-        copenBtn.innerHTML = originalCopenLabel;
+        clearElement(copenBtn);
+        originalCopenNodes.forEach(n => copenBtn.appendChild(n.cloneNode(true)));
       }, 1000);
 
       let url;

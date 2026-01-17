@@ -3,6 +3,8 @@
  * Handles extension download functionality
  */
 
+import { createElement, clearElement } from '../utils/dom-helpers.js';
+
 function waitForComponents() {
   if (document.querySelector('header')) {
     initApp();
@@ -19,8 +21,11 @@ function initApp() {
     downloadBtn.addEventListener('click', async () => {
       try {
         downloadBtn.disabled = true;
-        const originalDownloadLabel = downloadBtn.innerHTML;
-        downloadBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span> Preparing download...';
+        const originalDownloadNodes = Array.from(downloadBtn.childNodes).map(n => n.cloneNode(true));
+
+        clearElement(downloadBtn);
+        downloadBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'hourglass_top'));
+        downloadBtn.appendChild(document.createTextNode(' Preparing download...'));
 
         // Download pre-built zip file
         const a = document.createElement('a');
@@ -30,16 +35,24 @@ function initApp() {
         a.click();
         document.body.removeChild(a);
 
-        downloadBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Downloaded!';
+        clearElement(downloadBtn);
+        downloadBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'check_circle'));
+        downloadBtn.appendChild(document.createTextNode(' Downloaded!'));
+
         setTimeout(() => {
-          downloadBtn.innerHTML = originalDownloadLabel;
+          clearElement(downloadBtn);
+          originalDownloadNodes.forEach(n => downloadBtn.appendChild(n.cloneNode(true)));
           downloadBtn.disabled = false;
         }, 2000);
       } catch (error) {
         console.error('Download failed:', error);
-        downloadBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">error</span> Download failed';
+        clearElement(downloadBtn);
+        downloadBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'error'));
+        downloadBtn.appendChild(document.createTextNode(' Download failed'));
+
         setTimeout(() => {
-          downloadBtn.innerHTML = originalDownloadLabel;
+          clearElement(downloadBtn);
+          originalDownloadNodes.forEach(n => downloadBtn.appendChild(n.cloneNode(true)));
           downloadBtn.disabled = false;
         }, 2000);
       }

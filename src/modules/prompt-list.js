@@ -1,7 +1,7 @@
 import { slugify } from '../utils/slug.js';
 import { STORAGE_KEYS, TAG_DEFINITIONS } from '../utils/constants.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
-import { clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
+import { createElement, clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
 
 let files = [];
 let expandedState = new Set();
@@ -167,16 +167,15 @@ function createSubmenu() {
   submenuEl = document.createElement('div');
   submenuEl.className = 'folder-submenu';
   
-  const makeMenuItem = (label, emoji, dataAction) => {
-    const item = document.createElement('div');
-    item.className = 'folder-submenu-item';
-    item.innerHTML = `${emoji} ${label}`;
-    item.dataset.action = dataAction;
-    return item;
+  const makeMenuItem = (label, iconName, dataAction) => {
+    return createElement('div', { className: 'folder-submenu-item', 'data-action': dataAction }, [
+        createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, iconName),
+        ` ${label}`
+    ]);
   };
   
-  submenuEl.appendChild(makeMenuItem('Prompt (blank)', '<span class="icon icon-inline" aria-hidden="true">edit_note</span>', 'create-prompt'));
-  submenuEl.appendChild(makeMenuItem('Conversation (template)', '<span class="icon icon-inline" aria-hidden="true">chat_bubble</span>', 'create-conversation'));
+  submenuEl.appendChild(makeMenuItem('Prompt (blank)', 'edit_note', 'create-prompt'));
+  submenuEl.appendChild(makeMenuItem('Conversation (template)', 'chat_bubble', 'create-conversation'));
   
   document.body.appendChild(submenuEl);
 }
@@ -375,9 +374,12 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       toggle.type = 'button';
       const isForced = forcedExpanded.has(entry.path);
       const isExpanded = isForced || expandedState.has(entry.path);
-      toggle.innerHTML = isExpanded 
-        ? '<span class="icon" aria-hidden="true">expand_more</span>'
-        : '<span class="icon" aria-hidden="true">chevron_right</span>';
+
+      toggle.appendChild(createElement('span', {
+        className: 'icon',
+        'aria-hidden': 'true'
+      }, isExpanded ? 'expand_more' : 'chevron_right'));
+
       toggle.dataset.action = 'toggle-dir';
       toggle.dataset.path = entry.path;
 
@@ -522,7 +524,7 @@ export function renderList(items, owner, repo, branch) {
 
   if (!filtered.length) {
     clearElement(listEl);
-    listEl.innerHTML = '<div style="color:var(--muted); padding:8px;">No prompts found.</div>';
+    listEl.appendChild(createElement('div', { style: { color: 'var(--muted)', padding: '8px' } }, 'No prompts found.'));
     return;
   }
 
@@ -583,9 +585,13 @@ export async function loadList(owner, repo, branch, cacheKey) {
   } catch (e) {
     const folder = getPromptFolder(branch);
     clearElement(listEl);
-    listEl.innerHTML = `<div style="color:var(--muted); padding:8px;">
-      Could not load prompts from <code>${owner}/${repo}@${branch}/${folder}</code>.<br/>${e.message}
-    </div>`;
+    listEl.appendChild(createElement('div', { style: { color: 'var(--muted)', padding: '8px' } }, [
+        document.createTextNode('Could not load prompts from '),
+        createElement('code', {}, `${owner}/${repo}@${branch}/${folder}`),
+        document.createTextNode('.'),
+        createElement('br'),
+        document.createTextNode(e.message)
+    ]));
     return [];
   }
 }

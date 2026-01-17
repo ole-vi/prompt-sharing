@@ -3,6 +3,7 @@
 
 import { JULES_API_BASE, ERRORS, PAGE_SIZES, JULES_MESSAGES } from '../utils/constants.js';
 import { showToast } from './toast.js';
+import { createElement, clearElement } from '../utils/dom-helpers.js';
 
 // API key cache for memoization
 const keyCache = new Map();
@@ -243,7 +244,9 @@ export async function callRunJulesFunction(promptText, sourceId, branch = 'maste
     return sessionUrl;
   } catch (error) {
     if (julesBtn) {
-      julesBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">smart_toy</span> Try in Jules';
+      clearElement(julesBtn);
+      julesBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'smart_toy'));
+      julesBtn.appendChild(document.createTextNode(' Try in Jules'));
       julesBtn.disabled = false;
     }
     throw error;

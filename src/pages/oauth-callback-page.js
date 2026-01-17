@@ -3,6 +3,8 @@
  * Processes GitHub OAuth callbacks for both web app and browser extension
  */
 
+import { createElement, clearElement } from '../utils/dom-helpers.js';
+
 (async function() {
   const statusDiv = document.getElementById('status');
   
@@ -67,7 +69,8 @@
     const spinner = document.querySelector('.spinner');
     spinner.style.display = 'none';
     messageEl.style.display = 'none';
-    statusDiv.innerHTML = `<div class="error">${message}</div>`;
+    clearElement(statusDiv);
+    statusDiv.appendChild(createElement('div', { className: 'error' }, message));
   }
 
   function showSuccess(message) {
@@ -75,6 +78,7 @@
     const spinner = document.querySelector('.spinner');
     spinner.style.display = 'none';
     messageEl.style.display = 'none';
-    statusDiv.innerHTML = `<div class="success">${message}</div>`;
+    clearElement(statusDiv);
+    statusDiv.appendChild(createElement('div', { className: 'success' }, message));
   }
 })();

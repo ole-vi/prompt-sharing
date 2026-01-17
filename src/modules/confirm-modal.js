@@ -1,29 +1,38 @@
 // ===== Confirmation Modal Module =====
 // Provides styled confirmation dialogs to replace confirm() calls
 
+import { createElement } from '../utils/dom-helpers.js';
+
 let confirmModal = null;
 let confirmResolve = null;
 
 function createConfirmModal() {
-  const modal = document.createElement('div');
-  modal.id = 'confirmModal';
-  modal.className = 'modal';
-  modal.style.zIndex = '10000';
-  modal.innerHTML = `
-    <div class="modal-content" style="max-width: 480px;">
-      <div class="modal-header">
-        <h3 id="confirmModalTitle">Confirm Action</h3>
-        <button class="btn-icon close-modal" id="confirmModalClose" title="Close">✕</button>
-      </div>
-      <div class="modal-body">
-        <p id="confirmModalMessage" style="line-height: 1.6; white-space: pre-wrap;"></p>
-      </div>
-      <div class="modal-buttons">
-        <button id="confirmModalCancel" class="btn">Cancel</button>
-        <button id="confirmModalConfirm" class="btn danger">Confirm</button>
-      </div>
-    </div>
-  `;
+  const modal = createElement('div', {
+    id: 'confirmModal',
+    className: 'modal',
+    style: { zIndex: '10000' }
+  }, [
+    createElement('div', { className: 'modal-content', style: { maxWidth: '480px' } }, [
+      createElement('div', { className: 'modal-header' }, [
+        createElement('h3', { id: 'confirmModalTitle' }, 'Confirm Action'),
+        createElement('button', {
+          className: 'btn-icon close-modal',
+          id: 'confirmModalClose',
+          title: 'Close'
+        }, '✕')
+      ]),
+      createElement('div', { className: 'modal-body' }, [
+        createElement('p', {
+          id: 'confirmModalMessage',
+          style: { lineHeight: '1.6', whiteSpace: 'pre-wrap' }
+        })
+      ]),
+      createElement('div', { className: 'modal-buttons' }, [
+        createElement('button', { id: 'confirmModalCancel', className: 'btn' }, 'Cancel'),
+        createElement('button', { id: 'confirmModalConfirm', className: 'btn danger' }, 'Confirm')
+      ])
+    ])
+  ]);
   
   document.body.appendChild(modal);
   return modal;

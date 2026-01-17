@@ -2,6 +2,7 @@ import { USER_BRANCHES, FEATURE_PATTERNS, STORAGE_KEYS } from '../utils/constant
 import { getBranches } from './github-api.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { initDropdown } from './dropdown.js';
+import { createElement, clearElement } from '../utils/dom-helpers.js';
 
 let branchSelect = null;
 let branchDropdownBtn = null;
@@ -155,7 +156,8 @@ export async function loadBranches() {
   if (!branchSelect) return;
 
   branchSelect.disabled = true;
-  branchSelect.innerHTML = `<option>Loading branches…</option>`;
+  clearElement(branchSelect);
+  branchSelect.appendChild(createElement('option', {}, 'Loading branches…'));
 
   try {
     // Check cache first
@@ -190,7 +192,7 @@ export async function loadBranches() {
     userBranchesArr.sort((a, b) => a.name.localeCompare(b.name));
     featureBranches.sort((a, b) => a.name.localeCompare(b.name));
 
-    branchSelect.innerHTML = '';
+    clearElement(branchSelect);
 
     for (const b of mainBranches) {
       const opt = document.createElement('option');
@@ -279,7 +281,7 @@ export async function loadBranches() {
         }
       };
 
-      branchDropdownMenu.innerHTML = '';
+      clearElement(branchDropdownMenu);
       if (mainBranches.length > 0) {
         addGroupHeader(`Main Branches (${mainBranches.length})`);
         addItems(mainBranches);
@@ -298,7 +300,8 @@ export async function loadBranches() {
       if (labelEl) labelEl.textContent = `${currentBranch}`;
     }
   } catch (e) {
-    branchSelect.innerHTML = `<option value="${currentBranch}">${currentBranch}</option>`;
+    clearElement(branchSelect);
+    branchSelect.appendChild(createElement('option', { value: currentBranch }, currentBranch));
     branchSelect.title = (e && e.message) ? e.message : 'Failed to load branches';
   } finally {
     branchSelect.disabled = false;

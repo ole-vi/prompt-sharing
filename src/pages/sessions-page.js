@@ -1,6 +1,7 @@
 import { waitForFirebase } from '../shared-init.js';
 import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js';
 import { attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
+import { createElement, clearElement } from '../utils/dom-helpers.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -50,11 +51,13 @@ async function loadSessionsPage() {
         loadMoreSection.classList.add('hidden');
       }
     } else if (allSessionsCache.length === 0) {
-      allSessionsList.innerHTML = '<div class="muted text-center pad-lg">No sessions found</div>';
+      clearElement(allSessionsList);
+      allSessionsList.appendChild(createElement('div', { className: 'muted text-center pad-lg' }, 'No sessions found'));
     }
   } catch (error) {
     if (allSessionsCache.length === 0) {
-      allSessionsList.innerHTML = `<div class="text-center pad-lg" style="color:#e74c3c;">Failed to load sessions: ${error.message}</div>`;
+      clearElement(allSessionsList);
+      allSessionsList.appendChild(createElement('div', { className: 'text-center pad-lg', style: { color: '#e74c3c' } }, `Failed to load sessions: ${error.message}`));
     }
     loadMoreBtn.disabled = false;
     loadMoreBtn.textContent = 'Load More';
@@ -86,12 +89,13 @@ function renderAllSessions(sessions) {
     filteredSessions = cachedFuseInstance.search(searchTerm).map(result => result.item);
   }
   
+  clearElement(allSessionsList);
   if (filteredSessions.length === 0 && searchTerm) {
-    allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions match your search</div>';
+    allSessionsList.appendChild(createElement('div', { style: { color: 'var(--muted)', textAlign: 'center', padding: '24px' } }, 'No sessions match your search'));
     return;
   }
   
-  allSessionsList.innerHTML = filteredSessions.map(session => {
+  filteredSessions.forEach(session => {
     const state = session.state || 'UNKNOWN';
     const stateIcons = {
       'COMPLETED': 'check_circle',
@@ -119,20 +123,53 @@ function renderAllSessions(sessions) {
     
     const sessionId = session.name?.split('sessions/')[1] || session.id?.split('sessions/')[1] || session.id;
     const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
+    const cleanId = sessionId.replace(/[^a-zA-Z0-9]/g, '_');
     
-    return `
-      <div class="session-card" onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
-        <div class="session-meta">${createdAt}</div>
-        <div class="session-prompt">${displayPrompt}</div>
-        <div class="session-row">
-          <span class="session-pill"><span class="icon icon-inline" aria-hidden="true">${stateIcon}</span> ${stateLabel}</span>
-          ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" onclick="event.stopPropagation()"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a>` : ''}
-          <span class="session-hint"><span class="icon icon-inline" aria-hidden="true">info</span> Click to view session</span>
-          <button class="btn-icon session-view-btn" onclick="event.stopPropagation(); window.viewPrompt_${sessionId.replace(/[^a-zA-Z0-9]/g, '_')}()" title="View full prompt"><span class="icon" aria-hidden="true">visibility</span></button>
-        </div>
-      </div>
-    `;
-  }).join('');
+    const card = createElement('div', {
+        className: 'session-card',
+        onClick: () => window.open(sessionUrl, '_blank', 'noopener')
+    });
+
+    card.appendChild(createElement('div', { className: 'session-meta' }, createdAt));
+    card.appendChild(createElement('div', { className: 'session-prompt' }, displayPrompt));
+
+    const row = createElement('div', { className: 'session-row' });
+
+    row.appendChild(createElement('span', { className: 'session-pill' }, [
+        createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, stateIcon),
+        ` ${stateLabel}`
+    ]));
+
+    if (prUrl) {
+        row.appendChild(createElement('a', {
+            href: prUrl,
+            target: '_blank',
+            rel: 'noopener',
+            className: 'small-text',
+            onClick: (e) => e.stopPropagation()
+        }, [
+            createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'link'),
+            ' View PR'
+        ]));
+    }
+
+    row.appendChild(createElement('span', { className: 'session-hint' }, [
+        createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'info'),
+        ' Click to view session'
+    ]));
+
+    row.appendChild(createElement('button', {
+        className: 'btn-icon session-view-btn',
+        title: 'View full prompt',
+        onClick: (e) => {
+            e.stopPropagation();
+            if (window[`viewPrompt_${cleanId}`]) window[`viewPrompt_${cleanId}`]();
+        }
+    }, [ createElement('span', { className: 'icon', 'aria-hidden': 'true' }, 'visibility') ]));
+
+    card.appendChild(row);
+    allSessionsList.appendChild(card);
+  });
   
   attachPromptViewerHandlers(filteredSessions);
 }

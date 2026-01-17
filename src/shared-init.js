@@ -7,6 +7,7 @@ import { initBranchSelector, loadBranches, loadBranchFromStorage } from './modul
 import { OWNER, REPO, BRANCH } from './utils/constants.js';
 import { parseParams } from './utils/url-params.js';
 import statusBar from './modules/status-bar.js';
+import { createElement, clearElement } from './utils/dom-helpers.js';
 
 let isInitialized = false;
 
@@ -158,7 +159,8 @@ async function initializeSharedComponents(activePage) {
 
       const repoPill = document.getElementById('repoPill');
       if (repoPill) {
-        repoPill.innerHTML = `<strong>${currentOwner}/${currentRepo}</strong>`;
+        clearElement(repoPill);
+        repoPill.appendChild(createElement('strong', {}, `${currentOwner}/${currentRepo}`));
       }
 
       fetchVersion();

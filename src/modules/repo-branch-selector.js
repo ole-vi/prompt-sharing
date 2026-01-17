@@ -1,5 +1,6 @@
 import { getCurrentUser } from './auth.js';
 import { showToast } from './toast.js';
+import { createElement, clearElement } from '../utils/dom-helpers.js';
 
 function extractDefaultBranch(source) {
   const defaultBranchObj = source?.githubRepo?.defaultBranch ||
@@ -163,7 +164,7 @@ export class RepoSelector {
   }
 
   async populateDropdown() {
-    this.dropdownMenu.innerHTML = '';
+    clearElement(this.dropdownMenu);
     
     const loadingIndicator = document.createElement('div');
     loadingIndicator.style.cssText = 'padding:12px; text-align:center; color:var(--muted); font-size:13px;';
@@ -174,12 +175,12 @@ export class RepoSelector {
     await new Promise(resolve => setTimeout(resolve, 0));
     
     if (this.showFavorites && this.favorites && this.favorites.length > 0) {
-      this.dropdownMenu.innerHTML = '';
+      clearElement(this.dropdownMenu);
       await this.renderFavorites();
       this.addShowMoreButton();
     } else {
       await this.loadAllRepos();
-      this.dropdownMenu.innerHTML = '';
+      clearElement(this.dropdownMenu);
       this.renderAllRepos();
     }
     
@@ -320,9 +321,10 @@ export class RepoSelector {
     }
     
     const star = document.createElement('span');
-    star.innerHTML = isFavorite 
-      ? '<span class="icon icon-inline" aria-hidden="true">star</span>'
-      : '<span class="icon icon-inline" aria-hidden="true">star_border</span>';
+    star.appendChild(createElement('span', {
+      className: 'icon icon-inline',
+      'aria-hidden': 'true'
+    }, isFavorite ? 'star' : 'star_border'));
     star.style.cssText = `font-size:18px; cursor:pointer; color:${isFavorite ? 'var(--accent)' : 'var(--muted)'}; flex-shrink:0;`;
     star.onclick = async (e) => {
       e.stopPropagation();
@@ -551,7 +553,7 @@ export class BranchSelector {
       return;
     }
     
-    this.dropdownMenu.innerHTML = '';
+    clearElement(this.dropdownMenu);
     
     const currentItem = document.createElement('div');
     currentItem.className = 'custom-dropdown-item selected';

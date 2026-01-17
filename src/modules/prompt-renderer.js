@@ -1,7 +1,7 @@
 import { slugify } from '../utils/slug.js';
 import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './github-api.js';
 import { CODEX_URL_REGEX } from '../utils/constants.js';
-import { setElementDisplay } from '../utils/dom-helpers.js';
+import { setElementDisplay, createElement, clearElement } from '../utils/dom-helpers.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
 
@@ -38,7 +38,8 @@ export function initPromptRenderer() {
   actionsEl = document.getElementById('actions');
   copyBtn = document.getElementById('copyBtn');
   copenBtn = document.getElementById('copenBtn');
-  if (copenBtn) originalCopenLabel = copenBtn.innerHTML;
+  // Store cloned nodes instead of HTML string
+  if (copenBtn) originalCopenLabel = Array.from(copenBtn.childNodes).map(n => n.cloneNode(true));
   rawBtn = document.getElementById('rawBtn');
   ghBtn = document.getElementById('ghBtn');
   editBtn = document.getElementById('editBtn');
@@ -158,7 +159,7 @@ async function handleBranchChanged() {
   setElementDisplay(metaEl, false);
   setElementDisplay(actionsEl, false);
   setElementDisplay(emptyEl, false);
-  if (contentEl) contentEl.innerHTML = '';
+  if (contentEl) clearElement(contentEl);
   setCurrentSlug(null);
   currentPromptText = null;
   updateActiveItem();
@@ -297,14 +298,28 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   const moreRawBtn = document.getElementById('moreRawBtn');
   
   if (isGistContent && gistUrl) {
-    editBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
+    clearElement(editBtn);
+    editBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'edit'));
+    editBtn.appendChild(document.createTextNode(' Edit Link'));
     editBtn.title = 'Edit the gist link';
-    if (moreEditBtn) moreEditBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
     
-    ghBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on Gist';
+    if (moreEditBtn) {
+        clearElement(moreEditBtn);
+        moreEditBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'edit'));
+        moreEditBtn.appendChild(document.createTextNode(' Edit Link'));
+    }
+
+    clearElement(ghBtn);
+    ghBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'folder'));
+    ghBtn.appendChild(document.createTextNode(' View on Gist'));
     ghBtn.title = 'Open the gist on GitHub';
     ghBtn.href = gistUrl;
-    if (moreGhBtn) moreGhBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on Gist';
+
+    if (moreGhBtn) {
+        clearElement(moreGhBtn);
+        moreGhBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'folder'));
+        moreGhBtn.appendChild(document.createTextNode(' View on Gist'));
+    }
     
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
@@ -317,15 +332,29 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     rawBtn.removeAttribute('download');
     rawBtn.title = 'Open gist content in new tab';
   } else if (isCodexContent && codexUrl) {
-    editBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
+    clearElement(editBtn);
+    editBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'edit'));
+    editBtn.appendChild(document.createTextNode(' Edit Link'));
     editBtn.title = 'Edit the codex link';
-    if (moreEditBtn) moreEditBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
     
-    ghBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">chat_bubble</span> View on Codex';
+    if (moreEditBtn) {
+        clearElement(moreEditBtn);
+        moreEditBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'edit'));
+        moreEditBtn.appendChild(document.createTextNode(' Edit Link'));
+    }
+
+    clearElement(ghBtn);
+    ghBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'chat_bubble'));
+    ghBtn.appendChild(document.createTextNode(' View on Codex'));
     ghBtn.title = 'Open the conversation on Codex';
     ghBtn.href = codexUrl;
     ghBtn.target = '_blank';
-    if (moreGhBtn) moreGhBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">chat_bubble</span> View on Codex';
+
+    if (moreGhBtn) {
+        clearElement(moreGhBtn);
+        moreGhBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'chat_bubble'));
+        moreGhBtn.appendChild(document.createTextNode(' View on Codex'));
+    }
     
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
@@ -339,14 +368,28 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     rawBtn.removeAttribute('download');
     rawBtn.title = 'Open raw link in new tab';
   } else {
-    editBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub';
+    clearElement(editBtn);
+    editBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'edit'));
+    editBtn.appendChild(document.createTextNode(' Edit on GitHub'));
     editBtn.title = 'Edit the file on GitHub';
-    if (moreEditBtn) moreEditBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub';
     
-    ghBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub';
+    if (moreEditBtn) {
+        clearElement(moreEditBtn);
+        moreEditBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'edit'));
+        moreEditBtn.appendChild(document.createTextNode(' Edit on GitHub'));
+    }
+
+    clearElement(ghBtn);
+    ghBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'folder'));
+    ghBtn.appendChild(document.createTextNode(' View on GitHub'));
     ghBtn.title = 'Open the file on GitHub';
     ghBtn.href = `https://github.com/${owner}/${repo}/blob/${branch}/${f.path}`;
-    if (moreGhBtn) moreGhBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub';
+
+    if (moreGhBtn) {
+        clearElement(moreGhBtn);
+        moreGhBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'folder'));
+        moreGhBtn.appendChild(document.createTextNode(' View on GitHub'));
+    }
     
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
@@ -359,11 +402,18 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
 
   if (isCodexContent) {
     copyBtn.classList.add('hidden');
-    shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
+    clearElement(shareBtn);
+    shareBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'link'));
+    shareBtn.appendChild(document.createTextNode(' Copy link'));
   } else {
     copyBtn.classList.remove('hidden');
-    copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy prompt';
-    shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
+    clearElement(copyBtn);
+    copyBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'content_copy'));
+    copyBtn.appendChild(document.createTextNode(' Copy prompt'));
+
+    clearElement(shareBtn);
+    shareBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'link'));
+    shareBtn.appendChild(document.createTextNode(' Copy link'));
   }
 
   // Update title and content
@@ -392,11 +442,12 @@ function enhanceCodeBlocks() {
   const pres = contentEl.querySelectorAll('pre');
   pres.forEach((pre) => {
     if (pre.querySelector('.copy-code-btn')) return;
-    const btn = document.createElement('button');
-    btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">content_copy</span>';
-    btn.className = 'copy-code-btn';
-    btn.dataset.action = 'copy-code';
-    btn.title = 'Copy code';
+    const btn = createElement('button', {
+        className: 'copy-code-btn',
+        'data-action': 'copy-code',
+        title: 'Copy code'
+    }, [ createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'content_copy') ]);
+
     const wrapper = document.createElement('div');
     wrapper.className = 'code-block-wrapper';
     pre.parentNode.insertBefore(wrapper, pre);
@@ -413,11 +464,15 @@ function enhanceCodeBlocks() {
           const code = pre.innerText;
           try {
             await navigator.clipboard.writeText(code);
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span>';
+            const originalNodes = Array.from(btn.childNodes).map(n => n.cloneNode(true));
+
+            clearElement(btn);
+            btn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'check_circle'));
+
             btn.classList.add('copied');
             setTimeout(() => {
-              btn.innerHTML = originalHTML;
+              clearElement(btn);
+              originalNodes.forEach(n => btn.appendChild(n));
               btn.classList.remove('copied');
             }, 900);
           } catch {}
@@ -431,20 +486,28 @@ function enhanceCodeBlocks() {
 async function handleCopyPrompt() {
   try {
     let contentToCopy;
-    let buttonText;
+    let buttonIcon = 'content_copy';
+    let buttonLabel = 'Copy prompt';
 
     const isCodex = getCurrentPromptText() && CODEX_URL_REGEX.test(getCurrentPromptText().trim());
     if (isCodex) {
       contentToCopy = getCurrentPromptText();
-      buttonText = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy link';
+      buttonLabel = ' Copy link';
     } else {
       contentToCopy = getCurrentPromptText();
-      buttonText = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy prompt';
+      buttonLabel = ' Copy prompt';
     }
 
     await navigator.clipboard.writeText(contentToCopy);
-    copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied';
-    setTimeout(() => (copyBtn.innerHTML = buttonText), 1000);
+    clearElement(copyBtn);
+    copyBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'check_circle'));
+    copyBtn.appendChild(document.createTextNode(' Copied'));
+
+    setTimeout(() => {
+        clearElement(copyBtn);
+        copyBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, buttonIcon));
+        copyBtn.appendChild(document.createTextNode(buttonLabel));
+    }, 1000);
   } catch {
     showToast('Clipboard blocked. Select and copy manually.', 'warn');
   }
@@ -460,8 +523,20 @@ async function handleCopenPrompt(target) {
 
     // Copy to clipboard
     await navigator.clipboard.writeText(promptText);
-    copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied!';
-    setTimeout(() => (copenBtn.innerHTML = originalCopenLabel), 1000);
+    clearElement(copenBtn);
+    copenBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'check_circle'));
+    copenBtn.appendChild(document.createTextNode(' Copied!'));
+
+    setTimeout(() => {
+        clearElement(copenBtn);
+        if (Array.isArray(originalCopenLabel)) {
+            originalCopenLabel.forEach(n => copenBtn.appendChild(n.cloneNode(true)));
+        } else {
+            // Fallback if something went wrong
+            copenBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'content_paste'));
+            copenBtn.appendChild(document.createTextNode(' Copy & Open'));
+        }
+    }, 1000);
 
     // Open appropriate tab based on target
     let url;
@@ -492,11 +567,16 @@ async function handleCopenPrompt(target) {
 async function handleShareLink() {
   try {
     await navigator.clipboard.writeText(location.href);
-    shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Link copied';
+    clearElement(shareBtn);
+    shareBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'check_circle'));
+    shareBtn.appendChild(document.createTextNode(' Link copied'));
   } catch {
     showToast('Could not copy link.', 'warn');
   } finally {
-    const originalText = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
-    setTimeout(() => (shareBtn.innerHTML = originalText), 1000);
+    setTimeout(() => {
+        clearElement(shareBtn);
+        shareBtn.appendChild(createElement('span', { className: 'icon icon-inline', 'aria-hidden': 'true' }, 'link'));
+        shareBtn.appendChild(document.createTextNode(' Copy link'));
+    }, 1000);
   }
 }
