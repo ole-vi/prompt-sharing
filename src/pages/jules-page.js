@@ -60,7 +60,7 @@ async function loadJulesInfo() {
       if (noJulesKeySection) noJulesKeySection.classList.add('hidden');
       if (julesContentSection) julesContentSection.classList.remove('hidden');
       if (dangerZoneSection) dangerZoneSection.classList.remove('hidden');
-      if (loadJulesInfoBtn) loadJulesInfoBtn.style.display = 'block';
+      if (loadJulesInfoBtn) loadJulesInfoBtn.classList.remove('hidden');
       
       // Load Jules account information
       await loadJulesAccountInfo(user);
@@ -68,7 +68,7 @@ async function loadJulesInfo() {
       if (noJulesKeySection) noJulesKeySection.classList.remove('hidden');
       if (julesContentSection) julesContentSection.classList.add('hidden');
       if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
-      if (loadJulesInfoBtn) loadJulesInfoBtn.style.display = 'none';
+      if (loadJulesInfoBtn) loadJulesInfoBtn.classList.add('hidden');
     }
   } catch (err) {
     console.error('Jules info loading error:', err);

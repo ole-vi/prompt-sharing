@@ -293,12 +293,13 @@ setElementDisplay(element, isVisible);
 ### Avoid Direct Style Manipulation
 
 ```javascript
-// ❌ Avoid: Direct style manipulation
+// ❌ Avoid: Direct style manipulation for visibility
 element.style.display = 'none';
 element.style.display = 'block';
 ```
 
-**Exception**: Use direct manipulation only when dynamic values are required (e.g., positioning, animations).
+**Exception**: Use direct style manipulation (`style.top`, `style.left`, etc.) for dynamic positioning (e.g., tooltips, custom dropdowns) or animations.
+When toggling visibility, always prefer `classList.add('hidden')` and `classList.remove('hidden')`.
 
 ---
 

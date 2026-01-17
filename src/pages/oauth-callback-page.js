@@ -65,16 +65,16 @@
   function showError(message) {
     const messageEl = document.querySelector('.message');
     const spinner = document.querySelector('.spinner');
-    spinner.style.display = 'none';
-    messageEl.style.display = 'none';
+    spinner.classList.add('hidden');
+    messageEl.classList.add('hidden');
     statusDiv.innerHTML = `<div class="error">${message}</div>`;
   }
 
   function showSuccess(message) {
     const messageEl = document.querySelector('.message');
     const spinner = document.querySelector('.spinner');
-    spinner.style.display = 'none';
-    messageEl.style.display = 'none';
+    spinner.classList.add('hidden');
+    messageEl.classList.add('hidden');
     statusDiv.innerHTML = `<div class="success">${message}</div>`;
   }
 })();

@@ -88,25 +88,25 @@ export async function updateAuthUI(user) {
         userAvatar.src = avatarUrl;
         userAvatar.alt = displayName;
         userAvatar.classList.remove('hidden');
-        userDisplay.style.display = 'none';
+        userDisplay.classList.add('hidden');
       } else {
-        userDisplay.style.display = 'flex';
+        userDisplay.classList.remove('hidden');
         userAvatar.classList.add('hidden');
         userAvatar.onload = () => {
           userAvatar.classList.remove('hidden');
-          userDisplay.style.display = 'none';
+          userDisplay.classList.add('hidden');
           setCache('USER_AVATAR', user.photoURL, user.uid);
         };
         userAvatar.onerror = () => {
           userAvatar.classList.add('hidden');
-          userDisplay.style.display = 'flex';
+          userDisplay.classList.remove('hidden');
         };
         userAvatar.src = user.photoURL;
         userAvatar.alt = displayName;
       }
     } else {
       userAvatar.classList.add('hidden');
-      userDisplay.style.display = 'flex';
+      userDisplay.classList.remove('hidden');
     }
     
     if (dropdownUserName) {
@@ -120,7 +120,7 @@ export async function updateAuthUI(user) {
       const cachedAvatar = getCache('USER_AVATAR', user.uid);
       dropdownAvatar.src = cachedAvatar || user.photoURL;
       dropdownAvatar.alt = displayName;
-      dropdownAvatar.style.display = 'block';
+      dropdownAvatar.classList.remove('hidden');
     }
     
     if (signInItem) {
@@ -133,7 +133,7 @@ export async function updateAuthUI(user) {
     }
   } else {
     if (userAvatar) userAvatar.classList.add('hidden');
-    if (userDisplay) userDisplay.style.display = 'flex';
+    if (userDisplay) userDisplay.classList.remove('hidden');
     
     if (dropdownUserName) {
       dropdownUserName.textContent = 'Guest';
@@ -141,7 +141,7 @@ export async function updateAuthUI(user) {
         dropdownUserName.nextElementSibling.textContent = 'Not signed in';
       }
     }
-    if (dropdownAvatar) dropdownAvatar.style.display = 'none';
+    if (dropdownAvatar) dropdownAvatar.classList.add('hidden');
     
     if (signInItem) {
       signInItem.classList.remove('hidden');

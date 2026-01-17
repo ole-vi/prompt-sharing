@@ -19,7 +19,7 @@ function setupClickOutsideClose(targetBtn, targetMenu) {
   
   const closeDropdown = (e) => {
     if (!targetBtn.contains(e.target) && !targetMenu.contains(e.target)) {
-      targetMenu.style.display = 'none';
+      targetMenu.classList.add('hidden');
     }
   };
   
@@ -142,8 +142,9 @@ export class RepoSelector {
   setupDropdownToggle() {
     this.dropdownBtn.onclick = async (e) => {
       e.stopPropagation();
-      if (this.dropdownMenu.style.display === 'block') {
-        this.dropdownMenu.style.display = 'none';
+      const isOpen = !this.dropdownMenu.classList.contains('hidden') && this.dropdownMenu.style.display !== 'none';
+      if (isOpen) {
+        this.dropdownMenu.classList.add('hidden');
         return;
       }
       
@@ -169,7 +170,9 @@ export class RepoSelector {
     loadingIndicator.style.cssText = 'padding:12px; text-align:center; color:var(--muted); font-size:13px;';
     loadingIndicator.textContent = 'Loading...';
     this.dropdownMenu.appendChild(loadingIndicator);
-    this.dropdownMenu.style.display = 'block';
+    // Clear inline display style
+    this.dropdownMenu.style.display = '';
+    this.dropdownMenu.classList.remove('hidden');
     
     await new Promise(resolve => setTimeout(resolve, 0));
     
@@ -183,7 +186,7 @@ export class RepoSelector {
       this.renderAllRepos();
     }
     
-    this.dropdownMenu.style.display = 'block';
+    this.dropdownMenu.classList.remove('hidden');
   }
 
   async renderFavorites() {
@@ -191,7 +194,7 @@ export class RepoSelector {
       const item = this.createRepoItem(fav.name, fav.id, true, async () => {
         this.selectedSourceId = fav.id;
         this.dropdownText.textContent = fav.name;
-        this.dropdownMenu.style.display = 'none';
+        this.dropdownMenu.classList.add('hidden');
         
         // Save repo selection
         this.saveToStorage();
@@ -245,7 +248,7 @@ export class RepoSelector {
         }
       }
       
-      showMoreBtn.style.display = 'none';
+      showMoreBtn.classList.add('hidden');
       this.renderAllRepos();
     };
     
@@ -296,7 +299,7 @@ export class RepoSelector {
       const item = this.createRepoItem(repoName, source.name || source.id, false, () => {
         this.selectedSourceId = source.name || source.id;
         this.dropdownText.textContent = repoName;
-        this.dropdownMenu.style.display = 'none';
+        this.dropdownMenu.classList.add('hidden');
         
         // Save repo selection
         this.saveToStorage();
@@ -328,7 +331,7 @@ export class RepoSelector {
       e.stopPropagation();
       if (isFavorite) {
         await this.removeFavorite(id);
-        this.dropdownMenu.style.display = 'none';
+        this.dropdownMenu.classList.add('hidden');
         setTimeout(() => this.populateDropdown(), 0);
       } else {
         const defaultBranch = extractDefaultBranch(this.allSources.find(s => (s.name || s.id) === id));
@@ -525,8 +528,9 @@ export class BranchSelector {
   setupDropdownToggle() {
     this.dropdownBtn.onclick = (e) => {
       e.stopPropagation();
-      if (this.dropdownMenu.style.display === 'block') {
-        this.dropdownMenu.style.display = 'none';
+      const isOpen = !this.dropdownMenu.classList.contains('hidden') && this.dropdownMenu.style.display !== 'none';
+      if (isOpen) {
+        this.dropdownMenu.classList.add('hidden');
         return;
       }
       
@@ -557,7 +561,7 @@ export class BranchSelector {
     currentItem.className = 'custom-dropdown-item selected';
     currentItem.textContent = this.selectedBranch;
     currentItem.onclick = () => {
-      this.dropdownMenu.style.display = 'none';
+      this.dropdownMenu.classList.add('hidden');
     };
     this.dropdownMenu.appendChild(currentItem);
     
@@ -587,7 +591,7 @@ export class BranchSelector {
         }
 
         this.allBranchesLoaded = true;
-        showMoreBtn.style.display = 'none';
+        showMoreBtn.classList.add('hidden');
         
         allBranches.forEach(branch => {
           if (branch.name === this.selectedBranch) return;
@@ -598,7 +602,7 @@ export class BranchSelector {
           
           item.onclick = () => {
             this.setSelectedBranch(branch.name);
-            this.dropdownMenu.style.display = 'none';
+            this.dropdownMenu.classList.add('hidden');
           };
           
           this.dropdownMenu.appendChild(item);
@@ -613,7 +617,9 @@ export class BranchSelector {
     
     this.dropdownMenu.appendChild(showMoreBtn);
     
-    this.dropdownMenu.style.display = 'block';
+    // Clear inline display style
+    this.dropdownMenu.style.display = '';
+    this.dropdownMenu.classList.remove('hidden');
   }
 
   setSelectedBranch(branch) {

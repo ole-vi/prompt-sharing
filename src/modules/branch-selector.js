@@ -270,7 +270,7 @@ export async function loadBranches() {
             branchSelect.value = b.name;
             handleBranchChange();
             // Close menu and update label
-            branchDropdownMenu.style.display = 'none';
+            branchDropdownMenu.classList.add('hidden');
             branchDropdownBtn.setAttribute('aria-expanded', 'false');
             const labelEl = document.getElementById('branchDropdownLabel');
             if (labelEl) labelEl.textContent = `${b.name}`;

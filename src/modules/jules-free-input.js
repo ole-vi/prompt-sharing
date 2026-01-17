@@ -62,13 +62,10 @@ export function showFreeInputForm() {
   const content = document.getElementById('content');
   
   empty.classList.add('hidden');
-  if (title) title.style.display = 'none';
-  if (meta) meta.style.display = 'none';
-  if (actions) actions.style.display = 'none';
-  if (content) {
-    content.style.display = 'none';
-    content.classList.add('hidden');
-  }
+  if (title) title.classList.add('hidden');
+  if (meta) meta.classList.add('hidden');
+  if (actions) actions.classList.add('hidden');
+  if (content) content.classList.add('hidden');
   
   freeInputSection.classList.remove('hidden');
   
@@ -322,7 +319,7 @@ export function showFreeInputForm() {
   
   copenBtn.onclick = (e) => {
     e.stopPropagation();
-    copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
+    copenMenu.classList.toggle('hidden');
   };
   
   if (copenMenu) {
@@ -331,14 +328,14 @@ export function showFreeInputForm() {
         e.stopPropagation();
         const target = item.dataset.target;
         await handleCopen(target);
-        copenMenu.style.display = 'none';
+        copenMenu.classList.add('hidden');
       };
     });
   }
   
   const closeCopenMenu = (e) => {
     if (!copenBtn.contains(e.target) && !copenMenu.contains(e.target)) {
-      copenMenu.style.display = 'none';
+      copenMenu.classList.add('hidden');
     }
   };
   document.addEventListener('click', closeCopenMenu);
@@ -367,10 +364,10 @@ export function hideFreeInputForm() {
   
   // Restore the main content area elements
   empty.classList.remove('hidden');
-  if (title) title.style.display = '';
-  if (meta) meta.style.display = '';
-  if (actions) actions.style.display = '';
-  if (content) content.style.display = '';
+  if (title) title.classList.remove('hidden');
+  if (meta) meta.classList.remove('hidden');
+  if (actions) actions.classList.remove('hidden');
+  if (content) content.classList.remove('hidden');
 }
 
 async function populateFreeInputRepoSelection() {
