@@ -472,14 +472,14 @@ async function handleCopenPrompt(target) {
       case 'codex':
         url = 'https://chatgpt.com/codex';
         break;
+      case 'copilot':
+        url = 'https://github.com/copilot/agents';
+        break;
       case 'gemini':
         url = 'https://gemini.google.com/app';
         break;
       case 'chatgpt':
         url = 'https://chatgpt.com/';
-        break;
-      case 'github-copilot':
-        url = 'https://github.com/copilot/agents';
         break;
       case 'blank':
       default:
