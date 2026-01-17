@@ -143,6 +143,15 @@ export const RETRY_CONFIG = {
  * @typedef {object} Timeouts
  * @property {number} statusBar - The duration in milliseconds to display a status bar message.
  * @property {number} fetch - The timeout in milliseconds for fetch requests.
+ * @property {number} componentCheck - Interval for checking if components are loaded (50ms).
+ * @property {number} windowClose - Delay before closing the window (2000ms).
+ * @property {number} uiDelay - Standard delay for UI updates to avoid flicker (500ms).
+ * @property {number} longDelay - Long delay for retries or significant pauses (5000ms).
+ * @property {number} toast - Default duration for toast messages (3000ms).
+ * @property {number} copyFeedback - Duration to show "Copied!" feedback (1000ms).
+ * @property {number} queueDelay - Delay between queue processing items (800ms).
+ * @property {number} firebaseRetry - Interval for retrying Firebase initialization (100ms).
+ * @property {number} modalFocus - Delay to set focus in modals (100ms).
  */
 
 /**
@@ -151,7 +160,32 @@ export const RETRY_CONFIG = {
  */
 export const TIMEOUTS = {
   statusBar: 3000,
-  fetch: 5000
+  fetch: 5000,
+  componentCheck: 50,
+  windowClose: 2000,
+  uiDelay: 500,
+  longDelay: 5000,
+  toast: 3000,
+  copyFeedback: 1000,
+  queueDelay: 800,
+  firebaseRetry: 100,
+  modalFocus: 100,
+  actionFeedback: 2000
+};
+
+/**
+ * @typedef {object} Limits
+ * @property {number} firebaseMaxAttempts - Maximum attempts to initialize Firebase (300).
+ * @property {number} componentMaxAttempts - Maximum attempts to wait for components (100).
+ */
+
+/**
+ * Limits for various operations.
+ * @type {Limits}
+ */
+export const LIMITS = {
+  firebaseMaxAttempts: 300,
+  componentMaxAttempts: 100
 };
 
 /**

@@ -12,7 +12,7 @@ import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
-import { JULES_MESSAGES } from '../utils/constants.js';
+import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';
 
 // Module state
 let currentFullPrompt = '';
@@ -252,7 +252,7 @@ async function submitSubtasks(subtasks) {
   
   if (!subtasks || subtasks.length === 0) {
     let retryCount = 0;
-    let maxRetries = 3;
+    let maxRetries = RETRY_CONFIG.maxRetries;
     let submitted = false;
 
     while (retryCount < maxRetries && !submitted) {
@@ -277,14 +277,14 @@ async function submitSubtasks(subtasks) {
             return;
           } else if (result.action === 'retry') {
             if (result.shouldDelay) {
-              await new Promise(resolve => setTimeout(resolve, 5000));
+              await new Promise(resolve => setTimeout(resolve, TIMEOUTS.longDelay));
             }
           }
         } else {
           const result = await showSubtaskErrorModal(1, 1, error);
           if (result.action === 'retry') {
             if (result.shouldDelay) {
-              await new Promise(resolve => setTimeout(resolve, 5000));
+              await new Promise(resolve => setTimeout(resolve, TIMEOUTS.longDelay));
             }
             try {
               const title = extractTitleFromPrompt(currentFullPrompt);
@@ -305,7 +305,7 @@ async function submitSubtasks(subtasks) {
       }
 
       if (!submitted) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, RETRY_CONFIG.baseDelay));
       }
     }
     return;
@@ -338,7 +338,7 @@ async function submitSubtasks(subtasks) {
   statusBar?.showMessage?.(`Processing ${totalCount} subtasks...`, { timeout: 0 });
   statusBar?.setAction?.('Pause', () => {
     paused = true;
-    statusBar?.showMessage?.('Pausing after current subtask...', { timeout: 3000 });
+    statusBar?.showMessage?.('Pausing after current subtask...', { timeout: TIMEOUTS.statusBar });
     statusBar?.clearAction?.();
   });
   
@@ -346,7 +346,7 @@ async function submitSubtasks(subtasks) {
     const subtask = sequenced[i];
     
     let retryCount = 0;
-    let maxRetries = 3;
+    let maxRetries = RETRY_CONFIG.maxRetries;
     let submitted = false;
 
     while (retryCount < maxRetries && !submitted) {
@@ -383,13 +383,13 @@ async function submitSubtasks(subtasks) {
                 totalCount,
                 note: 'Paused by user'
               });
-              statusBar?.showMessage?.(`Paused and queued ${remaining.length} remaining subtasks`, { timeout: 4000 });
+              statusBar?.showMessage?.(`Paused and queued ${remaining.length} remaining subtasks`, { timeout: TIMEOUTS.longDelay });
             } catch (err) {
               console.warn('Failed to queue remaining subtasks on pause', err.message || err);
-              statusBar?.showMessage?.('Paused but failed to save remaining subtasks', { timeout: 4000 });
+              statusBar?.showMessage?.('Paused but failed to save remaining subtasks', { timeout: TIMEOUTS.longDelay });
             }
           } else {
-            statusBar?.showMessage?.('Paused', { timeout: 3000 });
+            statusBar?.showMessage?.('Paused', { timeout: TIMEOUTS.statusBar });
           }
           statusBar?.clear?.();
           // Only reload queue page if we're actually on that page
@@ -416,7 +416,7 @@ async function submitSubtasks(subtasks) {
           } else if (result.action === 'skip') {
             skippedCount++;
             submitted = true;
-            statusBar?.showMessage?.(`Skipped subtask. Continuing with remaining...`, { timeout: 2000 });
+            statusBar?.showMessage?.(`Skipped subtask. Continuing with remaining...`, { timeout: TIMEOUTS.actionFeedback });
           } else if (result.action === 'queue') {
             const user = window.auth?.currentUser;
             if (!user) {
@@ -444,7 +444,7 @@ async function submitSubtasks(subtasks) {
             return;
           } else if (result.action === 'retry') {
             if (result.shouldDelay) {
-              await new Promise(resolve => setTimeout(resolve, 5000));
+              await new Promise(resolve => setTimeout(resolve, TIMEOUTS.longDelay));
             }
           }
         } else {
@@ -487,13 +487,13 @@ async function submitSubtasks(subtasks) {
             }
             skippedCount++;
             submitted = true;
-            statusBar?.showMessage?.(`Skipped subtask. Continuing with remaining...`, { timeout: 2000 });
+            statusBar?.showMessage?.(`Skipped subtask. Continuing with remaining...`, { timeout: TIMEOUTS.actionFeedback });
           }
         }
       }
 
       if (!submitted && i < sequenced.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, RETRY_CONFIG.baseDelay));
       }
     }
   }

@@ -9,12 +9,13 @@ import { showJulesKeyModal } from '../modules/jules-modal.js';
 import { deleteStoredJulesKey, checkJulesKey } from '../modules/jules-keys.js';
 import { showToast } from '../modules/toast.js';
 import { showConfirm } from '../modules/confirm-modal.js';
+import { TIMEOUTS } from '../utils/constants.js';
 
 function waitForComponents() {
   if (document.querySelector('header')) {
     initApp();
   } else {
-    setTimeout(waitForComponents, 50);
+    setTimeout(waitForComponents, TIMEOUTS.componentCheck);
   }
 }
 

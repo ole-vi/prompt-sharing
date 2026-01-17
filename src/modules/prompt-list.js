@@ -1,20 +1,19 @@
 import { slugify } from '../utils/slug.js';
 import { STORAGE_KEYS, TAG_DEFINITIONS } from '../utils/constants.js';
+import { debounce } from '../utils/debounce.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
-import { clearElement, stopPropagation, createElement } from '../utils/dom-helpers.js';
+import { clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
+import * as folderSubmenu from './folder-submenu.js';
 
 let files = [];
 let expandedState = new Set();
 let expandedStateKey = null;
-let openSubmenus = new Set();
-let activeSubmenuHeaders = new Set();
 let currentSlug = null;
 let currentOwner = null;
 let currentRepo = null;
 let currentBranch = null;
 let listEl = null;
 let searchEl = null;
-let submenuEl = null;
 let selectFileCallback = null;
 let cachedFiles = null;
 let cachedItemsWithTags = null;
@@ -28,16 +27,21 @@ export function setRepoContext(owner, repo, branch) {
   currentOwner = owner;
   currentRepo = repo;
   currentBranch = branch;
+  folderSubmenu.setContext(owner, repo, branch);
 }
 
 export function initPromptList() {
   listEl = document.getElementById('list');
   searchEl = document.getElementById('search');
   const searchClearBtn = document.getElementById('searchClear');
+
+  const debouncedRender = debounce(() => {
+    renderList(files, currentOwner, currentRepo, currentBranch);
+  }, 300);
   
   if (searchEl) {
     searchEl.addEventListener('input', () => {
-      renderList(files, currentOwner, currentRepo, currentBranch);
+      // Immediate UI updates
       if (searchClearBtn) {
         if (searchEl.value) {
           searchClearBtn.classList.remove('hidden');
@@ -45,6 +49,8 @@ export function initPromptList() {
           searchClearBtn.classList.add('hidden');
         }
       }
+      // Debounced search
+      debouncedRender();
     });
   }
   
@@ -56,21 +62,14 @@ export function initPromptList() {
       renderList(files, currentOwner, currentRepo, currentBranch);
     });
   }
-  createSubmenu();
-  document.addEventListener('click', handleDocumentClick);
+  folderSubmenu.init();
   listEl.addEventListener('click', handleListClick);
 }
 
 export function destroyPromptList() {
-  document.removeEventListener('click', handleDocumentClick);
-  if (submenuEl && submenuEl.parentNode) {
-    submenuEl.parentNode.removeChild(submenuEl);
-  }
-  submenuEl = null;
+  folderSubmenu.destroy();
   files = [];
   expandedState.clear();
-  openSubmenus.clear();
-  activeSubmenuHeaders.clear();
   currentSlug = null;
   currentOwner = null;
   currentRepo = null;
@@ -149,71 +148,6 @@ export function toggleDirectory(path, expand) {
   renderList(files, currentOwner, currentRepo, currentBranch);
 }
 
-function closeAllSubmenus() {
-  if (submenuEl) {
-    submenuEl.classList.remove('folder-submenu--visible');
-    submenuEl.style.visibility = '';
-  }
-  activeSubmenuHeaders.forEach(header => {
-    header.classList.remove('submenu-open');
-  });
-  openSubmenus.clear();
-  activeSubmenuHeaders.clear();
-}
-
-function createSubmenu() {
-  if (submenuEl) return;
-  
-  submenuEl = document.createElement('div');
-  submenuEl.className = 'folder-submenu';
-  
-  const makeMenuItem = (label, emoji, dataAction) => {
-    const item = document.createElement('div');
-    item.className = 'folder-submenu-item';
-    item.innerHTML = `${emoji} ${label}`;
-    item.dataset.action = dataAction;
-    return item;
-  };
-  
-  submenuEl.appendChild(makeMenuItem('Prompt (blank)', '<span class="icon icon-inline" aria-hidden="true">edit_note</span>', 'create-prompt'));
-  submenuEl.appendChild(makeMenuItem('Conversation (template)', '<span class="icon icon-inline" aria-hidden="true">chat_bubble</span>', 'create-conversation'));
-  
-  document.body.appendChild(submenuEl);
-}
-
-function handleDocumentClick(event) {
-  const target = event.target;
-  const submenuItem = target.closest('.folder-submenu-item');
-  if (submenuItem && submenuEl) {
-    event.stopPropagation();
-    const action = submenuItem.dataset.action;
-    const path = submenuEl.dataset.currentPath;
-    
-    closeAllSubmenus();
-    
-    if (action === 'create-prompt') {
-      const newFilePath = path ? `${path}/new-prompt.md` : 'new-prompt.md';
-      const ghUrl = `https://github.com/${currentOwner}/${currentRepo}/new/${currentBranch}?filename=${encodeURIComponent(newFilePath)}&ref=${encodeURIComponent(currentBranch)}`;
-      window.open(ghUrl, '_blank', 'noopener,noreferrer');
-    } else if (action === 'create-conversation') {
-      const template = `**Conversation Link (Codex, Jules, etc):** [https://chatgpt.com/s/...]
-
-### Prompt
-[paste your full prompt here]
-
-### Output
-[response(s), context, notes, or follow-up thoughts]
-`;
-      const encoded = encodeURIComponent(template);
-      const newFilePath = path ? `${path}/new-conversation.md` : 'new-conversation.md';
-      const ghUrl = `https://github.com/${currentOwner}/${currentRepo}/new/${currentBranch}?filename=${encodeURIComponent(newFilePath)}&value=${encoded}&ref=${encodeURIComponent(currentBranch)}`;
-      window.open(ghUrl, '_blank', 'noopener,noreferrer');
-    }
-    return;
-  }
-  closeAllSubmenus();
-}
-
 function handleListClick(event) {
   const target = event.target;
   const badge = target.closest('.tag-badge');
@@ -257,42 +191,8 @@ function handleListClick(event) {
   const addIcon = target.closest('[data-action="show-submenu"]');
   if (addIcon) {
     event.stopPropagation();
-    const header = addIcon.closest('.tree-dir');
     const path = addIcon.dataset.path;
-    
-    const wasOpen = submenuEl.classList.contains('folder-submenu--visible');
-    closeAllSubmenus();
-    
-    if (!wasOpen) {
-      const rect = addIcon.getBoundingClientRect();
-      submenuEl.dataset.currentPath = path;
-      submenuEl.style.visibility = 'hidden';
-      submenuEl.classList.add('folder-submenu--visible');
-      
-      const submenuRect = submenuEl.getBoundingClientRect();
-      
-      let left = rect.right;
-      let top = rect.top;
-      
-      if (left + submenuRect.width > window.innerWidth - 10) {
-        left = rect.left - submenuRect.width;
-      }
-      
-      if (top + submenuRect.height > window.innerHeight - 10) {
-        top = rect.bottom - submenuRect.height;
-      }
-      
-      if (left < 10) left = 10;
-      if (top < 10) top = 10;
-      
-      submenuEl.style.setProperty('--submenu-left', `${left}px`);
-      submenuEl.style.setProperty('--submenu-top', `${top}px`);
-      submenuEl.style.visibility = 'visible';
-      
-      openSubmenus.add(submenuEl);
-      header.classList.add('submenu-open');
-      activeSubmenuHeaders.add(header);
-    }
+    folderSubmenu.toggle(addIcon, path);
     return;
   }
   const fileLink = target.closest('.item');
