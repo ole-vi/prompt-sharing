@@ -1,8 +1,13 @@
 const functions = require("firebase-functions");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const fetch = require("node-fetch");
 
 admin.initializeApp();
+
+function formatJulesError(error, statusCode) {
+  return 'Failed to create Jules session. Most likely causes: (1) API rate limit - wait a few minutes, (2) Invalid API key - check your settings, (3) Repository access - verify permissions.';
+}
 
 async function decryptJulesKeyBase64(b64, uid) {
   try {
@@ -99,7 +104,8 @@ exports.runJules = functions.https.onCall(async (data, context) => {
 
     if (!r.ok) {
       console.error("Jules API error:", r.status, json);
-      throw new functions.https.HttpsError("permission-denied", `Jules API error: ${r.status}`);
+      const errorMessage = formatJulesError(json.error, r.status);
+      throw new functions.https.HttpsError("permission-denied", errorMessage);
     }
 
     if (!json || !json.url) {
@@ -206,8 +212,9 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
     }
 
     if (!r.ok) {
-      console.error('Jules API error:', r.status, json);
-      res.status(502).json({ error: `Jules API error: ${r.status}` });
+      console.error('Jules API error:', r.status, 'Full response:', JSON.stringify(json));
+      const errorMessage = formatJulesError(json.error || json, r.status);
+      res.status(502).json({ error: errorMessage });
       return;
     }
 
@@ -410,5 +417,167 @@ exports.getGitHubUser = functions.https.onRequest(async (req, res) => {
   } catch (error) {
     console.error('Error in getGitHubUser:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+exports.activateScheduledQueueItems = onSchedule('every 1 minutes', async (event) => {
+  const db = admin.firestore();
+  const now = admin.firestore.Timestamp.now();
+  
+  console.log('Running scheduled queue activation check at', now.toDate().toISOString());
+  
+  try {
+    const scheduledItemsSnapshot = await db.collectionGroup('items')
+      .where('status', '==', 'scheduled')
+      .where('scheduledAt', '<=', now)
+      .get();
+    
+    if (scheduledItemsSnapshot.empty) {
+      console.log('No scheduled items found to activate.');
+      console.log('Activation check complete. Total items activated: 0');
+      return null;
+    }
+    
+    console.log(`Found ${scheduledItemsSnapshot.size} scheduled items across all users.`);
+    
+    let totalActivated = 0;
+    
+    for (const doc of scheduledItemsSnapshot.docs) {
+      const userId = doc.ref.parent?.parent?.id;
+      if (!userId) {
+        console.error(`Could not determine user ID for item ${doc.id}`);
+        continue;
+      }
+      
+      const item = doc.data();
+      console.log(`Processing scheduled item ${doc.id} for user ${userId}`);
+      
+      try {
+        const keySnap = await db.doc(`julesKeys/${userId}`).get();
+        if (!keySnap.exists) {
+          console.error(`No Jules API key found for user ${userId}`);
+          await doc.ref.update({
+            status: 'error',
+            error: 'No Jules API key configured',
+            updatedAt: now
+          });
+          continue;
+        }
+        
+        const encryptedBase64 = keySnap.data().key;
+        const julesKey = await decryptJulesKeyBase64(encryptedBase64, userId);
+        
+        if (item.type === 'single') {
+          await doc.ref.update({ status: 'in-progress', updatedAt: now });
+          
+          const julesBody = {
+            title: `${item.prompt?.substring(0, 50) || 'Untitled'}`,
+            prompt: item.prompt,
+            sourceContext: {
+              source: item.sourceId,
+              githubRepoContext: { startingBranch: item.branch || 'master' }
+            }
+          };
+          
+          const r = await fetch("https://jules.googleapis.com/v1alpha/sessions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Goog-Api-Key": julesKey },
+            body: JSON.stringify(julesBody)
+          });
+          
+          const json = await r.json();
+          
+          if (!r.ok || json.error) {
+            const errorMessage = formatJulesError(json.error, r.status);
+            throw new Error(errorMessage);
+          }
+          
+          await doc.ref.delete();
+          
+          console.log(`Successfully executed single prompt for item ${doc.id}`);
+          totalActivated++;
+          
+        } else if (item.type === 'subtasks' && Array.isArray(item.remaining) && item.remaining.length > 0) {
+          await doc.ref.update({ status: 'in-progress', updatedAt: now });
+          
+          const subtask = item.remaining[0];
+          const julesBody = {
+            title: `${subtask.fullContent?.substring(0, 50) || 'Untitled'}`,
+            prompt: subtask.fullContent,
+            sourceContext: {
+              source: item.sourceId,
+              githubRepoContext: { startingBranch: item.branch || 'master' }
+            }
+          };
+          
+          const r = await fetch("https://jules.googleapis.com/v1alpha/sessions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Goog-Api-Key": julesKey },
+            body: JSON.stringify(julesBody)
+          });
+          
+          const json = await r.json();
+          
+          if (!r.ok || json.error) {
+            const errorMessage = formatJulesError(json.error, r.status);
+            throw new Error(errorMessage);
+          }
+          
+          const newRemaining = item.remaining.slice(1);
+          if (newRemaining.length === 0) {
+            await doc.ref.delete();
+          } else {
+            await doc.ref.update({
+              remaining: newRemaining,
+              status: 'pending',
+              updatedAt: now
+            });
+          }
+          
+          console.log(`Successfully executed first subtask for item ${doc.id}, ${newRemaining.length} remaining`);
+          totalActivated++;
+        }
+        
+      } catch (err) {
+        console.error(`Error processing item ${doc.id}:`, err);
+        
+        const retryCount = item.retryCount || 0;
+        const maxRetries = 3;
+        
+        if (item.retryOnFailure && retryCount < maxRetries) {
+          const newScheduledAt = new admin.firestore.Timestamp(
+            now.seconds + 600,
+            now.nanoseconds
+          );
+          
+          console.log(`Scheduling retry ${retryCount + 1}/${maxRetries} for item ${doc.id} in 10 minutes`);
+          
+          await doc.ref.update({
+            status: 'scheduled',
+            scheduledAt: newScheduledAt,
+            retryCount: retryCount + 1,
+            lastError: err.message,
+            lastAttemptAt: now,
+            updatedAt: now
+          });
+        } else {
+          const errorMessage = item.retryOnFailure 
+            ? `Failed after ${retryCount} retries: ${err.message}`
+            : err.message;
+          
+          await doc.ref.update({
+            status: 'error',
+            error: errorMessage,
+            updatedAt: now
+          });
+        }
+      }
+    }
+    
+    console.log(`Activation check complete. Total items processed: ${totalActivated}`);
+    return null;
+  } catch (error) {
+    console.error('Error in activateScheduledQueueItems:', error);
+    return null;
   }
 });
