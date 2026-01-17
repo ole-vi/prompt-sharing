@@ -1112,6 +1112,67 @@ function checkEmailInput() {
 ```
 
 ---
+---
+
+## Testing
+
+The project uses [Vitest](https://vitest.dev/) for automated testing.
+
+### Test Structure
+
+Tests are located in `src/tests/` and mirror the source structure where possible:
+
+```
+src/tests/
+├── integration/      # Integration tests for modules
+│   ├── auth.test.js
+│   ├── jules-submission.test.js
+│   └── prompt-loading.test.js
+└── utils/           # Unit tests for pure utility functions
+    ├── slug.test.js
+    ├── title.test.js
+    └── validation.test.js
+```
+
+### Writing Tests
+
+#### Unit Tests
+Focus on pure functions in `src/utils/`. These tests should verify logic without external dependencies.
+
+```javascript
+import { describe, it, expect } from 'vitest';
+import { myUtility } from '../../utils/my-utility.js';
+
+describe('myUtility', () => {
+  it('should return correct value', () => {
+    expect(myUtility(input)).toBe(expected);
+  });
+});
+```
+
+#### Integration Tests
+Focus on modules in `src/modules/` that interact with DOM or APIs. Use `vi.mock` to mock external dependencies like `fetch` or other modules.
+
+```javascript
+import { describe, it, expect, vi } from 'vitest';
+import { someAction } from '../../modules/some-module.js';
+
+describe('someAction', () => {
+  it('should call API', async () => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    await someAction();
+    expect(global.fetch).toHaveBeenCalled();
+  });
+});
+```
+
+### Running Tests
+
+- `npm test`: Run tests in watch mode
+- `npm run test:run`: Run tests once
+- `npm run test:coverage`: Run tests with coverage report
+
+---
 
 ## Performance
 

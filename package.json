@@ -3,9 +3,18 @@
   "version": "1.0.0",
   "description": "Prompt sharing and management application",
   "scripts": {
-    "start": "python -m http.server 3000"
+    "start": "python -m http.server 3000",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",
-  "license": "AGPL-3.0-only"
+  "license": "AGPL-3.0-only",
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/user-event": "^14.6.1",
+    "jsdom": "^25.0.1",
+    "vitest": "^2.1.8"
+  }
 }
