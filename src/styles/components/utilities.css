@@ -6,6 +6,7 @@
 .d-none { display: none !important; }
 .d-flex { display: flex !important; }
 .d-flex-center { display: flex; align-items: center; }
+.d-flex-center-gap-6 { display: flex; align-items: center; gap: 6px; }
 
 /* Flexbox Layout */
 .flex-col { display: flex; flex-direction: column; }
@@ -21,17 +22,22 @@
 .mb-6 { margin-bottom: 6px; }
 .mb-12 { margin-bottom: 12px; }
 .ml-12 { margin-left: 12px; }
+.mt-4 { margin-top: 4px; }
+.mt-8 { margin-top: 8px; }
 
 /* Spacing - Padding */
 .pad-8 { padding: 8px; }
 .pad-24 { padding: 24px; }
 
 /* Dimensions */
+.w-full { width: 100%; }
 .max-w-700 { max-width: 700px; }
 .max-h-400 { max-height: 400px; }
 
 /* Typography */
 .text-align-center { text-align: center; }
+.text-center { text-align: center; }
+.break-word { word-break: break-word; }
 .font-sm { font-size: 12px; }
 .font-13 { font-size: 13px; }
 .font-mono { font-family: monospace; }
@@ -59,25 +65,5 @@
 .modal-show { display: flex !important; }
 .modal-hide { display: none !important; }
 
-/* Component-Specific Utilities */
-.label-flex {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.split-panel-container {
-  padding: 8px;
-}
-
-.split-panel-config {
-  margin-bottom: 12px;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 8px;
-}
-
 .btn-padding-sm { padding: 4px 12px; }
-.btn-padding-xs { padding: 6px 10px; }
+.btn-padding-xs { padding: 2px 8px !important; font-size: 11px !important; }

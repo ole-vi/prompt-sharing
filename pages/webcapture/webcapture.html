@@ -170,19 +170,19 @@
         <div class="instruction-panel">
           <div class="mb-md">
             <strong class="instruction-strong">Extension not appearing after installation?</strong>
-            <p class="muted-text small-text" style="margin:4px 0 0;">
+            <p class="muted-text small-text mt-4 mb-0">
               Make sure Developer Mode is enabled and you selected the correct folder. The folder should contain the manifest.json file.
             </p>
           </div>
           <div class="mb-md">
             <strong class="instruction-strong">GitHub sync not working?</strong>
-            <p class="muted-text small-text" style="margin:4px 0 0;">
+            <p class="muted-text small-text mt-4 mb-0">
               Check that you're authenticated by opening the extension popup and verifying your GitHub username is displayed.
             </p>
           </div>
           <div>
             <strong class="instruction-strong">Capture quality issues?</strong>
-            <p class="muted-text small-text" style="margin:4px 0 0;">
+            <p class="muted-text small-text mt-4 mb-0">
               Some websites with complex layouts may not convert perfectly. Try refreshing the page before capturing or report issues on GitHub.
             </p>
           </div>
@@ -193,23 +193,23 @@
   </div>
 
   <footer>
-    <div style="text-align: center;">
-      <a href="https://github.com/promptroot/promptroot/blob/main/README.md" target="_blank" rel="noopener" style="color: var(--muted); text-decoration: none;">Help</a>
-      <span style="margin: 0 12px;">•</span>
-      <button id="footerFeedbackBtn" style="color: var(--muted); text-decoration: none; background: none; border: none; cursor: pointer; font: inherit; padding: 0;">Feedback</button>
-      <span style="margin: 0 12px;">•</span>
-      <a href="../../pages/privacy/privacy.html" style="color: var(--muted); text-decoration: none;">Privacy Policy</a>
-      <span style="margin: 0 12px;">•</span>
-      <a href="https://github.com/promptroot/promptroot" target="_blank" rel="noopener" style="color: var(--muted); text-decoration: none;">GitHub</a>
+    <div class="footer-content">
+      <a href="https://github.com/promptroot/promptroot/blob/main/README.md" target="_blank" rel="noopener" class="footer-link">Help</a>
+      <span class="footer-separator">•</span>
+      <button id="footerFeedbackBtn" class="footer-btn">Feedback</button>
+      <span class="footer-separator">•</span>
+      <a href="../../pages/privacy/privacy.html" class="footer-link">Privacy Policy</a>
+      <span class="footer-separator">•</span>
+      <a href="https://github.com/promptroot/promptroot" target="_blank" rel="noopener" class="footer-link">GitHub</a>
     </div>
   </footer>
 
   <!-- Status Bar -->
   <div id="statusBar" class="hidden" aria-live="polite">
     <div class="status-inner">
-      <div class="status-msg" style="flex:1;">Ready</div>
-      <div class="status-progress hidden" style="margin-left:12px;"></div>
-      <button class="status-action btn hidden" style="margin-left:12px; padding:6px 10px;">Action</button>
+      <div class="status-msg flex-1">Ready</div>
+      <div class="status-progress hidden ml-12"></div>
+      <button class="status-action btn hidden ml-12 btn-padding-xs">Action</button>
     </div>
   </div>
 
