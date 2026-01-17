@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const fetch = require("node-fetch");
 
@@ -413,7 +414,7 @@ exports.getGitHubUser = functions.https.onRequest(async (req, res) => {
   }
 });
 
-exports.activateScheduledQueueItems = functions.pubsub.schedule('every 1 minute').onRun(async (context) => {
+exports.activateScheduledQueueItems = onSchedule('every 1 minutes', async (event) => {
   const db = admin.firestore();
   const now = admin.firestore.Timestamp.now();
   
