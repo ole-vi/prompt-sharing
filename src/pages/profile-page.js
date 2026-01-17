@@ -4,7 +4,6 @@
  */
 
 import { waitForFirebase } from '../shared-init.js';
-import { loadProfileDirectly } from '../modules/jules-account.js';
 
 function waitForComponents() {
   if (document.querySelector('header')) {
@@ -26,6 +25,7 @@ async function loadProfile() {
   }
 
   try {
+    const { loadProfileDirectly } = await import('../modules/jules-account.js');
     await loadProfileDirectly(user);
   } catch (err) {
     console.error('Profile loading error:', err);

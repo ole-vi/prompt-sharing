@@ -4,11 +4,8 @@
  */
 
 import { waitForFirebase } from '../shared-init.js';
-import { loadJulesAccountInfo } from '../modules/jules-account.js';
-import { showJulesKeyModal } from '../modules/jules-modal.js';
-import { deleteStoredJulesKey, checkJulesKey } from '../modules/jules-keys.js';
+import { checkJulesKey } from '../modules/jules-keys.js';
 import { showToast } from '../modules/toast.js';
-import { showConfirm } from '../modules/confirm-modal.js';
 
 function waitForComponents() {
   if (document.querySelector('header')) {
@@ -63,6 +60,7 @@ async function loadJulesInfo() {
       if (loadJulesInfoBtn) loadJulesInfoBtn.style.display = 'block';
       
       // Load Jules account information
+      const { loadJulesAccountInfo } = await import('../modules/jules-account.js');
       await loadJulesAccountInfo(user);
     } else {
       if (noJulesKeySection) noJulesKeySection.classList.remove('hidden');
@@ -81,7 +79,8 @@ function initApp() {
   const addJulesKeyBtnProminent = document.getElementById('addJulesKeyBtnProminent');
   const resetJulesKeyBtn = document.getElementById('resetJulesKeyBtn');
   
-  const addKeyHandler = () => {
+  const addKeyHandler = async () => {
+    const { showJulesKeyModal } = await import('../modules/jules-modal.js');
     showJulesKeyModal(() => {
       // Reload Jules info after saving key
       const user = window.auth?.currentUser;
@@ -97,6 +96,7 @@ function initApp() {
   
   if (resetJulesKeyBtn) {
     resetJulesKeyBtn.onclick = async () => {
+      const { showConfirm } = await import('../modules/confirm-modal.js');
       const confirmed = await showConfirm(`This will delete your stored Jules API key. You'll need to enter a new one next time.`, {
         title: 'Delete API Key',
         confirmText: 'Delete',
@@ -111,6 +111,7 @@ function initApp() {
         resetJulesKeyBtn.disabled = true;
         resetJulesKeyBtn.textContent = 'Deleting...';
         
+        const { deleteStoredJulesKey } = await import('../modules/jules-keys.js');
         const deleted = await deleteStoredJulesKey(user.uid);
         if (deleted) {
           const julesKeyStatus = document.getElementById('julesKeyStatus');

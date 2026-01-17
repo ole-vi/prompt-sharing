@@ -1,9 +1,6 @@
 // ===== Jules Modal Module =====
 // Core modal UI functions (key modal, env modal, error modal)
 
-import { encryptAndStoreKey } from './jules-keys.js';
-import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
-import { addToJulesQueue } from './jules-queue.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import { RETRY_CONFIG, TIMEOUTS, JULES_MESSAGES } from '../utils/constants.js';
 import { showToast } from './toast.js';
@@ -76,6 +73,7 @@ export function showJulesKeyModal(onSave) {
         return;
       }
 
+      const { encryptAndStoreKey } = await import('./jules-keys.js');
       await encryptAndStoreKey(apiKey, user.uid);
 
       showToast('Jules API key saved successfully', 'success');
@@ -118,6 +116,8 @@ export async function showJulesEnvModal(promptText) {
   
   let selectedSourceId = null;
   let selectedBranch = null;
+
+  const { RepoSelector, BranchSelector } = await import('./repo-branch-selector.js');
 
   // Initialize BranchSelector first
   const branchSelector = new BranchSelector({
@@ -166,6 +166,7 @@ export async function showJulesEnvModal(promptText) {
     }
     
     try {
+      const { addToJulesQueue } = await import('./jules-queue.js');
       await addToJulesQueue(user.uid, {
         type: 'single',
         prompt: promptText,
@@ -227,6 +228,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
             return;
           }
           try {
+            const { addToJulesQueue } = await import('./jules-queue.js');
             await addToJulesQueue(user.uid, {
               type: 'single',
               prompt: promptText,
@@ -260,6 +262,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
             return;
           }
           try {
+            const { addToJulesQueue } = await import('./jules-queue.js');
             await addToJulesQueue(user.uid, {
               type: 'single',
               prompt: promptText,

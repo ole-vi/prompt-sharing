@@ -1,11 +1,13 @@
 # PromptRoot Code Style Guide
 
-**Version:** 1.0  
-**Last Updated:** January 6, 2026
+**Version:** 1.1
+**Last Updated:** January 10, 2026
 
 This guide covers JavaScript patterns, module architecture, and coding conventions for the PromptRoot application. For UI/CSS guidelines, see [UI_GUIDELINES.md](UI_GUIDELINES.md).
 
 **Recent Architecture Update (PR #218)**: All inline `<script>` blocks have been removed from HTML files. Each page now has a dedicated initialization file in `src/pages/`. See [Page Initialization Pattern](#page-initialization-pattern) section.
+
+**Update v1.1**: Added Dynamic Imports guidelines for performance optimization.
 
 ---
 
@@ -40,7 +42,8 @@ Each HTML page has a dedicated initialization file in `src/pages/` that handles 
 ```javascript
 // src/pages/example-page.js
 import { waitForFirebase } from '../shared-init.js';
-import { someModule } from '../modules/some-module.js';
+// Only import lightweight modules statically
+import { checkSomething } from '../modules/lightweight-module.js';
 
 function waitForComponents() {
   if (document.querySelector('header')) {
@@ -51,30 +54,83 @@ function waitForComponents() {
 }
 
 function initApp() {
-  // Set up event handlers
+  // Set up event handlers using dynamic imports for heavy actions
   const btn = document.getElementById('myBtn');
   if (btn) {
-    btn.onclick = handleClick;
+    btn.onclick = async () => {
+      // Dynamic import
+      const { heavyAction } = await import('../modules/heavy-module.js');
+      await heavyAction();
+    };
   }
-  
-  // Initialize features
-  waitForFirebase(() => {
-    window.auth.onAuthStateChanged((user) => {
-      if (user) {
-        loadUserData();
-      }
-    });
-  });
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', waitForComponents);
-} else {
-  waitForComponents();
 }
 ```
 
-**Key Pattern**: Each page waits for shared components (header) to load before initializing page-specific functionality.
+---
+
+## Dynamic Imports
+
+To improve initial load time and reduce bundle size, use dynamic imports for modules that are:
+1.  **Large/Heavy**: Modules with many dependencies (e.g., `jules-modal.js` which pulls in `repo-branch-selector.js`, `github-api.js`, etc.).
+2.  **Conditional**: Features only used when a user interacts with a specific element (e.g., opening a modal, clicking "Try in Jules").
+3.  **Secondary**: Not required for the immediate first paint or critical path.
+
+### Pattern: Event Handler Import
+
+Import the module inside the event handler:
+
+```javascript
+// ✅ Good: Load heavy module on click
+button.addEventListener('click', async () => {
+  // Show loading state if necessary
+  button.classList.add('loading');
+
+  try {
+    const { openModal } = await import('../modules/heavy-modal.js');
+    openModal();
+  } catch (error) {
+    console.error('Failed to load module:', error);
+  } finally {
+    button.classList.remove('loading');
+  }
+});
+```
+
+### Pattern: Callback Wrapper
+
+If you need to pass a callback function that resides in a heavy module, wrap it:
+
+```javascript
+// src/app.js
+import { setCallback } from './modules/consumer.js';
+
+// ❌ Avoid: Static import
+// import { heavyFunction } from './modules/heavy.js';
+// setCallback(heavyFunction);
+
+// ✅ Good: Wrapper with dynamic import
+setCallback(async (...args) => {
+  const { heavyFunction } = await import('./modules/heavy.js');
+  return heavyFunction(...args);
+});
+```
+
+### Pattern: Internal Dynamic Imports
+
+If a module exports multiple functions but some depend on heavy libraries, consider importing those dependencies dynamically inside the functions that need them.
+
+```javascript
+// src/modules/jules-modal.js
+
+// ❌ Avoid: Top-level static import of heavy dependencies
+// import { heavyLib } from './heavy-lib.js';
+
+export async function showModal() {
+  // ✅ Good: Import only when function is called
+  const { heavyLib } = await import('./heavy-lib.js');
+  heavyLib.doWork();
+}
+```
 
 ---
 
@@ -978,45 +1034,6 @@ const data = await fetchData();
 
 ---
 
-## Anti-Patterns
-
-### ❌ HTML String Generation
-
-```javascript
-// Bad: HTML in JavaScript
-element.innerHTML = `<div class="item">${name}</div>`;
-
-// Good: Use createElement helper
-const item = createElement('div', 'item', name);
-element.appendChild(item);
-```
-
-### ❌ Inline CSS in JavaScript
-
-```javascript
-// Bad: Style manipulation for presentation
-element.style.color = 'red';
-element.style.fontSize = '14px';
-
-// Good: CSS classes
-element.classList.add('error-text');
-```
-
-### ❌ Global Variables
-
-```javascript
-// Bad: Pollutes global scope
-window.currentUser = user;
-
-// Good: Module-scoped
-let currentUser = null;
-export function setCurrentUser(user) {
-  currentUser = user;
-}
-```
-
----
-
 ## Error Handling
 
 ### Consistent Error Handling
@@ -1210,6 +1227,7 @@ setupMutualExclusivity('freeInputSuppressPopupsCheckbox', 'freeInputOpenInBackgr
 
 ## Version History
 
+- **v1.1** (Jan 10, 2026): Added Dynamic Imports guidelines
 - **v1.0** (Jan 6, 2026): Initial code style guide with PR #218 page architecture
 
 ---
