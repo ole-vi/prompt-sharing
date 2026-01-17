@@ -6,6 +6,7 @@
 import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
 import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly } from '../modules/jules-queue.js';
 import { loadSubtaskErrorModal } from '../modules/jules-modal.js';
+import { waitForComponents } from '../shared-init.js';
 
 // Initialize checkbox mutual exclusivity
 initMutualExclusivity();
@@ -13,12 +14,9 @@ initMutualExclusivity();
 // Load the subtask error modal partial
 loadSubtaskErrorModal();
 
-function waitForComponents() {
-  if (document.querySelector('header')) {
-    initApp();
-  } else {
-    setTimeout(waitForComponents, 50);
-  }
+async function startApp() {
+  await waitForComponents();
+  initApp();
 }
 
 function initApp() {
@@ -75,7 +73,7 @@ async function loadQueue() {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', waitForComponents);
+  document.addEventListener('DOMContentLoaded', startApp);
 } else {
-  waitForComponents();
+  startApp();
 }

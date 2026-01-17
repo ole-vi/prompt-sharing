@@ -3,12 +3,11 @@
  * Handles extension download functionality
  */
 
-function waitForComponents() {
-  if (document.querySelector('header')) {
-    initApp();
-  } else {
-    setTimeout(waitForComponents, 50);
-  }
+import { waitForComponents } from '../shared-init.js';
+
+async function startApp() {
+  await waitForComponents();
+  initApp();
 }
 
 function initApp() {
@@ -48,7 +47,7 @@ function initApp() {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', waitForComponents);
+  document.addEventListener('DOMContentLoaded', startApp);
 } else {
-  waitForComponents();
+  startApp();
 }

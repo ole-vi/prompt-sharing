@@ -174,6 +174,19 @@ async function initializeSharedComponents(activePage) {
   }
 }
 
+function waitForComponents(selector = 'header') {
+  return new Promise((resolve) => {
+    function check() {
+      if (document.querySelector(selector)) {
+        resolve();
+      } else {
+        setTimeout(check, 50);
+      }
+    }
+    check();
+  });
+}
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     const activePage = document.body.getAttribute('data-page') || 'home';
@@ -184,4 +197,4 @@ if (document.readyState === 'loading') {
   initializeSharedComponents(activePage);
 }
 
-export { initializeSharedComponents, waitForFirebase };
+export { initializeSharedComponents, waitForFirebase, waitForComponents };
