@@ -1,5 +1,7 @@
 // ===== Status Bar Module =====
 
+import { TIMEOUTS } from '../utils/constants.js';
+
 class StatusBar {
   constructor() {
     this.element = null;
@@ -34,7 +36,7 @@ class StatusBar {
   showMessage(message, options = {}) {
     if (!this.element || !this.msgElement) return;
 
-    const { timeout = 3000 } = options;
+    const { timeout = TIMEOUTS.statusBar } = options;
 
     this.msgElement.textContent = message;
     this.element.classList.add('status-visible');

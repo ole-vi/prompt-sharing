@@ -4,7 +4,7 @@ import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
-import { JULES_MESSAGES } from '../utils/constants.js';
+import { JULES_MESSAGES, TIMEOUTS } from '../utils/constants.js';
 
 let queueCache = [];
 
@@ -1098,13 +1098,13 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
           }
         }
         successfulIndices.push(originalIndex);
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise(r => setTimeout(r, TIMEOUTS.queueDelay));
         retry = false;
       } catch (err) {
         const result = await showSubtaskErrorModal(i + 1, toRun.length, err, true);
         
         if (result.action === 'retry') {
-          if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
+          if (result.shouldDelay) await new Promise(r => setTimeout(r, TIMEOUTS.longDelay));
           continue;
         } else if (result.action === 'skip') {
           skippedIndices.push(originalIndex);
@@ -1357,14 +1357,14 @@ async function runSelectedQueueItems() {
     pauseBtn.onclick = () => {
       paused = true;
       pauseBtn.disabled = true;
-      statusBar.showMessage('Pausing queue processing after the current subtask', { timeout: 4000 });
+      statusBar.showMessage('Pausing queue processing after the current subtask', { timeout: TIMEOUTS.longDelay });
     };
   }
 
   statusBar.showMessage('Processing queue...', { timeout: 0 });
   statusBar.setAction('Pause', () => {
     paused = true;
-    statusBar.showMessage('Pausing after current subtask', { timeout: 3000 });
+    statusBar.showMessage('Pausing after current subtask', { timeout: TIMEOUTS.statusBar });
     statusBar.clearAction();
     if (pauseBtn) pauseBtn.disabled = true;
   });
@@ -1449,7 +1449,7 @@ async function runSelectedQueueItems() {
           } catch (singleErr) {
             const result = await showSubtaskErrorModal(currentItemNumber, totalItems, singleErr, true);
             if (result.action === 'retry') {
-              if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
+              if (result.shouldDelay) await new Promise(r => setTimeout(r, TIMEOUTS.longDelay));
               continue;
             } else if (result.action === 'skip') {
               totalSkipped++;
@@ -1481,7 +1481,7 @@ async function runSelectedQueueItems() {
             } catch (e) {
               console.warn('Failed to persist paused state for queue item', id, e.message || e);
             }
-            statusBar.showMessage('Paused — progress saved', { timeout: 3000 });
+            statusBar.showMessage('Paused — progress saved', { timeout: TIMEOUTS.statusBar });
             statusBar.clearProgress();
             statusBar.clearAction();
             await loadQueuePage();
@@ -1524,13 +1524,13 @@ async function runSelectedQueueItems() {
                 statusBar.showMessage(`Processing subtask ${done}/${initialCount}`, { timeout: 0 });
               } catch (e) {}
 
-              await new Promise(r => setTimeout(r, 800));
+              await new Promise(r => setTimeout(r, TIMEOUTS.queueDelay));
               subtaskRetry = false;
             } catch (err) {
               const result = await showSubtaskErrorModal(subtaskNumber, initialCount, err, true);
               
               if (result.action === 'retry') {
-                if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
+                if (result.shouldDelay) await new Promise(r => setTimeout(r, TIMEOUTS.longDelay));
                 continue;
               } else if (result.action === 'skip') {
                 totalSkipped++;
@@ -1544,7 +1544,7 @@ async function runSelectedQueueItems() {
                 } catch (e) {
                   console.warn('Failed to persist remaining after skip', e);
                 }
-                statusBar.showMessage(JULES_MESSAGES.SKIPPED_SUBTASK, { timeout: 2000 });
+                statusBar.showMessage(JULES_MESSAGES.SKIPPED_SUBTASK, { timeout: TIMEOUTS.actionFeedback });
                 subtaskRetry = false;
               } else if (result.action === 'queue') {
                 try {
@@ -1556,7 +1556,7 @@ async function runSelectedQueueItems() {
                 } catch (e) {
                   console.warn('Failed to persist queue state', e);
                 }
-                statusBar.showMessage('Remainder queued for later', { timeout: 3000 });
+                statusBar.showMessage('Remainder queued for later', { timeout: TIMEOUTS.statusBar });
                 statusBar.clearProgress();
                 statusBar.clearAction();
                 await loadQueuePage();

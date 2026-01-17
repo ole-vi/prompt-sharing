@@ -1,7 +1,7 @@
 // ===== Jules API Client Module =====
 // Provides access to the Jules API for managing sources, sessions, and activities
 
-import { JULES_API_BASE, ERRORS, PAGE_SIZES, JULES_MESSAGES } from '../utils/constants.js';
+import { JULES_API_BASE, ERRORS, PAGE_SIZES, JULES_MESSAGES, TIMEOUTS } from '../utils/constants.js';
 import { showToast } from './toast.js';
 
 // API key cache for memoization
@@ -280,7 +280,7 @@ export async function handleTryInJules(promptText) {
       try {
         const { signInWithGitHub } = await import('./auth.js');
         await signInWithGitHub();
-        setTimeout(() => handleTryInJulesAfterAuth(promptText), 500);
+        setTimeout(() => handleTryInJulesAfterAuth(promptText), TIMEOUTS.uiDelay);
       } catch (error) {
         showToast(JULES_MESSAGES.LOGIN_REQUIRED, 'warn');
       }
