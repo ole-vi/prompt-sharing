@@ -6,6 +6,7 @@
 import { initApp } from '../app.js';
 import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
 import { loadSubtaskErrorModal } from '../modules/jules-modal.js';
+import { waitForComponents } from '../shared-init.js';
 
 // Initialize all mutually exclusive checkboxes defined by data-exclusive-group attributes
 initMutualExclusivity();
@@ -14,16 +15,13 @@ initMutualExclusivity();
 loadSubtaskErrorModal();
 
 // Wait for shared components to load, then initialize app
-function waitForComponents() {
-  if (document.querySelector('header')) {
-    initApp();
-  } else {
-    setTimeout(waitForComponents, 50);
-  }
+async function startApp() {
+  await waitForComponents();
+  initApp();
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', waitForComponents);
+  document.addEventListener('DOMContentLoaded', startApp);
 } else {
-  waitForComponents();
+  startApp();
 }

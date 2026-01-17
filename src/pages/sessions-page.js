@@ -1,4 +1,4 @@
-import { waitForFirebase } from '../shared-init.js';
+import { waitForFirebase, waitForComponents } from '../shared-init.js';
 import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js';
 import { attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
 
@@ -9,12 +9,9 @@ let cachedSessions = null;
 let cachedSearchData = null;
 let cachedFuseInstance = null;
 
-function waitForComponents() {
-  if (document.querySelector('header')) {
-    initApp();
-  } else {
-    setTimeout(waitForComponents, 50);
-  }
+async function startApp() {
+  await waitForComponents();
+  initApp();
 }
 
 async function loadSessionsPage() {
@@ -213,7 +210,7 @@ async function initApp() {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', waitForComponents);
+  document.addEventListener('DOMContentLoaded', startApp);
 } else {
-  waitForComponents();
+  startApp();
 }

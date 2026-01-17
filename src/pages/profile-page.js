@@ -3,15 +3,12 @@
  * Handles user profile page functionality
  */
 
-import { waitForFirebase } from '../shared-init.js';
+import { waitForFirebase, waitForComponents } from '../shared-init.js';
 import { loadProfileDirectly } from '../modules/jules-account.js';
 
-function waitForComponents() {
-  if (document.querySelector('header')) {
-    initApp();
-  } else {
-    setTimeout(waitForComponents, 50);
-  }
+async function startApp() {
+  await waitForComponents();
+  initApp();
 }
 
 async function loadProfile() {
@@ -56,7 +53,7 @@ function initApp() {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', waitForComponents);
+  document.addEventListener('DOMContentLoaded', startApp);
 } else {
-  waitForComponents();
+  startApp();
 }
