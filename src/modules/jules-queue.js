@@ -676,18 +676,30 @@ function parseDateInTimeZone(dateTimeStr, timeZone) {
 
 function getCommonTimeZones() {
   return [
-    { value: 'America/New_York', label: 'Eastern Time (ET)' },
-    { value: 'America/Chicago', label: 'Central Time (CT)' },
-    { value: 'America/Denver', label: 'Mountain Time (MT)' },
-    { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
-    { value: 'America/Anchorage', label: 'Alaska Time (AKT)' },
-    { value: 'Pacific/Honolulu', label: 'Hawaii Time (HT)' },
+    { value: 'America/New_York', label: 'New York (ET)' },
+    { value: 'America/Chicago', label: 'Chicago (CT)' },
+    { value: 'America/Denver', label: 'Denver (MT)' },
+    { value: 'America/Los_Angeles', label: 'Los Angeles (PT)' },
+    { value: 'America/Anchorage', label: 'Anchorage (AKT)' },
+    { value: 'Pacific/Honolulu', label: 'Honolulu (HT)' },
+    { value: 'America/Mexico_City', label: 'Mexico City (CST)' },
+    { value: 'America/Toronto', label: 'Toronto (ET)' },
+    { value: 'America/Sao_Paulo', label: 'São Paulo (BRT)' },
+    { value: 'America/Buenos_Aires', label: 'Buenos Aires (ART)' },
     { value: 'Europe/London', label: 'London (GMT/BST)' },
     { value: 'Europe/Paris', label: 'Paris (CET/CEST)' },
-    { value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
-    { value: 'Asia/Shanghai', label: 'Shanghai (CST)' },
+    { value: 'Europe/Berlin', label: 'Berlin (CET/CEST)' },
+    { value: 'Europe/Moscow', label: 'Moscow (MSK)' },
+    { value: 'Africa/Cairo', label: 'Cairo (EET)' },
+    { value: 'Africa/Johannesburg', label: 'Johannesburg (SAST)' },
     { value: 'Asia/Dubai', label: 'Dubai (GST)' },
+    { value: 'Asia/Kolkata', label: 'India (IST)' },
+    { value: 'Asia/Singapore', label: 'Singapore (SGT)' },
+    { value: 'Asia/Bangkok', label: 'Bangkok (ICT)' },
+    { value: 'Asia/Shanghai', label: 'Shanghai (CST)' },
+    { value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
     { value: 'Australia/Sydney', label: 'Sydney (AEDT/AEST)' },
+    { value: 'Pacific/Auckland', label: 'Auckland (NZDT/NZST)' },
     { value: 'UTC', label: 'UTC' }
   ];
 }
