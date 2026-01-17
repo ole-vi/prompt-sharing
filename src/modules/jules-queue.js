@@ -961,7 +961,9 @@ function renderQueueList(items) {
     
     let errorInfo = '';
     if (status === 'error' && item.error) {
-      errorInfo = `<div class="queue-error-info"><span class="icon icon-inline" aria-hidden="true">error</span> Error: ${escapeHtml(item.error)}</div>`;
+      errorInfo = `<div class="queue-error-info"><span class="icon icon-inline" aria-hidden="true">error</span> ${escapeHtml(item.error)}</div>`;
+    } else if (status === 'scheduled' && item.lastError && item.retryCount > 0) {
+      errorInfo = `<div class="queue-error-info"><span class="icon icon-inline" aria-hidden="true">warning</span> Last attempt failed: ${escapeHtml(item.lastError)}</div>`;
     }
     
     if (item.type === 'subtasks' && Array.isArray(item.remaining) && item.remaining.length > 0) {

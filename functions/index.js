@@ -5,6 +5,10 @@ const fetch = require("node-fetch");
 
 admin.initializeApp();
 
+function formatJulesError(error, statusCode) {
+  return 'Failed to create Jules session. Most likely causes: (1) API rate limit - wait a few minutes, (2) Invalid API key - check your settings, (3) Repository access - verify permissions.';
+}
+
 async function decryptJulesKeyBase64(b64, uid) {
   try {
     const enc = Buffer.from(b64, "base64");
@@ -100,7 +104,8 @@ exports.runJules = functions.https.onCall(async (data, context) => {
 
     if (!r.ok) {
       console.error("Jules API error:", r.status, json);
-      throw new functions.https.HttpsError("permission-denied", `Jules API error: ${r.status}`);
+      const errorMessage = formatJulesError(json.error, r.status);
+      throw new functions.https.HttpsError("permission-denied", errorMessage);
     }
 
     if (!json || !json.url) {
@@ -207,8 +212,9 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
     }
 
     if (!r.ok) {
-      console.error('Jules API error:', r.status, json);
-      res.status(502).json({ error: `Jules API error: ${r.status}` });
+      console.error('Jules API error:', r.status, 'Full response:', JSON.stringify(json));
+      const errorMessage = formatJulesError(json.error || json, r.status);
+      res.status(502).json({ error: errorMessage });
       return;
     }
 
@@ -482,7 +488,8 @@ exports.activateScheduledQueueItems = onSchedule('every 1 minutes', async (event
           const json = await r.json();
           
           if (!r.ok || json.error) {
-            throw new Error(json.error?.message || 'Jules API error');
+            const errorMessage = formatJulesError(json.error, r.status);
+            throw new Error(errorMessage);
           }
           
           await doc.ref.delete();
@@ -512,7 +519,8 @@ exports.activateScheduledQueueItems = onSchedule('every 1 minutes', async (event
           const json = await r.json();
           
           if (!r.ok || json.error) {
-            throw new Error(json.error?.message || 'Jules API error');
+            const errorMessage = formatJulesError(json.error, r.status);
+            throw new Error(errorMessage);
           }
           
           const newRemaining = item.remaining.slice(1);
