@@ -3,28 +3,41 @@
  * Handles the toggling of the sidebar and persists its state.
  */
 
+import { appState } from './app-state.js';
+
 /**
  * Initializes the sidebar toggle functionality.
- * - Restores the collapsed/expanded state from localStorage.
+ * - Restores the collapsed/expanded state from appState.
  * - Attaches a click event listener to the toggle button.
+ * - Subscribes to state changes.
  */
 export function initSidebar() {
   const sidebar = document.getElementById('sidebar');
   const toggleBtn = document.getElementById('sidebarToggle');
-  const STORAGE_KEY = 'sidebar-collapsed';
 
   if (!sidebar || !toggleBtn) return;
 
   // Restore previous state
-  const isCollapsed = localStorage.getItem(STORAGE_KEY) === 'true';
-  if (isCollapsed) {
-    sidebar.classList.add('collapsed');
-  }
+  const updateSidebar = (collapsed) => {
+    if (collapsed) {
+      sidebar.classList.add('collapsed');
+    } else {
+      sidebar.classList.remove('collapsed');
+    }
+  };
+
+  const isCollapsed = appState.getState('preferences.sidebarCollapsed') === true;
+  updateSidebar(isCollapsed);
+
+  // Subscribe to changes
+  appState.subscribe('preferences.sidebarCollapsed', (collapsed) => {
+    updateSidebar(collapsed);
+  });
 
   // Handle toggle click
   toggleBtn.addEventListener('click', () => {
-    sidebar.classList.toggle('collapsed');
-    const collapsed = sidebar.classList.contains('collapsed');
-    localStorage.setItem(STORAGE_KEY, collapsed);
+    // We toggle the class immediately for responsiveness, but the source of truth is appState
+    const current = appState.getState('preferences.sidebarCollapsed') === true;
+    appState.setState('preferences.sidebarCollapsed', !current);
   });
 }

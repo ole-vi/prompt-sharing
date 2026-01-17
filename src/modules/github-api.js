@@ -1,3 +1,5 @@
+import { appState } from './app-state.js';
+
 let viaProxy = (url) => url;
 
 export function setViaProxy(proxyFn) {
@@ -14,24 +16,25 @@ async function getGitHubAccessToken() {
     const isGitHubAuth = user.providerData.some(p => p.providerId === 'github.com');
     if (!isGitHubAuth) return null;
 
-    const tokenDataStr = localStorage.getItem('github_access_token');
-    if (!tokenDataStr) return null;
+    const tokenData = appState.getState('auth.githubToken');
+    if (!tokenData) return null;
 
-    const parsed = JSON.parse(tokenDataStr);
+    // Handle both raw object (from appState) or string if something weird happened
+    const parsed = typeof tokenData === 'string' ? JSON.parse(tokenData) : tokenData;
     const isObject = parsed !== null && typeof parsed === 'object';
     const token = isObject ? parsed.token : undefined;
     const timestamp = isObject ? parsed.timestamp : undefined;
     
     // Validate token is a non-empty string and timestamp is valid
     if (typeof token !== 'string' || !token || !Number.isFinite(timestamp)) {
-      localStorage.removeItem('github_access_token');
+      appState.setState('auth.githubToken', null);
       return null;
     }
     
     // Validate timestamp is not in the future and not expired
     const now = Date.now();
     if (timestamp > now || now - timestamp > TOKEN_MAX_AGE) {
-      localStorage.removeItem('github_access_token');
+      appState.setState('auth.githubToken', null);
       return null;
     }
 

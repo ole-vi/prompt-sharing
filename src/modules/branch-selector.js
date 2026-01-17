@@ -2,6 +2,7 @@ import { USER_BRANCHES, FEATURE_PATTERNS, STORAGE_KEYS } from '../utils/constant
 import { getBranches } from './github-api.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { initDropdown } from './dropdown.js';
+import { appState } from './app-state.js';
 
 let branchSelect = null;
 let branchDropdownBtn = null;
@@ -28,6 +29,10 @@ export function initBranchSelector(owner, repo, branch) {
   if (branchDropdownBtn && branchDropdownMenu) {
     initDropdown(branchDropdownBtn, branchDropdownMenu, branchDropdown);
   }
+
+  // Subscribe to preference changes
+  appState.subscribe('preferences.showFeatureBranches', () => loadBranches());
+  appState.subscribe('preferences.showUserBranches', () => loadBranches());
 }
 
 export function setCurrentBranch(branch) {
@@ -36,33 +41,26 @@ export function setCurrentBranch(branch) {
     branchSelect.value = branch;
   }
   
-  // Persist to localStorage
+  // Persist to appState
   saveBranchToStorage(branch, currentOwner, currentRepo);
 }
 
 function saveBranchToStorage(branch, owner, repo) {
   if (branch && owner && repo) {
-    try {
-      localStorage.setItem('selectedBranch', JSON.stringify({
-        branch,
-        owner,
-        repo,
-        timestamp: Date.now()
-      }));
-    } catch (error) {}
+    appState.setState('repo.current', {
+      branch,
+      owner,
+      repo,
+      timestamp: Date.now()
+    });
   }
 }
 
 export function loadBranchFromStorage(owner, repo) {
-  try {
-    const stored = localStorage.getItem('selectedBranch');
-    if (stored) {
-      const data = JSON.parse(stored);
-      if (data.owner === owner && data.repo === repo) {
-        return data.branch;
-      }
-    }
-  } catch (error) {}
+  const data = appState.getState('repo.current');
+  if (data && data.owner === owner && data.repo === repo) {
+    return data.branch;
+  }
   return null;
 }
 
@@ -107,17 +105,15 @@ function classifyBranch(branchName) {
 }
 
 function toggleFeatureBranches() {
-  const showFeatures = localStorage.getItem('showFeatureBranches') === 'true';
+  const showFeatures = appState.getState('preferences.showFeatureBranches') === true;
   const newShowFeatures = !showFeatures;
-  localStorage.setItem('showFeatureBranches', newShowFeatures.toString());
-  loadBranches();
+  appState.setState('preferences.showFeatureBranches', newShowFeatures);
 }
 
 function toggleUserBranches() {
-  const showUsers = localStorage.getItem('showUserBranches') !== 'false';
+  const showUsers = appState.getState('preferences.showUserBranches') !== false;
   const newShowUsers = !showUsers;
-  localStorage.setItem('showUserBranches', newShowUsers.toString());
-  loadBranches();
+  appState.setState('preferences.showUserBranches', newShowUsers);
 }
 
 async function handleBranchChange(e) {
@@ -201,7 +197,7 @@ export async function loadBranches() {
 
     // User branches
     if (userBranchesArr.length > 0) {
-      const showUsers = localStorage.getItem('showUserBranches') !== 'false';
+      const showUsers = appState.getState('preferences.showUserBranches') !== false;
       const userGroup = document.createElement('optgroup');
       userGroup.label = `${showUsers ? '▼' : '▶'} User Branches (${userBranchesArr.length})`;
 
@@ -217,7 +213,7 @@ export async function loadBranches() {
     }
 
     if (featureBranches.length > 0) {
-      const showFeatures = localStorage.getItem('showFeatureBranches') === 'true';
+      const showFeatures = appState.getState('preferences.showFeatureBranches') === true;
       const featureGroup = document.createElement('optgroup');
       featureGroup.label = `${showFeatures ? '▼' : '▶'} Feature Branches (${featureBranches.length})`;
 

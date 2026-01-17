@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>State Verification</title>
+    <script type="module">
+        import { appState } from '../src/modules/app-state.js';
+
+        // Log all state changes
+        const log = (msg) => {
+            const el = document.getElementById('log');
+            const item = document.createElement('div');
+            item.textContent = `${new Date().toISOString()} - ${msg}`;
+            el.prepend(item);
+        };
+
+        // UI Helpers
+        const bindCheckbox = (id, path) => {
+            const el = document.getElementById(id);
+            // Init
+            el.checked = appState.getState(path) === true;
+            // Listen to UI
+            el.addEventListener('change', () => {
+                appState.setState(path, el.checked);
+                log(`Set ${path} to ${el.checked}`);
+            });
+            // Listen to State
+            appState.subscribe(path, (val) => {
+                el.checked = val === true;
+                log(`State change ${path} -> ${val}`);
+            });
+        };
+
+        const bindInput = (id, path) => {
+            const el = document.getElementById(id);
+            el.value = appState.getState(path) || '';
+            el.addEventListener('input', () => {
+                appState.setState(path, el.value);
+            });
+            appState.subscribe(path, (val) => {
+                el.value = val || '';
+                log(`State change ${path} -> ${val}`);
+            });
+        };
+
+        window.addEventListener('load', () => {
+            bindCheckbox('sidebar', 'preferences.sidebarCollapsed');
+            bindCheckbox('features', 'preferences.showFeatureBranches');
+            bindInput('repoName', 'repo.name');
+
+            document.getElementById('reset').addEventListener('click', () => {
+                localStorage.clear();
+                sessionStorage.clear();
+                log('Storage cleared. Refresh page to reset state.');
+            });
+        });
+    </script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .controls { border: 1px solid #ccc; padding: 10px; margin-bottom: 20px; }
+        #log { border: 1px solid #eee; background: #f9f9f9; padding: 10px; height: 300px; overflow-y: auto; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>App State Verification</h1>
+    <div class="controls">
+        <label><input type="checkbox" id="sidebar"> Sidebar Collapsed</label><br>
+        <label><input type="checkbox" id="features"> Show Feature Branches</label><br>
+        <label>Repo Name: <input type="text" id="repoName"></label><br>
+        <button id="reset">Clear Storage</button>
+    </div>
+    <div id="log"></div>
+</body>
+</html>

@@ -213,6 +213,44 @@ export default function() { }
 
 ---
 
+## Global State Management
+
+**New Architecture**: Application state is centralized in `src/modules/app-state.js`.
+
+### Pattern
+
+Use the singleton `appState` for shared state, persistence, and cross-tab synchronization.
+
+```javascript
+import { appState } from './app-state.js';
+
+// Get state
+const isCollapsed = appState.getState('preferences.sidebarCollapsed');
+
+// Set state (auto-persists and notifies)
+appState.setState('preferences.sidebarCollapsed', true);
+
+// Subscribe to changes
+appState.subscribe('preferences.sidebarCollapsed', (newValue) => {
+  updateUI(newValue);
+});
+```
+
+### Guidelines
+
+1.  **Centralize**: Avoid direct `localStorage` usage for app configuration.
+2.  **Subscribe**: Components should subscribe to state changes to ensure reactivity across tabs.
+3.  **Persistence**: State paths defined in `STORAGE_KEYS` (in `app-state.js`) are automatically persisted.
+
+### State Schema
+
+- `auth`: User session and tokens
+- `repo`: Repository context
+- `preferences`: User UI preferences (sidebar, filters)
+- `ui`: Transient or session-based UI state
+
+---
+
 ## DOM Manipulation
 
 ### DOM Helpers
@@ -302,7 +340,7 @@ element.style.display = 'block';
 
 ---
 
-## State Management
+## UI State Styling
 
 ### Use State Classes
 
