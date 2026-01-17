@@ -896,8 +896,11 @@ async function confirmScheduleItems() {
     const totalScheduled = new Set([...queueSelections, ...Object.keys(subtaskSelections)]).size;
     
     const formattedScheduledAt = new Intl.DateTimeFormat('en-US', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
       timeZone: selectedTimeZone,
       timeZoneName: 'short'
     }).format(scheduledDate);
