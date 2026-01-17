@@ -16,6 +16,7 @@ function ensureContainer() {
   if (!toastContainer) {
     toastContainer = document.createElement('div');
     toastContainer.className = 'toast-container';
+    toastContainer.setAttribute('aria-live', 'assertive');
     document.body.appendChild(toastContainer);
   }
   return toastContainer;

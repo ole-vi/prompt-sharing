@@ -14,6 +14,8 @@ class StatusBar {
     if (!this.element) {
       return;
     }
+
+    this.element.setAttribute('role', 'status');
     
     this.msgElement = this.element.querySelector('.status-msg');
     this.progressElement = this.element.querySelector('.status-progress');

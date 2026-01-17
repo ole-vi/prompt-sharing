@@ -81,3 +81,15 @@
 
 .btn-padding-sm { padding: 4px 12px; }
 .btn-padding-xs { padding: 6px 10px; }
+
+/* Screen Reader Only */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
