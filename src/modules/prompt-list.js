@@ -413,7 +413,9 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       li.appendChild(header);
 
       const childList = document.createElement('ul');
-      childList.style.display = isExpanded ? 'block' : 'none';
+      if (!isExpanded) {
+        childList.classList.add('hidden');
+      }
       li.appendChild(childList);
       renderTree(entry, childList, forcedExpanded, owner, repo, branch);
       if (!childList.children.length) {

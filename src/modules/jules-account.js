@@ -88,9 +88,9 @@ export function showUserProfileModal() {
           resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key';
           resetBtn.disabled = false;
           
-          if (addBtn) addBtn.style.display = 'block';
-          if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-          if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+          if (addBtn) addBtn.classList.remove('hidden');
+          if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
+          if (julesProfileInfoSection) julesProfileInfoSection.classList.add('hidden');
           
           showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
         } else {
@@ -201,14 +201,14 @@ async function loadAndDisplayJulesProfile(uid) {
           : '(no branches)';
 
         const branchesHtml = branches.length > 0
-          ? `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted);">
+          ? `<div id="${sourceId}-branches" class="hidden" style="margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted);">
                <div style="margin-bottom:4px; color:var(--text);"><span class="icon icon-inline" aria-hidden="true">account_tree</span> Branches (${branches.length}):</div>
                ${branches.map(b => `<div style="padding:3px 0 3px 8px; cursor:pointer;"
                   onclick="window.open('https://github.com/${githubPath}/tree/${encodeURIComponent(b.displayName || b.name)}', '_blank')">
                   • ${b.displayName || b.name}
                 </div>`).join('')}
              </div>`
-          : `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted); font-style:italic;">No branches found</div>`;
+          : `<div id="${sourceId}-branches" class="hidden" style="margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted); font-style:italic;">No branches found</div>`;
 
         const cardHtml = `
           <div class="queue-card">
@@ -218,8 +218,8 @@ async function loadAndDisplayJulesProfile(uid) {
                     onclick="(function(){
                       const el = document.getElementById('${sourceId}-branches');
                       const arrow = document.getElementById('${sourceId}-arrow');
-                      if (el.style.display === 'none') { el.style.display = 'block'; arrow.textContent = '▼'; }
-                      else { el.style.display = 'none'; arrow.textContent = '▶'; }
+                      if (el.classList.contains('hidden')) { el.classList.remove('hidden'); arrow.textContent = '▼'; }
+                      else { el.classList.add('hidden'); arrow.textContent = '▶'; }
                     })()">
                   <span id="${sourceId}-arrow" style="display:inline-block; width:12px; font-size:10px; margin-right:6px;">▶</span>
                   <span class="icon icon-inline" aria-hidden="true">folder</span> ${githubPath}
@@ -316,7 +316,7 @@ export function showJulesSessionsHistoryModal() {
   const modal = document.getElementById('julesSessionsHistoryModal');
   const searchInput = document.getElementById('sessionSearchInput');
   
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  modal.classList.add('show');
   
   allSessionsCache = [];
   sessionNextPageToken = null;
@@ -327,7 +327,7 @@ export function showJulesSessionsHistoryModal() {
 
 export function hideJulesSessionsHistoryModal() {
   const modal = document.getElementById('julesSessionsHistoryModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  modal.classList.remove('show');
 }
 
 async function loadSessionsPage() {
@@ -356,11 +356,11 @@ async function loadSessionsPage() {
       renderAllSessions(allSessionsCache);
       
       if (sessionNextPageToken) {
-        loadMoreSection.style.display = 'block';
+        loadMoreSection.classList.remove('hidden');
         loadMoreBtn.disabled = false;
         loadMoreBtn.textContent = 'Load More';
       } else {
-        loadMoreSection.style.display = 'none';
+        loadMoreSection.classList.add('hidden');
       }
     } else if (allSessionsCache.length === 0) {
       allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions found</div>';
@@ -477,15 +477,15 @@ export async function loadProfileDirectly(user) {
   }
   
   if (hasKey) {
-    if (addBtn) addBtn.style.display = 'none';
-    if (dangerZoneSection) dangerZoneSection.style.display = 'block';
-    if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'block';
+    if (addBtn) addBtn.classList.add('hidden');
+    if (dangerZoneSection) dangerZoneSection.classList.remove('hidden');
+    if (julesProfileInfoSection) julesProfileInfoSection.classList.remove('hidden');
     
     await loadAndDisplayJulesProfile(user.uid);
   } else {
-    if (addBtn) addBtn.style.display = 'block';
-    if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-    if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+    if (addBtn) addBtn.classList.remove('hidden');
+    if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
+    if (julesProfileInfoSection) julesProfileInfoSection.classList.add('hidden');
   }
 
   // Attach event handlers
@@ -519,9 +519,9 @@ export async function loadProfileDirectly(user) {
           resetBtn.innerHTML = originalResetLabel;
           resetBtn.disabled = false;
           
-          if (addBtn) addBtn.style.display = 'block';
-          if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-          if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+          if (addBtn) addBtn.classList.remove('hidden');
+          if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
+          if (julesProfileInfoSection) julesProfileInfoSection.classList.add('hidden');
           
           showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
         } else {
@@ -559,13 +559,13 @@ export async function loadJulesAccountInfo(user) {
   
   if (!hasKey) {
     if (julesProfileInfoSection) {
-      julesProfileInfoSection.style.display = 'none';
+      julesProfileInfoSection.classList.add('hidden');
     }
     return;
   }
 
   if (julesProfileInfoSection) {
-    julesProfileInfoSection.style.display = 'block';
+    julesProfileInfoSection.classList.remove('hidden');
   }
 
   await loadAndDisplayJulesProfile(user.uid);

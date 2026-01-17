@@ -76,7 +76,7 @@ function handleDocumentClick(event) {
   if (target === copenBtn) {
     event.stopPropagation();
     if (copenMenu) {
-      copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
+      copenMenu.classList.toggle('hidden');
     }
     return;
   }
@@ -86,7 +86,7 @@ function handleDocumentClick(event) {
     event.stopPropagation();
     const targetApp = copenMenuItem.dataset.target;
     handleCopenPrompt(targetApp);
-    copenMenu.style.display = 'none';
+    copenMenu.classList.add('hidden');
     return;
   }
 
@@ -113,7 +113,7 @@ function handleDocumentClick(event) {
   if (target === moreBtn) {
     event.stopPropagation();
     if (moreMenu) {
-      moreMenu.style.display = moreMenu.style.display === 'none' ? 'block' : 'none';
+      moreMenu.classList.toggle('hidden');
     }
     return;
   }
@@ -127,7 +127,7 @@ function handleDocumentClick(event) {
     if (editBtn && editBtn.href) {
       window.open(editBtn.href, '_blank', 'noopener,noreferrer');
     }
-    if (moreMenu) moreMenu.style.display = 'none';
+    if (moreMenu) moreMenu.classList.add('hidden');
     return;
   }
 
@@ -136,7 +136,7 @@ function handleDocumentClick(event) {
     if (ghBtn && ghBtn.href) {
       window.open(ghBtn.href, '_blank', 'noopener,noreferrer');
     }
-    if (moreMenu) moreMenu.style.display = 'none';
+    if (moreMenu) moreMenu.classList.add('hidden');
     return;
   }
 
@@ -145,12 +145,12 @@ function handleDocumentClick(event) {
     if (rawBtn && rawBtn.href) {
       window.open(rawBtn.href, '_blank', 'noopener,noreferrer');
     }
-    if (moreMenu) moreMenu.style.display = 'none';
+    if (moreMenu) moreMenu.classList.add('hidden');
     return;
   }
 
-  if (copenMenu) copenMenu.style.display = 'none';
-  if (moreMenu) moreMenu.style.display = 'none';
+  if (copenMenu) copenMenu.classList.add('hidden');
+  if (moreMenu) moreMenu.classList.add('hidden');
 }
 
 async function handleBranchChanged() {
@@ -208,9 +208,18 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   setElementDisplay(actionsEl, true);
   
   // Clear inline styles that might have been set by showFreeInputForm
-  if (titleEl) titleEl.style.display = '';
-  if (metaEl) metaEl.style.display = '';
-  if (actionsEl) actionsEl.style.display = '';
+  if (titleEl) {
+    titleEl.style.display = '';
+    titleEl.classList.remove('hidden');
+  }
+  if (metaEl) {
+    metaEl.style.display = '';
+    metaEl.classList.remove('hidden');
+  }
+  if (actionsEl) {
+    actionsEl.style.display = '';
+    actionsEl.classList.remove('hidden');
+  }
   
   if (contentEl) {
     contentEl.style.display = '';

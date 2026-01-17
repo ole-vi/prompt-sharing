@@ -58,7 +58,7 @@
                   <span id="freeInputRepoDropdownText">Select repository...</span>
                   <span class="custom-dropdown-caret" aria-hidden="true">▼</span>
                 </button>
-                <div id="freeInputRepoDropdownMenu" class="custom-dropdown-menu" role="menu"></div>
+                <div id="freeInputRepoDropdownMenu" class="custom-dropdown-menu hidden" role="menu"></div>
               </div>
             </div>
             
@@ -70,7 +70,7 @@
                   <span id="freeInputBranchDropdownText">Select branch...</span>
                   <span class="custom-dropdown-caret" aria-hidden="true">▼</span>
                 </button>
-                <div id="freeInputBranchDropdownMenu" class="custom-dropdown-menu" role="menu"></div>
+                <div id="freeInputBranchDropdownMenu" class="custom-dropdown-menu hidden" role="menu"></div>
               </div>
             </div>
           </div>
@@ -85,7 +85,7 @@
           <button id="freeInputSplitBtn" class="btn" title="Split into Subtasks"><span class="icon icon-inline" aria-hidden="true">content_cut</span></button>
           <div class="menu-anchor">
             <button id="freeInputCopenBtn" class="btn" title="Copy prompt and open in new tab"><span class="icon icon-inline" aria-hidden="true">open_in_new</span> ▼</button>
-            <div id="freeInputCopenMenu" class="menu-panel menu-panel-sm menu-panel--above" style="display:none;">
+            <div id="freeInputCopenMenu" class="menu-panel menu-panel-sm menu-panel--above hidden">
               <div class="custom-dropdown-item" data-target="blank"><span class="icon icon-inline" aria-hidden="true">public</span> Blank</div>
               <div class="custom-dropdown-item" data-target="claude"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Claude</div>
               <div class="custom-dropdown-item" data-target="codex"><span class="icon icon-inline" aria-hidden="true">forum</span> Codex</div>
@@ -105,7 +105,7 @@
         <button class="btn" id="copyBtn" title="Copy the entire prompt"><span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy</button>
         <div class="menu-anchor">
           <button class="btn" id="copenBtn" title="Copy prompt and open in new tab"><span class="icon icon-inline" aria-hidden="true">open_in_new</span> copen ▼</button>
-          <div id="copenMenu" class="menu-panel menu-panel-sm menu-panel--below-left" style="display:none;">
+          <div id="copenMenu" class="menu-panel menu-panel-sm menu-panel--below-left hidden">
             <div class="custom-dropdown-item" data-target="blank"><span class="icon icon-inline" aria-hidden="true">public</span> Blank</div>
             <div class="custom-dropdown-item" data-target="claude"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Claude</div>
             <div class="custom-dropdown-item" data-target="codex"><span class="icon icon-inline" aria-hidden="true">forum</span> Codex</div>
@@ -117,15 +117,15 @@
         <button class="btn" id="shareBtn" title="Copy a link to this prompt"><span class="icon icon-inline" aria-hidden="true">link</span> Copy link</button>
         <div class="menu-anchor">
           <button class="btn" id="moreBtn" title="More actions">⋯ More</button>
-          <div id="moreMenu" class="menu-panel menu-panel-md menu-panel--below-right" style="display:none;">
+          <div id="moreMenu" class="menu-panel menu-panel-md menu-panel--below-right hidden">
             <div class="custom-dropdown-item" id="moreEditBtn"><span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub</div>
             <div class="custom-dropdown-item" id="moreGhBtn"><span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub</div>
             <div class="custom-dropdown-item" id="moreRawBtn"><span class="icon icon-inline" aria-hidden="true">description</span> Open raw</div>
           </div>
         </div>
-        <a class="btn" id="editBtn" target="_blank" rel="noopener" title="Edit the file on GitHub" style="display:none;"><span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub</a>
-        <a class="btn" id="ghBtn" target="_blank" rel="noopener" title="Open the file on GitHub" style="display:none;"><span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub</a>
-        <a class="btn" id="rawBtn" target="_blank" rel="noopener" title="Open the raw file" style="display:none;"><span class="icon icon-inline" aria-hidden="true">description</span> Open raw</a>
+        <a class="btn hidden" id="editBtn" target="_blank" rel="noopener" title="Edit the file on GitHub"><span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub</a>
+        <a class="btn hidden" id="ghBtn" target="_blank" rel="noopener" title="Open the file on GitHub"><span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub</a>
+        <a class="btn hidden" id="rawBtn" target="_blank" rel="noopener" title="Open the raw file"><span class="icon icon-inline" aria-hidden="true">description</span> Open raw</a>
       </div>
       <article id="content" class="scrollable-list list-lg"></article>
     </main>
@@ -162,7 +162,7 @@
                 <span id="julesRepoDropdownText">Select a repository...</span>
                 <span class="custom-dropdown-caret" aria-hidden="true">▼</span>
               </button>
-              <div id="julesRepoDropdownMenu" class="custom-dropdown-menu" role="menu"></div>
+              <div id="julesRepoDropdownMenu" class="custom-dropdown-menu hidden" role="menu"></div>
             </div>
           </div>
           
@@ -174,7 +174,7 @@
                 <span id="julesBranchDropdownText">Select branch...</span>
                 <span class="custom-dropdown-caret" aria-hidden="true">▼</span>
               </button>
-              <div id="julesBranchDropdownMenu" class="custom-dropdown-menu" role="menu"></div>
+              <div id="julesBranchDropdownMenu" class="custom-dropdown-menu hidden" role="menu"></div>
             </div>
           </div>
         </div>

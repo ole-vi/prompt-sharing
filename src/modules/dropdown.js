@@ -2,14 +2,14 @@ const openDropdowns = new Set();
 
 function closeAllDropdowns() {
   for (const dropdown of openDropdowns) {
-    dropdown.menu.style.display = 'none';
+    dropdown.menu.classList.add('hidden');
     dropdown.btn.setAttribute('aria-expanded', 'false');
   }
   openDropdowns.clear();
 }
 
 function toggleDropdown(dropdown) {
-  const isOpen = dropdown.menu.style.display === 'block';
+  const isOpen = !dropdown.menu.classList.contains('hidden') && dropdown.menu.style.display !== 'none';
   if (isOpen) {
     closeDropdown(dropdown);
   } else {
@@ -19,13 +19,15 @@ function toggleDropdown(dropdown) {
 
 function openDropdown(dropdown) {
   closeAllDropdowns();
-  dropdown.menu.style.display = 'block';
+  // Clear inline style just in case it was set by old code
+  dropdown.menu.style.display = '';
+  dropdown.menu.classList.remove('hidden');
   dropdown.btn.setAttribute('aria-expanded', 'true');
   openDropdowns.add(dropdown);
 }
 
 function closeDropdown(dropdown) {
-  dropdown.menu.style.display = 'none';
+  dropdown.menu.classList.add('hidden');
   dropdown.btn.setAttribute('aria-expanded', 'false');
   openDropdowns.delete(dropdown);
 }

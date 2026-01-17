@@ -87,7 +87,7 @@ export function showJulesQueueModal() {
     console.error('julesQueueModal element not found!');
     return;
   }
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1003; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  modal.classList.add('show');
   
   modal.onclick = (e) => {
     if (e.target === modal) {
@@ -100,7 +100,7 @@ export function showJulesQueueModal() {
 
 export function hideJulesQueueModal() {
   const modal = document.getElementById('julesQueueModal');
-  if (modal) modal.setAttribute('style', 'display:none !important;');
+  if (modal) modal.classList.remove('show');
 }
 
 export function renderQueueListDirectly(items) {
@@ -276,8 +276,8 @@ async function openEditQueueModal(docId) {
 
   if (item.type === 'single') {
     typeDiv.textContent = 'Single Prompt';
-    promptGroup.style.display = 'block';
-    subtasksGroup.style.display = 'none';
+    promptGroup.classList.remove('hidden');
+    subtasksGroup.classList.add('hidden');
     promptTextarea.value = item.prompt || '';
     editModalState.originalData = { prompt: item.prompt || '' };
     editModalState.currentType = 'single';
@@ -285,8 +285,8 @@ async function openEditQueueModal(docId) {
     document.getElementById('convertToSubtasksBtn').onclick = convertToSubtasks;
   } else if (item.type === 'subtasks') {
     typeDiv.textContent = 'Subtasks Batch';
-    promptGroup.style.display = 'none';
-    subtasksGroup.style.display = 'block';
+    promptGroup.classList.add('hidden');
+    subtasksGroup.classList.remove('hidden');
     
     const subtasks = item.remaining || [];
     renderSubtasksList(subtasks);
@@ -305,7 +305,7 @@ async function openEditQueueModal(docId) {
 
   await initializeEditRepoAndBranch(item.sourceId, item.branch || 'master', repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu);
 
-  modal.style.display = 'flex';
+  modal.classList.add('show');
 
   const trackChanges = () => {
     editModalState.hasUnsavedChanges = true;
@@ -327,8 +327,8 @@ function convertToSubtasks() {
   const subtasksGroup = document.getElementById('editSubtasksGroup');
   const typeDiv = document.getElementById('editQueueType');
   
-  promptGroup.style.display = 'none';
-  subtasksGroup.style.display = 'block';
+  promptGroup.classList.add('hidden');
+  subtasksGroup.classList.remove('hidden');
   typeDiv.textContent = 'Subtasks Batch';
   
   const subtasks = promptContent ? [{ fullContent: promptContent }] : [{ fullContent: '' }];
@@ -363,8 +363,8 @@ async function convertToSingle() {
   
   const combinedPrompt = currentSubtasks.join('\n\n---\n\n');
   
-  subtasksGroup.style.display = 'none';
-  promptGroup.style.display = 'block';
+  subtasksGroup.classList.add('hidden');
+  promptGroup.classList.remove('hidden');
   typeDiv.textContent = 'Single Prompt';
   promptTextarea.value = combinedPrompt;
   
@@ -379,7 +379,11 @@ function updateConvertToSingleButtonVisibility() {
   const subtaskCount = document.querySelectorAll('.edit-subtask-content').length;
   
   if (convertBtn) {
-    convertBtn.style.display = subtaskCount === 1 ? 'block' : 'none';
+    if (subtaskCount === 1) {
+      convertBtn.classList.remove('hidden');
+    } else {
+      convertBtn.classList.add('hidden');
+    }
   }
 }
 
@@ -459,7 +463,7 @@ async function closeEditModal(force = false) {
     });
     if (!confirmed) return;
   }
-  modal.style.display = 'none';
+  modal.classList.remove('show');
   editModalState.hasUnsavedChanges = false;
   editModalState.originalData = null;
   editModalState.currentDocId = null;
