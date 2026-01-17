@@ -82,7 +82,7 @@
 .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(77, 217, 255, 0.1); }
 .form-control:read-only { background: #0a0d1a; color: var(--muted); cursor: not-allowed; }
 .form-control:disabled { background: #0a0d1a; color: var(--muted); cursor: not-allowed; opacity: 0.6; }
-.form-control select, select.form-control { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234dd9ff' d='M6 9L1 4h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+.form-control select, select.form-control:not(:disabled) { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234dd9ff' d='M6 9L1 4h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
 .form-text { font-size: 13px; color: var(--muted); padding: 8px 0; }
 
 /* Close button */
