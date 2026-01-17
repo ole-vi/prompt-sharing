@@ -89,7 +89,12 @@ function setupEventListeners() {
           await selectBySlug(hashSlug, getFiles(), currentOwner, currentRepo, currentBranch);
         }
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error('Error handling hashchange:', {
+        error,
+        context: 'app.hashchange'
+      });
+    }
   });
 
   // Handle back/forward buttons
@@ -112,7 +117,12 @@ function setupEventListeners() {
         await loadPrompts();
         await loadBranches();
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error('Error handling popstate:', {
+        error,
+        context: 'app.popstate'
+      });
+    }
   });
 
   window.addEventListener('branchChanged', async (e) => {
@@ -125,6 +135,12 @@ function setupEventListeners() {
       if (repoPill) {
         repoPill.textContent = `${currentOwner}/${currentRepo}`;
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error('Error handling branchChanged:', {
+        error,
+        context: 'app.branchChanged',
+        detail: e.detail
+      });
+    }
   });
 }
