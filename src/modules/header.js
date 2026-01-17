@@ -82,8 +82,7 @@ export async function loadHeader() {
       }
     };
     const setupFeedbackButtons = () => {
-      const feedbackBtn = document.getElementById('feedbackBtn');
-      const mobileFeedbackBtn = document.getElementById('mobileFeedbackBtn');
+      const footerFeedbackBtn = document.getElementById('footerFeedbackBtn');
       
       const openFeedback = () => {
         const owner = 'promptroot';
@@ -103,11 +102,8 @@ export async function loadHeader() {
         window.open(url, '_blank', 'noopener,noreferrer');
       };
       
-      if (feedbackBtn) {
-        feedbackBtn.addEventListener('click', openFeedback);
-      }
-      if (mobileFeedbackBtn) {
-        mobileFeedbackBtn.addEventListener('click', openFeedback);
+      if (footerFeedbackBtn) {
+        footerFeedbackBtn.addEventListener('click', openFeedback);
       }
     };
     
