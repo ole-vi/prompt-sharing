@@ -215,8 +215,8 @@ function handleListClick(event) {
 function ancestorPaths(path) {
   const parts = path.split('/');
   const ancestors = [];
-  for (let i = 0; i < parts.length - 1; i++) {
-    ancestors.push(parts.slice(0, i + 1).join('/'));
+  for (let i = 1; i < parts.length; i++) {
+    ancestors.push(parts.slice(0, i).join('/'));
   }
   return ancestors;
 }
@@ -379,6 +379,16 @@ export function updateActiveItem() {
   });
 }
 
+function createStatusMessage(message) {
+  const container = createElement('div', 'color-muted pad-8');
+  if (typeof message === 'string') {
+    container.textContent = message;
+  } else if (message instanceof Node) {
+    container.appendChild(message);
+  }
+  return container;
+}
+
 export function renderList(items, owner, repo, branch) {
   if (!Array.isArray(items)) {
     console.warn('renderList received non-array items:', items);
@@ -422,7 +432,7 @@ export function renderList(items, owner, repo, branch) {
 
   if (!filtered.length) {
     clearElement(listEl);
-    listEl.innerHTML = '<div style="color:var(--muted); padding:8px;">No prompts found.</div>';
+    listEl.appendChild(createStatusMessage('No prompts found.'));
     return;
   }
 
@@ -483,9 +493,15 @@ export async function loadList(owner, repo, branch, cacheKey) {
   } catch (e) {
     const folder = getPromptFolder(branch);
     clearElement(listEl);
-    listEl.innerHTML = `<div style="color:var(--muted); padding:8px;">
-      Could not load prompts from <code>${owner}/${repo}@${branch}/${folder}</code>.<br/>${e.message}
-    </div>`;
+
+    const msgContainer = document.createElement('div');
+    msgContainer.appendChild(document.createTextNode('Could not load prompts from '));
+    const code = createElement('code', '', `${owner}/${repo}@${branch}/${folder}`);
+    msgContainer.appendChild(code);
+    msgContainer.appendChild(document.createElement('br'));
+    msgContainer.appendChild(document.createTextNode(e.message));
+
+    listEl.appendChild(createStatusMessage(msgContainer));
     return [];
   }
 }
