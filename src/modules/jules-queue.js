@@ -118,7 +118,8 @@ let editModalState = {
   currentDocId: null,
   currentType: null,
   repoSelector: null,
-  branchSelector: null
+  branchSelector: null,
+  isUnscheduled: false
 };
 
 async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu) {
@@ -177,6 +178,49 @@ function setupSubtasksEventDelegation() {
   });
 }
 
+function displayScheduleStatus(item) {
+  const statusGroup = document.getElementById('editQueueStatusGroup');
+  const scheduleText = document.getElementById('editQueueScheduleText');
+  const unscheduleBtn = document.getElementById('unscheduleBtn');
+  
+  if (!statusGroup || !scheduleText) return;
+  
+  if (item.status === 'scheduled' && item.scheduledAt) {
+    const scheduledDate = new Date(item.scheduledAt.seconds * 1000);
+    const timeZone = item.scheduledTimeZone || 'America/New_York';
+    const dateStr = scheduledDate.toLocaleString('en-US', {
+      timeZone: timeZone,
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    scheduleText.textContent = `Scheduled for ${dateStr} (${timeZone})`;
+    statusGroup.style.display = 'block';
+    
+    if (unscheduleBtn) {
+      unscheduleBtn.onclick = () => {
+        unscheduleQueueItem();
+      };
+    }
+  } else {
+    statusGroup.style.display = 'none';
+  }
+}
+
+function unscheduleQueueItem() {
+  const statusGroup = document.getElementById('editQueueStatusGroup');
+  if (statusGroup) {
+    statusGroup.style.display = 'none';
+  }
+  
+  editModalState.isUnscheduled = true;
+  editModalState.hasUnsavedChanges = true;
+  
+  showToast('Item marked for unscheduling. Click Save to confirm.', 'info');
+}
+
 async function openEditQueueModal(docId) {
   const item = queueCache.find(i => i.id === docId);
   if (!item) {
@@ -202,6 +246,13 @@ async function openEditQueueModal(docId) {
           <div class="form-group">
             <label class="form-section-label">Type:</label>
             <div id="editQueueType" class="form-text"></div>
+          </div>
+          <div class="form-group" id="editQueueStatusGroup" style="display: none;">
+            <label class="form-section-label">Schedule:</label>
+            <div id="editQueueScheduleInfo" class="form-text" style="display: flex; align-items: center; justify-content: space-between;">
+              <div id="editQueueScheduleText"></div>
+              <button type="button" id="unscheduleBtn" class="btn btn-secondary" style="font-size: 12px; padding: 4px 12px;">Unschedule</button>
+            </div>
           </div>
           <div class="form-group" id="editPromptGroup">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
@@ -302,6 +353,8 @@ async function openEditQueueModal(docId) {
 
   editModalState.originalData.sourceId = item.sourceId || '';
   editModalState.originalData.branch = item.branch || 'master';
+
+  displayScheduleStatus(item);
 
   await initializeEditRepoAndBranch(item.sourceId, item.branch || 'master', repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu);
 
@@ -466,6 +519,7 @@ async function closeEditModal(force = false) {
   editModalState.currentType = null;
   editModalState.repoSelector = null;
   editModalState.branchSelector = null;
+  editModalState.isUnscheduled = false;
 }
 
 async function saveQueueItemEdit(docId, closeModalCallback) {
@@ -490,6 +544,13 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
       branch: branch || item.branch || 'master',
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
+    
+    if (editModalState.isUnscheduled) {
+      updates.status = 'pending';
+      updates.scheduledAt = firebase.firestore.FieldValue.delete();
+      updates.scheduledTimeZone = firebase.firestore.FieldValue.delete();
+      updates.activatedAt = firebase.firestore.FieldValue.delete();
+    }
 
     const currentType = editModalState.currentType || item.type;
     
