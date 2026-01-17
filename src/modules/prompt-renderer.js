@@ -180,10 +180,8 @@ export async function selectBySlug(slug, files, owner, repo, branch) {
     if (f) {
       await selectFile(f, false, owner, repo, branch);
     } else {
-      const freeInputSection = document.getElementById('freeInputSection');
-      if (freeInputSection && !freeInputSection.classList.contains('hidden')) {
-        freeInputSection.classList.add('hidden');
-      }
+      const { showFreeInputForm } = await import('./jules-free-input.js');
+      showFreeInputForm();
     }
   } catch (error) {
     console.error('Error selecting file by slug:', error);
