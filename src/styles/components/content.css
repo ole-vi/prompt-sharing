@@ -1,5 +1,12 @@
 /* Content */
 #content { line-height: 1.55; font-size: 15px; }
+
+#content.scrollable-list { 
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
 #content pre { background: #0b0f21; padding: 12px; border: 1px solid var(--border); border-radius: 10px; overflow: auto; position: relative; }
 #content code { background: #0b0f21; padding: 1px 4px; border-radius: 6px; font-family: 'Courier New', monospace; }
 
