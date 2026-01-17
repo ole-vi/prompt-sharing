@@ -1,7 +1,7 @@
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
-import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
+import { RepoBranchManager } from './repo-branch-manager.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { JULES_MESSAGES } from '../utils/constants.js';
@@ -117,34 +117,28 @@ let editModalState = {
   hasUnsavedChanges: false,
   currentDocId: null,
   currentType: null,
-  repoSelector: null,
-  branchSelector: null
+  repoBranchManager: null
 };
 
 async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu) {
-  const branchSelector = new BranchSelector({
-    dropdownBtn: branchDropdownBtn,
-    dropdownText: branchDropdownText,
-    dropdownMenu: branchDropdownMenu,
-    onSelect: (selectedBranch) => {
+  const manager = new RepoBranchManager({
+    repoBtn: repoDropdownBtn,
+    repoText: repoDropdownText,
+    repoMenu: repoDropdownMenu,
+    branchBtn: branchDropdownBtn,
+    branchText: branchDropdownText,
+    branchMenu: branchDropdownMenu,
+    onRepoSelect: (selectedSourceId) => {
+      editModalState.hasUnsavedChanges = true;
+    },
+    onBranchSelect: (selectedBranch) => {
       editModalState.hasUnsavedChanges = true;
     }
   });
 
-  const repoSelector = new RepoSelector({
-    dropdownBtn: repoDropdownBtn,
-    dropdownText: repoDropdownText,
-    dropdownMenu: repoDropdownMenu,
-    branchSelector: branchSelector,
-    onSelect: (selectedSourceId) => {
-      editModalState.hasUnsavedChanges = true;
-    }
-  });
+  editModalState.repoBranchManager = manager;
 
-  editModalState.repoSelector = repoSelector;
-  editModalState.branchSelector = branchSelector;
-
-  await repoSelector.initialize(sourceId, branch);
+  await manager.initialize(sourceId, branch);
 }
 
 function setupSubtasksEventDelegation() {
@@ -464,8 +458,7 @@ async function closeEditModal(force = false) {
   editModalState.originalData = null;
   editModalState.currentDocId = null;
   editModalState.currentType = null;
-  editModalState.repoSelector = null;
-  editModalState.branchSelector = null;
+  editModalState.repoBranchManager = null;
 }
 
 async function saveQueueItemEdit(docId, closeModalCallback) {
@@ -482,8 +475,8 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
   }
 
   try {
-    const sourceId = editModalState.repoSelector?.getSelectedSourceId();
-    const branch = editModalState.branchSelector?.getSelectedBranch();
+    const sourceId = editModalState.repoBranchManager?.getSelectedSourceId();
+    const branch = editModalState.repoBranchManager?.getSelectedBranch();
     
     const updates = {
       sourceId: sourceId || item.sourceId,

@@ -1,5 +1,6 @@
 import { getCurrentUser } from './auth.js';
 import { showToast } from './toast.js';
+import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 
 function extractDefaultBranch(source) {
   const defaultBranchObj = source?.githubRepo?.defaultBranch ||
@@ -12,7 +13,6 @@ function extractDefaultBranch(source) {
 }
 
 function setupClickOutsideClose(targetBtn, targetMenu) {
-  // Remove any previously registered handler for this button, if present
   if (targetBtn._closeDropdownHandler) {
     document.removeEventListener('click', targetBtn._closeDropdownHandler);
   }
@@ -23,9 +23,88 @@ function setupClickOutsideClose(targetBtn, targetMenu) {
     }
   };
   
-  // Store handler on the button so we can remove it on re-initialization
   targetBtn._closeDropdownHandler = closeDropdown;
   document.addEventListener('click', closeDropdown);
+}
+
+export class RepoBranchManager {
+  constructor(config) {
+    this.repoSelector = new RepoSelector({
+      dropdownBtn: config.repoBtn,
+      dropdownText: config.repoText,
+      dropdownMenu: config.repoMenu,
+      onSelect: (sourceId, branch, name) => {
+        this.selectedSourceId = sourceId;
+        this.selectedBranch = branch;
+        // Update branch selector
+        this.branchSelector.initialize(sourceId, branch);
+
+        if (config.onRepoSelect) {
+          config.onRepoSelect(sourceId, branch, name);
+        }
+      }
+    });
+
+    this.branchSelector = new BranchSelector({
+      dropdownBtn: config.branchBtn,
+      dropdownText: config.branchText,
+      dropdownMenu: config.branchMenu,
+      onSelect: (branch) => {
+        this.selectedBranch = branch;
+        if (config.onBranchSelect) {
+          config.onBranchSelect(branch);
+        }
+      }
+    });
+
+    // Link them
+    this.repoSelector.branchSelector = this.branchSelector;
+
+    this.selectedSourceId = null;
+    this.selectedBranch = null;
+  }
+
+  async initialize(defaultSourceId = null, defaultBranch = null) {
+    await this.repoSelector.initialize();
+
+    // If specific defaults provided, override what might have been loaded from storage/favorites
+    if (defaultSourceId) {
+      this.selectedSourceId = defaultSourceId;
+      this.selectedBranch = defaultBranch || 'main';
+
+      // We need to manually update the UI for repo selector since we are bypassing its internal selection logic
+      // But RepoSelector.initialize tries to restore from storage.
+      // If defaultSourceId is passed, we should force it.
+
+      // Let's rely on RepoSelector's public API to set selection if possible,
+      // or just call initialize on branch selector.
+
+      // If the RepoSelector found a match in favorites/storage, it might have already set selectedSourceId.
+      // But if the caller explicitly passes defaults (e.g. editing a queue item), those should take precedence.
+
+      this.repoSelector.setSelection(defaultSourceId, defaultBranch); // We need to implement this
+    } else {
+      // Sync local state with whatever RepoSelector initialized with
+      this.selectedSourceId = this.repoSelector.selectedSourceId;
+
+      // If repo selector didn't trigger branch selector init (e.g. no selection), we should init branch selector as empty
+      if (!this.selectedSourceId) {
+        this.branchSelector.initialize(null, null);
+      } else {
+        // If repo selector picked something, it usually calls branchSelector.initialize.
+        // Let's ensure we capture the branch.
+        this.selectedBranch = this.branchSelector.selectedBranch;
+      }
+    }
+  }
+
+  getSelectedSourceId() {
+    return this.selectedSourceId || this.repoSelector.selectedSourceId;
+  }
+
+  getSelectedBranch() {
+    return this.selectedBranch || this.branchSelector.selectedBranch;
+  }
 }
 
 export class RepoSelector {
@@ -61,6 +140,28 @@ export class RepoSelector {
 
   getSelectedSourceId() {
     return this.selectedSourceId;
+  }
+
+  setSelection(sourceId, branch, repoName = null) {
+    this.selectedSourceId = sourceId;
+
+    if (!repoName) {
+       // Try to find name in favorites or guess from ID
+       const fav = this.favorites.find(f => f.id === sourceId);
+       if (fav) {
+         repoName = fav.name;
+       } else {
+         const pathParts = sourceId.split('/');
+         repoName = pathParts.length >= 4 ? pathParts.slice(-2).join('/') : sourceId;
+       }
+    }
+
+    this.dropdownText.textContent = repoName;
+    this.saveToStorage();
+
+    if (this.branchSelector) {
+      this.branchSelector.initialize(sourceId, branch);
+    }
   }
 
   async initialize() {
@@ -178,9 +279,13 @@ export class RepoSelector {
       await this.renderFavorites();
       this.addShowMoreButton();
     } else {
-      await this.loadAllRepos();
-      this.dropdownMenu.innerHTML = '';
-      this.renderAllRepos();
+      try {
+        await this.loadAllRepos();
+        this.dropdownMenu.innerHTML = '';
+        this.renderAllRepos();
+      } catch (error) {
+        this.dropdownMenu.innerHTML = `<div style="padding:12px; text-align:center; color:var(--error); font-size:13px;">${error.message}</div>`;
+      }
     }
     
     this.dropdownMenu.style.display = 'block';
@@ -254,6 +359,15 @@ export class RepoSelector {
 
   async loadAllRepos() {
     const user = getCurrentUser();
+    if (!user) throw new Error('Not logged in');
+
+    // Check cache first
+    const cachedRepos = getCache(CACHE_KEYS.JULES_REPOS, user.uid);
+    if (cachedRepos) {
+      this.allSources = cachedRepos;
+      return;
+    }
+
     const { listJulesSources } = await import('./jules-api.js');
     const { getDecryptedJulesKey } = await import('./jules-api.js');
     
@@ -275,6 +389,9 @@ export class RepoSelector {
     if (this.allSources.length === 0) {
       throw new Error('No repositories found');
     }
+
+    // Cache the results
+    setCache(CACHE_KEYS.JULES_REPOS, this.allSources, user.uid);
   }
 
   renderAllRepos() {
@@ -355,6 +472,14 @@ export class RepoSelector {
   async verifyDefaultBranch(favorite, updateUI = false) {
     try {
       const user = getCurrentUser();
+      if (!user) return favorite.branch || 'master';
+
+      // Use cached repos if available to avoid refetch
+      const cachedRepos = getCache(CACHE_KEYS.JULES_REPOS, user.uid);
+      if (cachedRepos) {
+        this.sourcesCache = { sources: cachedRepos };
+      }
+
       const { listJulesSources, getDecryptedJulesKey } = await import('./jules-api.js');
       const apiKey = await getDecryptedJulesKey(user.uid);
       
@@ -369,6 +494,8 @@ export class RepoSelector {
           pageToken = response.nextPageToken;
         } while (pageToken);
         this.sourcesCache = { sources: allSources };
+        // Cache for future
+        setCache(CACHE_KEYS.JULES_REPOS, allSources, user.uid);
       }
       
       const favoriteIdToMatch = favorite.id.replace(/^sources\//, '');
@@ -572,39 +699,10 @@ export class BranchSelector {
       showMoreBtn.style.pointerEvents = 'none';
       
       try {
-        const pathParts = this.sourceId.split('/');
-        const owner = pathParts[pathParts.length - 2];
-        const repo = pathParts[pathParts.length - 1];
-        
-        const { getBranches } = await import('./github-api.js');
-        const allBranches = await getBranches(owner, repo);
-
-        if (!allBranches || allBranches.length === 0) {
-          showMoreBtn.textContent = allBranches === null ? 'GitHub API rate limited - try later' : 'No branches found';
-          showMoreBtn.style.color = 'var(--muted)';
-          showMoreBtn.style.pointerEvents = 'auto';
-          return;
-        }
-
+        await this.loadBranches();
         this.allBranchesLoaded = true;
         showMoreBtn.style.display = 'none';
-        
-        allBranches.forEach(branch => {
-          if (branch.name === this.selectedBranch) return;
-          
-          const item = document.createElement('div');
-          item.className = 'custom-dropdown-item';
-          item.textContent = branch.name;
-          
-          item.onclick = () => {
-            this.setSelectedBranch(branch.name);
-            this.dropdownMenu.style.display = 'none';
-          };
-          
-          this.dropdownMenu.appendChild(item);
-        });
       } catch (error) {
-        console.error('Failed to load branches:', error);
         showMoreBtn.textContent = 'Failed to load - click to retry';
         showMoreBtn.style.color = 'var(--muted)';
         showMoreBtn.style.pointerEvents = 'auto';
@@ -614,6 +712,52 @@ export class BranchSelector {
     this.dropdownMenu.appendChild(showMoreBtn);
     
     this.dropdownMenu.style.display = 'block';
+  }
+
+  async loadBranches() {
+    const user = getCurrentUser();
+
+    // Construct a cache key that is unique to this repo
+    // CACHE_KEYS.BRANCHES is a prefix, we append the repo ID
+    const cacheKey = `${CACHE_KEYS.BRANCHES}_${this.sourceId.replace(/\//g, '_')}`;
+
+    const cachedBranches = getCache(cacheKey, user?.uid);
+    if (cachedBranches) {
+      this.renderBranches(cachedBranches);
+      return;
+    }
+
+    const pathParts = this.sourceId.split('/');
+    const owner = pathParts[pathParts.length - 2];
+    const repo = pathParts[pathParts.length - 1];
+
+    const { getBranches } = await import('./github-api.js');
+    const allBranches = await getBranches(owner, repo);
+
+    if (!allBranches || allBranches.length === 0) {
+      throw new Error(allBranches === null ? 'Rate limited' : 'No branches');
+    }
+
+    // Cache the results
+    setCache(cacheKey, allBranches, user?.uid);
+    this.renderBranches(allBranches);
+  }
+
+  renderBranches(branches) {
+    branches.forEach(branch => {
+      if (branch.name === this.selectedBranch) return;
+
+      const item = document.createElement('div');
+      item.className = 'custom-dropdown-item';
+      item.textContent = branch.name;
+
+      item.onclick = () => {
+        this.setSelectedBranch(branch.name);
+        this.dropdownMenu.style.display = 'none';
+      };
+
+      this.dropdownMenu.appendChild(item);
+    });
   }
 
   setSelectedBranch(branch) {
