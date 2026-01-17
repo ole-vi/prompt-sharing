@@ -1,5 +1,6 @@
 import { getCurrentUser } from './auth.js';
 import { showToast } from './toast.js';
+import { createIcon, createElement } from '../utils/dom-helpers.js';
 
 function extractDefaultBranch(source) {
   const defaultBranchObj = source?.githubRepo?.defaultBranch ||
@@ -163,7 +164,7 @@ export class RepoSelector {
   }
 
   async populateDropdown() {
-    this.dropdownMenu.innerHTML = '';
+    this.dropdownMenu.replaceChildren();
     
     const loadingIndicator = document.createElement('div');
     loadingIndicator.style.cssText = 'padding:12px; text-align:center; color:var(--muted); font-size:13px;';
@@ -174,12 +175,12 @@ export class RepoSelector {
     await new Promise(resolve => setTimeout(resolve, 0));
     
     if (this.showFavorites && this.favorites && this.favorites.length > 0) {
-      this.dropdownMenu.innerHTML = '';
+      this.dropdownMenu.replaceChildren();
       await this.renderFavorites();
       this.addShowMoreButton();
     } else {
       await this.loadAllRepos();
-      this.dropdownMenu.innerHTML = '';
+      this.dropdownMenu.replaceChildren();
       this.renderAllRepos();
     }
     
@@ -320,10 +321,14 @@ export class RepoSelector {
     }
     
     const star = document.createElement('span');
-    star.innerHTML = isFavorite 
-      ? '<span class="icon icon-inline" aria-hidden="true">star</span>'
-      : '<span class="icon icon-inline" aria-hidden="true">star_border</span>';
     star.style.cssText = `font-size:18px; cursor:pointer; color:${isFavorite ? 'var(--accent)' : 'var(--muted)'}; flex-shrink:0;`;
+
+    if (isFavorite) {
+        star.replaceChildren(createIcon('star', 'icon icon-inline'));
+    } else {
+        star.replaceChildren(createIcon('star_border', 'icon icon-inline'));
+    }
+
     star.onclick = async (e) => {
       e.stopPropagation();
       if (isFavorite) {
@@ -551,7 +556,7 @@ export class BranchSelector {
       return;
     }
     
-    this.dropdownMenu.innerHTML = '';
+    this.dropdownMenu.replaceChildren();
     
     const currentItem = document.createElement('div');
     currentItem.className = 'custom-dropdown-item selected';

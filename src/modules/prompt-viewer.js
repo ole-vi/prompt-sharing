@@ -3,7 +3,7 @@
  * Shared modal for viewing and copying Jules session prompts
  */
 
-import { createElement } from '../utils/dom-helpers.js';
+import { createElement, createIcon } from '../utils/dom-helpers.js';
 import { showToast } from './toast.js';
 
 let currentEscapeHandler = null;
@@ -38,8 +38,7 @@ function createPromptViewerModal() {
 
   const copyBtn = createElement('button', 'btn primary');
   copyBtn.id = 'promptViewerCopy';
-  const icon = createElement('span', 'icon icon-inline', 'content_copy');
-  icon.setAttribute('aria-hidden', 'true');
+  const icon = createIcon('content_copy', 'icon icon-inline');
   copyBtn.appendChild(icon);
   copyBtn.append(' Copy Prompt');
 
@@ -75,12 +74,22 @@ export function showPromptViewer(prompt, sessionId) {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(prompt);
-      const originalText = copyBtn.innerHTML;
-      copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check</span> Copied!';
+
+      // Store original content nodes
+      const originalChildren = Array.from(copyBtn.childNodes).map(n => n.cloneNode(true));
+
+      // Update button state
+      copyBtn.replaceChildren(
+        createIcon('check', 'icon icon-inline'),
+        document.createTextNode(' Copied!')
+      );
       copyBtn.disabled = true;
+
       showToast('Prompt copied to clipboard', 'success');
+
       setTimeout(() => {
-        copyBtn.innerHTML = originalText;
+        // Restore original content
+        copyBtn.replaceChildren(...originalChildren);
         copyBtn.disabled = false;
       }, 2000);
     } catch (err) {

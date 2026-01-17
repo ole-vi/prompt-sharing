@@ -5,6 +5,7 @@
 
 import { waitForFirebase } from '../shared-init.js';
 import { loadProfileDirectly } from '../modules/jules-account.js';
+import { createElement } from '../utils/dom-helpers.js';
 
 function waitForComponents() {
   if (document.querySelector('header')) {
@@ -45,7 +46,7 @@ function initApp() {
         const dangerZoneSection = document.getElementById('dangerZoneSection');
         
         if (profileUserName) {
-          profileUserName.innerHTML = '<div class="muted-text text-center pad-xl">Please sign in to view your profile.</div>';
+          profileUserName.replaceChildren(createElement('div', 'muted-text text-center pad-xl', 'Please sign in to view your profile.'));
         }
         if (julesKeyStatusDiv) julesKeyStatusDiv.classList.add('hidden');
         if (addJulesKeyBtn) addJulesKeyBtn.classList.add('hidden');

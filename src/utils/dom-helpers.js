@@ -1,9 +1,27 @@
 // ===== Common DOM Helpers =====
 
+/**
+ * WARNING: Avoid using innerHTML whenever possible.
+ * Prefer safe DOM construction using createElement, createIcon, and replaceChildren.
+ * innerHTML can lead to XSS vulnerabilities and performance issues.
+ */
+
 export function createElement(tag, className = '', textContent = '') {
   const el = document.createElement(tag);
   if (className) el.className = className;
   if (textContent) el.textContent = textContent;
+  return el;
+}
+
+/**
+ * Creates a Material Icon span element.
+ * @param {string} iconName The name of the Material Icon (ligature).
+ * @param {string} className Additional classes (default: 'icon').
+ * @returns {HTMLElement} The icon element.
+ */
+export function createIcon(iconName, className = 'icon') {
+  const el = createElement('span', className, iconName);
+  el.setAttribute('aria-hidden', 'true');
   return el;
 }
 
