@@ -58,6 +58,37 @@ a:hover { text-decoration: underline; }
 .y-scroll { overflow-y: auto; }
 .max-h-300 { max-height:300px; }
 
+/* Shared scrollable list styles */
+.scrollable-list {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+}
+
+/* Default max height for scrollable lists */
+.scrollable-list.list-sm { max-height: 250px; }
+.scrollable-list.list-md { max-height: 300px; }
+.scrollable-list.list-lg { max-height: calc(100vh - 350px); }
+
+/* Custom scrollbar styling for scrollable lists */
+.scrollable-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+
+.scrollable-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.scrollable-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 /* Vertical list container */
 .vlist { display:flex; flex-direction:column; gap:8px; }
 
