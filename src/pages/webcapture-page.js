@@ -3,11 +3,13 @@
  * Handles extension download functionality
  */
 
+import { TIMEOUTS } from '../utils/constants.js';
+
 function waitForComponents() {
   if (document.querySelector('header')) {
     initApp();
   } else {
-    setTimeout(waitForComponents, 50);
+    setTimeout(waitForComponents, TIMEOUTS.componentCheck);
   }
 }
 
@@ -34,14 +36,14 @@ function initApp() {
         setTimeout(() => {
           downloadBtn.innerHTML = originalDownloadLabel;
           downloadBtn.disabled = false;
-        }, 2000);
+        }, TIMEOUTS.actionFeedback);
       } catch (error) {
         console.error('Download failed:', error);
         downloadBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">error</span> Download failed';
         setTimeout(() => {
           downloadBtn.innerHTML = originalDownloadLabel;
           downloadBtn.disabled = false;
-        }, 2000);
+        }, TIMEOUTS.actionFeedback);
       }
     });
   }

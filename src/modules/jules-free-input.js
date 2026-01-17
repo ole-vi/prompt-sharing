@@ -4,7 +4,7 @@ import { showJulesKeyModal, showSubtaskErrorModal } from './jules-modal.js';
 import { addToJulesQueue, handleQueueAction } from './jules-queue.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
-import { JULES_MESSAGES } from '../utils/constants.js';
+import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';
 
 let _lastSelectedSourceId = null;
 let _lastSelectedBranch = null;
@@ -20,7 +20,7 @@ export function showFreeInputModal() {
       try {
         const { signInWithGitHub } = await import('./auth.js');
         await signInWithGitHub();
-        setTimeout(() => showFreeInputModal(), 500);
+        setTimeout(() => showFreeInputModal(), TIMEOUTS.uiDelay);
       } catch (error) {
         showToast('Login required to use Jules.', 'warn');
       }
@@ -122,7 +122,7 @@ export function showFreeInputForm() {
 
     try {
       let retryCount = 0;
-      let maxRetries = 3;
+      let maxRetries = RETRY_CONFIG.maxRetries;
       let submitted = false;
 
       while (retryCount < maxRetries && !submitted) {
@@ -161,7 +161,7 @@ export function showFreeInputForm() {
               return;
             } else if (result.action === 'retry') {
               if (result.shouldDelay) {
-                await new Promise(resolve => setTimeout(resolve, 5000));
+                await new Promise(resolve => setTimeout(resolve, TIMEOUTS.longDelay));
               }
             }
           } else {
@@ -187,7 +187,7 @@ export function showFreeInputForm() {
 
             if (result.action === 'retry') {
               if (result.shouldDelay) {
-                await new Promise(resolve => setTimeout(resolve, 5000));
+                await new Promise(resolve => setTimeout(resolve, TIMEOUTS.longDelay));
               }
               try {
                 const sessionUrl = await callRunJulesFunction(promptText, _lastSelectedSourceId, _lastSelectedBranch, title);
@@ -203,7 +203,7 @@ export function showFreeInputForm() {
         }
 
         if (!submitted) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, RETRY_CONFIG.baseDelay));
         }
       }
     } catch (error) {
@@ -249,7 +249,7 @@ export function showFreeInputForm() {
       copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied!';
       setTimeout(() => {
         copenBtn.innerHTML = originalCopenLabel;
-      }, 1000);
+      }, TIMEOUTS.copyFeedback);
 
       let url;
       switch(target) {

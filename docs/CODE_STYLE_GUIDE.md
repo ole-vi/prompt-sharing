@@ -695,7 +695,10 @@ import {
   TAG_DEFINITIONS,
   ERRORS,
   UI_TEXT,
-  JULES_API_BASE
+  JULES_API_BASE,
+  TIMEOUTS,
+  LIMITS,
+  RETRY_CONFIG
 } from '../utils/constants.js';
 
 // Repository defaults
@@ -712,9 +715,23 @@ button.textContent = UI_TEXT.SIGN_IN;
 
 // API base URL
 const url = `${JULES_API_BASE}/sessions`;
+
+// Timeouts and Delays
+setTimeout(waitForComponents, TIMEOUTS.componentCheck);
+await new Promise(r => setTimeout(r, TIMEOUTS.uiDelay));
+
+// Retry Logic
+let retryCount = 0;
+while (retryCount < RETRY_CONFIG.maxRetries) {
+  // ...
+  await new Promise(r => setTimeout(r, RETRY_CONFIG.baseDelay));
+}
 ```
 
 **Available constants**:
+- `TIMEOUTS`: Standardized delays (componentCheck, uiDelay, toast, etc.)
+- `LIMITS`: Operational limits (firebaseMaxAttempts, etc.)
+- `RETRY_CONFIG`: Retry configuration (maxRetries, baseDelay)
 - `OWNER`, `REPO`, `BRANCH`: Default repository info
 - `STORAGE_KEYS`: Functions to generate storage keys
 - `TAG_DEFINITIONS`: Tag classification config
