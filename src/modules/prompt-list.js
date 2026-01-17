@@ -2,6 +2,7 @@ import { slugify } from '../utils/slug.js';
 import { STORAGE_KEYS, TAG_DEFINITIONS } from '../utils/constants.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
 import { clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
+import { escapeHTML } from '../utils/sanitization.js';
 
 let files = [];
 let expandedState = new Set();
@@ -584,7 +585,7 @@ export async function loadList(owner, repo, branch, cacheKey) {
     const folder = getPromptFolder(branch);
     clearElement(listEl);
     listEl.innerHTML = `<div style="color:var(--muted); padding:8px;">
-      Could not load prompts from <code>${owner}/${repo}@${branch}/${folder}</code>.<br/>${e.message}
+      Could not load prompts from <code>${escapeHTML(owner)}/${escapeHTML(repo)}@${escapeHTML(branch)}/${escapeHTML(folder)}</code>.<br/>${escapeHTML(e.message)}
     </div>`;
     return [];
   }

@@ -13,6 +13,7 @@ import { showConfirm } from './confirm-modal.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { JULES_MESSAGES } from '../utils/constants.js';
+import { escapeHTML } from '../utils/sanitization.js';
 
 // Module state
 let currentFullPrompt = '';
@@ -166,7 +167,7 @@ function renderSplitEdit(subtasks, promptText) {
   
   const promptPreview = promptText.length > 200 ? promptText.substring(0, 200) + '...' : promptText;
   const promptDisplay = `<div style="padding: 12px; margin-bottom: 8px; background: rgba(77,217,255,0.05); border: 1px solid rgba(77,217,255,0.2); border-radius: 6px;">
-    <div style="font-size: 12px; color: var(--text); line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;">${promptPreview}</div>
+    <div style="font-size: 12px; color: var(--text); line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;">${escapeHTML(promptPreview)}</div>
   </div>`;
   
   if (!subtasks || subtasks.length === 0) {
@@ -179,7 +180,7 @@ function renderSplitEdit(subtasks, promptText) {
       <div style="padding: 8px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center;">
         <input type="checkbox" id="subtask-${idx}" checked style="cursor: pointer;" />
         <label for="subtask-${idx}" style="flex: 1; cursor: pointer; font-size: 13px;">
-          <strong>Part ${idx + 1}:</strong> ${st.title || `Part ${idx + 1}`}
+          <strong>Part ${idx + 1}:</strong> ${escapeHTML(st.title || `Part ${idx + 1}`)}
         </label>
         <span style="font-size: 11px; color: var(--muted);">${st.content.length}c</span>
         <button class="subtask-preview-btn" data-idx="${idx}" style="background: none; border: none; cursor: pointer; color: var(--accent); font-size: 16px; padding: 4px 8px; transition: transform 0.2s; line-height: 1;" title="Preview subtask" onclick="event.stopPropagation();"><span class="icon icon-inline" aria-hidden="true">visibility</span></button>

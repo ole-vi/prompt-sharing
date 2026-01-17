@@ -5,6 +5,7 @@ import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { JULES_MESSAGES } from '../utils/constants.js';
+import { escapeHTML } from '../utils/sanitization.js';
 
 let queueCache = [];
 
@@ -396,7 +397,7 @@ function renderSubtasksList(subtasks) {
         <label class="form-label">Subtask ${index + 1}:</label>
         <button type="button" class="remove-subtask-btn" data-index="${index}" title="Remove this subtask"><span class="icon" aria-hidden="true">close</span></button>
       </div>
-      <textarea class="form-control edit-subtask-content" rows="5">${escapeHtml(subtask.fullContent || '')}</textarea>
+      <textarea class="form-control edit-subtask-content" rows="5">${escapeHTML(subtask.fullContent || '')}</textarea>
     </div>
   `).join('');
   
@@ -551,12 +552,6 @@ async function loadQueuePage() {
   }
 }
 
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
 function renderQueueList(items) {
   const listDiv = document.getElementById('allQueueList');
   if (!listDiv) return;
@@ -580,13 +575,13 @@ function renderQueueList(items) {
             </div>
             <div class="queue-subtask-content">
               <div class="queue-subtask-meta">Subtask ${index + 1} of ${item.remaining.length}</div>
-              <div class="queue-subtask-text">${escapeHtml(preview)}${preview.length >= 150 ? '...' : ''}</div>
+              <div class="queue-subtask-text">${escapeHTML(preview)}${preview.length >= 150 ? '...' : ''}</div>
             </div>
           </div>
         `;
       }).join('');
 
-      const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+      const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${escapeHTML(item.sourceId.split('/').slice(-2).join('/'))} (${escapeHTML(item.branch || 'master')})</div>` : '';
       
       return `
         <div class="queue-card queue-item" data-docid="${item.id}">
@@ -612,7 +607,7 @@ function renderQueueList(items) {
     }
 
     const promptPreview = (item.prompt || '').substring(0, 200);
-    const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+    const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${escapeHTML(item.sourceId.split('/').slice(-2).join('/'))} (${escapeHTML(item.branch || 'master')})</div>` : '';
     
     return `
       <div class="queue-card queue-item" data-docid="${item.id}">
@@ -627,7 +622,7 @@ function renderQueueList(items) {
             </div>
             <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
             ${repoDisplay}
-            <div class="queue-prompt">${escapeHtml(promptPreview)}${promptPreview.length >= 200 ? '...' : ''}</div>
+            <div class="queue-prompt">${escapeHTML(promptPreview)}${promptPreview.length >= 200 ? '...' : ''}</div>
           </div>
         </div>
       </div>

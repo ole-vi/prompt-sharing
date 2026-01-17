@@ -4,6 +4,7 @@ import { CODEX_URL_REGEX } from '../utils/constants.js';
 import { setElementDisplay } from '../utils/dom-helpers.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
+import { sanitizeHTML } from '../utils/sanitization.js';
 
 let cacheRaw = new Map();
 let currentPromptText = null;
@@ -376,12 +377,12 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     const looksLikeMarkdown = /^#|^\*|^-|^\d+\.|```/.test(raw.trim());
     if (!looksLikeMarkdown) {
       const wrappedContent = '```\n' + raw + '\n```';
-      contentEl.innerHTML = marked.parse(wrappedContent, { breaks: true });
+      contentEl.innerHTML = sanitizeHTML(marked.parse(wrappedContent, { breaks: true }));
     } else {
-      contentEl.innerHTML = marked.parse(raw, { breaks: true });
+      contentEl.innerHTML = sanitizeHTML(marked.parse(raw, { breaks: true }));
     }
   } else {
-    contentEl.innerHTML = marked.parse(raw, { breaks: true });
+    contentEl.innerHTML = sanitizeHTML(marked.parse(raw, { breaks: true }));
   }
 
   setCurrentPromptText(raw);
