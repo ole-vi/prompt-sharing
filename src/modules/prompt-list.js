@@ -1,5 +1,6 @@
 import { slugify } from '../utils/slug.js';
 import { STORAGE_KEYS, TAG_DEFINITIONS } from '../utils/constants.js';
+import { debounce } from '../utils/debounce.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
 import { clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
 
@@ -34,10 +35,14 @@ export function initPromptList() {
   listEl = document.getElementById('list');
   searchEl = document.getElementById('search');
   const searchClearBtn = document.getElementById('searchClear');
+
+  const debouncedRender = debounce(() => {
+    renderList(files, currentOwner, currentRepo, currentBranch);
+  }, 300);
   
   if (searchEl) {
     searchEl.addEventListener('input', () => {
-      renderList(files, currentOwner, currentRepo, currentBranch);
+      // Immediate UI updates
       if (searchClearBtn) {
         if (searchEl.value) {
           searchClearBtn.classList.remove('hidden');
@@ -45,6 +50,8 @@ export function initPromptList() {
           searchClearBtn.classList.add('hidden');
         }
       }
+      // Debounced search
+      debouncedRender();
     });
   }
   
