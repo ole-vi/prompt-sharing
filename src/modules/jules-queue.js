@@ -1399,10 +1399,6 @@ async function runSelectedQueueItems() {
     if (queueSelections.includes(docId)) continue;
     
     const item = queueCache.find(i => i.id === docId);
-    if (item?.status === 'scheduled') {
-      console.log('Skipping scheduled item:', docId);
-      continue;
-    }
     
     try {
       const result = await runSelectedSubtasks(docId, indices.slice().sort((a, b) => a - b), suppressPopups, openInBackground);
@@ -1431,11 +1427,6 @@ async function runSelectedQueueItems() {
     if (paused) break;
     const item = queueCache.find(i => i.id === id);
     if (!item) continue;
-    
-    if (item.status === 'scheduled') {
-      console.log('Skipping scheduled item:', id);
-      continue;
-    }
 
     try {
       if (item.type === 'single') {
