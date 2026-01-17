@@ -49,7 +49,13 @@ function saveBranchToStorage(branch, owner, repo) {
         repo,
         timestamp: Date.now()
       }));
-    } catch (error) {}
+    } catch (error) {
+      console.error('Error saving branch to storage:', {
+        error,
+        context: 'saveBranchToStorage',
+        branch, owner, repo
+      });
+    }
   }
 }
 
@@ -62,7 +68,13 @@ export function loadBranchFromStorage(owner, repo) {
         return data.branch;
       }
     }
-  } catch (error) {}
+  } catch (error) {
+    console.error('Error loading branch from storage:', {
+      error,
+      context: 'loadBranchFromStorage',
+      owner, repo
+    });
+  }
   return null;
 }
 

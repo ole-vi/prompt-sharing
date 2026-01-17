@@ -122,7 +122,12 @@ export function loadExpandedState(owner, repo, branch) {
     const raw = sessionStorage.getItem(key);
     const parsed = raw ? JSON.parse(raw) : [];
     expandedState = new Set(Array.isArray(parsed) ? parsed : []);
-  } catch {
+  } catch (error) {
+    console.error('Error loading expanded state:', {
+      error,
+      context: 'loadExpandedState',
+      owner, repo, branch
+    });
     expandedState = new Set();
   }
   expandedState.add('prompts');
@@ -133,7 +138,13 @@ export function persistExpandedState() {
   if (!key) return;
   try {
     sessionStorage.setItem(key, JSON.stringify([...expandedState]));
-  } catch {}
+  } catch (error) {
+    console.error('Error persisting expanded state:', {
+      error,
+      context: 'persistExpandedState',
+      key
+    });
+  }
 }
 
 export function toggleDirectory(path, expand) {
@@ -571,7 +582,13 @@ export async function loadList(owner, repo, branch, cacheKey) {
         renderList(files, owner, repo, branch);
         
         if (cacheAge > CACHE_DURATION) {
-          refreshList(owner, repo, branch, cacheKey).catch(() => {});
+          refreshList(owner, repo, branch, cacheKey).catch(error => {
+            console.error('Background list refresh failed:', {
+              error,
+              context: 'loadList.backgroundRefresh',
+              owner, repo, branch
+            });
+          });
         }
         
         return files;
