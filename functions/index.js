@@ -545,7 +545,6 @@ exports.activateScheduledQueueItems = onSchedule('every 1 minutes', async (event
         const maxRetries = 3;
         
         if (item.retryOnFailure && retryCount < maxRetries) {
-          const retryDelay = 10 * 60 * 1000;
           const newScheduledAt = new admin.firestore.Timestamp(
             now.seconds + 600,
             now.nanoseconds
