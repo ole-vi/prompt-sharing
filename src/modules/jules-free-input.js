@@ -259,6 +259,9 @@ export function showFreeInputForm() {
         case 'codex':
           url = 'https://chatgpt.com/codex';
           break;
+        case 'copilot':
+          url = 'https://github.com/copilot/agents';
+          break;
         case 'gemini':
           url = 'https://gemini.google.com/app';
           break;
