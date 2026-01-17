@@ -13,10 +13,12 @@ import { showConfirm } from './confirm-modal.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { JULES_MESSAGES } from '../utils/constants.js';
+import { trapFocus, releaseFocus } from '../utils/focus-trap.js';
 
 // Module state
 let currentFullPrompt = '';
 let currentSubtasks = [];
+let escapeHandler = null;
 
 /**
  * Show the subtask split modal for a given prompt
@@ -38,7 +40,19 @@ export function showSubtaskSplitModal(promptText) {
   
   console.log('Setting modal display to flex');
   modal.classList.add('show');
+  trapFocus(modal);
   console.log('Modal should now be visible');
+
+  if (escapeHandler) {
+    document.removeEventListener('keydown', escapeHandler);
+  }
+
+  escapeHandler = (e) => {
+    if (e.key === 'Escape') {
+      hideSubtaskSplitModal();
+    }
+  };
+  document.addEventListener('keydown', escapeHandler);
 
   renderSplitEdit(currentSubtasks, promptText);
 
@@ -153,7 +167,13 @@ export function showSubtaskSplitModal(promptText) {
 export function hideSubtaskSplitModal() {
   const modal = document.getElementById('subtaskSplitModal');
   modal.classList.remove('show');
+  releaseFocus();
   currentSubtasks = [];
+
+  if (escapeHandler) {
+    document.removeEventListener('keydown', escapeHandler);
+    escapeHandler = null;
+  }
 }
 
 /**
@@ -229,14 +249,17 @@ function showSubtaskPreview(subtask, partNumber) {
   content.textContent = subtask.fullContent || subtask.content || '';
   
   modal.classList.add('show');
+  trapFocus(modal);
   
   closeBtn.onclick = () => {
     modal.classList.remove('show');
+    releaseFocus();
   };
   
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
       modal.classList.remove('show');
+      releaseFocus();
     }
   });
 }
