@@ -1,5 +1,6 @@
 import { getCurrentUser } from './auth.js';
 import { showToast } from './toast.js';
+import { logger } from '../utils/logger.js';
 
 function extractDefaultBranch(source) {
   const defaultBranchObj = source?.githubRepo?.defaultBranch ||
@@ -54,7 +55,7 @@ export class RepoSelector {
     try {
       return localStorage.getItem('selectedRepoId');
     } catch (error) {
-      console.error('Failed to load repo from storage:', error);
+      logger.error('Failed to load repo from storage:', error);
     }
     return null;
   }
@@ -84,7 +85,7 @@ export class RepoSelector {
         }
       }
     } catch (error) {
-      console.error('Failed to load favorites:', error);
+      logger.error('Failed to load favorites:', error);
     }
 
     // Try to restore previous selection
@@ -212,7 +213,7 @@ export class RepoSelector {
             this.branchSelector.initialize(fav.id, currentBranch);
           }
           this.verifyDefaultBranch(fav, true).catch((error) => {
-            console.error('Failed to verify default branch in background:', error);
+            logger.error('Failed to verify default branch in background:', error);
           });
         }
         
@@ -398,7 +399,7 @@ export class RepoSelector {
       
       return defaultBranch;
     } catch (error) {
-      console.error('[RepoSelector] Failed to verify default branch:', error);
+      logger.error('[RepoSelector] Failed to verify default branch:', error);
       return favorite.branch || 'master';
     }
   }
@@ -413,7 +414,7 @@ export class RepoSelector {
         this.favorites = newFavorites;
       }
     } catch (error) {
-      console.error('Failed to save favorites:', error);
+      logger.error('Failed to save favorites:', error);
     }
   }
 
@@ -429,7 +430,7 @@ export class RepoSelector {
         this.favorites = [...this.favorites, newFavorite];
       }
     } catch (error) {
-      console.error('Failed to add favorite:', error);
+      logger.error('Failed to add favorite:', error);
     }
   }
 
@@ -447,7 +448,7 @@ export class RepoSelector {
         this.favorites = this.favorites.filter(f => f.id !== sourceId);
       }
     } catch (error) {
-      console.error('Failed to remove favorite:', error);
+      logger.error('Failed to remove favorite:', error);
     }
   }
 }
@@ -480,7 +481,7 @@ export class BranchSelector {
         return JSON.parse(stored);
       }
     } catch (error) {
-      console.error('Failed to load branch from storage:', error);
+      logger.error('Failed to load branch from storage:', error);
     }
     return null;
   }
@@ -604,7 +605,7 @@ export class BranchSelector {
           this.dropdownMenu.appendChild(item);
         });
       } catch (error) {
-        console.error('Failed to load branches:', error);
+        logger.error('Failed to load branches:', error);
         showMoreBtn.textContent = 'Failed to load - click to retry';
         showMoreBtn.style.color = 'var(--muted)';
         showMoreBtn.style.pointerEvents = 'auto';

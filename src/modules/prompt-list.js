@@ -2,6 +2,7 @@ import { slugify } from '../utils/slug.js';
 import { STORAGE_KEYS, TAG_DEFINITIONS } from '../utils/constants.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
 import { clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
+import { logger } from '../utils/logger.js';
 
 let files = [];
 let expandedState = new Set();
@@ -304,7 +305,7 @@ function handleListClick(event) {
       const file = files.find(f => f.path === filePath);
       if (file) {
         selectFileCallback(file, true, currentOwner, currentRepo, currentBranch).catch(err => {
-          console.error('Error selecting file:', err);
+          logger.error('Error selecting file:', err);
         });
       }
     }
@@ -481,7 +482,7 @@ export function updateActiveItem() {
 
 export function renderList(items, owner, repo, branch) {
   if (!Array.isArray(items)) {
-    console.warn('renderList received non-array items:', items);
+    logger.warn('renderList received non-array items:', items);
     items = [];
   }
   
@@ -491,7 +492,7 @@ export function renderList(items, owner, repo, branch) {
 
   // Ensure items is an array
   if (!Array.isArray(items)) {
-    console.error('renderList received non-array items:', items);
+    logger.error('renderList received non-array items:', items);
     items = [];
   }
 
@@ -555,12 +556,12 @@ export async function loadList(owner, repo, branch, cacheKey) {
       try {
         cacheData = JSON.parse(cached);
         if (!cacheData || typeof cacheData !== 'object' || Array.isArray(cacheData) || !Array.isArray(cacheData.files)) {
-          console.warn('Old cache format detected, clearing cache');
+          logger.warn('Old cache format detected, clearing cache');
           sessionStorage.removeItem(cacheKey);
           cacheData = null;
         }
       } catch (e) {
-        console.warn('Corrupted cache data detected, clearing cache', e);
+        logger.warn('Corrupted cache data detected, clearing cache', e);
         sessionStorage.removeItem(cacheKey);
         cacheData = null;
       }
@@ -604,14 +605,14 @@ export async function refreshList(owner, repo, branch, cacheKey) {
       parsedCache = JSON.parse(cached);
       // Validate cache structure - handle migration from old formats
       if (!parsedCache || typeof parsedCache !== 'object' || Array.isArray(parsedCache)) {
-        console.warn('Old cache format detected, clearing cache');
+        logger.warn('Old cache format detected, clearing cache');
         sessionStorage.removeItem(cacheKey);
         parsedCache = null;
       } else {
         cachedETag = parsedCache.etag || null;
       }
     } catch (e) {
-      console.warn('Corrupted cache data detected, clearing cache', e);
+      logger.warn('Corrupted cache data detected, clearing cache', e);
       sessionStorage.removeItem(cacheKey);
     }
   }
@@ -630,13 +631,13 @@ export async function refreshList(owner, repo, branch, cacheKey) {
     // New data received
     files = (result.files || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
   } catch (e) {
-    console.warn('Trees API failed, using Contents fallback');
+    logger.warn('Trees API failed, using Contents fallback');
     try {
       const data = await listPromptsViaContents(owner, repo, branch, folder);
       files = (data || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
       result = { files, etag: null }; // Contents API doesn't provide ETag
     } catch (contentsError) {
-      console.error('Both API strategies failed:', contentsError);
+      logger.error('Both API strategies failed:', contentsError);
       throw contentsError;
     }
   }

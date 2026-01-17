@@ -9,6 +9,7 @@ import { showJulesKeyModal } from '../modules/jules-modal.js';
 import { deleteStoredJulesKey, checkJulesKey } from '../modules/jules-keys.js';
 import { showToast } from '../modules/toast.js';
 import { showConfirm } from '../modules/confirm-modal.js';
+import { logger } from '../utils/logger.js';
 
 function waitForComponents() {
   if (document.querySelector('header')) {
@@ -71,7 +72,7 @@ async function loadJulesInfo() {
       if (loadJulesInfoBtn) loadJulesInfoBtn.style.display = 'none';
     }
   } catch (err) {
-    console.error('Jules info loading error:', err);
+    logger.error('Jules info loading error:', err);
     loadingDiv.classList.add('hidden');
   }
 }

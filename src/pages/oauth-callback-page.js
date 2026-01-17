@@ -3,6 +3,8 @@
  * Processes GitHub OAuth callbacks for both web app and browser extension
  */
 
+import { logger } from '../utils/logger.js';
+
 (async function() {
   const statusDiv = document.getElementById('status');
   
@@ -36,7 +38,7 @@
           },
           (response) => {
             if (chrome.runtime.lastError) {
-              console.error('Chrome runtime error:', chrome.runtime.lastError);
+              logger.error('Chrome runtime error:', chrome.runtime.lastError);
               showError('Failed to communicate with extension');
               return;
             }
@@ -50,15 +52,15 @@
           }
         );
       } catch (err) {
-        console.error('Extension message error:', err);
+        logger.error('Extension message error:', err);
         showError(`Error communicating with extension: ${err.message}`);
       }
     } else {
-      console.log('Web app OAuth callback, Firebase Auth will handle this');
+      logger.log('Web app OAuth callback, Firebase Auth will handle this');
     }
 
   } catch (error) {
-    console.error('OAuth callback error:', error);
+    logger.error('OAuth callback error:', error);
     showError(`Error: ${error.message}`);
   }
 

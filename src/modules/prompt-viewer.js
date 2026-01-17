@@ -5,6 +5,7 @@
 
 import { createElement } from '../utils/dom-helpers.js';
 import { showToast } from './toast.js';
+import { logger } from '../utils/logger.js';
 
 let currentEscapeHandler = null;
 let promptViewerHandlers = new Map();
@@ -84,7 +85,7 @@ export function showPromptViewer(prompt, sessionId) {
         copyBtn.disabled = false;
       }, 2000);
     } catch (err) {
-      console.error('Copy failed:', err);
+      logger.error('Copy failed:', err);
       showToast('Failed to copy prompt to clipboard', 'error');
     }
   };

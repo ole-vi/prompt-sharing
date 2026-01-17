@@ -5,6 +5,7 @@ import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { JULES_MESSAGES } from '../utils/constants.js';
+import { logger } from '../utils/logger.js';
 
 let queueCache = [];
 
@@ -38,7 +39,7 @@ export async function addToJulesQueue(uid, queueItem) {
     clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return docRef.id;
   } catch (err) {
-    console.error('Failed to add to queue', err);
+    logger.error('Failed to add to queue', err);
     throw err;
   }
 }
@@ -52,7 +53,7 @@ export async function updateJulesQueueItem(uid, docId, updates) {
     clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return true;
   } catch (err) {
-    console.error('Failed to update queue item', err);
+    logger.error('Failed to update queue item', err);
     throw err;
   }
 }
@@ -65,7 +66,7 @@ export async function deleteFromJulesQueue(uid, docId) {
     clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return true;
   } catch (err) {
-    console.error('Failed to delete queue item', err);
+    logger.error('Failed to delete queue item', err);
     throw err;
   }
 }
@@ -76,7 +77,7 @@ export async function listJulesQueue(uid) {
     const snapshot = await window.db.collection('julesQueues').doc(uid).collection('items').orderBy('createdAt', 'desc').get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (err) {
-    console.error('Failed to list queue', err);
+    logger.error('Failed to list queue', err);
     throw err;
   }
 }
@@ -84,7 +85,7 @@ export async function listJulesQueue(uid) {
 export function showJulesQueueModal() {
   const modal = document.getElementById('julesQueueModal');
   if (!modal) {
-    console.error('julesQueueModal element not found!');
+    logger.error('julesQueueModal element not found!');
     return;
   }
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1003; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
@@ -386,7 +387,7 @@ function updateConvertToSingleButtonVisibility() {
 function renderSubtasksList(subtasks) {
   const subtasksList = document.getElementById('editQueueSubtasksList');
   if (!subtasksList) {
-    console.error('editQueueSubtasksList element not found');
+    logger.error('editQueueSubtasksList element not found');
     return;
   }
   
@@ -976,7 +977,7 @@ async function runSelectedQueueItems() {
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
               });
             } catch (e) {
-              console.warn('Failed to persist paused state for queue item', id, e.message || e);
+              logger.warn('Failed to persist paused state for queue item', id, e.message || e);
             }
             statusBar.showMessage('Paused — progress saved', { timeout: 3000 });
             statusBar.clearProgress();
@@ -1011,7 +1012,7 @@ async function runSelectedQueueItems() {
                   updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
               } catch (e) {
-                console.warn('Failed to persist progress for queue item', id, e.message || e);
+                logger.warn('Failed to persist progress for queue item', id, e.message || e);
               }
 
               try {
@@ -1039,7 +1040,7 @@ async function runSelectedQueueItems() {
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                   });
                 } catch (e) {
-                  console.warn('Failed to persist remaining after skip', e);
+                  logger.warn('Failed to persist remaining after skip', e);
                 }
                 statusBar.showMessage(JULES_MESSAGES.SKIPPED_SUBTASK, { timeout: 2000 });
                 subtaskRetry = false;
@@ -1051,7 +1052,7 @@ async function runSelectedQueueItems() {
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                   });
                 } catch (e) {
-                  console.warn('Failed to persist queue state', e);
+                  logger.warn('Failed to persist queue state', e);
                 }
                 statusBar.showMessage('Remainder queued for later', { timeout: 3000 });
                 statusBar.clearProgress();
@@ -1066,7 +1067,7 @@ async function runSelectedQueueItems() {
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                   });
                 } catch (e) {
-                  console.warn('Failed to persist error state', e);
+                  logger.warn('Failed to persist error state', e);
                 }
                 showToast(JULES_MESSAGES.cancelled(totalSuccessful, totalItems), 'warn');
                 statusBar.clear();
@@ -1085,13 +1086,13 @@ async function runSelectedQueueItems() {
               updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
           } catch (e) {
-            console.warn('Failed to save skipped subtasks', e);
+              logger.warn('Failed to save skipped subtasks', e);
           }
         } else if (skippedSubtasks.length === 0 && remaining.length === 0) {
           await deleteFromJulesQueue(user.uid, id);
         }
       } else {
-        console.warn('Unknown queue item type', item.type);
+          logger.warn('Unknown queue item type', item.type);
       }
     } catch (err) {
       if (err.message === 'User cancelled') {
@@ -1100,7 +1101,7 @@ async function runSelectedQueueItems() {
         await loadQueuePage();
         return;
       }
-      console.error('Unexpected error running queue item', id, err);
+        logger.error('Unexpected error running queue item', id, err);
       showToast(JULES_MESSAGES.UNEXPECTED_ERROR(err.message), 'error');
       statusBar.clearProgress();
       statusBar.clearAction();

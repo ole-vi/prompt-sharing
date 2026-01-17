@@ -7,6 +7,7 @@ import { initBranchSelector, loadBranches, loadBranchFromStorage } from './modul
 import { OWNER, REPO, BRANCH } from './utils/constants.js';
 import { parseParams } from './utils/url-params.js';
 import statusBar from './modules/status-bar.js';
+import { logger } from './utils/logger.js';
 
 let isInitialized = false;
 
@@ -16,7 +17,7 @@ function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
   } else if (attempts < maxAttempts) {
     setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), 100);
   } else {
-    console.error('Firebase failed to initialize after', maxAttempts, 'attempts');
+    logger.error('Firebase failed to initialize after', maxAttempts, 'attempts');
     callback();
   }
 }
@@ -153,7 +154,7 @@ async function initializeSharedComponents(activePage) {
       initBranchSelector(currentOwner, currentRepo, currentBranch);
 
       loadBranches().catch(error => {
-        console.error('Failed to load branches:', error);
+        logger.error('Failed to load branches:', error);
       });
 
       const repoPill = document.getElementById('repoPill');

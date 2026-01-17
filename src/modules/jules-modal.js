@@ -7,6 +7,7 @@ import { addToJulesQueue } from './jules-queue.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import { RETRY_CONFIG, TIMEOUTS, JULES_MESSAGES } from '../utils/constants.js';
 import { showToast } from './toast.js';
+import { logger } from '../utils/logger.js';
 
 let lastSelectedSourceId = 'sources/github/promptroot/promptroot';
 let lastSelectedBranch = 'main';
@@ -19,7 +20,7 @@ export async function loadSubtaskErrorModal() {
       document.body.insertAdjacentHTML('beforeend', html);
     }
   } catch (err) {
-    console.error('Error loading subtask error modal:', err);
+    logger.error('Error loading subtask error modal:', err);
   }
 }
 

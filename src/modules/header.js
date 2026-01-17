@@ -1,4 +1,5 @@
 import { initDropdown } from './dropdown.js';
+import { logger } from '../utils/logger.js';
 
 export async function loadHeader() {
   if (document.querySelector('header')) return;
@@ -113,6 +114,6 @@ export async function loadHeader() {
       setupFeedbackButtons();
     });
   } catch (error) {
-    console.error('Failed to load header:', error);
+    logger.error('Failed to load header:', error);
   }
 }

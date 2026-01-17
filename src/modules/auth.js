@@ -3,6 +3,7 @@
 import { clearJulesKeyCache } from './jules-api.js';
 import { showToast } from './toast.js';
 import { setCache, getCache } from '../utils/session-cache.js';
+import { logger } from '../utils/logger.js';
 
 let currentUser = null;
 
@@ -34,12 +35,12 @@ export async function signInWithGitHub() {
       };
       localStorage.setItem('github_access_token', JSON.stringify(tokenData));
     } else {
-      console.warn('GitHub sign-in succeeded but no access token was returned. Falling back to unauthenticated GitHub requests.', {
+      logger.warn('GitHub sign-in succeeded but no access token was returned. Falling back to unauthenticated GitHub requests.', {
         hasCredential: !!result.credential
       });
     }
   } catch (error) {
-    console.error('Sign-in failed:', error);
+    logger.error('Sign-in failed:', error);
     showToast('Failed to sign in. Please try again.', 'error');
   }
 }
@@ -55,7 +56,7 @@ export async function signOutUser() {
       localStorage.removeItem('github_access_token');
     }
   } catch (error) {
-    console.error('Sign-out failed:', error);
+    logger.error('Sign-out failed:', error);
     showToast('Failed to sign out.', 'error');
   }
 }
@@ -75,7 +76,7 @@ export async function updateAuthUI(user) {
     if (window.populateFreeInputRepoSelection) await window.populateFreeInputRepoSelection();
     if (window.populateFreeInputBranchSelection) await window.populateFreeInputBranchSelection();
   } catch (error) {
-    console.error('Failed to refresh dropdowns:', error);
+    logger.error('Failed to refresh dropdowns:', error);
   }
 
   if (user) {
@@ -157,13 +158,13 @@ export async function updateAuthUI(user) {
 export function initAuthStateListener() {
   try {
     if (!window.auth) {
-      console.error('Auth not initialized yet');
+      logger.error('Auth not initialized yet');
       return;
     }
     window.auth.onAuthStateChanged((user) => {
       updateAuthUI(user);
     });
   } catch (error) {
-    console.error('Failed to initialize auth listener:', error);
+    logger.error('Failed to initialize auth listener:', error);
   }
 }

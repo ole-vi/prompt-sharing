@@ -1,3 +1,5 @@
+import { logger } from './utils/logger.js';
+
 // Firebase initialization wrapper for browser environment
 // This file initializes Firebase using the modular SDK
 
@@ -37,15 +39,15 @@ function initFirebaseWhenReady() {
           const emulatorHost = window.location.hostname;
           window.db.useEmulator(emulatorHost, 8080);
           window.functions.useEmulator(emulatorHost, 5001);
-          console.log('🔧 Connected to Firebase Emulators (Firestore, Functions)');
-          console.log('⚠️ Dev server - using test data only');
+          logger.log('🔧 Connected to Firebase Emulators (Firestore, Functions)');
+          logger.log('⚠️ Dev server - using test data only');
         } catch (emulatorError) {
-          console.error('Failed to connect to Firebase emulators:', emulatorError);
-          console.error('Make sure emulators are running: firebase emulators:start or docker-compose up');
-          console.log('🌐 Falling back to production Firebase backend');
+          logger.error('Failed to connect to Firebase emulators:', emulatorError);
+          logger.error('Make sure emulators are running: firebase emulators:start or docker-compose up');
+          logger.log('🌐 Falling back to production Firebase backend');
         }
       } else {
-        console.log('🌐 Using production Firebase backend');
+        logger.log('🌐 Using production Firebase backend');
       }
       
       window.firebaseReady = true;
@@ -55,7 +57,7 @@ function initFirebaseWhenReady() {
       return false;
     }
   } catch (error) {
-    console.error('Firebase initialization error:', error);
+    logger.error('Firebase initialization error:', error);
     window.firebaseError = error;
     return false;
   }
@@ -71,7 +73,7 @@ if (!initFirebaseWhenReady()) {
     if (initFirebaseWhenReady() || attempts >= maxAttempts) {
       clearInterval(retryInterval);
       if (attempts >= maxAttempts) {
-        console.error('Failed to initialize Firebase after 30 seconds');
+        logger.error('Failed to initialize Firebase after 30 seconds');
         window.firebaseError = 'Timeout waiting for Firebase SDK';
       }
     }
