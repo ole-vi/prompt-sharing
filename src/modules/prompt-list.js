@@ -14,6 +14,7 @@ let currentRepo = null;
 let currentBranch = null;
 let listEl = null;
 let searchEl = null;
+let searchClearBtn = null;
 let submenuEl = null;
 let selectFileCallback = null;
 let cachedFiles = null;
@@ -33,7 +34,7 @@ export function setRepoContext(owner, repo, branch) {
 export function initPromptList() {
   listEl = document.getElementById('list');
   searchEl = document.getElementById('search');
-  const searchClearBtn = document.getElementById('searchClear');
+  searchClearBtn = document.getElementById('searchClear');
   
   if (searchEl) {
     searchEl.addEventListener('input', () => {
@@ -67,6 +68,9 @@ export function destroyPromptList() {
     submenuEl.parentNode.removeChild(submenuEl);
   }
   submenuEl = null;
+  listEl = null;
+  searchEl = null;
+  searchClearBtn = null;
   files = [];
   expandedState.clear();
   openSubmenus.clear();
