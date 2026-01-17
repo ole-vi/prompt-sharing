@@ -42,16 +42,18 @@ exports.runJules = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "Must be signed in to use Jules");
   }
 
-  const promptText = (data && data.promptText) || "";
-  const sourceId = (data && data.sourceId) || "sources/github/open-learning-exchange/myplanet";
-  const branch = (data && data.branch) || "master";
+  const { promptText, sourceId, branch, title } = data || {};
 
   if (!promptText || typeof promptText !== "string" || promptText.trim() === "") {
-    throw new functions.https.HttpsError("invalid-argument", "Prompt text is required");
+    throw new functions.https.HttpsError("invalid-argument", "Prompt text is required.");
   }
 
   if (!sourceId || typeof sourceId !== "string" || !sourceId.startsWith("sources/github/")) {
-    throw new functions.https.HttpsError("invalid-argument", "Invalid sourceId format");
+    throw new functions.https.HttpsError("invalid-argument", 'A valid sourceId (e.g., "sources/github/owner/repo") is required.');
+  }
+
+  if (!branch || typeof branch !== "string" || branch.trim() === "") {
+    throw new functions.https.HttpsError("invalid-argument", "A valid branch name is required.");
   }
 
   try {
@@ -76,7 +78,7 @@ exports.runJules = functions.https.onCall(async (data, context) => {
     }
 
     const julesBody = {
-      title: (data && data.title) || 'Unnamed Session',
+      title: title || 'Unnamed Session',
       prompt: promptText,
       sourceContext: {
         source: sourceId,
