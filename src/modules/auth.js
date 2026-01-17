@@ -3,18 +3,19 @@
 import { clearJulesKeyCache } from './jules-api.js';
 import { showToast } from './toast.js';
 import { setCache, getCache } from '../utils/session-cache.js';
-
-let currentUser = null;
+import { appState } from './app-state.js';
 
 export function getCurrentUser() {
-  if (window.auth?.currentUser && window.auth.currentUser !== currentUser) {
-    currentUser = window.auth.currentUser;
+  const stateUser = appState.getState('auth.user');
+  if (!stateUser && window.auth?.currentUser) {
+    appState.setState('auth.user', window.auth.currentUser);
+    return window.auth.currentUser;
   }
-  return currentUser;
+  return stateUser;
 }
 
 export function setCurrentUser(user) {
-  currentUser = user;
+  appState.setState('auth.user', user);
 }
 
 export async function signInWithGitHub() {
@@ -32,7 +33,7 @@ export async function signInWithGitHub() {
         token: result.credential.accessToken,
         timestamp: Date.now()
       };
-      localStorage.setItem('github_access_token', JSON.stringify(tokenData));
+      appState.setState('auth.githubToken', tokenData);
     } else {
       console.warn('GitHub sign-in succeeded but no access token was returned. Falling back to unauthenticated GitHub requests.', {
         hasCredential: !!result.credential
@@ -52,7 +53,7 @@ export async function signOutUser() {
         clearJulesKeyCache(window.auth.currentUser.uid);
       }
       await window.auth.signOut();
-      localStorage.removeItem('github_access_token');
+      appState.setState('auth.githubToken', null);
     }
   } catch (error) {
     console.error('Sign-out failed:', error);

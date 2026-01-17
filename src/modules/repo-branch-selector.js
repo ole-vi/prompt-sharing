@@ -1,5 +1,6 @@
 import { getCurrentUser } from './auth.js';
 import { showToast } from './toast.js';
+import { appState } from './app-state.js';
 
 function extractDefaultBranch(source) {
   const defaultBranchObj = source?.githubRepo?.defaultBranch ||
@@ -46,17 +47,12 @@ export class RepoSelector {
 
   saveToStorage() {
     if (this.selectedSourceId) {
-      localStorage.setItem('selectedRepoId', this.selectedSourceId);
+      appState.setState('jules.selectedRepoId', this.selectedSourceId);
     }
   }
 
   loadFromStorage() {
-    try {
-      return localStorage.getItem('selectedRepoId');
-    } catch (error) {
-      console.error('Failed to load repo from storage:', error);
-    }
-    return null;
+    return appState.getState('jules.selectedRepoId');
   }
 
   getSelectedSourceId() {
@@ -466,23 +462,19 @@ export class BranchSelector {
 
   saveToStorage() {
     if (this.sourceId && this.selectedBranch) {
-      localStorage.setItem('selectedBranchRepo', JSON.stringify({
+      appState.setState('jules.selectedBranchRepo', {
         sourceId: this.sourceId,
         branch: this.selectedBranch
-      }));
+      });
     }
   }
 
   loadFromStorage() {
-    try {
-      const stored = localStorage.getItem('selectedBranchRepo');
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch (error) {
-      console.error('Failed to load branch from storage:', error);
-    }
-    return null;
+    const data = appState.getState('jules.selectedBranchRepo');
+    // appState returns object directly (already parsed or not stringified if in memory)
+    // but we need to handle if it was stored as string previously in localStorage before migration
+    // AppState handles JSON parsing if it reads from storage.
+    return data;
   }
 
   getSelectedBranch() {
