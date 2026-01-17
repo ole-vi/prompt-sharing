@@ -7,18 +7,18 @@ import { initBranchSelector, loadBranches, loadBranchFromStorage } from './modul
 import { OWNER, REPO, BRANCH } from './utils/constants.js';
 import { parseParams } from './utils/url-params.js';
 import statusBar from './modules/status-bar.js';
+import { firebaseReadyPromise } from './firebase-init.js';
 
 let isInitialized = false;
 
-function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
-  if (window.firebaseReady) {
-    callback();
-  } else if (attempts < maxAttempts) {
-    setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), 100);
-  } else {
-    console.error('Firebase failed to initialize after', maxAttempts, 'attempts');
-    callback();
-  }
+function waitForFirebase(callback) {
+  firebaseReadyPromise
+    .then(() => callback())
+    .catch((error) => {
+      console.error('Firebase failed to initialize:', error);
+      // Still execute callback to allow app to function partially
+      callback();
+    });
 }
 
 function showUpdateBanner(latestDate, latestSha) {
