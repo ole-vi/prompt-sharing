@@ -8,6 +8,76 @@ import { JULES_MESSAGES } from '../utils/constants.js';
 
 let queueCache = [];
 
+const DOM = {
+  queueModal: null,
+  list: null,
+  // Controls
+  selectAll: null,
+  runBtn: null,
+  deleteBtn: null,
+  closeBtn: null,
+  suppressPopups: null,
+  openInBackground: null,
+  pauseBtn: null,
+  // Edit modal
+  editModal: null,
+  editType: null,
+  editPromptGroup: null,
+  editPrompt: null,
+  editSubtasksGroup: null,
+  editSubtasksList: null,
+  editRepoBtn: null,
+  editRepoText: null,
+  editRepoMenu: null,
+  editBranchBtn: null,
+  editBranchText: null,
+  editBranchMenu: null,
+  closeEditBtn: null,
+  cancelEditBtn: null,
+  saveEditBtn: null,
+  convertToSubtasksBtn: null,
+  convertToSingleBtn: null
+};
+
+export function initQueueDOM() {
+  DOM.queueModal = document.getElementById('julesQueueModal');
+  DOM.list = document.getElementById('allQueueList');
+
+  DOM.selectAll = document.getElementById('queueSelectAll');
+  DOM.runBtn = document.getElementById('queueRunBtn');
+  DOM.deleteBtn = document.getElementById('queueDeleteBtn');
+  DOM.closeBtn = document.getElementById('closeQueueBtn');
+
+  DOM.suppressPopups = document.getElementById('queueSuppressPopupsCheckbox');
+  DOM.openInBackground = document.getElementById('queueOpenInBackgroundCheckbox');
+  DOM.pauseBtn = document.getElementById('queuePauseBtn');
+
+  // Attempt to load edit modal elements if it exists
+  refreshEditModalCache();
+}
+
+function refreshEditModalCache() {
+  DOM.editModal = document.getElementById('editQueueItemModal');
+  if (!DOM.editModal) return;
+
+  DOM.editType = document.getElementById('editQueueType');
+  DOM.editPromptGroup = document.getElementById('editPromptGroup');
+  DOM.editPrompt = document.getElementById('editQueuePrompt');
+  DOM.editSubtasksGroup = document.getElementById('editSubtasksGroup');
+  DOM.editSubtasksList = document.getElementById('editQueueSubtasksList');
+  DOM.editRepoBtn = document.getElementById('editQueueRepoDropdownBtn');
+  DOM.editRepoText = document.getElementById('editQueueRepoDropdownText');
+  DOM.editRepoMenu = document.getElementById('editQueueRepoDropdownMenu');
+  DOM.editBranchBtn = document.getElementById('editQueueBranchDropdownBtn');
+  DOM.editBranchText = document.getElementById('editQueueBranchDropdownText');
+  DOM.editBranchMenu = document.getElementById('editQueueBranchDropdownMenu');
+  DOM.closeEditBtn = document.getElementById('closeEditQueueModal');
+  DOM.cancelEditBtn = document.getElementById('cancelEditQueue');
+  DOM.saveEditBtn = document.getElementById('saveEditQueue');
+  DOM.convertToSubtasksBtn = document.getElementById('convertToSubtasksBtn');
+  DOM.convertToSingleBtn = document.getElementById('convertToSingleBtn');
+}
+
 export async function handleQueueAction(queueItemData) {
   const user = window.auth?.currentUser;
   if (!user) {
@@ -82,7 +152,9 @@ export async function listJulesQueue(uid) {
 }
 
 export function showJulesQueueModal() {
-  const modal = document.getElementById('julesQueueModal');
+  if (!DOM.queueModal) initQueueDOM();
+  const modal = DOM.queueModal;
+
   if (!modal) {
     console.error('julesQueueModal element not found!');
     return;
@@ -99,7 +171,7 @@ export function showJulesQueueModal() {
 }
 
 export function hideJulesQueueModal() {
-  const modal = document.getElementById('julesQueueModal');
+  const modal = DOM.queueModal || document.getElementById('julesQueueModal');
   if (modal) modal.setAttribute('style', 'display:none !important;');
 }
 
@@ -109,6 +181,7 @@ export function renderQueueListDirectly(items) {
 }
 
 export function attachQueueHandlers() {
+  initQueueDOM();
   attachQueueModalHandlers();
 }
 
@@ -148,7 +221,7 @@ async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, re
 }
 
 function setupSubtasksEventDelegation() {
-  const subtasksList = document.getElementById('editQueueSubtasksList');
+  const subtasksList = DOM.editSubtasksList || document.getElementById('editQueueSubtasksList');
   if (!subtasksList) return;
   
   if (subtasksList.dataset.listenerAttached) return;
@@ -187,7 +260,9 @@ async function openEditQueueModal(docId) {
   editModalState.currentDocId = docId;
   editModalState.hasUnsavedChanges = false;
 
-  let modal = document.getElementById('editQueueItemModal');
+  if (!DOM.editModal) refreshEditModalCache();
+  let modal = DOM.editModal;
+
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'editQueueItemModal';
@@ -246,8 +321,10 @@ async function openEditQueueModal(docId) {
     `;
     document.body.appendChild(modal);
     
-    document.getElementById('closeEditQueueModal').onclick = () => closeEditModal();
-    document.getElementById('cancelEditQueue').onclick = () => closeEditModal();
+    refreshEditModalCache();
+
+    DOM.closeEditBtn.onclick = () => closeEditModal();
+    DOM.cancelEditBtn.onclick = () => closeEditModal();
     
     modal.onclick = (e) => {
       if (e.target === modal) {
@@ -255,24 +332,22 @@ async function openEditQueueModal(docId) {
       }
     };
     
-    document.getElementById('saveEditQueue').onclick = async () => {
+    DOM.saveEditBtn.onclick = async () => {
       await saveQueueItemEdit(editModalState.currentDocId, closeEditModal);
     };    
-    setupSubtasksEventDelegation();    
     setupSubtasksEventDelegation();
   }
 
-  const typeDiv = document.getElementById('editQueueType');
-  const promptGroup = document.getElementById('editPromptGroup');
-  const subtasksGroup = document.getElementById('editSubtasksGroup');
-  const promptTextarea = document.getElementById('editQueuePrompt');
-  const subtasksList = document.getElementById('editQueueSubtasksList');
-  const repoDropdownBtn = document.getElementById('editQueueRepoDropdownBtn');
-  const repoDropdownText = document.getElementById('editQueueRepoDropdownText');
-  const repoDropdownMenu = document.getElementById('editQueueRepoDropdownMenu');
-  const branchDropdownBtn = document.getElementById('editQueueBranchDropdownBtn');
-  const branchDropdownText = document.getElementById('editQueueBranchDropdownText');
-  const branchDropdownMenu = document.getElementById('editQueueBranchDropdownMenu');
+  const typeDiv = DOM.editType;
+  const promptGroup = DOM.editPromptGroup;
+  const subtasksGroup = DOM.editSubtasksGroup;
+  const promptTextarea = DOM.editPrompt;
+  const repoDropdownBtn = DOM.editRepoBtn;
+  const repoDropdownText = DOM.editRepoText;
+  const repoDropdownMenu = DOM.editRepoMenu;
+  const branchDropdownBtn = DOM.editBranchBtn;
+  const branchDropdownText = DOM.editBranchText;
+  const branchDropdownMenu = DOM.editBranchMenu;
 
   if (item.type === 'single') {
     typeDiv.textContent = 'Single Prompt';
@@ -282,7 +357,7 @@ async function openEditQueueModal(docId) {
     editModalState.originalData = { prompt: item.prompt || '' };
     editModalState.currentType = 'single';
     
-    document.getElementById('convertToSubtasksBtn').onclick = convertToSubtasks;
+    if (DOM.convertToSubtasksBtn) DOM.convertToSubtasksBtn.onclick = convertToSubtasks;
   } else if (item.type === 'subtasks') {
     typeDiv.textContent = 'Subtasks Batch';
     promptGroup.style.display = 'none';
@@ -296,7 +371,7 @@ async function openEditQueueModal(docId) {
     };
     editModalState.currentType = 'subtasks';
     
-    document.getElementById('convertToSingleBtn').onclick = convertToSingle;
+    if (DOM.convertToSingleBtn) DOM.convertToSingleBtn.onclick = convertToSingle;
     updateConvertToSingleButtonVisibility();
   }
 
@@ -320,12 +395,12 @@ async function openEditQueueModal(docId) {
  * Convert single prompt to subtasks
  */
 function convertToSubtasks() {
-  const promptTextarea = document.getElementById('editQueuePrompt');
+  const promptTextarea = DOM.editPrompt || document.getElementById('editQueuePrompt');
   const promptContent = promptTextarea.value.trim();
   
-  const promptGroup = document.getElementById('editPromptGroup');
-  const subtasksGroup = document.getElementById('editSubtasksGroup');
-  const typeDiv = document.getElementById('editQueueType');
+  const promptGroup = DOM.editPromptGroup || document.getElementById('editPromptGroup');
+  const subtasksGroup = DOM.editSubtasksGroup || document.getElementById('editSubtasksGroup');
+  const typeDiv = DOM.editType || document.getElementById('editQueueType');
   
   promptGroup.style.display = 'none';
   subtasksGroup.style.display = 'block';
@@ -337,7 +412,7 @@ function convertToSubtasks() {
   editModalState.currentType = 'subtasks';
   editModalState.hasUnsavedChanges = true;
   
-  document.getElementById('convertToSingleBtn').onclick = convertToSingle;
+  if (DOM.convertToSingleBtn) DOM.convertToSingleBtn.onclick = convertToSingle;
   updateConvertToSingleButtonVisibility();
 }
 
@@ -345,7 +420,8 @@ function convertToSubtasks() {
  * Convert subtasks to single prompt
  */
 async function convertToSingle() {
-  const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => textarea.value);
+  const container = DOM.editSubtasksList || document;
+  const currentSubtasks = Array.from(container.querySelectorAll('.edit-subtask-content')).map(textarea => textarea.value);
   
   if (currentSubtasks.length > 1) {
     const confirmed = await showConfirm('This will combine all subtasks into a single prompt. Continue?', {
@@ -356,10 +432,10 @@ async function convertToSingle() {
     if (!confirmed) return;
   }
   
-  const promptGroup = document.getElementById('editPromptGroup');
-  const subtasksGroup = document.getElementById('editSubtasksGroup');
-  const typeDiv = document.getElementById('editQueueType');
-  const promptTextarea = document.getElementById('editQueuePrompt');
+  const promptGroup = DOM.editPromptGroup || document.getElementById('editPromptGroup');
+  const subtasksGroup = DOM.editSubtasksGroup || document.getElementById('editSubtasksGroup');
+  const typeDiv = DOM.editType || document.getElementById('editQueueType');
+  const promptTextarea = DOM.editPrompt || document.getElementById('editQueuePrompt');
   
   const combinedPrompt = currentSubtasks.join('\n\n---\n\n');
   
@@ -371,11 +447,11 @@ async function convertToSingle() {
   editModalState.currentType = 'single';
   editModalState.hasUnsavedChanges = true;
   
-  document.getElementById('convertToSubtasksBtn').onclick = convertToSubtasks;
+  if (DOM.convertToSubtasksBtn) DOM.convertToSubtasksBtn.onclick = convertToSubtasks;
 }
 
 function updateConvertToSingleButtonVisibility() {
-  const convertBtn = document.getElementById('convertToSingleBtn');
+  const convertBtn = DOM.convertToSingleBtn || document.getElementById('convertToSingleBtn');
   const subtaskCount = document.querySelectorAll('.edit-subtask-content').length;
   
   if (convertBtn) {
@@ -384,7 +460,7 @@ function updateConvertToSingleButtonVisibility() {
 }
 
 function renderSubtasksList(subtasks) {
-  const subtasksList = document.getElementById('editQueueSubtasksList');
+  const subtasksList = DOM.editSubtasksList || document.getElementById('editQueueSubtasksList');
   if (!subtasksList) {
     console.error('editQueueSubtasksList element not found');
     return;
@@ -410,7 +486,8 @@ function renderSubtasksList(subtasks) {
 }
 
 function addNewSubtask() {
-  const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => ({
+  const container = DOM.editSubtasksList || document;
+  const currentSubtasks = Array.from(container.querySelectorAll('.edit-subtask-content')).map(textarea => ({
     fullContent: textarea.value
   }));
   
@@ -420,14 +497,15 @@ function addNewSubtask() {
   
   editModalState.hasUnsavedChanges = true;
   
-  const textareas = document.querySelectorAll('.edit-subtask-content');
+  const textareas = container.querySelectorAll('.edit-subtask-content');
   if (textareas.length > 0) {
     textareas[textareas.length - 1].focus();
   }
 }
 
 async function removeSubtask(index) {
-  const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => ({
+  const container = DOM.editSubtasksList || document;
+  const currentSubtasks = Array.from(container.querySelectorAll('.edit-subtask-content')).map(textarea => ({
     fullContent: textarea.value
   }));
   
@@ -448,7 +526,7 @@ async function removeSubtask(index) {
 }
 
 async function closeEditModal(force = false) {
-  const modal = document.getElementById('editQueueItemModal');
+  const modal = DOM.editModal || document.getElementById('editQueueItemModal');
   if (!modal) return;
   
   if (!force && editModalState.hasUnsavedChanges) {
@@ -494,7 +572,7 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
     const currentType = editModalState.currentType || item.type;
     
     if (currentType === 'single') {
-      const promptTextarea = document.getElementById('editQueuePrompt');
+      const promptTextarea = DOM.editPrompt || document.getElementById('editQueuePrompt');
       updates.type = 'single';
       updates.prompt = promptTextarea.value;
       if (item.type === 'subtasks') {
@@ -502,7 +580,8 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
         updates.totalCount = firebase.firestore.FieldValue.delete();
       }
     } else if (currentType === 'subtasks') {
-      const subtaskTextareas = document.querySelectorAll('.edit-subtask-content');
+      const container = DOM.editSubtasksList || document;
+      const subtaskTextareas = container.querySelectorAll('.edit-subtask-content');
       const updatedSubtasks = Array.from(subtaskTextareas).map(textarea => ({
         fullContent: textarea.value
       }));
@@ -528,7 +607,9 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
 
 async function loadQueuePage() {
   const user = window.auth?.currentUser;
-  const listDiv = document.getElementById('allQueueList');
+  const listDiv = DOM.list || document.getElementById('allQueueList');
+  if (!listDiv) return;
+
   if (!user) {
     listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Please sign in to view your queue.</div>';
     return;
@@ -558,7 +639,7 @@ function escapeHtml(text) {
 }
 
 function renderQueueList(items) {
-  const listDiv = document.getElementById('allQueueList');
+  const listDiv = DOM.list || document.getElementById('allQueueList');
   if (!listDiv) return;
   if (!items || items.length === 0) {
     listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">No queued items.</div>';
@@ -730,10 +811,10 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
 }
 
 function attachQueueModalHandlers() {
-  const selectAll = document.getElementById('queueSelectAll');
-  const runBtn = document.getElementById('queueRunBtn');
-  const deleteBtn = document.getElementById('queueDeleteBtn');
-  const closeBtn = document.getElementById('closeQueueBtn');
+  const selectAll = DOM.selectAll || document.getElementById('queueSelectAll');
+  const runBtn = DOM.runBtn || document.getElementById('queueRunBtn');
+  const deleteBtn = DOM.deleteBtn || document.getElementById('queueDeleteBtn');
+  const closeBtn = DOM.closeBtn || document.getElementById('closeQueueBtn');
 
   if (selectAll) {
     selectAll.onclick = () => {
@@ -743,19 +824,20 @@ function attachQueueModalHandlers() {
     };
   }
 
-  document.querySelectorAll('.queue-checkbox').forEach(queueCb => {
+  const container = DOM.list || document;
+  container.querySelectorAll('.queue-checkbox').forEach(queueCb => {
     queueCb.onclick = (e) => {
       e.stopPropagation();
       const docId = queueCb.dataset.docid;
       const checked = queueCb.checked;
-      document.querySelectorAll(`.subtask-checkbox[data-docid="${docId}"]`).forEach(subtaskCb => {
+      container.querySelectorAll(`.subtask-checkbox[data-docid="${docId}"]`).forEach(subtaskCb => {
         subtaskCb.checked = checked;
       });
     };
   });
 
   // Attach edit handlers
-  document.querySelectorAll('.edit-queue-item').forEach(editBtn => {
+  container.querySelectorAll('.edit-queue-item').forEach(editBtn => {
     editBtn.onclick = (e) => {
       e.stopPropagation();
       const docId = editBtn.dataset.docid;
@@ -774,12 +856,13 @@ function attachQueueModalHandlers() {
 function getSelectedQueueIds() {
   const queueSelections = [];
   const subtaskSelections = {};
+  const container = DOM.list || document;
   
-  document.querySelectorAll('.queue-checkbox:checked').forEach(cb => {
+  container.querySelectorAll('.queue-checkbox:checked').forEach(cb => {
     queueSelections.push(cb.dataset.docid);
   });
   
-  document.querySelectorAll('.subtask-checkbox:checked').forEach(cb => {
+  container.querySelectorAll('.subtask-checkbox:checked').forEach(cb => {
     const docId = cb.dataset.docid;
     const index = parseInt(cb.dataset.index);
     if (!subtaskSelections[docId]) {
@@ -847,9 +930,9 @@ async function runSelectedQueueItems() {
     return;
   }
 
-  const suppressPopups = document.getElementById('queueSuppressPopupsCheckbox')?.checked || false;
-  const openInBackground = document.getElementById('queueOpenInBackgroundCheckbox')?.checked || false;
-  const pauseBtn = document.getElementById('queuePauseBtn');
+  const suppressPopups = (DOM.suppressPopups || document.getElementById('queueSuppressPopupsCheckbox'))?.checked || false;
+  const openInBackground = (DOM.openInBackground || document.getElementById('queueOpenInBackgroundCheckbox'))?.checked || false;
+  const pauseBtn = DOM.pauseBtn || document.getElementById('queuePauseBtn');
   let paused = false;
   if (pauseBtn) {
     pauseBtn.disabled = false;
