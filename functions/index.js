@@ -532,11 +532,38 @@ exports.activateScheduledQueueItems = onSchedule('every 1 minutes', async (event
         
       } catch (err) {
         console.error(`Error processing item ${doc.id}:`, err);
-        await doc.ref.update({
-          status: 'error',
-          error: err.message,
-          updatedAt: now
-        });
+        
+        const retryCount = item.retryCount || 0;
+        const maxRetries = 3;
+        
+        if (item.retryOnFailure && retryCount < maxRetries) {
+          const retryDelay = 10 * 60 * 1000;
+          const newScheduledAt = new admin.firestore.Timestamp(
+            now.seconds + 600,
+            now.nanoseconds
+          );
+          
+          console.log(`Scheduling retry ${retryCount + 1}/${maxRetries} for item ${doc.id} in 10 minutes`);
+          
+          await doc.ref.update({
+            status: 'scheduled',
+            scheduledAt: newScheduledAt,
+            retryCount: retryCount + 1,
+            lastError: err.message,
+            lastAttemptAt: now,
+            updatedAt: now
+          });
+        } else {
+          const errorMessage = item.retryOnFailure 
+            ? `Failed after ${retryCount} retries: ${err.message}`
+            : err.message;
+          
+          await doc.ref.update({
+            status: 'error',
+            error: errorMessage,
+            updatedAt: now
+          });
+        }
       }
     }
     
