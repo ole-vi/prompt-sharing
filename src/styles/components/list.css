@@ -5,3 +5,8 @@
 .item-title:hover { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .item-meta { color: var(--muted); font-size: 12px; }
 .item.active { border-color: var(--accent); background: linear-gradient(135deg, rgba(77,217,255,0.2), rgba(77,217,255,0.08)); box-shadow: 0 0 12px rgba(77, 217, 255, 0.2); }
+
+.list-message {
+  color: var(--muted);
+  padding: 8px;
+}

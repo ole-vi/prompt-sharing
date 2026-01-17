@@ -37,8 +37,17 @@
   color: var(--text);
   background-color: transparent;
   transition: background-color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .folder-submenu-item:hover {
   background-color: #1a1f35;
+}
+
+.file-item-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }

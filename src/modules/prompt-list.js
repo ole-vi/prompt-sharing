@@ -167,11 +167,21 @@ function createSubmenu() {
   submenuEl = document.createElement('div');
   submenuEl.className = 'folder-submenu';
   
-  const makeMenuItem = (label, emoji, dataAction) => {
+  const makeMenuItem = (label, iconHtml, dataAction) => {
     const item = document.createElement('div');
     item.className = 'folder-submenu-item';
-    item.innerHTML = `${emoji} ${label}`;
     item.dataset.action = dataAction;
+
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = iconHtml;
+    const icon = tempDiv.firstElementChild;
+    if (icon) {
+      item.appendChild(icon);
+    }
+
+    const text = document.createTextNode(label);
+    item.appendChild(text);
+
     return item;
   };
   
@@ -375,9 +385,13 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       toggle.type = 'button';
       const isForced = forcedExpanded.has(entry.path);
       const isExpanded = isForced || expandedState.has(entry.path);
-      toggle.innerHTML = isExpanded 
-        ? '<span class="icon" aria-hidden="true">expand_more</span>'
-        : '<span class="icon" aria-hidden="true">chevron_right</span>';
+
+      const toggleIcon = document.createElement('span');
+      toggleIcon.className = 'icon';
+      toggleIcon.setAttribute('aria-hidden', 'true');
+      toggleIcon.textContent = isExpanded ? 'expand_more' : 'chevron_right';
+      toggle.appendChild(toggleIcon);
+
       toggle.dataset.action = 'toggle-dir';
       toggle.dataset.path = entry.path;
 
@@ -413,7 +427,10 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       li.appendChild(header);
 
       const childList = document.createElement('ul');
-      childList.style.display = isExpanded ? 'block' : 'none';
+      childList.className = 'tree-child-list';
+      if (!isExpanded) {
+        childList.classList.add('hidden');
+      }
       li.appendChild(childList);
       renderTree(entry, childList, forcedExpanded, owner, repo, branch);
       if (!childList.children.length) {
@@ -431,9 +448,7 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       a.dataset.path = file.path;
 
       const left = document.createElement('div');
-      left.style.display = 'flex';
-      left.style.flexDirection = 'column';
-      left.style.gap = '2px';
+      left.className = 'file-item-wrapper';
       const t = document.createElement('div');
       t.className = 'item-title';
       t.textContent = getCleanTitle(file.name);
@@ -522,7 +537,10 @@ export function renderList(items, owner, repo, branch) {
 
   if (!filtered.length) {
     clearElement(listEl);
-    listEl.innerHTML = '<div style="color:var(--muted); padding:8px;">No prompts found.</div>';
+    const msg = document.createElement('div');
+    msg.className = 'list-message';
+    msg.textContent = 'No prompts found.';
+    listEl.appendChild(msg);
     return;
   }
 
@@ -583,9 +601,24 @@ export async function loadList(owner, repo, branch, cacheKey) {
   } catch (e) {
     const folder = getPromptFolder(branch);
     clearElement(listEl);
-    listEl.innerHTML = `<div style="color:var(--muted); padding:8px;">
-      Could not load prompts from <code>${owner}/${repo}@${branch}/${folder}</code>.<br/>${e.message}
-    </div>`;
+
+    const msg = document.createElement('div');
+    msg.className = 'list-message';
+
+    const textNode1 = document.createTextNode('Could not load prompts from ');
+    msg.appendChild(textNode1);
+
+    const code = document.createElement('code');
+    code.textContent = `${owner}/${repo}@${branch}/${folder}`;
+    msg.appendChild(code);
+
+    const br = document.createElement('br');
+    msg.appendChild(br);
+
+    const textNode2 = document.createTextNode(e.message);
+    msg.appendChild(textNode2);
+
+    listEl.appendChild(msg);
     return [];
   }
 }
