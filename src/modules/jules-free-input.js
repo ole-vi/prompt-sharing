@@ -2,7 +2,7 @@ import { getCurrentUser } from './auth.js';
 import { checkJulesKey } from './jules-keys.js';
 import { showJulesKeyModal, showSubtaskErrorModal } from './jules-modal.js';
 import { addToJulesQueue, handleQueueAction } from './jules-queue.js';
-import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
+import { RepoBranchManager } from './repo-branch-manager.js';
 import { showToast } from './toast.js';
 import { JULES_MESSAGES } from '../utils/constants.js';
 
@@ -396,30 +396,26 @@ async function populateFreeInputRepoSelection() {
     return;
   }
 
-  const branchSelector = new BranchSelector({
-    dropdownBtn: branchDropdownBtn,
-    dropdownText: branchDropdownText,
-    dropdownMenu: branchDropdownMenu,
-    onSelect: (branch) => {
-      _lastSelectedBranch = branch;
-    }
-  });
-
-  const repoSelector = new RepoSelector({
-    favoriteContainer: null,
-    dropdownBtn: repoDropdownBtn,
-    dropdownText: repoDropdownText,
-    dropdownMenu: repoDropdownMenu,
-    branchSelector: branchSelector,
-    onSelect: (sourceId, branch, repoName) => {
+  const repoBranchManager = new RepoBranchManager({
+    repoBtn: repoDropdownBtn,
+    repoText: repoDropdownText,
+    repoMenu: repoDropdownMenu,
+    branchBtn: branchDropdownBtn,
+    branchText: branchDropdownText,
+    branchMenu: branchDropdownMenu,
+    onRepoSelect: (sourceId, branch) => {
       _lastSelectedSourceId = sourceId;
       _lastSelectedBranch = branch;
-      branchSelector.initialize(sourceId, branch);
+    },
+    onBranchSelect: (branch) => {
+      _lastSelectedBranch = branch;
     }
   });
 
-  await repoSelector.initialize();
-  branchSelector.initialize(null, null);
+  await repoBranchManager.initialize();
+
+  _lastSelectedSourceId = repoBranchManager.getSelectedSourceId();
+  _lastSelectedBranch = repoBranchManager.getSelectedBranch();
 }
 
 window.populateFreeInputRepoSelection = populateFreeInputRepoSelection;

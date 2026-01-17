@@ -2,7 +2,7 @@
 // Core modal UI functions (key modal, env modal, error modal)
 
 import { encryptAndStoreKey } from './jules-keys.js';
-import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
+import { RepoBranchManager } from './repo-branch-manager.js';
 import { addToJulesQueue } from './jules-queue.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import { RETRY_CONFIG, TIMEOUTS, JULES_MESSAGES } from '../utils/constants.js';
@@ -119,34 +119,33 @@ export async function showJulesEnvModal(promptText) {
   let selectedSourceId = null;
   let selectedBranch = null;
 
-  // Initialize BranchSelector first
-  const branchSelector = new BranchSelector({
-    dropdownBtn: document.getElementById('julesBranchDropdownBtn'),
-    dropdownText: document.getElementById('julesBranchDropdownText'),
-    dropdownMenu: document.getElementById('julesBranchDropdownMenu'),
-    onSelect: (branch) => {
-      selectedBranch = branch;
-    }
-  });
-
-  // Initialize RepoSelector with branchSelector reference
-  const repoSelector = new RepoSelector({
-    dropdownBtn: document.getElementById('julesRepoDropdownBtn'),
-    dropdownText: document.getElementById('julesRepoDropdownText'),
-    dropdownMenu: document.getElementById('julesRepoDropdownMenu'),
-    branchSelector: branchSelector,
-    onSelect: (sourceId, branch, repoName) => {
+  const repoBranchManager = new RepoBranchManager({
+    repoBtn: document.getElementById('julesRepoDropdownBtn'),
+    repoText: document.getElementById('julesRepoDropdownText'),
+    repoMenu: document.getElementById('julesRepoDropdownMenu'),
+    branchBtn: document.getElementById('julesBranchDropdownBtn'),
+    branchText: document.getElementById('julesBranchDropdownText'),
+    branchMenu: document.getElementById('julesBranchDropdownMenu'),
+    onRepoSelect: (sourceId, branch) => {
       selectedSourceId = sourceId;
       selectedBranch = branch;
       submitBtn.disabled = false;
       queueBtn.disabled = false;
-      branchSelector.initialize(sourceId, branch);
+    },
+    onBranchSelect: (branch) => {
+      selectedBranch = branch;
     }
   });
 
-  // Load favorites and populate dropdown
-  await repoSelector.initialize();
-  branchSelector.initialize(null, null);
+  await repoBranchManager.initialize();
+
+  selectedSourceId = repoBranchManager.getSelectedSourceId();
+  selectedBranch = repoBranchManager.getSelectedBranch();
+
+  if (selectedSourceId && selectedBranch) {
+    submitBtn.disabled = false;
+    queueBtn.disabled = false;
+  }
 
   submitBtn.onclick = () => {
     if (selectedSourceId && selectedBranch) {
