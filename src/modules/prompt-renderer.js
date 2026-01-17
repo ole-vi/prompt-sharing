@@ -180,7 +180,6 @@ export async function selectBySlug(slug, files, owner, repo, branch) {
     if (f) {
       await selectFile(f, false, owner, repo, branch);
     } else {
-      // If no matching file found, show free input by default
       const { showFreeInputForm } = await import('./jules-free-input.js');
       showFreeInputForm();
     }
