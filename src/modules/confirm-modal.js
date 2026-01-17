@@ -29,6 +29,8 @@ function createConfirmModal() {
   return modal;
 }
 
+import { TIMEOUTS } from '../utils/constants.js';
+
 function showConfirmModal() {
   if (!confirmModal) {
     confirmModal = createConfirmModal();
@@ -40,7 +42,7 @@ function showConfirmModal() {
   setTimeout(() => {
     const confirmBtn = document.getElementById('confirmModalConfirm');
     if (confirmBtn) confirmBtn.focus();
-  }, 100);
+  }, TIMEOUTS.modalFocus);
 }
 
 function hideConfirmModal() {

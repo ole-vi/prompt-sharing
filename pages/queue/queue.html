@@ -15,7 +15,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js"></script>
-  <script src="../../src/firebase-init.js"></script>
+  <script type="module" src="../../src/firebase-init.js"></script>
 </head>
 <body data-page="queue">
 
@@ -39,9 +39,10 @@
           <div class="toolbar-actions">
             <label class="form-label small-text"><input id="queueSuppressPopupsCheckbox" type="checkbox" /> Suppress Popups</label>
             <label class="form-label small-text"><input id="queueOpenInBackgroundCheckbox" type="checkbox" /> Open in Background</label>
-            <button id="queuePauseBtn" class="btn">Pause</button>
-            <button id="queueRunBtn" class="btn primary">Run Selected</button>
-            <button id="queueDeleteBtn" class="btn danger">Delete Selected</button>
+            <button id="queuePauseBtn" class="btn"><span class="icon icon-inline" aria-hidden="true">pause</span> Pause</button>
+            <button id="queueScheduleBtn" class="btn" aria-label="Schedule selected items"><span class="icon icon-inline" aria-hidden="true">schedule</span> Schedule</button>
+            <button id="queueRunBtn" class="btn primary"><span class="icon icon-inline" aria-hidden="true">play_arrow</span> Run Selected</button>
+            <button id="queueDeleteBtn" class="btn danger"><span class="icon icon-inline" aria-hidden="true">delete</span> Delete Selected</button>
           </div>
         </div>
 
@@ -66,6 +67,9 @@
 
   <script type="module" src="../../src/shared-init.js"></script>
   <script type="module" src="../../src/pages/queue-page.js"></script>
+
+  <!-- Schedule Queue Modal -->
+  <div id="scheduleQueueModalContainer"></div>
 
   <!-- Status Bar -->
   <div id="statusBar" class="hidden" aria-live="polite">
