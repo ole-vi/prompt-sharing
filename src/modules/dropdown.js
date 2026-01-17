@@ -31,21 +31,29 @@ function closeDropdown(dropdown) {
 }
 
 export function initDropdown(btn, menu, container = null) {
-  if (!btn || !menu) return;
+  if (!btn || !menu) return () => {};
 
   const dropdownContainer = container || menu.parentNode;
   const dropdown = { btn, menu };
 
-  btn.addEventListener('click', (e) => {
+  const btnClickHandler = (e) => {
     e.stopPropagation();
     toggleDropdown(dropdown);
-  });
+  };
 
-  document.addEventListener('click', (e) => {
+  const docClickHandler = (e) => {
     if (!dropdownContainer.contains(e.target) && e.target !== btn) {
       closeDropdown(dropdown);
     }
-  });
+  };
+
+  btn.addEventListener('click', btnClickHandler);
+  document.addEventListener('click', docClickHandler);
+
+  return () => {
+    btn.removeEventListener('click', btnClickHandler);
+    document.removeEventListener('click', docClickHandler);
+  };
 }
 
 document.addEventListener('keydown', (e) => {

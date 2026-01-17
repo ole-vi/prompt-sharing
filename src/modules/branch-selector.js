@@ -10,6 +10,7 @@ let branchDropdown = null;
 let currentBranch = null;
 let currentOwner = null;
 let currentRepo = null;
+let dropdownCleanup = null;
 
 export function initBranchSelector(owner, repo, branch) {
   branchSelect = document.getElementById('branchSelect');
@@ -26,8 +27,23 @@ export function initBranchSelector(owner, repo, branch) {
   }
 
   if (branchDropdownBtn && branchDropdownMenu) {
-    initDropdown(branchDropdownBtn, branchDropdownMenu, branchDropdown);
+    if (dropdownCleanup) dropdownCleanup();
+    dropdownCleanup = initDropdown(branchDropdownBtn, branchDropdownMenu, branchDropdown);
   }
+}
+
+export function destroyBranchSelector() {
+  if (branchSelect) {
+    branchSelect.removeEventListener('change', handleBranchChange);
+  }
+  if (dropdownCleanup) {
+    dropdownCleanup();
+    dropdownCleanup = null;
+  }
+  branchSelect = null;
+  branchDropdownBtn = null;
+  branchDropdownMenu = null;
+  branchDropdown = null;
 }
 
 export function setCurrentBranch(branch) {

@@ -25,10 +25,21 @@ class StatusBar {
     
     // Add close button handler
     if (this.closeElement) {
-      this.closeElement.addEventListener('click', () => {
-        this.clear();
-      });
+      this.boundClear = this.clear.bind(this);
+      this.closeElement.addEventListener('click', this.boundClear);
     }
+  }
+
+  destroy() {
+    if (this.closeElement && this.boundClear) {
+      this.closeElement.removeEventListener('click', this.boundClear);
+      this.boundClear = null;
+    }
+    this.element = null;
+    this.msgElement = null;
+    this.progressElement = null;
+    this.actionElement = null;
+    this.closeElement = null;
   }
 
   showMessage(message, options = {}) {
