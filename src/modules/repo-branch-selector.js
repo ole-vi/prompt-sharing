@@ -1,5 +1,6 @@
 import { getCurrentUser } from './auth.js';
 import { showToast } from './toast.js';
+import { setupDropdownNavigation } from './dropdown.js';
 
 function extractDefaultBranch(source) {
   const defaultBranchObj = source?.githubRepo?.defaultBranch ||
@@ -160,6 +161,7 @@ export class RepoSelector {
     };
 
     setupClickOutsideClose(this.dropdownBtn, this.dropdownMenu);
+    setupDropdownNavigation(this.dropdownBtn, this.dropdownMenu);
   }
 
   async populateDropdown() {
@@ -229,6 +231,8 @@ export class RepoSelector {
     const showMoreBtn = document.createElement('div');
     showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
     showMoreBtn.textContent = '▼ Show more...';
+    showMoreBtn.tabIndex = 0;
+    showMoreBtn.setAttribute('role', 'menuitem');
     
     showMoreBtn.onclick = async () => {
       if (!this.allReposLoaded) {
@@ -314,6 +318,8 @@ export class RepoSelector {
     const item = document.createElement('div');
     item.className = 'custom-dropdown-item';
     item.style.cssText = 'display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer;';
+    item.tabIndex = 0;
+    item.setAttribute('role', 'menuitem');
     
     if (id === this.selectedSourceId) {
       item.classList.add('selected');
@@ -543,6 +549,7 @@ export class BranchSelector {
     };
 
     setupClickOutsideClose(this.dropdownBtn, this.dropdownMenu);
+    setupDropdownNavigation(this.dropdownBtn, this.dropdownMenu);
   }
 
   populateDropdown() {
@@ -556,6 +563,8 @@ export class BranchSelector {
     const currentItem = document.createElement('div');
     currentItem.className = 'custom-dropdown-item selected';
     currentItem.textContent = this.selectedBranch;
+    currentItem.tabIndex = 0;
+    currentItem.setAttribute('role', 'menuitem');
     currentItem.onclick = () => {
       this.dropdownMenu.style.display = 'none';
     };
@@ -564,6 +573,8 @@ export class BranchSelector {
     const showMoreBtn = document.createElement('div');
     showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
     showMoreBtn.textContent = '▼ Show more branches...';
+    showMoreBtn.tabIndex = 0;
+    showMoreBtn.setAttribute('role', 'menuitem');
     
     showMoreBtn.onclick = async () => {
       if (this.allBranchesLoaded) return;
@@ -595,6 +606,8 @@ export class BranchSelector {
           const item = document.createElement('div');
           item.className = 'custom-dropdown-item';
           item.textContent = branch.name;
+          item.tabIndex = 0;
+          item.setAttribute('role', 'menuitem');
           
           item.onclick = () => {
             this.setSelectedBranch(branch.name);

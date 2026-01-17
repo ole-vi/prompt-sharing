@@ -262,6 +262,7 @@ export async function loadBranches() {
           item.textContent = b.name;
           item.setAttribute('role', 'option');
           item.dataset.value = b.name;
+          item.tabIndex = 0; // NEW: Make focusable
           if (b.name === currentBranch) {
             item.classList.add('selected');
           }
