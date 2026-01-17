@@ -167,16 +167,24 @@ function createSubmenu() {
   submenuEl = document.createElement('div');
   submenuEl.className = 'folder-submenu';
   
-  const makeMenuItem = (label, emoji, dataAction) => {
+  const makeMenuItem = (label, iconName, dataAction) => {
     const item = document.createElement('div');
     item.className = 'folder-submenu-item';
-    item.innerHTML = `${emoji} ${label}`;
+
+    const icon = document.createElement('span');
+    icon.className = 'icon icon-inline';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = iconName;
+
+    item.appendChild(icon);
+    item.appendChild(document.createTextNode(` ${label}`));
+
     item.dataset.action = dataAction;
     return item;
   };
   
-  submenuEl.appendChild(makeMenuItem('Prompt (blank)', '<span class="icon icon-inline" aria-hidden="true">edit_note</span>', 'create-prompt'));
-  submenuEl.appendChild(makeMenuItem('Conversation (template)', '<span class="icon icon-inline" aria-hidden="true">chat_bubble</span>', 'create-conversation'));
+  submenuEl.appendChild(makeMenuItem('Prompt (blank)', 'edit_note', 'create-prompt'));
+  submenuEl.appendChild(makeMenuItem('Conversation (template)', 'chat_bubble', 'create-conversation'));
   
   document.body.appendChild(submenuEl);
 }
@@ -375,9 +383,13 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       toggle.type = 'button';
       const isForced = forcedExpanded.has(entry.path);
       const isExpanded = isForced || expandedState.has(entry.path);
-      toggle.innerHTML = isExpanded 
-        ? '<span class="icon" aria-hidden="true">expand_more</span>'
-        : '<span class="icon" aria-hidden="true">chevron_right</span>';
+
+      const toggleIcon = document.createElement('span');
+      toggleIcon.className = 'icon';
+      toggleIcon.setAttribute('aria-hidden', 'true');
+      toggleIcon.textContent = isExpanded ? 'expand_more' : 'chevron_right';
+      toggle.appendChild(toggleIcon);
+
       toggle.dataset.action = 'toggle-dir';
       toggle.dataset.path = entry.path;
 
@@ -522,7 +534,11 @@ export function renderList(items, owner, repo, branch) {
 
   if (!filtered.length) {
     clearElement(listEl);
-    listEl.innerHTML = '<div style="color:var(--muted); padding:8px;">No prompts found.</div>';
+    const emptyDiv = document.createElement('div');
+    emptyDiv.style.color = 'var(--muted)';
+    emptyDiv.style.padding = '8px';
+    emptyDiv.textContent = 'No prompts found.';
+    listEl.appendChild(emptyDiv);
     return;
   }
 
@@ -583,9 +599,22 @@ export async function loadList(owner, repo, branch, cacheKey) {
   } catch (e) {
     const folder = getPromptFolder(branch);
     clearElement(listEl);
-    listEl.innerHTML = `<div style="color:var(--muted); padding:8px;">
-      Could not load prompts from <code>${owner}/${repo}@${branch}/${folder}</code>.<br/>${e.message}
-    </div>`;
+
+    const errorDiv = document.createElement('div');
+    errorDiv.style.color = 'var(--muted)';
+    errorDiv.style.padding = '8px';
+
+    errorDiv.appendChild(document.createTextNode('Could not load prompts from '));
+
+    const code = document.createElement('code');
+    code.textContent = `${owner}/${repo}@${branch}/${folder}`;
+    errorDiv.appendChild(code);
+
+    errorDiv.appendChild(document.createTextNode('.'));
+    errorDiv.appendChild(document.createElement('br'));
+    errorDiv.appendChild(document.createTextNode(e.message));
+
+    listEl.appendChild(errorDiv);
     return [];
   }
 }
