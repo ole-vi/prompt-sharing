@@ -465,7 +465,7 @@ exports.activateScheduledQueueItems = onSchedule('every 1 minutes', async (event
           await doc.ref.update({ status: 'in-progress', updatedAt: now });
           
           const julesBody = {
-            title: `Scheduled: ${item.prompt?.substring(0, 50) || 'Untitled'}`,
+            title: `${item.prompt?.substring(0, 50) || 'Untitled'}`,
             prompt: item.prompt,
             sourceContext: {
               source: item.sourceId,
@@ -495,7 +495,7 @@ exports.activateScheduledQueueItems = onSchedule('every 1 minutes', async (event
           
           const subtask = item.remaining[0];
           const julesBody = {
-            title: `Scheduled: ${subtask.fullContent?.substring(0, 50) || 'Untitled'}`,
+            title: `${subtask.fullContent?.substring(0, 50) || 'Untitled'}`,
             prompt: subtask.fullContent,
             sourceContext: {
               source: item.sourceId,

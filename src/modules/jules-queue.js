@@ -197,7 +197,7 @@ function displayScheduleStatus(item) {
       minute: '2-digit'
     });
     scheduleText.textContent = `Scheduled for ${dateStr} (${timeZone})`;
-    statusGroup.style.display = 'block';
+    statusGroup.classList.remove('hidden');
     
     if (unscheduleBtn) {
       unscheduleBtn.onclick = () => {
@@ -205,14 +205,14 @@ function displayScheduleStatus(item) {
       };
     }
   } else {
-    statusGroup.style.display = 'none';
+    statusGroup.classList.add('hidden');
   }
 }
 
 function unscheduleQueueItem() {
   const statusGroup = document.getElementById('editQueueStatusGroup');
   if (statusGroup) {
-    statusGroup.style.display = 'none';
+    statusGroup.classList.add('hidden');
   }
   
   editModalState.isUnscheduled = true;
@@ -237,7 +237,7 @@ async function openEditQueueModal(docId) {
     modal.id = 'editQueueItemModal';
     modal.className = 'modal-overlay';
     modal.innerHTML = `
-      <div class="modal-dialog" style="max-width: 700px;">
+      <div class="modal-dialog modal-dialog-lg">
         <div class="modal-header">
           <h2 class="modal-title">Edit Queue Item</h2>
           <button class="btn-icon close-modal" id="closeEditQueueModal" title="Close"><span class="icon" aria-hidden="true">close</span></button>
@@ -247,24 +247,24 @@ async function openEditQueueModal(docId) {
             <label class="form-section-label">Type:</label>
             <div id="editQueueType" class="form-text"></div>
           </div>
-          <div class="form-group" id="editQueueStatusGroup" style="display: none;">
+          <div class="form-group" id="editQueueStatusGroup" class="hidden">
             <label class="form-section-label">Schedule:</label>
-            <div id="editQueueScheduleInfo" class="form-text" style="display: flex; align-items: center; justify-content: space-between;">
+            <div id="editQueueScheduleInfo" class="form-text schedule-info-row">
               <div id="editQueueScheduleText"></div>
-              <button type="button" id="unscheduleBtn" class="btn btn-secondary" style="font-size: 12px; padding: 4px 12px;">Unschedule</button>
+              <button type="button" id="unscheduleBtn" class="btn btn-secondary btn-xs">Unschedule</button>
             </div>
           </div>
           <div class="form-group" id="editPromptGroup">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <label class="form-section-label" style="margin-bottom: 0;">Prompt:</label>
-              <button type="button" id="convertToSubtasksBtn" class="btn btn-secondary" style="font-size: 12px; padding: 4px 12px;">Split into Subtasks</button>
+            <div class="form-group-header">
+              <label class="form-section-label">Prompt:</label>
+              <button type="button" id="convertToSubtasksBtn" class="btn btn-secondary btn-xs">Split into Subtasks</button>
             </div>
-            <textarea id="editQueuePrompt" class="form-control" rows="10" style="font-family: monospace; font-size: 13px;"></textarea>
+            <textarea id="editQueuePrompt" class="form-control form-control-mono" rows="10"></textarea>
           </div>
-          <div class="form-group" id="editSubtasksGroup" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <label class="form-section-label" style="margin-bottom: 0;">Subtasks:</label>
-              <button type="button" id="convertToSingleBtn" class="btn btn-secondary" style="font-size: 12px; padding: 4px 12px; display: none;">Convert to Single Prompt</button>
+          <div class="form-group" id="editSubtasksGroup" class="hidden">
+            <div class="form-group-header">
+              <label class="form-section-label">Subtasks:</label>
+              <button type="button" id="convertToSingleBtn" class="btn btn-secondary btn-xs hidden">Convert to Single Prompt</button>
             </div>
             <div id="editQueueSubtasksList"></div>
           </div>
@@ -327,8 +327,8 @@ async function openEditQueueModal(docId) {
 
   if (item.type === 'single') {
     typeDiv.textContent = 'Single Prompt';
-    promptGroup.style.display = 'block';
-    subtasksGroup.style.display = 'none';
+    promptGroup.classList.remove('hidden');
+    subtasksGroup.classList.add('hidden');
     promptTextarea.value = item.prompt || '';
     editModalState.originalData = { prompt: item.prompt || '' };
     editModalState.currentType = 'single';
@@ -336,8 +336,8 @@ async function openEditQueueModal(docId) {
     document.getElementById('convertToSubtasksBtn').onclick = convertToSubtasks;
   } else if (item.type === 'subtasks') {
     typeDiv.textContent = 'Subtasks Batch';
-    promptGroup.style.display = 'none';
-    subtasksGroup.style.display = 'block';
+    promptGroup.classList.add('hidden');
+    subtasksGroup.classList.remove('hidden');
     
     const subtasks = item.remaining || [];
     renderSubtasksList(subtasks);
@@ -380,8 +380,8 @@ function convertToSubtasks() {
   const subtasksGroup = document.getElementById('editSubtasksGroup');
   const typeDiv = document.getElementById('editQueueType');
   
-  promptGroup.style.display = 'none';
-  subtasksGroup.style.display = 'block';
+  promptGroup.classList.add('hidden');
+  subtasksGroup.classList.remove('hidden');
   typeDiv.textContent = 'Subtasks Batch';
   
   const subtasks = promptContent ? [{ fullContent: promptContent }] : [{ fullContent: '' }];
@@ -416,8 +416,8 @@ async function convertToSingle() {
   
   const combinedPrompt = currentSubtasks.join('\n\n---\n\n');
   
-  subtasksGroup.style.display = 'none';
-  promptGroup.style.display = 'block';
+  subtasksGroup.classList.add('hidden');
+  promptGroup.classList.remove('hidden');
   typeDiv.textContent = 'Single Prompt';
   promptTextarea.value = combinedPrompt;
   
@@ -432,7 +432,11 @@ function updateConvertToSingleButtonVisibility() {
   const subtaskCount = document.querySelectorAll('.edit-subtask-content').length;
   
   if (convertBtn) {
-    convertBtn.style.display = subtaskCount === 1 ? 'block' : 'none';
+    if (subtaskCount === 1) {
+      convertBtn.classList.remove('hidden');
+    } else {
+      convertBtn.classList.add('hidden');
+    }
   }
 }
 
@@ -943,15 +947,17 @@ function renderQueueList(items) {
     }
     
     if (item.type === 'subtasks' && Array.isArray(item.remaining) && item.remaining.length > 0) {
+      const isScheduled = status === 'scheduled';
       const subtasksHtml = item.remaining.map((subtask, index) => {
         const preview = (subtask.fullContent || '').substring(0, 150);
+        const scheduleIcon = (isScheduled && index === 0) ? '<span class="icon icon-inline icon-accent" aria-hidden="true">schedule</span> ' : '';
         return `
           <div class="queue-subtask">
             <div class="queue-subtask-index">
               <input class="subtask-checkbox" type="checkbox" data-docid="${item.id}" data-index="${index}" />
             </div>
             <div class="queue-subtask-content">
-              <div class="queue-subtask-meta">Subtask ${index + 1} of ${item.remaining.length}</div>
+              <div class="queue-subtask-meta">${scheduleIcon}Subtask ${index + 1} of ${item.remaining.length}</div>
               <div class="queue-subtask-text">${escapeHtml(preview)}${preview.length >= 150 ? '...' : ''}</div>
             </div>
           </div>
