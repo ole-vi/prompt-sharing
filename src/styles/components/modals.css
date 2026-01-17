@@ -95,3 +95,17 @@
 .remove-subtask-btn:hover { color: var(--error); }
 .edit-subtask-content { font-family: monospace; font-size: 12px; }
 .add-subtask-btn { margin-top: 8px; width: 100%; }
+
+/* Confirm Modal specific */
+#confirmModal {
+  z-index: 10000;
+}
+
+#confirmModal .modal-content {
+  max-width: 480px;
+}
+
+#confirmModal .modal-body p {
+  line-height: 1.6;
+  white-space: pre-wrap;
+}

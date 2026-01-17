@@ -1,32 +1,81 @@
 // ===== Confirmation Modal Module =====
 // Provides styled confirmation dialogs to replace confirm() calls
 
+import { createElement } from '../utils/dom-helpers.js';
+
 let confirmModal = null;
 let confirmResolve = null;
+let previousActiveElement = null;
 
 function createConfirmModal() {
-  const modal = document.createElement('div');
+  const modal = createElement('div', 'modal');
   modal.id = 'confirmModal';
-  modal.className = 'modal';
-  modal.style.zIndex = '10000';
-  modal.innerHTML = `
-    <div class="modal-content" style="max-width: 480px;">
-      <div class="modal-header">
-        <h3 id="confirmModalTitle">Confirm Action</h3>
-        <button class="btn-icon close-modal" id="confirmModalClose" title="Close">✕</button>
-      </div>
-      <div class="modal-body">
-        <p id="confirmModalMessage" style="line-height: 1.6; white-space: pre-wrap;"></p>
-      </div>
-      <div class="modal-buttons">
-        <button id="confirmModalCancel" class="btn">Cancel</button>
-        <button id="confirmModalConfirm" class="btn danger">Confirm</button>
-      </div>
-    </div>
-  `;
+
+  // ARIA attributes for accessibility
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-labelledby', 'confirmModalTitle');
+  modal.setAttribute('aria-describedby', 'confirmModalMessage');
+
+  const content = createElement('div', 'modal-content');
+
+  const header = createElement('div', 'modal-header');
+  const title = createElement('h3', '', 'Confirm Action');
+  title.id = 'confirmModalTitle';
+
+  const closeBtn = createElement('button', 'btn-icon close-modal', '✕');
+  closeBtn.id = 'confirmModalClose';
+  closeBtn.title = 'Close';
+  closeBtn.setAttribute('aria-label', 'Close');
+
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+
+  const body = createElement('div', 'modal-body');
+  const message = createElement('p');
+  message.id = 'confirmModalMessage';
+
+  body.appendChild(message);
+
+  const footer = createElement('div', 'modal-buttons');
+  const cancelBtn = createElement('button', 'btn', 'Cancel');
+  cancelBtn.id = 'confirmModalCancel';
+
+  const confirmBtn = createElement('button', 'btn danger', 'Confirm');
+  confirmBtn.id = 'confirmModalConfirm';
+
+  footer.appendChild(cancelBtn);
+  footer.appendChild(confirmBtn);
+
+  content.appendChild(header);
+  content.appendChild(body);
+  content.appendChild(footer);
+  modal.appendChild(content);
   
   document.body.appendChild(modal);
   return modal;
+}
+
+function handleFocusTrap(e) {
+  if (e.key !== 'Tab' || !confirmModal) return;
+
+  const focusableElements = confirmModal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  if (focusableElements.length === 0) return;
+
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+
+  if (e.shiftKey) {
+    if (document.activeElement === firstElement) {
+      lastElement.focus();
+      e.preventDefault();
+    }
+  } else {
+    if (document.activeElement === lastElement) {
+      firstElement.focus();
+      e.preventDefault();
+    }
+  }
 }
 
 function showConfirmModal() {
@@ -34,7 +83,9 @@ function showConfirmModal() {
     confirmModal = createConfirmModal();
   }
   
+  previousActiveElement = document.activeElement;
   confirmModal.classList.add('show');
+  confirmModal.addEventListener('keydown', handleFocusTrap);
   
   // Focus the confirm button
   setTimeout(() => {
@@ -46,6 +97,13 @@ function showConfirmModal() {
 function hideConfirmModal() {
   if (confirmModal) {
     confirmModal.classList.remove('show');
+    confirmModal.removeEventListener('keydown', handleFocusTrap);
+
+    // Restore focus to the element that triggered the modal
+    if (previousActiveElement && document.body.contains(previousActiveElement)) {
+      previousActiveElement.focus();
+    }
+    previousActiveElement = null;
   }
 }
 
