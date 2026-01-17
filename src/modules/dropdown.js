@@ -33,6 +33,17 @@ function closeDropdown(dropdown) {
 export function initDropdown(btn, menu, container = null) {
   if (!btn || !menu) return;
 
+  // Set ARIA attributes
+  if (!btn.hasAttribute('aria-haspopup')) {
+    btn.setAttribute('aria-haspopup', 'true');
+  }
+  if (!btn.hasAttribute('aria-expanded')) {
+    btn.setAttribute('aria-expanded', 'false');
+  }
+  if (!menu.hasAttribute('role')) {
+    menu.setAttribute('role', 'menu');
+  }
+
   const dropdownContainer = container || menu.parentNode;
   const dropdown = { btn, menu };
 

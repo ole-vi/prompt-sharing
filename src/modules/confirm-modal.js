@@ -8,12 +8,16 @@ function createConfirmModal() {
   const modal = document.createElement('div');
   modal.id = 'confirmModal';
   modal.className = 'modal';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-labelledby', 'confirmModalTitle');
+  modal.setAttribute('aria-describedby', 'confirmModalMessage');
   modal.style.zIndex = '10000';
   modal.innerHTML = `
     <div class="modal-content" style="max-width: 480px;">
       <div class="modal-header">
         <h3 id="confirmModalTitle">Confirm Action</h3>
-        <button class="btn-icon close-modal" id="confirmModalClose" title="Close">✕</button>
+        <button class="btn-icon close-modal" id="confirmModalClose" title="Close" aria-label="Close">✕</button>
       </div>
       <div class="modal-body">
         <p id="confirmModalMessage" style="line-height: 1.6; white-space: pre-wrap;"></p>

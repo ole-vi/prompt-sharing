@@ -31,7 +31,7 @@
       </div>
       <div class="search-wrapper">
         <input id="search" placeholder="Search prompts..." />
-        <button id="searchClear" class="search-clear hidden" title="Clear search"><span class="icon" aria-hidden="true">close</span></button>
+        <button id="searchClear" class="search-clear hidden" title="Clear search" aria-label="Clear search"><span class="icon" aria-hidden="true">close</span></button>
       </div>
       <button class="btn" id="freeInputBtn" title="Send a custom prompt to Jules"><span class="icon icon-inline" aria-hidden="true">edit_note</span> Free Input</button>
       <div id="list"></div>
@@ -54,7 +54,7 @@
             <div class="form-col">
               <label class="form-label">Repository:</label>
               <div id="freeInputRepoDropdown" class="custom-dropdown">
-                <button id="freeInputRepoDropdownBtn" class="custom-dropdown-btn w-full" type="button">
+                <button id="freeInputRepoDropdownBtn" class="custom-dropdown-btn w-full" type="button" aria-haspopup="true" aria-expanded="false">
                   <span id="freeInputRepoDropdownText">Select repository...</span>
                   <span class="custom-dropdown-caret" aria-hidden="true">▼</span>
                 </button>
@@ -66,7 +66,7 @@
             <div class="form-col">
               <label class="form-label">Branch:</label>
               <div id="freeInputBranchDropdown" class="custom-dropdown">
-                <button id="freeInputBranchDropdownBtn" class="custom-dropdown-btn w-full" type="button">
+                <button id="freeInputBranchDropdownBtn" class="custom-dropdown-btn w-full" type="button" aria-haspopup="true" aria-expanded="false">
                   <span id="freeInputBranchDropdownText">Select branch...</span>
                   <span class="custom-dropdown-caret" aria-hidden="true">▼</span>
                 </button>
@@ -82,9 +82,9 @@
         </div>
         
         <div class="actions-right">
-          <button id="freeInputSplitBtn" class="btn" title="Split into Subtasks"><span class="icon icon-inline" aria-hidden="true">content_cut</span></button>
+          <button id="freeInputSplitBtn" class="btn" title="Split into Subtasks" aria-label="Split into Subtasks"><span class="icon icon-inline" aria-hidden="true">content_cut</span></button>
           <div class="menu-anchor">
-            <button id="freeInputCopenBtn" class="btn" title="Copy prompt and open in new tab"><span class="icon icon-inline" aria-hidden="true">open_in_new</span> ▼</button>
+            <button id="freeInputCopenBtn" class="btn" title="Copy prompt and open in new tab" aria-label="Copy prompt and open in new tab"><span class="icon icon-inline" aria-hidden="true">open_in_new</span> ▼</button>
             <div id="freeInputCopenMenu" class="menu-panel menu-panel-sm menu-panel--above" style="display:none;">
               <div class="custom-dropdown-item" data-target="blank"><span class="icon icon-inline" aria-hidden="true">public</span> Blank</div>
               <div class="custom-dropdown-item" data-target="claude"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Claude</div>
@@ -102,9 +102,9 @@
       <h1 id="title" class="hidden"></h1>
       <div id="meta" class="hidden"></div>
       <div id="actions" class="hidden">
-        <button class="btn" id="copyBtn" title="Copy the entire prompt"><span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy</button>
+        <button class="btn" id="copyBtn" title="Copy the entire prompt" aria-label="Copy the entire prompt"><span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy</button>
         <div class="menu-anchor">
-          <button class="btn" id="copenBtn" title="Copy prompt and open in new tab"><span class="icon icon-inline" aria-hidden="true">open_in_new</span> copen ▼</button>
+          <button class="btn" id="copenBtn" title="Copy prompt and open in new tab" aria-label="Copy prompt and open in new tab"><span class="icon icon-inline" aria-hidden="true">open_in_new</span> copen ▼</button>
           <div id="copenMenu" class="menu-panel menu-panel-sm menu-panel--below-left" style="display:none;">
             <div class="custom-dropdown-item" data-target="blank"><span class="icon icon-inline" aria-hidden="true">public</span> Blank</div>
             <div class="custom-dropdown-item" data-target="claude"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Claude</div>
@@ -113,8 +113,8 @@
             <div class="custom-dropdown-item" data-target="chatgpt"><span class="icon icon-inline" aria-hidden="true">chat</span> ChatGPT</div>
           </div>
         </div>
-        <button class="btn" id="julesBtn" title="Try this prompt in Jules"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Try in Jules</button>
-        <button class="btn" id="shareBtn" title="Copy a link to this prompt"><span class="icon icon-inline" aria-hidden="true">link</span> Copy link</button>
+        <button class="btn" id="julesBtn" title="Try this prompt in Jules" aria-label="Try this prompt in Jules"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Try in Jules</button>
+        <button class="btn" id="shareBtn" title="Copy a link to this prompt" aria-label="Copy a link to this prompt"><span class="icon icon-inline" aria-hidden="true">link</span> Copy link</button>
         <div class="menu-anchor">
           <button class="btn" id="moreBtn" title="More actions">⋯ More</button>
           <div id="moreMenu" class="menu-panel menu-panel-md menu-panel--below-right" style="display:none;">
@@ -123,18 +123,18 @@
             <div class="custom-dropdown-item" id="moreRawBtn"><span class="icon icon-inline" aria-hidden="true">description</span> Open raw</div>
           </div>
         </div>
-        <a class="btn" id="editBtn" target="_blank" rel="noopener" title="Edit the file on GitHub" style="display:none;"><span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub</a>
-        <a class="btn" id="ghBtn" target="_blank" rel="noopener" title="Open the file on GitHub" style="display:none;"><span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub</a>
-        <a class="btn" id="rawBtn" target="_blank" rel="noopener" title="Open the raw file" style="display:none;"><span class="icon icon-inline" aria-hidden="true">description</span> Open raw</a>
+        <a class="btn" id="editBtn" target="_blank" rel="noopener" title="Edit the file on GitHub" style="display:none;" aria-label="Edit the file on GitHub"><span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub</a>
+        <a class="btn" id="ghBtn" target="_blank" rel="noopener" title="Open the file on GitHub" style="display:none;" aria-label="Open the file on GitHub"><span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub</a>
+        <a class="btn" id="rawBtn" target="_blank" rel="noopener" title="Open the raw file" style="display:none;" aria-label="Open the raw file"><span class="icon icon-inline" aria-hidden="true">description</span> Open raw</a>
       </div>
       <article id="content" class="scrollable-list list-lg"></article>
     </main>
   </div>
 
   <!-- Jules API Key Modal -->
-  <div id="julesKeyModal" class="modal">
+  <div id="julesKeyModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="julesKeyTitle">
     <div class="modal-content">
-      <h2>Save Jules API Key</h2>
+      <h2 id="julesKeyTitle">Save Jules API Key</h2>
       <p>Enter your Jules API key. This will be encrypted and stored securely.</p>
       <input id="julesKeyInput" type="password" class="modal-input" placeholder="Paste your Jules API key..." />
       <div class="modal-buttons">
@@ -145,9 +145,9 @@
   </div>
 
   <!-- Jules Environment Modal -->
-  <div id="julesEnvModal" class="modal">
+  <div id="julesEnvModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="julesEnvTitle">
     <div class="modal-content">
-      <h2>Choose Repository</h2>
+      <h2 id="julesEnvTitle">Choose Repository</h2>
       <p>Select a connected repository to open in Jules.</p>
       
       <div id="favoriteReposContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
@@ -158,7 +158,7 @@
           <div class="form-col">
             <label class="form-label">Repository:</label>
             <div id="julesRepoDropdown" class="custom-dropdown">
-              <button id="julesRepoDropdownBtn" class="custom-dropdown-btn w-full" type="button">
+              <button id="julesRepoDropdownBtn" class="custom-dropdown-btn w-full" type="button" aria-haspopup="true" aria-expanded="false">
                 <span id="julesRepoDropdownText">Select a repository...</span>
                 <span class="custom-dropdown-caret" aria-hidden="true">▼</span>
               </button>
@@ -170,7 +170,7 @@
           <div class="form-col">
             <label class="form-label">Branch:</label>
             <div id="julesBranchDropdown" class="custom-dropdown">
-              <button id="julesBranchDropdownBtn" class="custom-dropdown-btn w-full" type="button" disabled>
+              <button id="julesBranchDropdownBtn" class="custom-dropdown-btn w-full" type="button" disabled aria-haspopup="true" aria-expanded="false">
                 <span id="julesBranchDropdownText">Select branch...</span>
                 <span class="custom-dropdown-caret" aria-hidden="true">▼</span>
               </button>
@@ -194,9 +194,9 @@
   </div>
 
   <!-- Subtask Split Modal -->
-  <div id="subtaskSplitModal" class="modal">
+  <div id="subtaskSplitModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="subtaskSplitTitle">
     <div class="modal-content modal-lg">
-      <h2>Break into Subtasks</h2>
+      <h2 id="subtaskSplitTitle">Break into Subtasks</h2>
       
       <!-- Subtask list for editing -->
       <div id="splitEditPanel" class="panel mb-md split-panel" style="max-height:400px; overflow-y:auto;">
@@ -223,7 +223,7 @@
   </div>
 
   <!-- Subtask Preview Modal -->
-  <div id="subtaskPreviewModal" class="modal">
+  <div id="subtaskPreviewModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="subtaskPreviewTitle">
     <div class="modal-content modal-xl">
       <h2 id="subtaskPreviewTitle">Subtask Preview</h2>
       <div id="subtaskPreviewContent" class="scroll-box"></div>
@@ -239,7 +239,7 @@
       <div class="status-msg flex-1">Ready</div>
       <div class="status-progress hidden"></div>
       <button class="status-action btn hidden">Action</button>
-      <button class="status-close btn-icon" title="Close">✕</button>
+      <button class="status-close btn-icon" title="Close" aria-label="Close">✕</button>
     </div>
   </div>
 
@@ -247,7 +247,7 @@
     <div style="text-align: center;">
       <a href="https://github.com/promptroot/promptroot/blob/main/README.md" target="_blank" rel="noopener" style="color: var(--muted); text-decoration: none;">Help</a>
       <span style="margin: 0 12px;">•</span>
-      <button id="footerFeedbackBtn" style="color: var(--muted); text-decoration: none; background: none; border: none; cursor: pointer; font: inherit; padding: 0;">Feedback</button>
+      <button id="footerFeedbackBtn" style="color: var(--muted); text-decoration: none; background: none; border: none; cursor: pointer; font: inherit; padding: 0;" aria-label="Feedback">Feedback</button>
       <span style="margin: 0 12px;">•</span>
       <a href="../../pages/privacy/privacy.html" style="color: var(--muted); text-decoration: none;">Privacy Policy</a>
       <span style="margin: 0 12px;">•</span>

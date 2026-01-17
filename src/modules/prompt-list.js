@@ -59,10 +59,14 @@ export function initPromptList() {
   createSubmenu();
   document.addEventListener('click', handleDocumentClick);
   listEl.addEventListener('click', handleListClick);
+  listEl.addEventListener('keydown', handleListKeydown);
 }
 
 export function destroyPromptList() {
   document.removeEventListener('click', handleDocumentClick);
+  if (listEl) {
+    listEl.removeEventListener('keydown', handleListKeydown);
+  }
   if (submenuEl && submenuEl.parentNode) {
     submenuEl.parentNode.removeChild(submenuEl);
   }
@@ -212,6 +216,18 @@ function handleDocumentClick(event) {
     return;
   }
   closeAllSubmenus();
+}
+
+function handleListKeydown(event) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    const target = event.target;
+    // Activate custom buttons (spans with role="button")
+    if (target.getAttribute('role') === 'button' && target.getAttribute('tabindex') === '0') {
+      event.preventDefault();
+      event.stopPropagation();
+      target.click(); // Dispatch click to trigger handleListClick
+    }
+  }
 }
 
 function handleListClick(event) {
@@ -380,6 +396,8 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
         : '<span class="icon" aria-hidden="true">chevron_right</span>';
       toggle.dataset.action = 'toggle-dir';
       toggle.dataset.path = entry.path;
+      toggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+      toggle.setAttribute('aria-label', (isExpanded ? 'Collapse ' : 'Expand ') + entry.name);
 
       const label = document.createElement('span');
       label.className = 'folder-name';
@@ -391,7 +409,9 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       const ghIcon = document.createElement('span');
       ghIcon.className = 'github-folder-icon icon icon-inline';
       ghIcon.textContent = 'folder';
-      ghIcon.setAttribute('aria-hidden', 'true');
+      ghIcon.setAttribute('role', 'button');
+      ghIcon.setAttribute('aria-label', 'Open directory on GitHub');
+      ghIcon.setAttribute('tabindex', '0');
       ghIcon.title = 'Open directory on GitHub';
       ghIcon.dataset.action = 'open-github';
       ghIcon.dataset.path = entry.path;
@@ -399,7 +419,9 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       const addIcon = document.createElement('span');
       addIcon.className = 'add-file-icon icon icon-inline';
       addIcon.textContent = 'add';
-      addIcon.setAttribute('aria-hidden', 'true');
+      addIcon.setAttribute('role', 'button');
+      addIcon.setAttribute('aria-label', 'Create new file in this directory');
+      addIcon.setAttribute('tabindex', '0');
       addIcon.title = 'Create new file in this directory';
       addIcon.dataset.action = 'show-submenu';
       addIcon.dataset.path = entry.path;
