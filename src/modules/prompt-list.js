@@ -1,7 +1,7 @@
 import { slugify } from '../utils/slug.js';
 import { STORAGE_KEYS, TAG_DEFINITIONS } from '../utils/constants.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
-import { clearElement, stopPropagation, setElementDisplay, toggleClass, createElement } from '../utils/dom-helpers.js';
+import { clearElement, stopPropagation, createElement } from '../utils/dom-helpers.js';
 
 let files = [];
 let expandedState = new Set();
