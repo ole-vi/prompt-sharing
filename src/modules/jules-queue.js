@@ -701,7 +701,12 @@ async function showScheduleModal() {
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
-  if (queueSelections.length === 0 && Object.keys(subtaskSelections).length === 0) {
+  if (queueSelections.length === 0 && Object.keys(subtaskSelections).length > 0) {
+    showToast('Individual subtasks cannot be scheduled separately. Please select the parent batch to schedule all subtasks together.', 'warn');
+    return;
+  }
+  
+  if (queueSelections.length === 0) {
     showToast('No items selected to schedule', 'warn');
     return;
   }
@@ -873,7 +878,7 @@ async function confirmScheduleItems() {
   
   await saveUserTimeZone(selectedTimeZone);
   
-  const { queueSelections, subtaskSelections } = getSelectedQueueIds();
+  const { queueSelections } = getSelectedQueueIds();
   
   try {
     const scheduledAt = firebase.firestore.Timestamp.fromDate(scheduledDate);
@@ -890,20 +895,7 @@ async function confirmScheduleItems() {
       });
     }
     
-    for (const docId of Object.keys(subtaskSelections)) {
-      if (!queueSelections.includes(docId)) {
-        await updateJulesQueueItem(user.uid, docId, {
-          status: 'scheduled',
-          scheduledAt: scheduledAt,
-          scheduledTimeZone: selectedTimeZone,
-          retryOnFailure: retryOnFailure,
-          retryCount: 0,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
-    }
-    
-    const totalScheduled = new Set([...queueSelections, ...Object.keys(subtaskSelections)]).size;
+    const totalScheduled = queueSelections.length;
     
     const formattedScheduledAt = new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
@@ -915,7 +907,8 @@ async function confirmScheduleItems() {
       timeZoneName: 'short'
     }).format(scheduledDate);
     
-    showToast(`Scheduled ${totalScheduled} item(s) for ${formattedScheduledAt}`, 'success');
+    const itemText = totalScheduled === 1 ? 'item' : 'items';
+    showToast(`Scheduled ${totalScheduled} ${itemText} for ${formattedScheduledAt}`, 'success');
     hideScheduleModal();
     await loadQueuePage();
   } catch (err) {
@@ -960,17 +953,15 @@ function renderQueueList(items) {
     }
     
     if (item.type === 'subtasks' && Array.isArray(item.remaining) && item.remaining.length > 0) {
-      const isScheduled = status === 'scheduled';
       const subtasksHtml = item.remaining.map((subtask, index) => {
         const preview = (subtask.fullContent || '').substring(0, 150);
-        const scheduleIcon = (isScheduled && index === 0) ? '<span class="icon icon-inline icon-accent" aria-hidden="true">schedule</span> ' : '';
         return `
           <div class="queue-subtask">
             <div class="queue-subtask-index">
               <input class="subtask-checkbox" type="checkbox" data-docid="${item.id}" data-index="${index}" />
             </div>
             <div class="queue-subtask-content">
-              <div class="queue-subtask-meta">${scheduleIcon}Subtask ${index + 1} of ${item.remaining.length}</div>
+              <div class="queue-subtask-meta">Subtask ${index + 1} of ${item.remaining.length}</div>
               <div class="queue-subtask-text">${escapeHtml(preview)}${preview.length >= 150 ? '...' : ''}</div>
             </div>
           </div>
@@ -1192,8 +1183,8 @@ function updateScheduleButton() {
   const scheduleBtn = document.getElementById('queueScheduleBtn');
   if (!scheduleBtn) return;
   
-  const { queueSelections, subtaskSelections } = getSelectedQueueIds();
-  const hasSelections = queueSelections.length > 0 || Object.keys(subtaskSelections).length > 0;
+  const { queueSelections } = getSelectedQueueIds();
+  const hasSelections = queueSelections.length > 0;
   
   if (!hasSelections) {
     scheduleBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">schedule</span> Schedule';
@@ -1207,7 +1198,7 @@ function updateScheduleButton() {
     return item && item.status === 'scheduled';
   });
   
-  if (allScheduled && queueSelections.length > 0 && Object.keys(subtaskSelections).length === 0) {
+  if (allScheduled && queueSelections.length > 0) {
     scheduleBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">schedule</span> Unschedule';
     scheduleBtn.setAttribute('aria-label', 'Unschedule selected items');
     scheduleBtn.dataset.mode = 'unschedule';
