@@ -845,6 +845,7 @@ async function confirmScheduleItems() {
   const dateInput = document.getElementById('scheduleDate');
   const timeInput = document.getElementById('scheduleTime');
   const timeZoneSelect = document.getElementById('scheduleTimeZone');
+  const retryCheckbox = document.getElementById('scheduleRetryOnFailure');
   const errorDiv = document.getElementById('scheduleError');
   
   errorDiv.classList.add('hidden');
@@ -876,12 +877,15 @@ async function confirmScheduleItems() {
   
   try {
     const scheduledAt = firebase.firestore.Timestamp.fromDate(scheduledDate);
+    const retryOnFailure = retryCheckbox ? retryCheckbox.checked : false;
     
     for (const docId of queueSelections) {
       await updateJulesQueueItem(user.uid, docId, {
         status: 'scheduled',
         scheduledAt: scheduledAt,
         scheduledTimeZone: selectedTimeZone,
+        retryOnFailure: retryOnFailure,
+        retryCount: 0,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
@@ -892,6 +896,8 @@ async function confirmScheduleItems() {
           status: 'scheduled',
           scheduledAt: scheduledAt,
           scheduledTimeZone: selectedTimeZone,
+          retryOnFailure: retryOnFailure,
+          retryCount: 0,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
       }
@@ -943,7 +949,14 @@ function renderQueueList(items) {
         hour: '2-digit',
         minute: '2-digit'
       });
-      scheduledInfo = `<div class="queue-scheduled-info"><span class="icon icon-inline" aria-hidden="true">schedule</span> Scheduled: ${dateStr} (${timeZone})</div>`;
+      const retryCount = item.retryCount || 0;
+      const retryInfo = retryCount > 0 ? ` (Retry ${retryCount}/3)` : '';
+      scheduledInfo = `<div class="queue-scheduled-info"><span class="icon icon-inline" aria-hidden="true">schedule</span> Scheduled: ${dateStr} (${timeZone})${retryInfo}</div>`;
+    }
+    
+    let errorInfo = '';
+    if (status === 'error' && item.error) {
+      errorInfo = `<div class="queue-error-info"><span class="icon icon-inline" aria-hidden="true">error</span> Error: ${escapeHtml(item.error)}</div>`;
     }
     
     if (item.type === 'subtasks' && Array.isArray(item.remaining) && item.remaining.length > 0) {
@@ -983,6 +996,7 @@ function renderQueueList(items) {
               <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
               ${repoDisplay}
               ${scheduledInfo}
+              ${errorInfo}
             </div>
           </div>
           <div class="queue-subtasks">
@@ -1011,6 +1025,7 @@ function renderQueueList(items) {
             <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
             ${repoDisplay}
             ${scheduledInfo}
+            ${errorInfo}
             <div class="queue-prompt">${escapeHtml(promptPreview)}${promptPreview.length >= 200 ? '...' : ''}</div>
           </div>
         </div>

@@ -20,6 +20,12 @@
         <label class="form-label" for="scheduleTimeZone">Time Zone:</label>
         <select id="scheduleTimeZone" class="form-control"></select>
       </div>
+      <div class="form-group">
+        <label class="form-label">
+          <input type="checkbox" id="scheduleRetryOnFailure" />
+          Retry on failure (every 10 minutes, max 3 attempts)
+        </label>
+      </div>
       <div id="scheduleError" class="form-error hidden"></div>
     </div>
     <div class="modal-footer">
