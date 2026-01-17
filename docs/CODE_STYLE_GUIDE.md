@@ -186,6 +186,7 @@ src/
     ├── checkbox-helpers.js
     ├── constants.js
     ├── dom-helpers.js
+    ├── sanitization.js
     ├── session-cache.js
     ├── slug.js
     ├── title.js
@@ -267,6 +268,21 @@ onElement(badge, 'click', (e) => {
   stopPropagation(e);
   // Handle badge click
 });
+```
+
+### Sanitization
+
+Use `src/utils/sanitization.js` to protect against XSS when rendering user content.
+
+```javascript
+import { sanitizeHTML, escapeHTML } from '../utils/sanitization.js';
+
+// ✅ Good: Sanitize HTML content
+contentEl.innerHTML = sanitizeHTML(htmlContent);
+
+// ✅ Good: Escape plain text if inserting into HTML
+const safeText = escapeHTML(userInput);
+container.innerHTML = `<div>${safeText}</div>`;
 ```
 
 ---
