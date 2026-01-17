@@ -1,5 +1,5 @@
 import { extractTitleFromPrompt } from '../utils/title.js';
-import statusBar from './status-bar.js';
+import { showMessage, setAction, clear, clearProgress, clearAction, setProgress } from './status-bar.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
@@ -856,15 +856,15 @@ async function runSelectedQueueItems() {
     pauseBtn.onclick = () => {
       paused = true;
       pauseBtn.disabled = true;
-      statusBar.showMessage('Pausing queue processing after the current subtask', { timeout: 4000 });
+      showMessage('Pausing queue processing after the current subtask', { timeout: 4000 });
     };
   }
 
-  statusBar.showMessage('Processing queue...', { timeout: 0 });
-  statusBar.setAction('Pause', () => {
+  showMessage('Processing queue...', { timeout: 0 });
+  setAction('Pause', () => {
     paused = true;
-    statusBar.showMessage('Pausing after current subtask', { timeout: 3000 });
-    statusBar.clearAction();
+    showMessage('Pausing after current subtask', { timeout: 3000 });
+    clearAction();
     if (pauseBtn) pauseBtn.disabled = true;
   });
 
@@ -912,7 +912,7 @@ async function runSelectedQueueItems() {
           totalSuccessful += err.successfulCount;
         }
         showToast(JULES_MESSAGES.cancelled(totalSuccessful, totalItems), 'warn');
-        statusBar.clear();
+        clear();
         await loadQueuePage();
         return;
       }
@@ -955,7 +955,7 @@ async function runSelectedQueueItems() {
               retry = false;
             } else {
               showToast(JULES_MESSAGES.cancelled(totalSuccessful, totalItems), 'warn');
-              statusBar.clear();
+              clear();
               await loadQueuePage();
               return;
             }
@@ -978,9 +978,9 @@ async function runSelectedQueueItems() {
             } catch (e) {
               console.warn('Failed to persist paused state for queue item', id, e.message || e);
             }
-            statusBar.showMessage('Paused — progress saved', { timeout: 3000 });
-            statusBar.clearProgress();
-            statusBar.clearAction();
+            showMessage('Paused — progress saved', { timeout: 3000 });
+            clearProgress();
+            clearAction();
             await loadQueuePage();
             return;
           }
@@ -1017,8 +1017,8 @@ async function runSelectedQueueItems() {
               try {
                 const done = initialCount - remaining.length;
                 const percent = initialCount > 0 ? Math.round((done / initialCount) * 100) : 100;
-                statusBar.setProgress(`${done}/${initialCount}`, percent);
-                statusBar.showMessage(`Processing subtask ${done}/${initialCount}`, { timeout: 0 });
+                setProgress(`${done}/${initialCount}`, percent);
+                showMessage(`Processing subtask ${done}/${initialCount}`, { timeout: 0 });
               } catch (e) {}
 
               await new Promise(r => setTimeout(r, 800));
@@ -1041,7 +1041,7 @@ async function runSelectedQueueItems() {
                 } catch (e) {
                   console.warn('Failed to persist remaining after skip', e);
                 }
-                statusBar.showMessage(JULES_MESSAGES.SKIPPED_SUBTASK, { timeout: 2000 });
+                showMessage(JULES_MESSAGES.SKIPPED_SUBTASK, { timeout: 2000 });
                 subtaskRetry = false;
               } else if (result.action === 'queue') {
                 try {
@@ -1053,9 +1053,9 @@ async function runSelectedQueueItems() {
                 } catch (e) {
                   console.warn('Failed to persist queue state', e);
                 }
-                statusBar.showMessage('Remainder queued for later', { timeout: 3000 });
-                statusBar.clearProgress();
-                statusBar.clearAction();
+                showMessage('Remainder queued for later', { timeout: 3000 });
+                clearProgress();
+                clearAction();
                 await loadQueuePage();
                 return;
               } else {
@@ -1069,7 +1069,7 @@ async function runSelectedQueueItems() {
                   console.warn('Failed to persist error state', e);
                 }
                 showToast(JULES_MESSAGES.cancelled(totalSuccessful, totalItems), 'warn');
-                statusBar.clear();
+                clear();
                 await loadQueuePage();
                 return;
               }
@@ -1096,14 +1096,14 @@ async function runSelectedQueueItems() {
     } catch (err) {
       if (err.message === 'User cancelled') {
         showToast(JULES_MESSAGES.cancelled(totalSuccessful, totalItems), 'warn');
-        statusBar.clear();
+        clear();
         await loadQueuePage();
         return;
       }
       console.error('Unexpected error running queue item', id, err);
       showToast(JULES_MESSAGES.UNEXPECTED_ERROR(err.message), 'error');
-      statusBar.clearProgress();
-      statusBar.clearAction();
+      clearProgress();
+      clearAction();
       await loadQueuePage();
       return;
     }
@@ -1116,7 +1116,7 @@ async function runSelectedQueueItems() {
   } else {
     showToast(JULES_MESSAGES.COMPLETED_RUNNING, 'success');
   }
-  statusBar.clear();
-  statusBar.clearAction();
+  clear();
+  clearAction();
   await loadQueuePage();
 }

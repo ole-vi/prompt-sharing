@@ -1,103 +1,97 @@
 // ===== Status Bar Module =====
 
-class StatusBar {
-  constructor() {
-    this.element = null;
-    this.msgElement = null;
-    this.progressElement = null;
-    this.actionElement = null;
-    this.currentTimeout = null;
+let element = null;
+let msgElement = null;
+let progressElement = null;
+let actionElement = null;
+let closeElement = null;
+let currentTimeout = null;
+
+export function init() {
+  element = document.getElementById('statusBar');
+  if (!element) {
+    return;
   }
 
-  init() {
-    this.element = document.getElementById('statusBar');
-    if (!this.element) {
-      return;
-    }
-    
-    this.msgElement = this.element.querySelector('.status-msg');
-    this.progressElement = this.element.querySelector('.status-progress');
-    this.actionElement = this.element.querySelector('.status-action');
-    this.closeElement = this.element.querySelector('.status-close');
-    
-    // Ensure status bar is hidden initially
-    this.element.classList.remove('status-visible');
-    
-    // Add close button handler
-    if (this.closeElement) {
-      this.closeElement.addEventListener('click', () => {
-        this.clear();
-      });
-    }
-  }
+  msgElement = element.querySelector('.status-msg');
+  progressElement = element.querySelector('.status-progress');
+  actionElement = element.querySelector('.status-action');
+  closeElement = element.querySelector('.status-close');
 
-  showMessage(message, options = {}) {
-    if (!this.element || !this.msgElement) return;
+  // Ensure status bar is hidden initially
+  element.classList.remove('status-visible');
 
-    const { timeout = 3000 } = options;
-
-    this.msgElement.textContent = message;
-    this.element.classList.add('status-visible');
-    this.element.classList.remove('hidden');
-
-    if (this.currentTimeout) {
-      clearTimeout(this.currentTimeout);
-      this.currentTimeout = null;
-    }
-
-    if (timeout > 0) {
-      this.currentTimeout = setTimeout(() => {
-        this.hide();
-      }, timeout);
-    }
-  }
-
-  setProgress(text, percent) {
-    if (!this.progressElement) return;
-
-    this.progressElement.textContent = text;
-    this.progressElement.classList.remove('hidden');
-  }
-
-  clearProgress() {
-    if (!this.progressElement) return;
-    this.progressElement.textContent = '';
-    this.progressElement.classList.add('hidden');
-  }
-
-  setAction(label, callback) {
-    if (!this.actionElement) return;
-
-    this.actionElement.textContent = label;
-    this.actionElement.classList.remove('hidden');
-    this.actionElement.onclick = callback;
-  }
-
-  clearAction() {
-    if (!this.actionElement) return;
-    this.actionElement.textContent = '';
-    this.actionElement.classList.add('hidden');
-    this.actionElement.onclick = null;
-  }
-
-  hide() {
-    if (!this.element) return;
-    
-    this.element.classList.remove('status-visible');
-    this.element.classList.add('hidden');
-    
-    if (this.currentTimeout) {
-      clearTimeout(this.currentTimeout);
-      this.currentTimeout = null;
-    }
-  }
-
-  clear() {
-    this.clearProgress();
-    this.clearAction();
-    this.hide();
+  // Add close button handler
+  if (closeElement) {
+    closeElement.addEventListener('click', () => {
+      clear();
+    });
   }
 }
 
-const statusBar = new StatusBar();
-export default statusBar;
+export function showMessage(message, options = {}) {
+  if (!element || !msgElement) return;
+
+  const { timeout = 3000 } = options;
+
+  msgElement.textContent = message;
+  element.classList.add('status-visible');
+  element.classList.remove('hidden');
+
+  if (currentTimeout) {
+    clearTimeout(currentTimeout);
+    currentTimeout = null;
+  }
+
+  if (timeout > 0) {
+    currentTimeout = setTimeout(() => {
+      hide();
+    }, timeout);
+  }
+}
+
+export function setProgress(text, percent) {
+  if (!progressElement) return;
+
+  progressElement.textContent = text;
+  progressElement.classList.remove('hidden');
+}
+
+export function clearProgress() {
+  if (!progressElement) return;
+  progressElement.textContent = '';
+  progressElement.classList.add('hidden');
+}
+
+export function setAction(label, callback) {
+  if (!actionElement) return;
+
+  actionElement.textContent = label;
+  actionElement.classList.remove('hidden');
+  actionElement.onclick = callback;
+}
+
+export function clearAction() {
+  if (!actionElement) return;
+  actionElement.textContent = '';
+  actionElement.classList.add('hidden');
+  actionElement.onclick = null;
+}
+
+export function hide() {
+  if (!element) return;
+
+  element.classList.remove('status-visible');
+  element.classList.add('hidden');
+
+  if (currentTimeout) {
+    clearTimeout(currentTimeout);
+    currentTimeout = null;
+  }
+}
+
+export function clear() {
+  clearProgress();
+  clearAction();
+  hide();
+}
