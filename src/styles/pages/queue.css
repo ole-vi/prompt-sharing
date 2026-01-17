@@ -1,2 +1,29 @@
 /* Page: Queue */
 /* Add any queue-specific overrides here. */
+
+/* Make the queue list independently scrollable */
+#allQueueList {
+  max-height: calc(100vh - 350px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+}
+
+/* Custom scrollbar styling for queue list */
+#allQueueList::-webkit-scrollbar {
+  width: 8px;
+}
+
+#allQueueList::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+
+#allQueueList::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+#allQueueList::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
