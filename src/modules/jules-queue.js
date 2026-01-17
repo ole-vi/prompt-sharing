@@ -656,6 +656,20 @@ async function saveUserTimeZone(timeZone) {
   }
 }
 
+function parseDateInTimeZone(dateTimeStr, timeZone) {
+  const parts = dateTimeStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/);
+  if (!parts) {
+    throw new Error('Invalid date format');
+  }
+  
+  const [, year, month, day, hour, minute, second] = parts;
+  const dateInTz = new Date(new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`).toLocaleString('en-US', { timeZone }));
+  const dateInLocal = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`);
+  const offset = dateInLocal - dateInTz;
+  
+  return new Date(dateInLocal.getTime() - offset);
+}
+
 function getCommonTimeZones() {
   return [
     { value: 'America/New_York', label: 'Eastern Time (ET)' },
@@ -737,18 +751,57 @@ function populateTimeZoneDropdown(selectedTimeZone) {
 function initializeScheduleModalInputs() {
   const dateInput = document.getElementById('scheduleDate');
   const timeInput = document.getElementById('scheduleTime');
+  const tzSelect = document.getElementById('scheduleTimeZone');
+  
+  const updateMinDate = () => {
+    if (!dateInput || !tzSelect) return;
+    
+    const selectedTz = tzSelect.value;
+    const nowInTz = new Date().toLocaleString('en-US', { timeZone: selectedTz });
+    const minDate = new Date(nowInTz).toISOString().split('T')[0];
+    dateInput.min = minDate;
+    dateInput.value = minDate;
+  };
+  
+  const updateDefaultTime = () => {
+    if (!timeInput || !tzSelect) return;
+    
+    try {
+      const selectedTz = tzSelect.value;
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: selectedTz
+      });
+      const parts = formatter.formatToParts(now);
+      let hour = parseInt(parts.find(p => p.type === 'hour')?.value ?? '0', 10);
+      hour = (hour + 1) % 24;
+      timeInput.value = `${hour.toString().padStart(2, '0')}:00`;
+    } catch (e) {
+      const now = new Date();
+      now.setHours(now.getHours() + 1);
+      now.setMinutes(0);
+      timeInput.value = now.toTimeString().slice(0, 5);
+    }
+  };
   
   if (dateInput) {
-    const today = new Date().toISOString().split('T')[0];
-    dateInput.min = today;
-    dateInput.value = today;
+    updateMinDate();
   }
   
   if (timeInput) {
-    const now = new Date();
-    now.setHours(now.getHours() + 1);
-    now.setMinutes(0);
-    timeInput.value = now.toTimeString().slice(0, 5);
+    updateDefaultTime();
+  }
+  
+  if (tzSelect) {
+    const handleTzChange = () => {
+      updateMinDate();
+      updateDefaultTime();
+    };
+    tzSelect.removeEventListener('change', handleTzChange);
+    tzSelect.addEventListener('change', handleTzChange);
   }
 }
 
@@ -804,7 +857,7 @@ async function confirmScheduleItems() {
   const selectedTimeZone = timeZoneSelect.value;
   
   const dateTimeStr = `${selectedDate}T${selectedTime}:00`;
-  const scheduledDate = new Date(dateTimeStr);
+  const scheduledDate = parseDateInTimeZone(dateTimeStr, selectedTimeZone);
   
   const now = new Date();
   if (scheduledDate < now) {
@@ -841,7 +894,15 @@ async function confirmScheduleItems() {
     }
     
     const totalScheduled = new Set([...queueSelections, ...Object.keys(subtaskSelections)]).size;
-    showToast(`Scheduled ${totalScheduled} item(s) for ${selectedDate} ${selectedTime} ${selectedTimeZone}`, 'success');
+    
+    const formattedScheduledAt = new Intl.DateTimeFormat('en-US', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: selectedTimeZone,
+      timeZoneName: 'short'
+    }).format(scheduledDate);
+    
+    showToast(`Scheduled ${totalScheduled} item(s) for ${formattedScheduledAt}`, 'success');
     hideScheduleModal();
     await loadQueuePage();
   } catch (err) {
@@ -1112,7 +1173,8 @@ function updateScheduleButton() {
   const hasSelections = queueSelections.length > 0 || Object.keys(subtaskSelections).length > 0;
   
   if (!hasSelections) {
-    scheduleBtn.textContent = 'Schedule';
+    scheduleBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">schedule</span> Schedule';
+    scheduleBtn.setAttribute('aria-label', 'Schedule selected items');
     scheduleBtn.dataset.mode = 'schedule';
     return;
   }
@@ -1123,10 +1185,12 @@ function updateScheduleButton() {
   });
   
   if (allScheduled && queueSelections.length > 0 && Object.keys(subtaskSelections).length === 0) {
-    scheduleBtn.textContent = 'Unschedule';
+    scheduleBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">schedule</span> Unschedule';
+    scheduleBtn.setAttribute('aria-label', 'Unschedule selected items');
     scheduleBtn.dataset.mode = 'unschedule';
   } else {
-    scheduleBtn.textContent = 'Schedule';
+    scheduleBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">schedule</span> Schedule';
+    scheduleBtn.setAttribute('aria-label', 'Schedule selected items');
     scheduleBtn.dataset.mode = 'schedule';
   }
 }

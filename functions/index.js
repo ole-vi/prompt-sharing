@@ -413,44 +413,48 @@ exports.getGitHubUser = functions.https.onRequest(async (req, res) => {
   }
 });
 
-exports.activateScheduledQueueItems = functions.pubsub.schedule('every 1 minutes').onRun(async (context) => {
+exports.activateScheduledQueueItems = functions.pubsub.schedule('every 1 minute').onRun(async (context) => {
   const db = admin.firestore();
   const now = admin.firestore.Timestamp.now();
   
   console.log('Running scheduled queue activation check at', now.toDate().toISOString());
   
   try {
-    const usersSnapshot = await db.collection('julesQueues').listDocuments();
+    const scheduledItemsSnapshot = await db.collectionGroup('items')
+      .where('status', '==', 'scheduled')
+      .where('scheduledAt', '<=', now)
+      .get();
+    
+    if (scheduledItemsSnapshot.empty) {
+      console.log('No scheduled items found to activate.');
+      console.log('Activation check complete. Total items activated: 0');
+      return null;
+    }
+    
+    console.log(`Found ${scheduledItemsSnapshot.size} scheduled items across all users.`);
+    
+    const docs = scheduledItemsSnapshot.docs;
+    const BATCH_SIZE = 500;
     let totalActivated = 0;
     
-    for (const userDoc of usersSnapshot) {
-      try {
-        const scheduledItems = await userDoc.collection('items')
-          .where('status', '==', 'scheduled')
-          .where('scheduledAt', '<=', now)
-          .get();
+    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+      const batch = db.batch();
+      const chunk = docs.slice(i, i + BATCH_SIZE);
+      
+      chunk.forEach(doc => {
+        const userId = doc.ref.parent?.parent?.id || 'unknown';
+        console.log(`Activating scheduled item ${doc.id} for user ${userId}`);
         
-        if (scheduledItems.empty) {
-          continue;
-        }
-        
-        console.log(`Found ${scheduledItems.size} scheduled items for user ${userDoc.id}`);
-        
-        const batch = db.batch();
-        scheduledItems.docs.forEach(doc => {
-          batch.update(doc.ref, {
-            status: 'pending',
-            activatedAt: now,
-            updatedAt: now
-          });
+        batch.update(doc.ref, {
+          status: 'pending',
+          activatedAt: now,
+          updatedAt: now
         });
-        
-        await batch.commit();
-        totalActivated += scheduledItems.size;
-        console.log(`Activated ${scheduledItems.size} items for user ${userDoc.id}`);
-      } catch (userErr) {
-        console.error(`Error processing scheduled items for user ${userDoc.id}:`, userErr);
-      }
+      });
+      
+      await batch.commit();
+      totalActivated += chunk.length;
+      console.log(`Activated ${chunk.length} scheduled items in this batch.`);
     }
     
     console.log(`Activation check complete. Total items activated: ${totalActivated}`);
