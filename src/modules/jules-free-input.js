@@ -265,6 +265,9 @@ export function showFreeInputForm() {
         case 'chatgpt':
           url = 'https://chatgpt.com/';
           break;
+        case 'github-copilot':
+          url = 'https://github.com/copilot/agents';
+          break;
         case 'blank':
         default:
           url = 'about:blank';
