@@ -1,6 +1,8 @@
 // ===== Confirmation Modal Module =====
 // Provides styled confirmation dialogs to replace confirm() calls
 
+import { trapFocus, releaseFocus } from '../utils/focus-trap.js';
+
 let confirmModal = null;
 let confirmResolve = null;
 
@@ -36,16 +38,17 @@ function showConfirmModal() {
   
   confirmModal.classList.add('show');
   
-  // Focus the confirm button
+  // Trap focus within the modal, prioritizing the confirm button
   setTimeout(() => {
     const confirmBtn = document.getElementById('confirmModalConfirm');
-    if (confirmBtn) confirmBtn.focus();
-  }, 100);
+    trapFocus(confirmModal, confirmBtn);
+  }, 50);
 }
 
 function hideConfirmModal() {
   if (confirmModal) {
     confirmModal.classList.remove('show');
+    releaseFocus();
   }
 }
 

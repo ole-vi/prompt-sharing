@@ -7,6 +7,7 @@ import { addToJulesQueue } from './jules-queue.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import { RETRY_CONFIG, TIMEOUTS, JULES_MESSAGES } from '../utils/constants.js';
 import { showToast } from './toast.js';
+import { trapFocus, releaseFocus } from '../utils/focus-trap.js';
 
 let lastSelectedSourceId = 'sources/github/promptroot/promptroot';
 let lastSelectedBranch = 'main';
@@ -52,7 +53,7 @@ export function showJulesKeyModal(onSave) {
   
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
   input.value = '';
-  input.focus();
+  trapFocus(modal, input);
 
   const saveBtn = document.getElementById('julesSaveBtn');
   const cancelBtn = document.getElementById('julesCancelBtn');
@@ -102,11 +103,13 @@ export function showJulesKeyModal(onSave) {
 export function hideJulesKeyModal() {
   const modal = document.getElementById('julesKeyModal');
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  releaseFocus();
 }
 
 export async function showJulesEnvModal(promptText) {
   const modal = document.getElementById('julesEnvModal');
   modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  trapFocus(modal);
 
   const submitBtn = document.getElementById('julesEnvSubmitBtn');
   const queueBtn = document.getElementById('julesEnvQueueBtn');
@@ -300,6 +303,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
 export function hideJulesEnvModal() {
   const modal = document.getElementById('julesEnvModal');
   modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  releaseFocus();
 }
 
 export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error, hideQueueButton = false) {
@@ -336,6 +340,7 @@ export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error,
 
     modal.style.zIndex = '10000';
     modal.classList.add('show');
+    trapFocus(modal);
 
     const handleAction = (action) => {
       retryBtn.onclick = null;
@@ -380,6 +385,7 @@ export function hideSubtaskErrorModal() {
   const modal = document.getElementById('subtaskErrorModal');
   if (modal) {
     modal.classList.remove('show');
+    releaseFocus();
   }
 }
 
