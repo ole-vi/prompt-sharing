@@ -1,7 +1,8 @@
 import { slugify } from '../utils/slug.js';
-import { STORAGE_KEYS, TAG_DEFINITIONS } from '../utils/constants.js';
+import { STORAGE_KEYS, TAG_DEFINITIONS, ERRORS } from '../utils/constants.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
 import { clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
+import statusBar from './status-bar.js';
 
 let files = [];
 let expandedState = new Set();
@@ -581,6 +582,8 @@ export async function loadList(owner, repo, branch, cacheKey) {
     await refreshList(owner, repo, branch, cacheKey);
     return files;
   } catch (e) {
+    console.error('Failed to load list:', e);
+    statusBar.showMessage(ERRORS.PROMPT_LOAD_FAILED || 'Failed to load prompts', { timeout: 4000 });
     const folder = getPromptFolder(branch);
     clearElement(listEl);
     listEl.innerHTML = `<div style="color:var(--muted); padding:8px;">
@@ -637,6 +640,7 @@ export async function refreshList(owner, repo, branch, cacheKey) {
       result = { files, etag: null }; // Contents API doesn't provide ETag
     } catch (contentsError) {
       console.error('Both API strategies failed:', contentsError);
+      statusBar.showMessage('Failed to fetch prompt list', { timeout: 4000 });
       throw contentsError;
     }
   }
