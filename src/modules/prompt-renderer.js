@@ -2,6 +2,7 @@ import { slugify } from '../utils/slug.js';
 import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './github-api.js';
 import { CODEX_URL_REGEX, TIMEOUTS } from '../utils/constants.js';
 import { setElementDisplay } from '../utils/dom-helpers.js';
+import { loadMarked } from '../utils/lazy-loaders.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
 import statusBar from './status-bar.js';
@@ -227,7 +228,7 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
 
   const expanded = ensureAncestorsExpanded(f.path);
   if (expanded) {
-    renderList(getFiles(), owner, repo, branch);
+    await renderList(getFiles(), owner, repo, branch);
   } else {
     updateActiveItem();
   }
@@ -372,6 +373,9 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   if (/^#\s+/.test(firstLine)) {
     titleEl.textContent = firstLine.replace(/^#\s+/, '');
   }
+
+  // Lazy load marked.js
+  const marked = await loadMarked();
 
   if (isGistContent) {
     const looksLikeMarkdown = /^#|^\*|^-|^\d+\.|```/.test(raw.trim());

@@ -3,6 +3,7 @@ import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js
 import { attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
 import { debounce } from '../utils/debounce.js';
 import { TIMEOUTS } from '../utils/constants.js';
+import { loadFuse } from '../utils/lazy-loaders.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -42,7 +43,7 @@ async function loadSessionsPage() {
       allSessionsCache = [...allSessionsCache, ...result.sessions];
       sessionNextPageToken = result.nextPageToken || null;
       
-      renderAllSessions(allSessionsCache);
+      await renderAllSessions(allSessionsCache);
       
       if (sessionNextPageToken) {
         loadMoreSection.classList.remove('hidden');
@@ -63,7 +64,7 @@ async function loadSessionsPage() {
   }
 }
 
-function renderAllSessions(sessions) {
+async function renderAllSessions(sessions) {
   const allSessionsList = document.getElementById('allSessionsList');
   const searchInput = document.getElementById('sessionSearchInput');
   const searchTerm = searchInput.value.trim();
@@ -79,6 +80,10 @@ function renderAllSessions(sessions) {
         promptText: s.prompt || s.displayName || '',
         sessionId: s.name?.split('/').pop() || ''
       }));
+      cachedFuseInstance = null; // Clear old instance
+    }
+    if (!cachedFuseInstance) {
+      const Fuse = await loadFuse(); // Lazy load only when searching
       cachedFuseInstance = new Fuse(cachedSearchData, {
         keys: ['promptText', 'sessionId'],
         includeScore: true,
@@ -189,8 +194,8 @@ async function initApp() {
         }
       };
       
-      const debouncedRender = debounce(() => {
-        renderAllSessions(allSessionsCache);
+      const debouncedRender = debounce(async () => {
+        await renderAllSessions(allSessionsCache);
       }, 300);
       
       searchInput.addEventListener('input', () => { 
@@ -201,10 +206,10 @@ async function initApp() {
       });
       if (searchClear && !searchClear.dataset.bound) {
         searchClear.dataset.bound = 'true';
-        searchClear.addEventListener('click', () => {
+        searchClear.addEventListener('click', async () => {
           searchInput.value = '';
           toggleClear();
-          renderAllSessions(allSessionsCache);
+          await renderAllSessions(allSessionsCache);
           searchInput.focus();
         });
       }

@@ -4,6 +4,7 @@ import { debounce } from '../utils/debounce.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
 import { clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
 import * as folderSubmenu from './folder-submenu.js';
+import { loadFuse } from '../utils/lazy-loaders.js';
 
 let files = [];
 let expandedState = new Set();
@@ -35,8 +36,8 @@ export function initPromptList() {
   searchEl = document.getElementById('search');
   const searchClearBtn = document.getElementById('searchClear');
 
-  const debouncedRender = debounce(() => {
-    renderList(files, currentOwner, currentRepo, currentBranch);
+  const debouncedRender = debounce(async () => {
+    await renderList(files, currentOwner, currentRepo, currentBranch);
   }, 300);
   
   if (searchEl) {
@@ -55,11 +56,11 @@ export function initPromptList() {
   }
   
   if (searchClearBtn && searchEl) {
-    searchClearBtn.addEventListener('click', () => {
+    searchClearBtn.addEventListener('click', async () => {
       searchEl.value = '';
       searchClearBtn.classList.add('hidden');
       searchEl.focus();
-      renderList(files, currentOwner, currentRepo, currentBranch);
+      await renderList(files, currentOwner, currentRepo, currentBranch);
     });
   }
   folderSubmenu.init();
@@ -146,7 +147,7 @@ export function persistExpandedState() {
   }
 }
 
-export function toggleDirectory(path, expand) {
+export async function toggleDirectory(path, expand) {
   const before = expandedState.has(path);
   if (expand) {
     expandedState.add(path);
@@ -156,7 +157,7 @@ export function toggleDirectory(path, expand) {
   if (before !== expand) {
     persistExpandedState();
   }
-  renderList(files, currentOwner, currentRepo, currentBranch);
+  await renderList(files, currentOwner, currentRepo, currentBranch);
 }
 
 function handleListClick(event) {
@@ -400,7 +401,7 @@ function createStatusMessage(message) {
   return container;
 }
 
-export function renderList(items, owner, repo, branch) {
+export async function renderList(items, owner, repo, branch) {
   if (!Array.isArray(items)) {
     console.warn('renderList received non-array items:', items);
     items = [];
@@ -420,6 +421,7 @@ export function renderList(items, owner, repo, branch) {
   if (!q) {
     filtered = items.slice();
   } else {
+    // Rebuild cache if items changed
     if (cachedFiles !== items) {
       cachedFiles = items;
       cachedItemsWithTags = items.map(item => {
@@ -432,12 +434,19 @@ export function renderList(items, owner, repo, branch) {
         }
         return { ...item, tags };
       });
+      cachedFuseInstance = null; // Clear old instance
+    }
+    
+    // Lazy load Fuse only when actually searching
+    if (!cachedFuseInstance) {
+      const Fuse = await loadFuse();
       cachedFuseInstance = new Fuse(cachedItemsWithTags, {
         keys: ['name', 'path', 'tags'],
         includeScore: true,
         threshold: 0.4,
       });
     }
+    
     filtered = cachedFuseInstance.search(q).map(result => result.item);
   }
 
@@ -489,7 +498,7 @@ export async function loadList(owner, repo, branch, cacheKey) {
       if (cacheData) {
         const cacheAge = now - (cacheData.timestamp || 0);
         files = cacheData.files || [];
-        renderList(files, owner, repo, branch);
+        await renderList(files, owner, repo, branch);
         
         if (cacheAge > CACHE_DURATION) {
           refreshList(owner, repo, branch, cacheKey).catch(error => {
@@ -580,5 +589,5 @@ export async function refreshList(owner, repo, branch, cacheKey) {
     timestamp: Date.now()
   };
   sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
-  renderList(files, owner, repo, branch);
+  await renderList(files, owner, repo, branch);
 }

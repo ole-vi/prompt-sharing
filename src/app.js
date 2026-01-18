@@ -2,8 +2,6 @@
 
 import { OWNER, REPO, BRANCH, STORAGE_KEYS } from './utils/constants.js';
 import { parseParams, getHashParam } from './utils/url-params.js';
-import { initJulesKeyModalListeners } from './modules/jules-modal.js';
-import { handleTryInJules } from './modules/jules-api.js';
 import statusBar from './modules/status-bar.js';
 import { initPromptList, loadList, loadExpandedState, renderList, setSelectFileCallback, setRepoContext } from './modules/prompt-list.js';
 import { initPromptRenderer, selectBySlug, selectFile, setHandleTryInJulesCallback } from './modules/prompt-renderer.js';
@@ -15,6 +13,22 @@ let currentOwner = OWNER;
 let currentRepo = REPO;
 let currentBranch = BRANCH;
 
+// Lazy Jules module loaders
+async function lazyHandleTryInJules(promptText) {
+  await ensureJulesModalInit();
+  const { handleTryInJules } = await import('./modules/jules-api.js');
+  return handleTryInJules(promptText);
+}
+
+let julesModalInitialized = false;
+async function ensureJulesModalInit() {
+  if (!julesModalInitialized) {
+    const { initJulesKeyModalListeners } = await import('./modules/jules-modal.js');
+    initJulesKeyModalListeners();
+    julesModalInitialized = true;
+  }
+}
+
 export function initApp() {
   const params = parseParams();
   if (params.owner) currentOwner = params.owner;
@@ -23,12 +37,12 @@ export function initApp() {
 
   // Set up callbacks to avoid circular dependencies
   setSelectFileCallback(selectFile);
-  setHandleTryInJulesCallback(handleTryInJules);
+  setHandleTryInJulesCallback(lazyHandleTryInJules);
 
   // Initialize modules
   initPromptList();
   initPromptRenderer();
-  initJulesKeyModalListeners();
+  // Jules modal now loads on-demand when needed
   
   // Init status bar
   statusBar.init();
