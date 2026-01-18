@@ -1,3 +1,5 @@
+import { GIST_POINTER_REGEX, GIST_URL_REGEX } from '../utils/constants.js';
+
 let viaProxy = (url) => url;
 
 export function setViaProxy(proxyFn) {
@@ -165,9 +167,6 @@ export async function fetchRawFile(owner, repo, branch, path) {
   if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
   return res.text();
 }
-
-const GIST_POINTER_REGEX = /^https:\/\/gist\.githubusercontent\.com\/\S+\/raw\/\S+$/i;
-const GIST_URL_REGEX = /^https:\/\/gist\.github\.com\/[\w-]+\/[a-f0-9]+\/?(?:#file-[\w.-]+)?(?:\?file=[\w.-]+)?$/i;
 
 export async function resolveGistRawUrl(gistUrl) {
   if (GIST_POINTER_REGEX.test(gistUrl)) {
