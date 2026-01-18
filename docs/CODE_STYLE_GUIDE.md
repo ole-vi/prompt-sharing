@@ -222,7 +222,6 @@ Located in `src/utils/dom-helpers.js`:
 ```javascript
 import { 
   createElement, 
-  setElementDisplay, 
   toggleClass, 
   clearElement, 
   onElement,
@@ -236,12 +235,6 @@ import {
 ```javascript
 const div = createElement('div', 'my-class', 'Text content');
 const button = createElement('button', 'btn primary');
-```
-
-**setElementDisplay(element, show)**
-```javascript
-setElementDisplay(element, true);  // Show
-setElementDisplay(element, false); // Hide
 ```
 
 **toggleClass(element, className, force)**
@@ -280,14 +273,6 @@ onElement(badge, 'click', (e) => {
 element.classList.add('hidden');      // Hide
 element.classList.remove('hidden');   // Show
 element.classList.toggle('hidden');   // Toggle
-```
-
-### Use Helper When Appropriate
-
-```javascript
-// ✅ Good: Helper function
-import { setElementDisplay } from '../utils/dom-helpers.js';
-setElementDisplay(element, isVisible);
 ```
 
 ### Avoid Direct Style Manipulation

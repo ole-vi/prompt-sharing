@@ -1,7 +1,6 @@
 import { slugify } from '../utils/slug.js';
 import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './github-api.js';
 import { CODEX_URL_REGEX, TIMEOUTS } from '../utils/constants.js';
-import { setElementDisplay } from '../utils/dom-helpers.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
 import statusBar from './status-bar.js';
@@ -155,10 +154,10 @@ function handleDocumentClick(event) {
 }
 
 async function handleBranchChanged() {
-  setElementDisplay(titleEl, false);
-  setElementDisplay(metaEl, false);
-  setElementDisplay(actionsEl, false);
-  setElementDisplay(emptyEl, false);
+  if (titleEl) titleEl.classList.add('hidden');
+  if (metaEl) metaEl.classList.add('hidden');
+  if (actionsEl) actionsEl.classList.add('hidden');
+  if (emptyEl) emptyEl.classList.add('hidden');
   if (contentEl) contentEl.innerHTML = '';
   setCurrentSlug(null);
   currentPromptText = null;
@@ -203,10 +202,10 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     freeInputSection.classList.add('hidden');
   }
 
-  setElementDisplay(emptyEl, false);
-  setElementDisplay(titleEl, true);
-  setElementDisplay(metaEl, true);
-  setElementDisplay(actionsEl, true);
+  if (emptyEl) emptyEl.classList.add('hidden');
+  if (titleEl) titleEl.classList.remove('hidden');
+  if (metaEl) metaEl.classList.remove('hidden');
+  if (actionsEl) actionsEl.classList.remove('hidden');
   
   // Clear inline styles that might have been set by showFreeInputForm
   if (titleEl) titleEl.style.display = '';
