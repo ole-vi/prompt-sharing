@@ -77,7 +77,7 @@ async function loadJulesInfo() {
   }
 }
 
-function initApp() {
+async function initApp() {
   // Set up Jules key event handlers
   const addJulesKeyBtnProminent = document.getElementById('addJulesKeyBtnProminent');
   const resetJulesKeyBtn = document.getElementById('resetJulesKeyBtn');
@@ -153,7 +153,8 @@ function initApp() {
     };
   }
 
-  waitForFirebase(() => {
+  try {
+    await waitForFirebase();
     window.auth.onAuthStateChanged((user) => {
       if (user) {
         loadJulesInfo();
@@ -162,7 +163,9 @@ function initApp() {
         document.getElementById('julesNotSignedIn').classList.remove('hidden');
       }
     });
-  });
+  } catch (error) {
+    console.error('Failed to initialize Firebase:', error);
+  }
 }
 
 if (document.readyState === 'loading') {

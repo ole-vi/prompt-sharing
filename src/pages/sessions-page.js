@@ -173,7 +173,9 @@ async function loadSessions() {
 }
 
 async function initApp() {
-  waitForFirebase(() => {
+  try {
+    await waitForFirebase();
+
     loadSessions();
     
     const searchInput = document.getElementById('sessionSearchInput');
@@ -221,7 +223,9 @@ async function initApp() {
         loadSessions();
       });
     }
-  });
+  } catch (error) {
+    console.error('Failed to initialize app:', error);
+  }
 }
 
 if (document.readyState === 'loading') {

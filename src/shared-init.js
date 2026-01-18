@@ -4,20 +4,20 @@
 import { loadHeader } from './modules/header.js';
 import { initAuthStateListener } from './modules/auth.js';
 import { initBranchSelector, loadBranches, loadBranchFromStorage } from './modules/branch-selector.js';
-import { OWNER, REPO, BRANCH, TIMEOUTS, LIMITS } from './utils/constants.js';
+import { OWNER, REPO, BRANCH, TIMEOUTS, LIMITS, ERRORS } from './utils/constants.js';
 import { parseParams } from './utils/url-params.js';
 import statusBar from './modules/status-bar.js';
+import { getFirebaseReady } from './firebase-init.js';
 
 let isInitialized = false;
 
-function waitForFirebase(callback, attempts = 0, maxAttempts = LIMITS.componentMaxAttempts) {
-  if (window.firebaseReady) {
-    callback();
-  } else if (attempts < maxAttempts) {
-    setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), TIMEOUTS.firebaseRetry);
-  } else {
-    console.error('Firebase failed to initialize after', maxAttempts, 'attempts');
-    callback();
+async function waitForFirebase() {
+  try {
+    await getFirebaseReady();
+  } catch (error) {
+    console.error('Firebase initialization failed:', error);
+    statusBar.showMessage(ERRORS.FIREBASE_NOT_READY, 'error');
+    throw error;
   }
 }
 
@@ -140,7 +140,9 @@ async function initializeSharedComponents(activePage) {
       }
     }
 
-    waitForFirebase(() => {
+    try {
+      await waitForFirebase();
+
       initAuthStateListener();
 
       const params = parseParams();
@@ -165,7 +167,9 @@ async function initializeSharedComponents(activePage) {
       if (statusBarElement) {
         statusBar.init();
       }
-    });
+    } catch (e) {
+      // Error already handled in waitForFirebase
+    }
 
   } catch (error) {
     isInitialized = false; // Reset so it can be tried again
