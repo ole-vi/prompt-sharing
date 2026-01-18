@@ -10,6 +10,7 @@ import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { attachPromptViewerHandlers } from './prompt-viewer.js';
 import { TIMEOUTS } from '../utils/constants.js';
+import { handleError, ErrorCategory } from '../utils/error-handler.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -19,7 +20,7 @@ export function showUserProfileModal() {
   const user = window.auth?.currentUser;
 
   if (!user) {
-    showToast('Not logged in.', 'error');
+    handleError('Not logged in.', { component: 'UserProfile', action: 'show' });
     return;
   }
 
@@ -98,7 +99,7 @@ export function showUserProfileModal() {
           throw new Error('Failed to delete key');
         }
       } catch (error) {
-        showToast('Failed to reset API key: ' + error.message, 'error');
+        handleError(error, { component: 'UserProfile', action: 'resetKey' });
         resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">refresh</span> Reset Jules API Key';
         resetBtn.disabled = false;
       }
@@ -296,11 +297,13 @@ async function loadAndDisplayJulesProfile(uid) {
     attachViewAllSessionsHandler();
 
   } catch (error) {
+    const { message } = handleError(error, { component: 'UserProfile', action: 'loadProfile' }, { category: ErrorCategory.SILENT });
+
     sourcesListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
-      Failed to load sources: ${error.message}
+      Failed to load sources: ${message}
     </div>`;
     sessionsListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
-      Failed to load sessions: ${error.message}
+      Failed to load sessions: ${message}
     </div>`;
 
     loadBtn.disabled = false;
@@ -367,8 +370,12 @@ async function loadSessionsPage() {
       allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions found</div>';
     }
   } catch (error) {
+    const { message } = handleError(error, { component: 'SessionsHistory', action: 'loadPage' }, {
+      category: allSessionsCache.length > 0 ? ErrorCategory.USER_ACTION : ErrorCategory.SILENT
+    });
+
     if (allSessionsCache.length === 0) {
-      allSessionsList.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">Failed to load sessions: ${error.message}</div>`;
+      allSessionsList.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">Failed to load sessions: ${message}</div>`;
     }
     loadMoreBtn.disabled = false;
     loadMoreBtn.textContent = 'Load More';
@@ -529,7 +536,7 @@ export async function loadProfileDirectly(user) {
           throw new Error('Failed to delete key');
         }
       } catch (error) {
-        showToast('Failed to reset API key: ' + error.message, 'error');
+        handleError(error, { component: 'UserProfile', action: 'resetKeyDirect' });
         resetBtn.innerHTML = originalResetLabel;
         resetBtn.disabled = false;
       }

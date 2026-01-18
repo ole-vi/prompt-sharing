@@ -2,7 +2,7 @@
 // Provides access to the Jules API for managing sources, sessions, and activities
 
 import { JULES_API_BASE, ERRORS, PAGE_SIZES, JULES_MESSAGES, TIMEOUTS } from '../utils/constants.js';
-import { showToast } from './toast.js';
+import { handleError, ErrorCategory } from '../utils/error-handler.js';
 
 // API key cache for memoization
 const keyCache = new Map();
@@ -217,7 +217,7 @@ export async function loadJulesProfileInfo(uid) {
 export async function callRunJulesFunction(promptText, sourceId, branch = 'master', title = '') {
   const user = window.auth ? window.auth.currentUser : null;
   if (!user) {
-    showToast(JULES_MESSAGES.NOT_LOGGED_IN, 'error');
+    handleError(JULES_MESSAGES.NOT_LOGGED_IN, { component: 'JulesApi', action: 'callRunJulesFunction' });
     return null;
   }
 
@@ -288,14 +288,14 @@ export async function handleTryInJules(promptText) {
     }
     await handleTryInJulesAfterAuth(promptText);
   } catch (error) {
-    showToast(JULES_MESSAGES.ERROR_WITH_MESSAGE(error.message), 'error');
+    handleError(error, { component: 'JulesApi', action: 'handleTryInJules' });
   }
 }
 
 export async function handleTryInJulesAfterAuth(promptText) {
   const user = window.auth ? window.auth.currentUser : null;
   if (!user) {
-    showToast(JULES_MESSAGES.NOT_LOGGED_IN, 'error');
+    handleError(JULES_MESSAGES.NOT_LOGGED_IN, { component: 'JulesApi', action: 'handleTryInJulesAfterAuth' });
     return;
   }
 
@@ -313,6 +313,6 @@ export async function handleTryInJulesAfterAuth(promptText) {
       showJulesEnvModal(promptText);
     }
   } catch (error) {
-    showToast(JULES_MESSAGES.GENERAL_ERROR, 'error');
+    handleError(JULES_MESSAGES.GENERAL_ERROR, { component: 'JulesApi', action: 'handleTryInJulesAfterAuth' });
   }
 }

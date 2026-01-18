@@ -7,6 +7,7 @@ import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
 import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly } from '../modules/jules-queue.js';
 import { loadSubtaskErrorModal } from '../modules/jules-modal.js';
 import { TIMEOUTS } from '../utils/constants.js';
+import { handleError, ErrorCategory } from '../utils/error-handler.js';
 
 // Initialize checkbox mutual exclusivity
 initMutualExclusivity();
@@ -70,8 +71,8 @@ async function loadQueue() {
     renderQueueListDirectly(items);
     attachQueueHandlers();
   } catch (err) {
-    console.error('Queue loading error:', err);
-    listDiv.innerHTML = `<div class="panel text-center pad-xl">Failed to load queue: ${err.message}</div>`;
+    const { message } = handleError(err, { component: 'QueuePage', action: 'loadQueue' }, { category: ErrorCategory.SILENT });
+    listDiv.innerHTML = `<div class="panel text-center pad-xl">Failed to load queue: ${message}</div>`;
   }
 }
 

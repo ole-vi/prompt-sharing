@@ -5,13 +5,14 @@ import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { JULES_MESSAGES, TIMEOUTS } from '../utils/constants.js';
+import { handleError, ErrorCategory } from '../utils/error-handler.js';
 
 let queueCache = [];
 
 export async function handleQueueAction(queueItemData) {
   const user = window.auth?.currentUser;
   if (!user) {
-    showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
+    handleError(JULES_MESSAGES.SIGN_IN_REQUIRED, { component: 'JulesQueue', action: 'handleQueueAction' });
     return false;
   }
   try {
@@ -19,7 +20,7 @@ export async function handleQueueAction(queueItemData) {
     showToast(JULES_MESSAGES.QUEUED, 'success');
     return true;
   } catch (err) {
-    showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
+    handleError(err, { component: 'JulesQueue', action: 'addToJulesQueue' });
     return false;
   }
 }
@@ -224,7 +225,7 @@ function unscheduleQueueItem() {
 async function openEditQueueModal(docId) {
   const item = queueCache.find(i => i.id === docId);
   if (!item) {
-    showToast(JULES_MESSAGES.QUEUE_NOT_FOUND, 'error');
+    handleError(JULES_MESSAGES.QUEUE_NOT_FOUND, { component: 'JulesQueue', action: 'openEditQueueModal', itemId: docId });
     return;
   }
 
@@ -529,13 +530,13 @@ async function closeEditModal(force = false) {
 async function saveQueueItemEdit(docId, closeModalCallback) {
   const item = queueCache.find(i => i.id === docId);
   if (!item) {
-    showToast(JULES_MESSAGES.QUEUE_NOT_FOUND, 'error');
+    handleError(JULES_MESSAGES.QUEUE_NOT_FOUND, { component: 'JulesQueue', action: 'saveQueueItemEdit', itemId: docId });
     return;
   }
   
   const user = window.auth?.currentUser;
   if (!user) {
-    showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error');
+    handleError(JULES_MESSAGES.NOT_SIGNED_IN, { component: 'JulesQueue', action: 'saveQueueItemEdit' });
     return;
   }
 
@@ -587,7 +588,7 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
     
     await loadQueuePage();
   } catch (err) {
-    showToast(JULES_MESSAGES.QUEUE_UPDATE_FAILED(err.message), 'error');
+    handleError(err, { component: 'JulesQueue', action: 'saveQueueItemEdit' });
   }
 }
 
@@ -612,7 +613,8 @@ async function loadQueuePage() {
     renderQueueList(items);
     attachQueueModalHandlers();
   } catch (err) {
-    listDiv.innerHTML = `<div class="panel text-center pad-xl">Failed to load queue: ${err.message}</div>`;
+    const { message } = handleError(err, { component: 'JulesQueue', action: 'loadQueuePage' }, { category: ErrorCategory.SILENT });
+    listDiv.innerHTML = `<div class="panel text-center pad-xl">Failed to load queue: ${message}</div>`;
   }
 }
 
@@ -714,12 +716,14 @@ async function showScheduleModal() {
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0 && Object.keys(subtaskSelections).length > 0) {
-    showToast('Individual subtasks cannot be scheduled separately. Please select the parent batch to schedule all subtasks together.', 'warn');
+    handleError('Individual subtasks cannot be scheduled separately. Please select the parent batch to schedule all subtasks together.',
+      { component: 'JulesQueue', action: 'showScheduleModal' },
+      { category: ErrorCategory.USER_ACTION }); // Validation error
     return;
   }
   
   if (queueSelections.length === 0) {
-    showToast('No items selected to schedule', 'warn');
+    handleError('No items selected to schedule', { component: 'JulesQueue', action: 'showScheduleModal' }, { category: ErrorCategory.USER_ACTION });
     return;
   }
   
@@ -1226,14 +1230,14 @@ function updateScheduleButton() {
 async function unscheduleSelectedQueueItems() {
   const user = window.auth?.currentUser;
   if (!user) {
-    showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error');
+    handleError(JULES_MESSAGES.NOT_SIGNED_IN, { component: 'JulesQueue', action: 'unscheduleSelectedQueueItems' });
     return;
   }
   
   const { queueSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0) {
-    showToast('No items selected', 'warn');
+    handleError('No items selected', { component: 'JulesQueue', action: 'unscheduleSelectedQueueItems' }, { category: ErrorCategory.USER_ACTION });
     return;
   }
   
@@ -1268,7 +1272,7 @@ async function unscheduleSelectedQueueItems() {
     showToast(`${queueSelections.length} ${itemText} unscheduled`, 'success');
     await loadQueuePage();
   } catch (err) {
-    showToast(`Failed to unschedule: ${err.message}`, 'error');
+    handleError(err, { component: 'JulesQueue', action: 'unscheduleSelectedQueueItems' });
   }
 }
 
@@ -1294,12 +1298,12 @@ function getSelectedQueueIds() {
 
 async function deleteSelectedQueueItems() {
   const user = window.auth?.currentUser;
-  if (!user) { showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error'); return; }
+  if (!user) { handleError(JULES_MESSAGES.NOT_SIGNED_IN, { component: 'JulesQueue', action: 'deleteSelectedQueueItems' }); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0 && Object.keys(subtaskSelections).length === 0) {
-    showToast('No items selected', 'warn');
+    handleError('No items selected', { component: 'JulesQueue', action: 'deleteSelectedQueueItems' }, { category: ErrorCategory.USER_ACTION });
     return;
   }
   
@@ -1325,7 +1329,7 @@ async function deleteSelectedQueueItems() {
     showToast(JULES_MESSAGES.deleted(totalCount), 'success');
     await loadQueuePage();
   } catch (err) {
-    showToast(JULES_MESSAGES.DELETE_FAILED(err.message), 'error');
+    handleError(err, { component: 'JulesQueue', action: 'deleteSelectedQueueItems' });
   }
 }
 
@@ -1339,12 +1343,12 @@ function sortByCreatedAt(ids) {
 
 async function runSelectedQueueItems() {
   const user = window.auth?.currentUser;
-  if (!user) { showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error'); return; }
+  if (!user) { handleError(JULES_MESSAGES.NOT_SIGNED_IN, { component: 'JulesQueue', action: 'runSelectedQueueItems' }); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0 && Object.keys(subtaskSelections).length === 0) {
-    showToast('No items selected', 'warn');
+    handleError('No items selected', { component: 'JulesQueue', action: 'runSelectedQueueItems' }, { category: ErrorCategory.USER_ACTION });
     return;
   }
 
@@ -1605,8 +1609,7 @@ async function runSelectedQueueItems() {
         await loadQueuePage();
         return;
       }
-      console.error('Unexpected error running queue item', id, err);
-      showToast(JULES_MESSAGES.UNEXPECTED_ERROR(err.message), 'error');
+      handleError(err, { component: 'JulesQueue', action: 'runSelectedQueueItems', itemId: id }, { category: ErrorCategory.ASYNC_PROCESS });
       statusBar.clearProgress();
       statusBar.clearAction();
       await loadQueuePage();
