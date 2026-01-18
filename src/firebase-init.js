@@ -3,9 +3,6 @@
 
 import { TIMEOUTS, LIMITS } from './utils/constants.js';
 
-// Check if we're in a browser and Firebase can be loaded
-window.firebaseError = null;
-
 // Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyD_NzQlgmcUfgrqpgTl3Q3pCkfBrO8PcoA",
@@ -55,7 +52,6 @@ function initFirebaseWhenReady() {
     }
   } catch (error) {
     console.error('Firebase initialization error:', error);
-    window.firebaseError = error;
     return false;
   }
 }
@@ -80,7 +76,6 @@ const firebaseReadyPromise = new Promise((resolve, reject) => {
       clearInterval(retryInterval);
       const errorMsg = 'Timeout waiting for Firebase SDK';
       console.error('Failed to initialize Firebase after 30 seconds');
-      window.firebaseError = errorMsg;
       reject(new Error(errorMsg));
     }
   }, TIMEOUTS.firebaseRetry);

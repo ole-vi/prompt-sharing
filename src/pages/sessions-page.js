@@ -224,7 +224,7 @@ async function initApp() {
       });
     }
   } catch (error) {
-    console.error('Failed to initialize app:', error);
+    console.error('Failed to initialize Firebase:', error);
   }
 }
 

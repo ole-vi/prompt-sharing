@@ -4,7 +4,7 @@
 import { loadHeader } from './modules/header.js';
 import { initAuthStateListener } from './modules/auth.js';
 import { initBranchSelector, loadBranches, loadBranchFromStorage } from './modules/branch-selector.js';
-import { OWNER, REPO, BRANCH, TIMEOUTS, LIMITS, ERRORS } from './utils/constants.js';
+import { OWNER, REPO, BRANCH, ERRORS } from './utils/constants.js';
 import { parseParams } from './utils/url-params.js';
 import statusBar from './modules/status-bar.js';
 import { getFirebaseReady } from './firebase-init.js';
@@ -142,33 +142,35 @@ async function initializeSharedComponents(activePage) {
 
     try {
       await waitForFirebase();
-
-      initAuthStateListener();
-
-      const params = parseParams();
-      const currentOwner = params.owner || OWNER;
-      const currentRepo = params.repo || REPO;
-      const currentBranch = params.branch || loadBranchFromStorage(currentOwner, currentRepo) || BRANCH;
-
-      initBranchSelector(currentOwner, currentRepo, currentBranch);
-
-      loadBranches().catch(error => {
-        console.error('Failed to load branches:', error);
-      });
-
-      const repoPill = document.getElementById('repoPill');
-      if (repoPill) {
-        repoPill.innerHTML = `<strong>${currentOwner}/${currentRepo}</strong>`;
-      }
-
-      fetchVersion();
-
-      const statusBarElement = document.getElementById('statusBar');
-      if (statusBarElement) {
-        statusBar.init();
-      }
     } catch (e) {
-      // Error already handled in waitForFirebase
+      // Error already handled in waitForFirebase with status bar message
+      console.error('Firebase initialization failed, skipping auth-dependent initialization');
+      return;
+    }
+
+    initAuthStateListener();
+
+    const params = parseParams();
+    const currentOwner = params.owner || OWNER;
+    const currentRepo = params.repo || REPO;
+    const currentBranch = params.branch || loadBranchFromStorage(currentOwner, currentRepo) || BRANCH;
+
+    initBranchSelector(currentOwner, currentRepo, currentBranch);
+
+    loadBranches().catch(error => {
+      console.error('Failed to load branches:', error);
+    });
+
+    const repoPill = document.getElementById('repoPill');
+    if (repoPill) {
+      repoPill.innerHTML = `<strong>${currentOwner}/${currentRepo}</strong>`;
+    }
+
+    fetchVersion();
+
+    const statusBarElement = document.getElementById('statusBar');
+    if (statusBarElement) {
+      statusBar.init();
     }
 
   } catch (error) {
