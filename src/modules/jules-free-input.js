@@ -4,6 +4,7 @@ import { showJulesKeyModal, showSubtaskErrorModal } from './jules-modal.js';
 import { addToJulesQueue, handleQueueAction } from './jules-queue.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
+import { copyText } from '../utils/clipboard.js';
 import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';
 
 let _lastSelectedSourceId = null;
@@ -244,8 +245,8 @@ export function showFreeInputForm() {
       return;
     }
 
-    try {
-      await navigator.clipboard.writeText(promptText);
+    const success = await copyText(promptText);
+    if (success) {
       copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied!';
       setTimeout(() => {
         copenBtn.innerHTML = originalCopenLabel;
@@ -274,8 +275,8 @@ export function showFreeInputForm() {
           break;
       }
       window.open(url, '_blank', 'noopener,noreferrer');
-    } catch (error) {
-      showToast('Failed to copy prompt: ' + error.message, 'error');
+    } else {
+      showToast('Failed to copy prompt.', 'error');
     }
   };
 

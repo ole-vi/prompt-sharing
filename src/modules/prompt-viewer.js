@@ -4,6 +4,7 @@
  */
 
 import { createElement } from '../utils/dom-helpers.js';
+import { copyText } from '../utils/clipboard.js';
 import { showToast } from './toast.js';
 import { TIMEOUTS } from '../utils/constants.js';
 
@@ -74,8 +75,8 @@ export function showPromptViewer(prompt, sessionId) {
   
   // Copy functionality
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(prompt);
+    const success = await copyText(prompt);
+    if (success) {
       const originalText = copyBtn.innerHTML;
       copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check</span> Copied!';
       copyBtn.disabled = true;
@@ -84,8 +85,7 @@ export function showPromptViewer(prompt, sessionId) {
         copyBtn.innerHTML = originalText;
         copyBtn.disabled = false;
       }, TIMEOUTS.actionFeedback);
-    } catch (err) {
-      console.error('Copy failed:', err);
+    } else {
       showToast('Failed to copy prompt to clipboard', 'error');
     }
   };
