@@ -79,7 +79,7 @@ export function showFreeInputForm() {
   const splitBtn = document.getElementById('freeInputSplitBtn');
   const copenBtn = document.getElementById('freeInputCopenBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
-  const originalCopenLabel = '<span class="icon icon-inline" aria-hidden="true">open_in_new</span> Open ▼';
+  const originalCopenLabel = '<span class="icon icon-inline" aria-hidden="true">open_in_new</span> Copen ▼';
 
   textarea.value = '';
   
