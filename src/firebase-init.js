@@ -2,6 +2,7 @@
 // This file initializes Firebase using the modular SDK
 
 import { TIMEOUTS, LIMITS } from './utils/constants.js';
+import { initServices } from './modules/firebase-service.js';
 
 // Check if we're in a browser and Firebase can be loaded
 window.firebaseReady = false;
@@ -17,6 +18,21 @@ const firebaseConfig = {
   appId: "1:494845853842:web:6c97aec4822be003fc264b"
 };
 
+// Helper to define deprecated global variables
+function defineDeprecatedGlobal(name, value) {
+  let warned = false;
+  Object.defineProperty(window, name, {
+    configurable: true,
+    get: () => {
+      if (!warned) {
+        console.warn(`Deprecation warning: window.${name} is deprecated. Use named exports from firebase-service.js instead.`);
+        warned = true;
+      }
+      return value;
+    }
+  });
+}
+
 // Initialize Firebase when modular SDK is available
 function initFirebaseWhenReady() {
   try {
@@ -26,9 +42,17 @@ function initFirebaseWhenReady() {
       const app = firebase.initializeApp(firebaseConfig);
       
       // Get services - compat API doesn't require app parameter
-      window.auth = firebase.auth();
-      window.db = firebase.firestore();
-      window.functions = firebase.functions();
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+      const functions = firebase.functions();
+
+      // Initialize module
+      initServices(auth, db, functions);
+
+      // Deprecated globals
+      defineDeprecatedGlobal('auth', auth);
+      defineDeprecatedGlobal('db', db);
+      defineDeprecatedGlobal('functions', functions);
       
       // Port 5000 = dev server with emulators, port 3000 = production
       const isDevServer = window.location.port === '5000';
@@ -37,8 +61,8 @@ function initFirebaseWhenReady() {
         try {
           // Use the same hostname as the page to avoid CORS issues
           const emulatorHost = window.location.hostname;
-          window.db.useEmulator(emulatorHost, 8080);
-          window.functions.useEmulator(emulatorHost, 5001);
+          db.useEmulator(emulatorHost, 8080);
+          functions.useEmulator(emulatorHost, 5001);
           console.log('🔧 Connected to Firebase Emulators (Firestore, Functions)');
           console.log('⚠️ Dev server - using test data only');
         } catch (emulatorError) {
