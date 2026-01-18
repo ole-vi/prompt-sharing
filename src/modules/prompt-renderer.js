@@ -4,6 +4,7 @@ import { CODEX_URL_REGEX, TIMEOUTS } from '../utils/constants.js';
 import { setElementDisplay } from '../utils/dom-helpers.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
+import { copyAndOpen } from './copen.js';
 import statusBar from './status-bar.js';
 
 let cacheRaw = new Map();
@@ -458,44 +459,12 @@ async function handleCopyPrompt() {
 }
 
 async function handleCopenPrompt(target) {
-  try {
-    const promptText = getCurrentPromptText();
-    if (!promptText) {
-      showToast('No prompt available.', 'warn');
-      return;
-    }
+  const promptText = getCurrentPromptText();
+  const success = await copyAndOpen(target, promptText);
 
-    // Copy to clipboard
-    await navigator.clipboard.writeText(promptText);
+  if (success) {
     copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied!';
     setTimeout(() => (copenBtn.innerHTML = originalCopenLabel), TIMEOUTS.copyFeedback);
-
-    // Open appropriate tab based on target
-    let url;
-    switch(target) {
-      case 'claude':
-        url = 'https://claude.ai/code';
-        break;
-      case 'codex':
-        url = 'https://chatgpt.com/codex';
-        break;
-      case 'copilot':
-        url = 'https://github.com/copilot/agents';
-        break;
-      case 'gemini':
-        url = 'https://gemini.google.com/app';
-        break;
-      case 'chatgpt':
-        url = 'https://chatgpt.com/';
-        break;
-      case 'blank':
-      default:
-        url = 'about:blank';
-        break;
-    }
-    window.open(url, '_blank', 'noopener,noreferrer');
-  } catch {
-    showToast('Clipboard blocked. Could not copy prompt.', 'warn');
   }
 }
 
