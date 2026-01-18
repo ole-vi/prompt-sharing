@@ -48,6 +48,7 @@ function showUpdateBanner(latestDate, latestSha) {
   dismissButton.addEventListener('click', () => {
     localStorage.setItem(`dismissed-version-${latestSha}`, 'true');
     banner.remove();
+    document.body.classList.remove('has-version-banner');
   });
 
   buttonContainer.appendChild(refreshButton);
@@ -58,7 +59,7 @@ function showUpdateBanner(latestDate, latestSha) {
 
   document.body.insertBefore(banner, document.body.firstChild);
 
-  document.body.style.paddingTop = '48px';
+  document.body.classList.add('has-version-banner');
 }
 
 async function fetchVersion() {
@@ -94,17 +95,11 @@ async function fetchVersion() {
 
     if (currentDate < latestDate) {
       appVersion.textContent = `v${currentDateStr} (${currentSha})`;
-      appVersion.style.background = '';
-      appVersion.style.borderRadius = '';
-      appVersion.style.padding = '';
-      appVersion.style.fontWeight = 'bold';
-      appVersion.style.color = '#ffe066'; // yellow text
+      appVersion.classList.add('version-badge', 'version-badge--new');
     } else {
       appVersion.textContent = `v${latestDateStr} (${latestSha})`;
-      appVersion.style.background = '';
-      appVersion.style.color = '';
-      appVersion.style.borderRadius = '';
-      appVersion.style.padding = '';
+      appVersion.classList.add('version-badge');
+      appVersion.classList.remove('version-badge--new');
     }
     
     const dismissed = localStorage.getItem(`dismissed-version-${latestSha}`);

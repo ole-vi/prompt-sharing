@@ -185,6 +185,15 @@ button.mobile-nav-item { border: none; background: transparent; cursor: pointer;
 #authStatus { display:flex; align-items:center; gap:6px; font-size:13px; flex-shrink:0; }
 #appVersion { color: var(--muted); font-size: 10px; opacity: 0.7; margin-top: 4px; font-family: monospace; }
 
+.version-badge {
+  /* Base class for version badge */
+}
+
+#appVersion.version-badge--new {
+  font-weight: bold;
+  color: #ffe066;
+}
+
 .site-title { font-size:16px; font-weight:900; letter-spacing:0.4px; line-height:1.2; }
 .site-tagline { color:var(--muted); font-size:10px; margin-top:2px; }
 #dropdownAvatar { width:32px; height:32px; border-radius:50%; }

@@ -48,6 +48,11 @@
   margin-left: 8px;
 }
 
+/* Body adjustment when banner is present */
+body.has-version-banner {
+  padding-top: 48px;
+}
+
 /* Responsive behavior */
 @media (max-width: 600px) {
   .update-banner {
