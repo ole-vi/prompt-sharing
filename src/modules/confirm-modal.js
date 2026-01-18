@@ -3,6 +3,7 @@
 
 let confirmModal = null;
 let confirmResolve = null;
+let confirmController = null;
 
 function createConfirmModal() {
   const modal = document.createElement('div');
@@ -96,64 +97,54 @@ export function showConfirm(message, options = {}) {
     }
     
     confirmResolve = resolve;
-    
-    // Remove old event listeners by cloning
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    const newCancelBtn = cancelBtn.cloneNode(true);
-    const newCloseBtn = closeBtn.cloneNode(true);
-    
-    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
-    
-    newConfirmBtn.onclick = () => {
+
+    // Use AbortController for cleanup
+    if (confirmController) {
+      confirmController.abort();
+    }
+    confirmController = new AbortController();
+    const { signal } = confirmController;
+
+    const cleanup = () => {
       hideConfirmModal();
+      if (confirmController) {
+        confirmController.abort();
+        confirmController = null;
+      }
+      confirmResolve = null;
+    };
+
+    const handleConfirm = () => {
       if (confirmResolve) {
         confirmResolve(true);
-        confirmResolve = null;
       }
+      cleanup();
     };
-    
-    newCancelBtn.onclick = () => {
-      hideConfirmModal();
+
+    const handleCancel = () => {
       if (confirmResolve) {
         confirmResolve(false);
-        confirmResolve = null;
       }
+      cleanup();
     };
     
-    newCloseBtn.onclick = () => {
-      hideConfirmModal();
-      if (confirmResolve) {
-        confirmResolve(false);
-        confirmResolve = null;
-      }
-    };
-    
+    confirmBtn.addEventListener('click', handleConfirm, { signal });
+    cancelBtn.addEventListener('click', handleCancel, { signal });
+    closeBtn.addEventListener('click', handleCancel, { signal });
+
     // Close on background click
-    confirmModal.onclick = (e) => {
+    confirmModal.addEventListener('click', (e) => {
       if (e.target === confirmModal) {
-        hideConfirmModal();
-        if (confirmResolve) {
-          confirmResolve(false);
-          confirmResolve = null;
-        }
+        handleCancel();
       }
-    };
+    }, { signal });
     
     // Handle Escape key
-    const handleEscape = (e) => {
+    document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        hideConfirmModal();
-        if (confirmResolve) {
-          confirmResolve(false);
-          confirmResolve = null;
-        }
-        document.removeEventListener('keydown', handleEscape);
+        handleCancel();
       }
-    };
-    
-    document.addEventListener('keydown', handleEscape);
+    }, { signal });
     
     showConfirmModal();
   });
