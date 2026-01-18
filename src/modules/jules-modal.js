@@ -7,6 +7,7 @@ import { addToJulesQueue } from './jules-queue.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import { RETRY_CONFIG, TIMEOUTS, JULES_MESSAGES } from '../utils/constants.js';
 import { showToast } from './toast.js';
+import { toggleVisibility } from '../utils/dom-helpers.js';
 
 let lastSelectedSourceId = 'sources/github/promptroot/promptroot';
 let lastSelectedBranch = 'main';
@@ -28,7 +29,7 @@ export function openUrlInBackground(url) {
   a.href = url;
   a.target = '_blank';
   a.rel = 'noopener noreferrer';
-  a.style.display = 'none';
+  a.className = 'hidden';
   document.body.appendChild(a);
   
   const evt = new MouseEvent('click', {
@@ -50,7 +51,7 @@ export function showJulesKeyModal(onSave) {
   const modal = document.getElementById('julesKeyModal');
   const input = document.getElementById('julesKeyInput');
   
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.classList.add('show');
   input.value = '';
   input.focus();
 
@@ -101,12 +102,13 @@ export function showJulesKeyModal(onSave) {
 
 export function hideJulesKeyModal() {
   const modal = document.getElementById('julesKeyModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.classList.remove('show');
+  modal.removeAttribute('style');
 }
 
 export async function showJulesEnvModal(promptText) {
   const modal = document.getElementById('julesEnvModal');
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.classList.add('show');
 
   const submitBtn = document.getElementById('julesEnvSubmitBtn');
   const queueBtn = document.getElementById('julesEnvQueueBtn');
@@ -299,7 +301,8 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
 
 export function hideJulesEnvModal() {
   const modal = document.getElementById('julesEnvModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modal.classList.remove('show');
+  modal.removeAttribute('style');
 }
 
 export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error, hideQueueButton = false) {
@@ -323,10 +326,8 @@ export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error,
     return { action: 'cancel', shouldDelay: false };
   }
 
-  if (hideQueueButton && queueBtn) {
-    queueBtn.style.display = 'none';
-  } else if (queueBtn) {
-    queueBtn.style.display = '';
+  if (queueBtn) {
+    toggleVisibility(queueBtn, !hideQueueButton);
   }
 
   return new Promise((resolve) => {
@@ -393,10 +394,10 @@ export function initJulesKeyModalListeners() {
 
   document.addEventListener('keydown', async (e) => {
     if (e.key === 'Escape') {
-      if (keyModal && keyModal.style.display === 'flex') {
+      if (keyModal && keyModal.classList.contains('show')) {
         hideJulesKeyModal();
       }
-      if (envModal && envModal.style.display === 'flex') {
+      if (envModal && envModal.classList.contains('show')) {
         hideJulesEnvModal();
       }
       const freeInputSection = document.getElementById('freeInputSection');
@@ -404,11 +405,11 @@ export function initJulesKeyModalListeners() {
         const { hideFreeInputForm } = await import('./jules-free-input.js?v=' + Date.now());
         hideFreeInputForm();
       }
-      if (profileModal && profileModal.style.display === 'flex') {
+      if (profileModal && profileModal.classList.contains('show')) {
         const { hideUserProfileModal } = await import('./jules-account.js');
         hideUserProfileModal();
       }
-      if (sessionsHistoryModal && sessionsHistoryModal.style.display === 'flex') {
+      if (sessionsHistoryModal && sessionsHistoryModal.classList.contains('show')) {
         const { hideJulesSessionsHistoryModal } = await import('./jules-account.js');
         hideJulesSessionsHistoryModal();
       }

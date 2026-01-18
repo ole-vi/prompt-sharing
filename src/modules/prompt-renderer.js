@@ -1,7 +1,7 @@
 import { slugify } from '../utils/slug.js';
 import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './github-api.js';
 import { CODEX_URL_REGEX, TIMEOUTS } from '../utils/constants.js';
-import { setElementDisplay } from '../utils/dom-helpers.js';
+import { toggleVisibility } from '../utils/dom-helpers.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
 import statusBar from './status-bar.js';
@@ -77,7 +77,8 @@ function handleDocumentClick(event) {
   if (target === copenBtn) {
     event.stopPropagation();
     if (copenMenu) {
-      copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
+      const isHidden = copenMenu.classList.contains('hidden') || copenMenu.style.display === 'none';
+      toggleVisibility(copenMenu, isHidden);
     }
     return;
   }
@@ -87,7 +88,7 @@ function handleDocumentClick(event) {
     event.stopPropagation();
     const targetApp = copenMenuItem.dataset.target;
     handleCopenPrompt(targetApp);
-    copenMenu.style.display = 'none';
+    toggleVisibility(copenMenu, false);
     return;
   }
 
@@ -114,7 +115,8 @@ function handleDocumentClick(event) {
   if (target === moreBtn) {
     event.stopPropagation();
     if (moreMenu) {
-      moreMenu.style.display = moreMenu.style.display === 'none' ? 'block' : 'none';
+      const isHidden = moreMenu.classList.contains('hidden') || moreMenu.style.display === 'none';
+      toggleVisibility(moreMenu, isHidden);
     }
     return;
   }
@@ -128,7 +130,7 @@ function handleDocumentClick(event) {
     if (editBtn && editBtn.href) {
       window.open(editBtn.href, '_blank', 'noopener,noreferrer');
     }
-    if (moreMenu) moreMenu.style.display = 'none';
+    if (moreMenu) toggleVisibility(moreMenu, false);
     return;
   }
 
@@ -137,7 +139,7 @@ function handleDocumentClick(event) {
     if (ghBtn && ghBtn.href) {
       window.open(ghBtn.href, '_blank', 'noopener,noreferrer');
     }
-    if (moreMenu) moreMenu.style.display = 'none';
+    if (moreMenu) toggleVisibility(moreMenu, false);
     return;
   }
 
@@ -146,19 +148,19 @@ function handleDocumentClick(event) {
     if (rawBtn && rawBtn.href) {
       window.open(rawBtn.href, '_blank', 'noopener,noreferrer');
     }
-    if (moreMenu) moreMenu.style.display = 'none';
+    if (moreMenu) toggleVisibility(moreMenu, false);
     return;
   }
 
-  if (copenMenu) copenMenu.style.display = 'none';
-  if (moreMenu) moreMenu.style.display = 'none';
+  if (copenMenu) toggleVisibility(copenMenu, false);
+  if (moreMenu) toggleVisibility(moreMenu, false);
 }
 
 async function handleBranchChanged() {
-  setElementDisplay(titleEl, false);
-  setElementDisplay(metaEl, false);
-  setElementDisplay(actionsEl, false);
-  setElementDisplay(emptyEl, false);
+  toggleVisibility(titleEl, false);
+  toggleVisibility(metaEl, false);
+  toggleVisibility(actionsEl, false);
+  toggleVisibility(emptyEl, false);
   if (contentEl) contentEl.innerHTML = '';
   setCurrentSlug(null);
   currentPromptText = null;
@@ -192,7 +194,7 @@ export async function selectBySlug(slug, files, owner, repo, branch) {
 export async function selectFile(f, pushHash, owner, repo, branch) {
   if (!f) {
     if (editBtn) {
-      editBtn.classList.add('hidden');
+      toggleVisibility(editBtn, false);
       editBtn.removeAttribute('href');
     }
     return;
@@ -203,19 +205,13 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     freeInputSection.classList.add('hidden');
   }
 
-  setElementDisplay(emptyEl, false);
-  setElementDisplay(titleEl, true);
-  setElementDisplay(metaEl, true);
-  setElementDisplay(actionsEl, true);
-  
-  // Clear inline styles that might have been set by showFreeInputForm
-  if (titleEl) titleEl.style.display = '';
-  if (metaEl) metaEl.style.display = '';
-  if (actionsEl) actionsEl.style.display = '';
+  toggleVisibility(emptyEl, false);
+  toggleVisibility(titleEl, true);
+  toggleVisibility(metaEl, true);
+  toggleVisibility(actionsEl, true);
   
   if (contentEl) {
-    contentEl.style.display = '';
-    contentEl.classList.remove('hidden');
+    toggleVisibility(contentEl, true);
   }
 
   titleEl.textContent = f.name.replace(/\.md$/i, '');

@@ -5,6 +5,7 @@ import { addToJulesQueue, handleQueueAction } from './jules-queue.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';
+import { toggleVisibility } from '../utils/dom-helpers.js';
 
 let _lastSelectedSourceId = null;
 let _lastSelectedBranch = null;
@@ -61,16 +62,13 @@ export function showFreeInputForm() {
   const actions = document.getElementById('actions');
   const content = document.getElementById('content');
   
-  empty.classList.add('hidden');
-  if (title) title.style.display = 'none';
-  if (meta) meta.style.display = 'none';
-  if (actions) actions.style.display = 'none';
-  if (content) {
-    content.style.display = 'none';
-    content.classList.add('hidden');
-  }
+  toggleVisibility(empty, false);
+  toggleVisibility(title, false);
+  toggleVisibility(meta, false);
+  toggleVisibility(actions, false);
+  toggleVisibility(content, false);
   
-  freeInputSection.classList.remove('hidden');
+  toggleVisibility(freeInputSection, true);
   
   const textarea = document.getElementById('freeInputTextarea');
   const submitBtn = document.getElementById('freeInputSubmitBtn');
@@ -325,7 +323,8 @@ export function showFreeInputForm() {
   
   copenBtn.onclick = (e) => {
     e.stopPropagation();
-    copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
+    const isHidden = copenMenu.classList.contains('hidden') || copenMenu.style.display === 'none';
+    toggleVisibility(copenMenu, isHidden);
   };
   
   if (copenMenu) {
@@ -334,14 +333,14 @@ export function showFreeInputForm() {
         e.stopPropagation();
         const target = item.dataset.target;
         await handleCopen(target);
-        copenMenu.style.display = 'none';
+        toggleVisibility(copenMenu, false);
       };
     });
   }
   
   const closeCopenMenu = (e) => {
     if (!copenBtn.contains(e.target) && !copenMenu.contains(e.target)) {
-      copenMenu.style.display = 'none';
+      toggleVisibility(copenMenu, false);
     }
   };
   document.addEventListener('click', closeCopenMenu);
@@ -366,14 +365,14 @@ export function hideFreeInputForm() {
   const actions = document.getElementById('actions');
   const content = document.getElementById('content');
   
-  freeInputSection.classList.add('hidden');
+  toggleVisibility(freeInputSection, false);
   
   // Restore the main content area elements
-  empty.classList.remove('hidden');
-  if (title) title.style.display = '';
-  if (meta) meta.style.display = '';
-  if (actions) actions.style.display = '';
-  if (content) content.style.display = '';
+  toggleVisibility(empty, true);
+  toggleVisibility(title, true);
+  toggleVisibility(meta, true);
+  toggleVisibility(actions, true);
+  toggleVisibility(content, true);
 }
 
 async function populateFreeInputRepoSelection() {

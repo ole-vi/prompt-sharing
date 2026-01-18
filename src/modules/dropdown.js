@@ -27,6 +27,7 @@ function openDropdown(dropdown) {
 
 function closeDropdown(dropdown) {
   dropdown.menu.classList.remove('open');
+  dropdown.menu.style.display = '';
   dropdown.btn.setAttribute('aria-expanded', 'false');
   openDropdowns.delete(dropdown);
 }
