@@ -1,0 +1,38 @@
+
+/* Jules Modals */
+#julesEnvModal,
+#subtaskErrorModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  display: none !important;
+  align-items: center;
+  justify-content: center;
+}
+
+#julesEnvModal.show,
+#subtaskErrorModal.show {
+  display: flex !important;
+}
+
+/* Modal Content Containers */
+#julesEnvModal > div,
+#subtaskErrorModal > div {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+#subtaskErrorModal > div {
+  max-width: 500px;
+}

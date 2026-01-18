@@ -10,6 +10,7 @@ import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { attachPromptViewerHandlers } from './prompt-viewer.js';
 import { TIMEOUTS } from '../utils/constants.js';
+import { renderStatus, STATUS_TYPES } from './status-renderer.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -40,22 +41,23 @@ export function showUserProfileModal() {
 
   checkJulesKey(user.uid).then(async (hasKey) => {
     if (julesKeyStatus) {
-      julesKeyStatus.innerHTML = hasKey 
-        ? '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Saved'
-        : '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
-      julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+      renderStatus(
+        julesKeyStatus,
+        hasKey ? STATUS_TYPES.SAVED : STATUS_TYPES.NOT_SAVED,
+        hasKey ? 'Saved' : 'Not saved'
+      );
     }
     
     if (hasKey) {
-      if (addBtn) addBtn.classList.add('d-none');
-      if (dangerZoneSection) dangerZoneSection.classList.remove('d-none');
-      if (julesProfileInfoSection) julesProfileInfoSection.classList.remove('d-none');
+      if (addBtn) addBtn.classList.add('hidden');
+      if (dangerZoneSection) dangerZoneSection.classList.remove('hidden');
+      if (julesProfileInfoSection) julesProfileInfoSection.classList.remove('hidden');
       
       await loadAndDisplayJulesProfile(user.uid);
     } else {
-      if (addBtn) addBtn.classList.remove('d-none');
-      if (dangerZoneSection) dangerZoneSection.classList.add('d-none');
-      if (julesProfileInfoSection) julesProfileInfoSection.classList.add('d-none');
+      if (addBtn) addBtn.classList.remove('hidden');
+      if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
+      if (julesProfileInfoSection) julesProfileInfoSection.classList.add('hidden');
     }
   });
 
@@ -79,19 +81,26 @@ export function showUserProfileModal() {
       
       try {
         resetBtn.disabled = true;
-        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span> Deleting...';
+        renderStatus(resetBtn, STATUS_TYPES.DELETING, 'Deleting...');
         const deleted = await deleteStoredJulesKey(user.uid);
         if (deleted) {
           if (julesKeyStatus) {
-            julesKeyStatus.innerHTML = '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
-            julesKeyStatus.style.color = 'var(--muted)';
+            renderStatus(julesKeyStatus, STATUS_TYPES.NOT_SAVED, 'Not saved');
           }
-          resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key';
+          // Restore original button state
+          resetBtn.innerHTML = '';
+          const icon = document.createElement('span');
+          icon.className = 'icon icon-inline';
+          icon.setAttribute('aria-hidden', 'true');
+          icon.textContent = 'delete';
+          resetBtn.appendChild(icon);
+          resetBtn.appendChild(document.createTextNode(' Delete Jules API Key'));
+
           resetBtn.disabled = false;
           
-          if (addBtn) addBtn.style.display = 'block';
-          if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-          if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+          if (addBtn) addBtn.classList.remove('hidden');
+          if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
+          if (julesProfileInfoSection) julesProfileInfoSection.classList.add('hidden');
           
           showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
         } else {
@@ -99,7 +108,7 @@ export function showUserProfileModal() {
         }
       } catch (error) {
         showToast('Failed to reset API key: ' + error.message, 'error');
-        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">refresh</span> Reset Jules API Key';
+        renderStatus(resetBtn, STATUS_TYPES.RESET, 'Reset Jules API Key');
         resetBtn.disabled = false;
       }
     };
@@ -317,7 +326,7 @@ export function showJulesSessionsHistoryModal() {
   const modal = document.getElementById('julesSessionsHistoryModal');
   const searchInput = document.getElementById('sessionSearchInput');
   
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  modal.classList.add('show');
   
   allSessionsCache = [];
   sessionNextPageToken = null;
@@ -328,7 +337,7 @@ export function showJulesSessionsHistoryModal() {
 
 export function hideJulesSessionsHistoryModal() {
   const modal = document.getElementById('julesSessionsHistoryModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  modal.classList.remove('show');
 }
 
 async function loadSessionsPage() {
@@ -357,11 +366,11 @@ async function loadSessionsPage() {
       renderAllSessions(allSessionsCache);
       
       if (sessionNextPageToken) {
-        loadMoreSection.style.display = 'block';
+        loadMoreSection.classList.remove('hidden');
         loadMoreBtn.disabled = false;
         loadMoreBtn.textContent = 'Load More';
       } else {
-        loadMoreSection.style.display = 'none';
+        loadMoreSection.classList.add('hidden');
       }
     } else if (allSessionsCache.length === 0) {
       allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions found</div>';
@@ -471,22 +480,23 @@ export async function loadProfileDirectly(user) {
   const hasKey = await checkJulesKey(user.uid);
   
   if (julesKeyStatus) {
-    julesKeyStatus.innerHTML = hasKey
-      ? '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Saved'
-      : '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
-    julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+    renderStatus(
+      julesKeyStatus,
+      hasKey ? STATUS_TYPES.SAVED : STATUS_TYPES.NOT_SAVED,
+      hasKey ? 'Saved' : 'Not saved'
+    );
   }
   
   if (hasKey) {
-    if (addBtn) addBtn.style.display = 'none';
-    if (dangerZoneSection) dangerZoneSection.style.display = 'block';
-    if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'block';
+    if (addBtn) addBtn.classList.add('hidden');
+    if (dangerZoneSection) dangerZoneSection.classList.remove('hidden');
+    if (julesProfileInfoSection) julesProfileInfoSection.classList.remove('hidden');
     
     await loadAndDisplayJulesProfile(user.uid);
   } else {
-    if (addBtn) addBtn.style.display = 'block';
-    if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-    if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+    if (addBtn) addBtn.classList.remove('hidden');
+    if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
+    if (julesProfileInfoSection) julesProfileInfoSection.classList.add('hidden');
   }
 
   // Attach event handlers
@@ -510,19 +520,18 @@ export async function loadProfileDirectly(user) {
       
       try {
         resetBtn.disabled = true;
-        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span> Deleting...';
+        renderStatus(resetBtn, STATUS_TYPES.DELETING, 'Deleting...');
         const deleted = await deleteStoredJulesKey(user.uid);
         if (deleted) {
           if (julesKeyStatus) {
-            julesKeyStatus.innerHTML = '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
-            julesKeyStatus.style.color = 'var(--muted)';
+            renderStatus(julesKeyStatus, STATUS_TYPES.NOT_SAVED, 'Not saved');
           }
           resetBtn.innerHTML = originalResetLabel;
           resetBtn.disabled = false;
           
-          if (addBtn) addBtn.style.display = 'block';
-          if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-          if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+          if (addBtn) addBtn.classList.remove('hidden');
+          if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
+          if (julesProfileInfoSection) julesProfileInfoSection.classList.add('hidden');
           
           showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
         } else {
@@ -560,13 +569,13 @@ export async function loadJulesAccountInfo(user) {
   
   if (!hasKey) {
     if (julesProfileInfoSection) {
-      julesProfileInfoSection.style.display = 'none';
+      julesProfileInfoSection.classList.add('hidden');
     }
     return;
   }
 
   if (julesProfileInfoSection) {
-    julesProfileInfoSection.style.display = 'block';
+    julesProfileInfoSection.classList.remove('hidden');
   }
 
   await loadAndDisplayJulesProfile(user.uid);
