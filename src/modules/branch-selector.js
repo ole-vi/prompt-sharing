@@ -7,6 +7,7 @@ let branchSelect = null;
 let branchDropdownBtn = null;
 let branchDropdownMenu = null;
 let branchDropdown = null;
+let dropdownControl = null;
 let currentBranch = null;
 let currentOwner = null;
 let currentRepo = null;
@@ -26,7 +27,7 @@ export function initBranchSelector(owner, repo, branch) {
   }
 
   if (branchDropdownBtn && branchDropdownMenu) {
-    initDropdown(branchDropdownBtn, branchDropdownMenu, branchDropdown);
+    dropdownControl = initDropdown(branchDropdownBtn, branchDropdownMenu, branchDropdown);
   }
 }
 
@@ -282,8 +283,9 @@ export async function loadBranches() {
             branchSelect.value = b.name;
             handleBranchChange();
             // Close menu and update label
-            branchDropdownMenu.style.display = 'none';
-            branchDropdownBtn.setAttribute('aria-expanded', 'false');
+            if (dropdownControl) {
+              dropdownControl.close();
+            }
             const labelEl = document.getElementById('branchDropdownLabel');
             if (labelEl) labelEl.textContent = `${b.name}`;
           });
