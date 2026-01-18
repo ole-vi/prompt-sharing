@@ -4,6 +4,7 @@ import { CODEX_URL_REGEX, TIMEOUTS } from '../utils/constants.js';
 import { setElementDisplay } from '../utils/dom-helpers.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
+import statusBar from './status-bar.js';
 
 let cacheRaw = new Map();
 let currentPromptText = null;
@@ -404,28 +405,33 @@ function enhanceCodeBlocks() {
     wrapper.appendChild(btn);
   });
   
-  if (!contentEl.dataset.codeBlockListenerAttached) {
-    contentEl.addEventListener('click', async (event) => {
-      const btn = event.target.closest('[data-action="copy-code"]');
-      if (btn) {
-        const pre = btn.previousElementSibling;
-        if (pre && pre.tagName === 'PRE') {
-          const code = pre.innerText;
-          try {
-            await navigator.clipboard.writeText(code);
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span>';
-            btn.classList.add('copied');
-            setTimeout(() => {
-              btn.innerHTML = originalHTML;
-              btn.classList.remove('copied');
-            }, TIMEOUTS.copyFeedback);
-          } catch {}
+if (!contentEl.dataset.codeBlockListenerAttached) {
+  contentEl.addEventListener('click', async (event) => {
+    const btn = event.target.closest('[data-action="copy-code"]');
+    if (btn) {
+      const pre = btn. previousElementSibling;
+      if (pre && pre.tagName === 'PRE') {
+        const code = pre.innerText;
+        try {
+          await navigator.clipboard.writeText(code);
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span>';
+          btn.classList.add('copied');
+          setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('copied');
+          }, TIMEOUTS. copyFeedback);
+        } catch (error) {
+          console.error('Error copying code to clipboard:', {
+            error,
+            context: 'enhanceCodeBlocks.copy',
+          });
+          statusBar.showMessage('Failed to copy to clipboard', { type:  'error' });
         }
       }
-    });
-    contentEl.dataset.codeBlockListenerAttached = 'true';
-  }
+    }
+  });
+  contentEl.dataset. codeBlockListenerAttached = 'true';
 }
 
 async function handleCopyPrompt() {

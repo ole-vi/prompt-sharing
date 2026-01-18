@@ -1522,7 +1522,9 @@ async function runSelectedQueueItems() {
                 const percent = initialCount > 0 ? Math.round((done / initialCount) * 100) : 100;
                 statusBar.setProgress(`${done}/${initialCount}`, percent);
                 statusBar.showMessage(`Processing subtask ${done}/${initialCount}`, { timeout: 0 });
-              } catch (e) {}
+              } catch (e) {
+                console.error('Failed to update UI progress for queue item', id, e);
+              }
 
               await new Promise(r => setTimeout(r, TIMEOUTS.queueDelay));
               subtaskRetry = false;
