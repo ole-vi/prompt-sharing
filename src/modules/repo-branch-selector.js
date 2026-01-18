@@ -227,7 +227,8 @@ export class RepoSelector {
 
   addShowMoreButton() {
     const showMoreBtn = document.createElement('div');
-    showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
+    showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); font-size:12px; cursor:pointer; font-weight:600;';
+    showMoreBtn.classList.add('status-action');
     showMoreBtn.textContent = '▼ Show more...';
     
     showMoreBtn.onclick = async () => {
@@ -562,7 +563,8 @@ export class BranchSelector {
     this.dropdownMenu.appendChild(currentItem);
     
     const showMoreBtn = document.createElement('div');
-    showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
+    showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); font-size:12px; cursor:pointer; font-weight:600;';
+    showMoreBtn.classList.add('status-action');
     showMoreBtn.textContent = '▼ Show more branches...';
     
     showMoreBtn.onclick = async () => {
@@ -581,7 +583,9 @@ export class BranchSelector {
 
         if (!allBranches || allBranches.length === 0) {
           showMoreBtn.textContent = allBranches === null ? 'GitHub API rate limited - try later' : 'No branches found';
-          showMoreBtn.style.color = 'var(--muted)';
+          showMoreBtn.style.color = '';
+          showMoreBtn.classList.remove('status-action');
+          showMoreBtn.classList.add('status-passive');
           showMoreBtn.style.pointerEvents = 'auto';
           return;
         }
@@ -606,7 +610,9 @@ export class BranchSelector {
       } catch (error) {
         console.error('Failed to load branches:', error);
         showMoreBtn.textContent = 'Failed to load - click to retry';
-        showMoreBtn.style.color = 'var(--muted)';
+        showMoreBtn.style.color = '';
+        showMoreBtn.classList.remove('status-action');
+        showMoreBtn.classList.add('status-passive');
         showMoreBtn.style.pointerEvents = 'auto';
       }
     };

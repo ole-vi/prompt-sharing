@@ -1,0 +1,24 @@
+/* ===== Status Indicators ===== */
+/* Semantic classes for status colors replacing inline styles */
+
+.status-saved {
+  color: var(--accent);
+}
+
+.status-not-saved {
+  color: var(--muted);
+}
+
+.status-outdated {
+  color: #ffe066;
+  font-weight: bold; /* Moved from inline style in shared-init.js */
+}
+
+/* Interactive States (for repo-branch-selector) */
+.status-action {
+  color: var(--accent);
+}
+
+.status-passive {
+  color: var(--muted);
+}

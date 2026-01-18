@@ -97,14 +97,16 @@ async function fetchVersion() {
       appVersion.style.background = '';
       appVersion.style.borderRadius = '';
       appVersion.style.padding = '';
-      appVersion.style.fontWeight = 'bold';
-      appVersion.style.color = '#ffe066'; // yellow text
+      appVersion.style.fontWeight = '';
+      appVersion.style.color = '';
+      appVersion.classList.add('status-outdated');
     } else {
       appVersion.textContent = `v${latestDateStr} (${latestSha})`;
       appVersion.style.background = '';
       appVersion.style.color = '';
       appVersion.style.borderRadius = '';
       appVersion.style.padding = '';
+      appVersion.classList.remove('status-outdated');
     }
     
     const dismissed = localStorage.getItem(`dismissed-version-${latestSha}`);

@@ -49,7 +49,9 @@ async function loadJulesInfo() {
       julesKeyStatus.innerHTML = hasKey 
         ? '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Saved'
         : '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
-      julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+      julesKeyStatus.style.color = '';
+      julesKeyStatus.classList.remove('status-saved', 'status-not-saved');
+      julesKeyStatus.classList.add(hasKey ? 'status-saved' : 'status-not-saved');
     }
     
     loadingDiv.classList.add('hidden');
@@ -117,7 +119,9 @@ function initApp() {
           const julesKeyStatus = document.getElementById('julesKeyStatus');
           if (julesKeyStatus) {
             julesKeyStatus.innerHTML = '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
-            julesKeyStatus.style.color = 'var(--muted)';
+            julesKeyStatus.style.color = '';
+            julesKeyStatus.classList.remove('status-saved', 'status-not-saved');
+            julesKeyStatus.classList.add('status-not-saved');
           }
           
           resetJulesKeyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key';
