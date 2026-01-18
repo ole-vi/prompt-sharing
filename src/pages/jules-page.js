@@ -3,21 +3,12 @@
  * Handles Jules account page functionality
  */
 
-import { waitForFirebase } from '../shared-init.js';
 import { loadJulesAccountInfo } from '../modules/jules-account.js';
 import { showJulesKeyModal } from '../modules/jules-modal.js';
 import { deleteStoredJulesKey, checkJulesKey } from '../modules/jules-keys.js';
 import { showToast } from '../modules/toast.js';
 import { showConfirm } from '../modules/confirm-modal.js';
-import { TIMEOUTS } from '../utils/constants.js';
-
-function waitForComponents() {
-  if (document.querySelector('header')) {
-    initApp();
-  } else {
-    setTimeout(waitForComponents, TIMEOUTS.componentCheck);
-  }
-}
+import { initializePage } from '../utils/page-init-helper.js';
 
 async function loadJulesInfo() {
   const user = window.auth?.currentUser;
@@ -77,7 +68,7 @@ async function loadJulesInfo() {
   }
 }
 
-function initApp() {
+function setupEventListeners() {
   // Set up Jules key event handlers
   const addJulesKeyBtnProminent = document.getElementById('addJulesKeyBtnProminent');
   const resetJulesKeyBtn = document.getElementById('resetJulesKeyBtn');
@@ -152,21 +143,16 @@ function initApp() {
       }
     };
   }
-
-  waitForFirebase(() => {
-    window.auth.onAuthStateChanged((user) => {
-      if (user) {
-        loadJulesInfo();
-      } else {
-        document.getElementById('julesProfileInfoSection').classList.add('hidden');
-        document.getElementById('julesNotSignedIn').classList.remove('hidden');
-      }
-    });
-  });
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', waitForComponents);
-} else {
-  waitForComponents();
-}
+initializePage({
+  onReady: setupEventListeners,
+  onAuth: (user) => {
+    if (user) {
+      loadJulesInfo();
+    } else {
+      document.getElementById('julesProfileInfoSection').classList.add('hidden');
+      document.getElementById('julesNotSignedIn').classList.remove('hidden');
+    }
+  }
+});

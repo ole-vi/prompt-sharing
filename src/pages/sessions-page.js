@@ -1,8 +1,7 @@
-import { waitForFirebase } from '../shared-init.js';
 import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js';
 import { attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
 import { debounce } from '../utils/debounce.js';
-import { TIMEOUTS } from '../utils/constants.js';
+import { initializePage } from '../utils/page-init-helper.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -10,14 +9,6 @@ let isSessionsLoading = false;
 let cachedSessions = null;
 let cachedSearchData = null;
 let cachedFuseInstance = null;
-
-function waitForComponents() {
-  if (document.querySelector('header')) {
-    initApp();
-  } else {
-    setTimeout(waitForComponents, TIMEOUTS.componentCheck);
-  }
-}
 
 async function loadSessionsPage() {
   const user = window.auth?.currentUser;
@@ -172,60 +163,51 @@ async function loadSessions() {
   }
 }
 
-async function initApp() {
-  waitForFirebase(() => {
-    loadSessions();
-    
-    const searchInput = document.getElementById('sessionSearchInput');
-    const searchClear = document.getElementById('sessionSearchClear');
-    if (searchInput) {
-      const toggleClear = () => {
-        if (searchClear) {
-          if (searchInput.value) {
-            searchClear.classList.remove('hidden');
-          } else {
-            searchClear.classList.add('hidden');
-          }
+function setupEventListeners() {
+  const searchInput = document.getElementById('sessionSearchInput');
+  const searchClear = document.getElementById('sessionSearchClear');
+  if (searchInput) {
+    const toggleClear = () => {
+      if (searchClear) {
+        if (searchInput.value) {
+          searchClear.classList.remove('hidden');
+        } else {
+          searchClear.classList.add('hidden');
         }
-      };
-      
-      const debouncedRender = debounce(() => {
-        renderAllSessions(allSessionsCache);
-      }, 300);
-      
-      searchInput.addEventListener('input', () => { 
-        // Immediate UI updates
-        toggleClear(); 
-        // Debounced search
-        debouncedRender();
-      });
-      if (searchClear && !searchClear.dataset.bound) {
-        searchClear.dataset.bound = 'true';
-        searchClear.addEventListener('click', () => {
-          searchInput.value = '';
-          toggleClear();
-          renderAllSessions(allSessionsCache);
-          searchInput.focus();
-        });
       }
-      toggleClear();
-    }
+    };
     
-    const loadMoreBtn = document.getElementById('loadMoreSessionsBtn');
-    if (loadMoreBtn) {
-      loadMoreBtn.addEventListener('click', loadSessionsPage);
-    }
+    const debouncedRender = debounce(() => {
+      renderAllSessions(allSessionsCache);
+    }, 300);
 
-    if (window.auth && typeof window.auth.onAuthStateChanged === 'function') {
-      window.auth.onAuthStateChanged(() => {
-        loadSessions();
+    searchInput.addEventListener('input', () => {
+      // Immediate UI updates
+      toggleClear();
+      // Debounced search
+      debouncedRender();
+    });
+    if (searchClear && !searchClear.dataset.bound) {
+      searchClear.dataset.bound = 'true';
+      searchClear.addEventListener('click', () => {
+        searchInput.value = '';
+        toggleClear();
+        renderAllSessions(allSessionsCache);
+        searchInput.focus();
       });
     }
-  });
+    toggleClear();
+  }
+
+  const loadMoreBtn = document.getElementById('loadMoreSessionsBtn');
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', loadSessionsPage);
+  }
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', waitForComponents);
-} else {
-  waitForComponents();
-}
+initializePage({
+  onReady: setupEventListeners,
+  onAuth: (user) => {
+    loadSessions();
+  }
+});

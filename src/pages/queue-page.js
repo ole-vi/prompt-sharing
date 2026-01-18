@@ -6,48 +6,13 @@
 import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
 import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly } from '../modules/jules-queue.js';
 import { loadSubtaskErrorModal } from '../modules/jules-modal.js';
-import { TIMEOUTS } from '../utils/constants.js';
+import { initializePage } from '../utils/page-init-helper.js';
 
 // Initialize checkbox mutual exclusivity
 initMutualExclusivity();
 
 // Load the subtask error modal partial
 loadSubtaskErrorModal();
-
-function waitForComponents() {
-  if (document.querySelector('header')) {
-    initApp();
-  } else {
-    setTimeout(waitForComponents, TIMEOUTS.componentCheck);
-  }
-}
-
-function initApp() {
-  // Initialize queue functionality
-  attachQueueHandlers();
-  
-  const user = window.auth?.currentUser;
-  if (user) {
-    document.getElementById('queueControls').classList.remove('hidden');
-    document.getElementById('queueNotSignedIn').classList.add('hidden');
-    loadQueue();
-  } else {
-    document.getElementById('queueControls').classList.add('hidden');
-    document.getElementById('queueNotSignedIn').classList.remove('hidden');
-  }
-  
-  // Listen for auth state changes
-  window.auth.onAuthStateChanged((user) => {
-    if (user) {
-      document.getElementById('queueControls').classList.remove('hidden');
-      document.getElementById('queueNotSignedIn').classList.add('hidden');
-      loadQueue();
-    } else {
-      document.getElementById('queueControls').classList.add('hidden');
-      document.getElementById('queueNotSignedIn').classList.remove('hidden');
-    }
-  });
-}
 
 async function loadQueue() {
   const user = window.auth?.currentUser;
@@ -75,8 +40,18 @@ async function loadQueue() {
   }
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', waitForComponents);
-} else {
-  waitForComponents();
-}
+initializePage({
+  onReady: () => {
+    attachQueueHandlers();
+  },
+  onAuth: (user) => {
+    if (user) {
+      document.getElementById('queueControls').classList.remove('hidden');
+      document.getElementById('queueNotSignedIn').classList.add('hidden');
+      loadQueue();
+    } else {
+      document.getElementById('queueControls').classList.add('hidden');
+      document.getElementById('queueNotSignedIn').classList.remove('hidden');
+    }
+  }
+});

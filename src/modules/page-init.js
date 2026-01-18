@@ -1,30 +1,6 @@
-// Shared page initialization
-import { loadHeader } from './header.js';
+/**
+ * Legacy Page Initialization Module
+ * Re-exports the standardized page initialization helper.
+ */
 
-export async function initializePage(activePage, callback) {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', async () => {
-      await loadHeader();
-      // Set active nav item
-      if (activePage) {
-        const navItem = document.querySelector(`.nav-item[data-page="${activePage}"]`);
-        if (navItem) {
-          navItem.classList.add('active');
-        }
-      }
-      callback();
-    });
-  } else {
-    (async () => {
-      await loadHeader();
-      // Set active nav item
-      if (activePage) {
-        const navItem = document.querySelector(`.nav-item[data-page="${activePage}"]`);
-        if (navItem) {
-          navItem.classList.add('active');
-        }
-      }
-      callback();
-    })();
-  }
-}
+export { initializePage } from '../utils/page-init-helper.js';
