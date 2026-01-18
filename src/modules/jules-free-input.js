@@ -1,6 +1,7 @@
 import { getCurrentUser } from './auth.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
+import { copyAndOpen } from './copen.js';
 import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';
 // Lazy loaded: jules-keys, jules-modal, jules-queue
 
@@ -78,7 +79,7 @@ export function showFreeInputForm() {
   const splitBtn = document.getElementById('freeInputSplitBtn');
   const copenBtn = document.getElementById('freeInputCopenBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
-  const originalCopenLabel = '<span class="icon icon-inline" aria-hidden="true">open_in_new</span> Open ▼';
+  const originalCopenLabel = '<span class="icon icon-inline" aria-hidden="true">open_in_new</span> Copen ▼';
 
   textarea.value = '';
   
@@ -248,38 +249,13 @@ export function showFreeInputForm() {
       return;
     }
 
-    try {
-      await navigator.clipboard.writeText(promptText);
+    const success = await copyAndOpen(target, promptText);
+
+    if (success) {
       copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied!';
       setTimeout(() => {
         copenBtn.innerHTML = originalCopenLabel;
       }, TIMEOUTS.copyFeedback);
-
-      let url;
-      switch(target) {
-        case 'claude':
-          url = 'https://claude.ai/code';
-          break;
-        case 'codex':
-          url = 'https://chatgpt.com/codex';
-          break;
-        case 'copilot':
-          url = 'https://github.com/copilot/agents';
-          break;
-        case 'gemini':
-          url = 'https://gemini.google.com/app';
-          break;
-        case 'chatgpt':
-          url = 'https://chatgpt.com/';
-          break;
-        case 'blank':
-        default:
-          url = 'about:blank';
-          break;
-      }
-      window.open(url, '_blank', 'noopener,noreferrer');
-    } catch (error) {
-      showToast('Failed to copy prompt: ' + error.message, 'error');
     }
   };
 
