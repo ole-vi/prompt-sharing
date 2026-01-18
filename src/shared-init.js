@@ -4,20 +4,20 @@
 import { loadHeader } from './modules/header.js';
 import { initAuthStateListener } from './modules/auth.js';
 import { initBranchSelector, loadBranches, loadBranchFromStorage } from './modules/branch-selector.js';
-import { OWNER, REPO, BRANCH, TIMEOUTS, LIMITS } from './utils/constants.js';
+import { OWNER, REPO, BRANCH, ERRORS } from './utils/constants.js';
 import { parseParams } from './utils/url-params.js';
 import statusBar from './modules/status-bar.js';
+import { getFirebaseReady } from './firebase-init.js';
 
 let isInitialized = false;
 
-function waitForFirebase(callback, attempts = 0, maxAttempts = LIMITS.componentMaxAttempts) {
-  if (window.firebaseReady) {
-    callback();
-  } else if (attempts < maxAttempts) {
-    setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), TIMEOUTS.firebaseRetry);
-  } else {
-    console.error('Firebase failed to initialize after', maxAttempts, 'attempts');
-    callback();
+async function waitForFirebase() {
+  try {
+    await getFirebaseReady();
+  } catch (error) {
+    console.error('Firebase initialization failed:', error);
+    statusBar.showMessage(ERRORS.FIREBASE_NOT_READY, 'error');
+    throw error;
   }
 }
 
@@ -135,32 +135,38 @@ async function initializeSharedComponents(activePage) {
       }
     }
 
-    waitForFirebase(() => {
-      initAuthStateListener();
+    try {
+      await waitForFirebase();
+    } catch (e) {
+      // Error already handled in waitForFirebase with status bar message
+      console.error('Firebase initialization failed, skipping auth-dependent initialization');
+      return;
+    }
 
-      const params = parseParams();
-      const currentOwner = params.owner || OWNER;
-      const currentRepo = params.repo || REPO;
-      const currentBranch = params.branch || loadBranchFromStorage(currentOwner, currentRepo) || BRANCH;
+    initAuthStateListener();
 
-      initBranchSelector(currentOwner, currentRepo, currentBranch);
+    const params = parseParams();
+    const currentOwner = params.owner || OWNER;
+    const currentRepo = params.repo || REPO;
+    const currentBranch = params.branch || loadBranchFromStorage(currentOwner, currentRepo) || BRANCH;
 
-      loadBranches().catch(error => {
-        console.error('Failed to load branches:', error);
-      });
+    initBranchSelector(currentOwner, currentRepo, currentBranch);
 
-      const repoPill = document.getElementById('repoPill');
-      if (repoPill) {
-        repoPill.innerHTML = `<strong>${currentOwner}/${currentRepo}</strong>`;
-      }
-
-      fetchVersion();
-
-      const statusBarElement = document.getElementById('statusBar');
-      if (statusBarElement) {
-        statusBar.init();
-      }
+    loadBranches().catch(error => {
+      console.error('Failed to load branches:', error);
     });
+
+    const repoPill = document.getElementById('repoPill');
+    if (repoPill) {
+      repoPill.innerHTML = `<strong>${currentOwner}/${currentRepo}</strong>`;
+    }
+
+    fetchVersion();
+
+    const statusBarElement = document.getElementById('statusBar');
+    if (statusBarElement) {
+      statusBar.init();
+    }
 
   } catch (error) {
     isInitialized = false; // Reset so it can be tried again

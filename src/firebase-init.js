@@ -3,10 +3,6 @@
 
 import { TIMEOUTS, LIMITS } from './utils/constants.js';
 
-// Check if we're in a browser and Firebase can be loaded
-window.firebaseReady = false;
-window.firebaseError = null;
-
 // Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyD_NzQlgmcUfgrqpgTl3Q3pCkfBrO8PcoA",
@@ -49,37 +45,43 @@ function initFirebaseWhenReady() {
         console.log('🌐 Using production Firebase backend');
       }
       
-      window.firebaseReady = true;
-      
       return true;
     } else {
       return false;
     }
   } catch (error) {
     console.error('Firebase initialization error:', error);
-    window.firebaseError = error;
     return false;
   }
 }
 
-// Try to initialize immediately
-if (!initFirebaseWhenReady()) {
+// Create a promise that resolves when Firebase is ready
+const firebaseReadyPromise = new Promise((resolve, reject) => {
+  // Try to initialize immediately
+  if (initFirebaseWhenReady()) {
+    resolve();
+    return;
+  }
+
   // If not ready, retry every 100ms for up to 30 seconds
   let attempts = 0;
   const maxAttempts = LIMITS.firebaseMaxAttempts;
   const retryInterval = setInterval(() => {
     attempts++;
-    if (initFirebaseWhenReady() || attempts >= maxAttempts) {
+    if (initFirebaseWhenReady()) {
       clearInterval(retryInterval);
-      if (attempts >= maxAttempts) {
-        console.error('Failed to initialize Firebase after 30 seconds');
-        window.firebaseError = 'Timeout waiting for Firebase SDK';
-      }
+      resolve();
+    } else if (attempts >= maxAttempts) {
+      clearInterval(retryInterval);
+      const errorMsg = 'Timeout waiting for Firebase SDK';
+      console.error('Failed to initialize Firebase after 30 seconds');
+      reject(new Error(errorMsg));
     }
   }, TIMEOUTS.firebaseRetry);
+});
+
+// Export the promise-based check
+export function getFirebaseReady() {
+  return firebaseReadyPromise;
 }
 
-// Also expose a manual check function
-window.checkFirebaseReady = function() {
-  return window.firebaseReady;
-};

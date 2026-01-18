@@ -33,8 +33,9 @@ async function loadProfile() {
   }
 }
 
-function initApp() {
-  waitForFirebase(() => {
+async function initApp() {
+  try {
+    await waitForFirebase();
     window.auth.onAuthStateChanged((user) => {
       if (user) {
         loadProfile();
@@ -53,7 +54,9 @@ function initApp() {
         if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
       }
     });
-  });
+  } catch (error) {
+    console.error('Failed to initialize Firebase:', error);
+  }
 }
 
 if (document.readyState === 'loading') {
