@@ -1,7 +1,7 @@
 # PromptRoot Code Style Guide
 
-**Version:** 1.0  
-**Last Updated:** January 6, 2026
+**Version:** 1.1  
+**Last Updated:** January 18, 2026
 
 This guide covers JavaScript patterns, module architecture, and coding conventions for the PromptRoot application. For UI/CSS guidelines, see [UI_GUIDELINES.md](UI_GUIDELINES.md).
 
@@ -1129,6 +1129,126 @@ function checkEmailInput() {
 ```
 
 ---
+---
+
+## Testing
+
+The project uses [Vitest](https://vitest.dev/) for automated testing with jsdom for DOM simulation.
+
+### Test Structure
+
+Tests are located in `src/tests/` and organized by purpose:
+
+```
+src/tests/
+├── setup.js          # Global test configuration (Firebase/localStorage mocks)
+├── integration/      # Integration tests for modules with dependencies
+│   ├── auth.test.js
+│   ├── toast.test.js
+│   ├── jules-submission.test.js
+│   └── prompt-loading.test.js
+└── utils/           # Unit tests for pure utility functions
+    ├── dom-helpers.test.js
+    ├── slug.test.js
+    ├── title.test.js
+    └── validation.test.js
+```
+
+### Running Tests
+
+```bash
+npm test              # Watch mode - reruns on file save
+npm run test:run      # Run once
+npm run test:coverage # Generate coverage report
+```
+
+Coverage reports are generated in `coverage/` directory. The project enforces minimum coverage thresholds: 60% lines/functions, 50% branches.
+
+### Writing Tests
+
+#### Unit Tests
+Focus on pure functions in `src/utils/`. These tests should verify logic without external dependencies.
+
+```javascript
+import { describe, it, expect } from 'vitest';
+import { myUtility } from '../../utils/my-utility.js';
+
+describe('myUtility', () => {
+  it('should return correct value', () => {
+    expect(myUtility(input)).toBe(expected);
+  });
+  
+  it('should handle edge cases', () => {
+    expect(myUtility(null)).toBe(null);
+    expect(myUtility('')).toBe('');
+  });
+});
+```
+
+#### Integration Tests
+Focus on modules in `src/modules/` that interact with DOM or APIs. Use `vi.mock()` to mock external dependencies.
+
+```javascript
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { signInWithGitHub } from '../../modules/auth.js';
+import { showToast } from '../../modules/toast.js';
+
+// Mock dependencies at top of file
+vi.mock('../../modules/toast.js');
+
+describe('signInWithGitHub', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+  
+  it('should show error when auth not ready', async () => {
+    const originalAuth = window.auth;
+    window.auth = null;
+    
+    await signInWithGitHub();
+    
+    expect(showToast).toHaveBeenCalledWith(
+      'Authentication not ready. Please refresh the page.',
+      'error'
+    );
+    
+    window.auth = originalAuth; // Restore for next tests
+  });
+  
+  it('should store token on successful sign in', async () => {
+    window.auth.signInWithPopup.mockResolvedValue({
+      credential: { accessToken: 'token123' }
+    });
+    
+    await signInWithGitHub();
+    
+    expect(window.auth.signInWithPopup).toHaveBeenCalled();
+    expect(vi.mocked(localStorage.setItem)).toHaveBeenCalledWith(
+      'github_access_token',
+      expect.any(String)
+    );
+  });
+});
+```
+
+#### Best Practices
+- **Test behavior, not implementation** - Focus on what the function does, not how
+- **One assertion concept per test** - Each test should verify one thing
+- **Use descriptive test names** - `should show error when API fails` not `test error`
+- **Mock external dependencies** - Don't make real API calls or Firebase requests
+- **Use `vi.mock()` at module level** - Place mocks before imports for proper hoisting
+- **Verify mock calls with `vi.mocked()`** - Wrap localStorage/window objects: `vi.mocked(localStorage.setItem)`
+- **Clean up after tests** - Use `beforeEach`/`afterEach` to reset state and clear mocks
+- **Avoid fake timers for DOM animations** - Use real timers for modules using `requestAnimationFrame`
+- **Setup file provides global mocks** - Firebase, localStorage, and window objects are pre-mocked
+
+### Global Test Setup
+
+The `src/tests/setup.js` file provides shared mocks for all tests:
+- `window.auth` - Firebase authentication mock
+- `window.db` - Firestore mock
+- `localStorage` - Storage mock wrapped in `vi.fn()` for spy assertions
+- `window.firebase.auth.GithubAuthProvider` - Auth provider mock
 
 ## Performance
 
@@ -1227,6 +1347,7 @@ setupMutualExclusivity('freeInputSuppressPopupsCheckbox', 'freeInputOpenInBackgr
 
 ## Version History
 
+- **v1.1** (Jan 18, 2026): Added Vitest testing infrastructure with 44 tests across 8 test files
 - **v1.0** (Jan 6, 2026): Initial code style guide with PR #218 page architecture
 
 ---
