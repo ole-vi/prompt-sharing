@@ -67,35 +67,3 @@ export async function loadFuse() {
   loadingPromises.set('fuse', promise);
   return promise;
 }
-
-/**
- * Lazy load Firebase Functions SDK
- * @returns {Promise<object>} The firebase.functions object
- */
-export async function loadFirebaseFunctions() {
-  if (loadedLibraries.has('firebase-functions')) {
-    return window.firebase.functions;
-  }
-  
-  if (loadingPromises.has('firebase-functions')) {
-    return loadingPromises.get('firebase-functions');
-  }
-  
-  const promise = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = 'https://www.gstatic.com/firebasejs/10.7.0/firebase-functions-compat.js';
-    script.onload = () => {
-      loadedLibraries.set('firebase-functions', true);
-      loadingPromises.delete('firebase-functions');
-      resolve(window.firebase.functions);
-    };
-    script.onerror = () => {
-      loadingPromises.delete('firebase-functions');
-      reject(new Error('Failed to load Firebase Functions SDK'));
-    };
-    document.head.appendChild(script);
-  });
-  
-  loadingPromises.set('firebase-functions', promise);
-  return promise;
-}
