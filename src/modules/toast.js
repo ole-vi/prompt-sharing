@@ -7,6 +7,8 @@
  *   showToast('Message here', 'success'); // or 'error', 'info', 'warn'
  */
 
+import { TIMEOUTS } from '../utils/constants.js';
+
 let toastContainer = null;
 
 /**
@@ -27,7 +29,7 @@ function ensureContainer() {
  * @param {string} type - Type of toast: 'success', 'error', 'warn', 'info'
  * @param {number} duration - Duration in ms (default: 4000)
  */
-export function showToast(message, type = 'info', duration = 4000) {
+export function showToast(message, type = 'info', duration = TIMEOUTS.toast) {
   const container = ensureContainer();
   
   const toast = document.createElement('div');
