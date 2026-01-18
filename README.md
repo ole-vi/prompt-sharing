@@ -78,6 +78,8 @@ Guidelines:
 ```
 promptroot/
 ├── index.html             # Home page (root)
+├── vitest.config.js       # Vitest test configuration
+├── package.json           # npm dependencies & scripts
 ├── pages/                 # Routed pages
 │   ├── jules/jules.html   # Jules account management & sessions
 │   ├── queue/queue.html   # Jules task queue management
@@ -90,6 +92,9 @@ promptroot/
 ├── firebase.json          # Firebase hosting config
 ├── config/
 │   └── firestore/firestore.rules # Firestore security rules
+├── .github/
+│   └── workflows/
+│       └── test.yml       # GitHub Actions CI workflow for tests
 ├── oauth-callback.html    # GitHub OAuth callback for extension
 ├── src/
 │   ├── app.js             # Main application initialization
@@ -115,6 +120,18 @@ promptroot/
 │   │   ├── status-bar.js  # Status notifications
 │   │   ├── toast.js       # Toast notifications
 │   │   └── ... (+ other UI components)
+│   ├── tests/             # Automated tests (Vitest)
+│   │   ├── setup.js       # Global test configuration
+│   │   ├── integration/   # Integration tests for modules
+│   │   │   ├── auth.test.js
+│   │   │   ├── toast.test.js
+│   │   │   ├── jules-submission.test.js
+│   │   │   └── prompt-loading.test.js
+│   │   └── utils/         # Unit tests for utilities
+│   │       ├── dom-helpers.test.js
+│   │       ├── slug.test.js
+│   │       ├── title.test.js
+│   │       └── validation.test.js
 │   └── utils/             # Shared utilities
 │       ├── constants.js   # Config, regex patterns, storage keys
 │       ├── slug.js        # URL-safe slug generation
@@ -384,8 +401,16 @@ The dev setup loads modules directly without compilation. Changes are reflected 
 Run automated tests:
 
 ```bash
-npm test
+npm test              # Watch mode - reruns on file save
+npm run test:run      # Run once
+npm run test:coverage # Generate coverage report
 ```
+
+Tests are organized by type:
+- `src/tests/utils/` - Unit tests for pure functions
+- `src/tests/integration/` - Integration tests for modules with mocks
+
+Coverage reports are generated in `coverage/` directory. Open `coverage/index.html` to view detailed coverage.
 
 ### Pre-commit Hooks
 
