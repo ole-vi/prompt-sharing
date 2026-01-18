@@ -2,6 +2,7 @@ import { slugify } from '../utils/slug.js';
 import { STORAGE_KEYS, TAG_DEFINITIONS } from '../utils/constants.js';
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
 import { clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
+import { loadFuse } from '../utils/lazy-loaders.js';
 
 let files = [];
 let expandedState = new Set();
@@ -36,8 +37,8 @@ export function initPromptList() {
   const searchClearBtn = document.getElementById('searchClear');
   
   if (searchEl) {
-    searchEl.addEventListener('input', () => {
-      renderList(files, currentOwner, currentRepo, currentBranch);
+    searchEl.addEventListener('input', async () => {
+      await renderList(files, currentOwner, currentRepo, currentBranch);
       if (searchClearBtn) {
         if (searchEl.value) {
           searchClearBtn.classList.remove('hidden');
@@ -49,11 +50,11 @@ export function initPromptList() {
   }
   
   if (searchClearBtn && searchEl) {
-    searchClearBtn.addEventListener('click', () => {
+    searchClearBtn.addEventListener('click', async () => {
       searchEl.value = '';
       searchClearBtn.classList.add('hidden');
       searchEl.focus();
-      renderList(files, currentOwner, currentRepo, currentBranch);
+      await renderList(files, currentOwner, currentRepo, currentBranch);
     });
   }
   createSubmenu();
@@ -136,7 +137,7 @@ export function persistExpandedState() {
   } catch {}
 }
 
-export function toggleDirectory(path, expand) {
+export async function toggleDirectory(path, expand) {
   const before = expandedState.has(path);
   if (expand) {
     expandedState.add(path);
@@ -146,7 +147,7 @@ export function toggleDirectory(path, expand) {
   if (before !== expand) {
     persistExpandedState();
   }
-  renderList(files, currentOwner, currentRepo, currentBranch);
+  await renderList(files, currentOwner, currentRepo, currentBranch);
 }
 
 function closeAllSubmenus() {
@@ -479,7 +480,7 @@ export function updateActiveItem() {
   });
 }
 
-export function renderList(items, owner, repo, branch) {
+export async function renderList(items, owner, repo, branch) {
   if (!Array.isArray(items)) {
     console.warn('renderList received non-array items:', items);
     items = [];
@@ -511,6 +512,11 @@ export function renderList(items, owner, repo, branch) {
         }
         return { ...item, tags };
       });
+      cachedFuseInstance = null;
+    }
+    
+    if (!cachedFuseInstance) {
+      const Fuse = await loadFuse();
       cachedFuseInstance = new Fuse(cachedItemsWithTags, {
         keys: ['name', 'path', 'tags'],
         includeScore: true,
@@ -568,7 +574,7 @@ export async function loadList(owner, repo, branch, cacheKey) {
       if (cacheData) {
         const cacheAge = now - (cacheData.timestamp || 0);
         files = cacheData.files || [];
-        renderList(files, owner, repo, branch);
+        await renderList(files, owner, repo, branch);
         
         if (cacheAge > CACHE_DURATION) {
           refreshList(owner, repo, branch, cacheKey).catch(() => {});
@@ -647,5 +653,5 @@ export async function refreshList(owner, repo, branch, cacheKey) {
     timestamp: Date.now()
   };
   sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
-  renderList(files, owner, repo, branch);
+  await renderList(files, owner, repo, branch);
 }

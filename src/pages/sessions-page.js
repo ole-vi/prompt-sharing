@@ -1,6 +1,7 @@
 import { waitForFirebase } from '../shared-init.js';
 import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js';
 import { attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
+import { loadFuse } from '../utils/lazy-loaders.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -40,7 +41,7 @@ async function loadSessionsPage() {
       allSessionsCache = [...allSessionsCache, ...result.sessions];
       sessionNextPageToken = result.nextPageToken || null;
       
-      renderAllSessions(allSessionsCache);
+      await renderAllSessions(allSessionsCache);
       
       if (sessionNextPageToken) {
         loadMoreSection.classList.remove('hidden');
@@ -61,15 +62,16 @@ async function loadSessionsPage() {
   }
 }
 
-function renderAllSessions(sessions) {
+async function renderAllSessions(sessions) {
   const allSessionsList = document.getElementById('allSessionsList');
   const searchInput = document.getElementById('sessionSearchInput');
-  const searchTerm = searchInput.value.trim();
+  const searchTerm = searchInput ? searchInput.value.trim() : '';
   
   let filteredSessions = [];
   if (!searchTerm) {
     filteredSessions = sessions;
   } else {
+    // Rebuild cache if sessions changed
     if (cachedSessions !== sessions) {
       cachedSessions = sessions;
       cachedSearchData = sessions.map(s => ({
@@ -77,12 +79,19 @@ function renderAllSessions(sessions) {
         promptText: s.prompt || s.displayName || '',
         sessionId: s.name?.split('/').pop() || ''
       }));
+      cachedFuseInstance = null; // Clear old instance
+    }
+    
+    // Lazy load Fuse only when actually searching
+    if (!cachedFuseInstance) {
+      const Fuse = await loadFuse();
       cachedFuseInstance = new Fuse(cachedSearchData, {
         keys: ['promptText', 'sessionId'],
         includeScore: true,
         threshold: 0.4,
       });
     }
+    
     filteredSessions = cachedFuseInstance.search(searchTerm).map(result => result.item);
   }
   
@@ -186,7 +195,7 @@ async function initApp() {
           }
         }
       };
-      searchInput.addEventListener('input', () => { toggleClear(); renderAllSessions(allSessionsCache); });
+      searchInput.addEventListener('input', () => { toggleClear(); renderAllSessions(allSessionsCache); }); // Fire and forget
       if (searchClear && !searchClear.dataset.bound) {
         searchClear.dataset.bound = 'true';
         searchClear.addEventListener('click', () => {
