@@ -1,6 +1,8 @@
 // Firebase initialization wrapper for browser environment
 // This file initializes Firebase using the modular SDK
 
+import { TIMEOUTS, LIMITS } from './utils/constants.js';
+
 // Check if we're in a browser and Firebase can be loaded
 window.firebaseReady = false;
 window.firebaseError = null;
@@ -65,7 +67,7 @@ function initFirebaseWhenReady() {
 if (!initFirebaseWhenReady()) {
   // If not ready, retry every 100ms for up to 30 seconds
   let attempts = 0;
-  const maxAttempts = 300;
+  const maxAttempts = LIMITS.firebaseMaxAttempts;
   const retryInterval = setInterval(() => {
     attempts++;
     if (initFirebaseWhenReady() || attempts >= maxAttempts) {
@@ -75,7 +77,7 @@ if (!initFirebaseWhenReady()) {
         window.firebaseError = 'Timeout waiting for Firebase SDK';
       }
     }
-  }, 100);
+  }, TIMEOUTS.firebaseRetry);
 }
 
 // Also expose a manual check function

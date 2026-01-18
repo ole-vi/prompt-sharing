@@ -9,6 +9,7 @@ import { getCache, setCache, clearCache, CACHE_KEYS } from '../utils/session-cac
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { attachPromptViewerHandlers } from './prompt-viewer.js';
+import { TIMEOUTS } from '../utils/constants.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -62,7 +63,7 @@ export function showUserProfileModal() {
     addBtn.onclick = () => {
       hideUserProfileModal();
       showJulesKeyModal(() => {
-        setTimeout(() => showUserProfileModal(), 500);
+        setTimeout(() => showUserProfileModal(), TIMEOUTS.uiDelay);
       });
     };
   }
@@ -492,7 +493,7 @@ export async function loadProfileDirectly(user) {
   if (addBtn) {
     addBtn.onclick = () => {
       showJulesKeyModal(() => {
-        setTimeout(() => loadProfileDirectly(user), 500);
+        setTimeout(() => loadProfileDirectly(user), TIMEOUTS.uiDelay);
       });
     };
   }

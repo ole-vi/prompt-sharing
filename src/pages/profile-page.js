@@ -4,12 +4,14 @@
  */
 
 import { waitForFirebase } from '../shared-init.js';
+import { loadProfileDirectly } from '../modules/jules-account.js';
+import { TIMEOUTS } from '../utils/constants.js';
 
 function waitForComponents() {
   if (document.querySelector('header')) {
     initApp();
   } else {
-    setTimeout(waitForComponents, 50);
+    setTimeout(waitForComponents, TIMEOUTS.componentCheck);
   }
 }
 
