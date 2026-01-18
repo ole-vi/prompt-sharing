@@ -2,7 +2,7 @@ import { waitForFirebase } from '../shared-init.js';
 import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js';
 import { attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
 import { debounce } from '../utils/debounce.js';
-import { TIMEOUTS } from '../utils/constants.js';
+import { waitForDOMReady, waitForHeader } from '../utils/dom-helpers.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -10,14 +10,6 @@ let isSessionsLoading = false;
 let cachedSessions = null;
 let cachedSearchData = null;
 let cachedFuseInstance = null;
-
-function waitForComponents() {
-  if (document.querySelector('header')) {
-    initApp();
-  } else {
-    setTimeout(waitForComponents, TIMEOUTS.componentCheck);
-  }
-}
 
 async function loadSessionsPage() {
   const user = window.auth?.currentUser;
@@ -224,8 +216,4 @@ async function initApp() {
   });
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', waitForComponents);
-} else {
-  waitForComponents();
-}
+waitForDOMReady(() => waitForHeader(initApp));

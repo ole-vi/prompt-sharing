@@ -4,14 +4,7 @@
  */
 
 import { TIMEOUTS } from '../utils/constants.js';
-
-function waitForComponents() {
-  if (document.querySelector('header')) {
-    initApp();
-  } else {
-    setTimeout(waitForComponents, TIMEOUTS.componentCheck);
-  }
-}
+import { waitForDOMReady, waitForHeader } from '../utils/dom-helpers.js';
 
 function initApp() {
   // Download extension button
@@ -49,8 +42,4 @@ function initApp() {
   }
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', waitForComponents);
-} else {
-  waitForComponents();
-}
+waitForDOMReady(() => waitForHeader(initApp));

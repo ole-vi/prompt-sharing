@@ -1,5 +1,7 @@
 // ===== Common DOM Helpers =====
 
+import { TIMEOUTS, LIMITS } from './constants.js';
+
 export function createElement(tag, className = '', textContent = '') {
   const el = document.createElement(tag);
   if (className) el.className = className;
@@ -38,4 +40,32 @@ export function onElement(el, event, handler) {
 
 export function stopPropagation(e) {
   e.stopPropagation();
+}
+
+/**
+ * Waits for the DOM to be ready before executing the callback.
+ * @param {Function} callback The function to execute when the DOM is ready.
+ */
+export function waitForDOMReady(callback) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', callback);
+  } else {
+    callback();
+  }
+}
+
+/**
+ * Waits for the header element to be present in the DOM.
+ * @param {Function} callback The function to execute when the header is ready.
+ * @param {number} attempts Current number of attempts (internal use).
+ */
+export function waitForHeader(callback, attempts = 0) {
+  if (document.querySelector('header')) {
+    callback();
+  } else if (attempts < LIMITS.componentMaxAttempts) {
+    setTimeout(() => waitForHeader(callback, attempts + 1), TIMEOUTS.componentCheck);
+  } else {
+    console.error('Header failed to load after multiple attempts');
+    callback();
+  }
 }
