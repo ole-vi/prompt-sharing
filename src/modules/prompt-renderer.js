@@ -5,11 +5,15 @@ import { setElementDisplay } from '../utils/dom-helpers.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
 import statusBar from './status-bar.js';
+import { registerDropdown } from './dropdown.js';
 
 let cacheRaw = new Map();
 let currentPromptText = null;
 let handleTryInJulesCallback = null;
 let currentBlobUrl = null;
+
+let copenDropdown = null;
+let moreDropdown = null;
 
 export function setHandleTryInJulesCallback(callback) {
   handleTryInJulesCallback = callback;
@@ -50,6 +54,65 @@ export function initPromptRenderer() {
 
   document.addEventListener('click', handleDocumentClick);
   window.addEventListener('branchChanged', handleBranchChanged);
+
+  // Initialize Dropdowns
+  const copenMenu = document.getElementById('copenMenu');
+  if (copenBtn && copenMenu) {
+    copenDropdown = registerDropdown('copen-dropdown', {
+      trigger: copenBtn,
+      menu: copenMenu
+    });
+
+    copenMenu.querySelectorAll('.custom-dropdown-item[data-target]').forEach(item => {
+      item.setAttribute('tabindex', '0');
+      item.setAttribute('role', 'menuitem');
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const targetApp = item.dataset.target;
+        handleCopenPrompt(targetApp);
+        copenDropdown.close();
+      });
+    });
+  }
+
+  const moreMenu = document.getElementById('moreMenu');
+  if (moreBtn && moreMenu) {
+    moreDropdown = registerDropdown('more-dropdown', {
+      trigger: moreBtn,
+      menu: moreMenu
+    });
+
+    const setupMoreItem = (id, onClick) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('role', 'menuitem');
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          onClick();
+          moreDropdown.close();
+        });
+      }
+    };
+
+    setupMoreItem('moreEditBtn', () => {
+      if (editBtn && editBtn.href) {
+        window.open(editBtn.href, '_blank', 'noopener,noreferrer');
+      }
+    });
+
+    setupMoreItem('moreGhBtn', () => {
+      if (ghBtn && ghBtn.href) {
+        window.open(ghBtn.href, '_blank', 'noopener,noreferrer');
+      }
+    });
+
+    setupMoreItem('moreRawBtn', () => {
+      if (rawBtn && rawBtn.href) {
+        window.open(rawBtn.href, '_blank', 'noopener,noreferrer');
+      }
+    });
+  }
 }
 
 export function destroyPromptRenderer() {
@@ -62,34 +125,24 @@ export function destroyPromptRenderer() {
     URL.revokeObjectURL(currentBlobUrl);
     currentBlobUrl = null;
   }
+  // Dropdowns are managed globally or attached to elements,
+  // but if we were strictly cleaning up, we might need a way to unregister.
+  // Current dropdown.js doesn't support unregister fully (listeners remain on elements).
+  // This should be fine as long as elements are garbage collected or not re-initialized
+  // without cleaning up DOM. Since initPromptRenderer attaches to existing DOM elements by ID,
+  // we assume page structure is static or reloaded.
 }
 
 function handleDocumentClick(event) {
   const target = event.target;
-  const copenMenu = document.getElementById('copenMenu');
-  const moreMenu = document.getElementById('moreMenu');
 
   if (target === copyBtn) {
     handleCopyPrompt();
     return;
   }
 
-  if (target === copenBtn) {
-    event.stopPropagation();
-    if (copenMenu) {
-      copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
-    }
-    return;
-  }
-
-  const copenMenuItem = target.closest('.custom-dropdown-item[data-target]');
-  if (copenMenuItem && copenMenu && copenMenuItem.parentElement === copenMenu) {
-    event.stopPropagation();
-    const targetApp = copenMenuItem.dataset.target;
-    handleCopenPrompt(targetApp);
-    copenMenu.style.display = 'none';
-    return;
-  }
+  // Dropdown toggling handled by registerDropdown now.
+  // Copen menu items click handled by event listeners attached in init.
 
   if (target === shareBtn) {
     handleShareLink();
@@ -111,47 +164,7 @@ function handleDocumentClick(event) {
     return;
   }
 
-  if (target === moreBtn) {
-    event.stopPropagation();
-    if (moreMenu) {
-      moreMenu.style.display = moreMenu.style.display === 'none' ? 'block' : 'none';
-    }
-    return;
-  }
-
-  const moreEditBtn = document.getElementById('moreEditBtn');
-  const moreGhBtn = document.getElementById('moreGhBtn');
-  const moreRawBtn = document.getElementById('moreRawBtn');
-
-  if (target === moreEditBtn) {
-    event.stopPropagation();
-    if (editBtn && editBtn.href) {
-      window.open(editBtn.href, '_blank', 'noopener,noreferrer');
-    }
-    if (moreMenu) moreMenu.style.display = 'none';
-    return;
-  }
-
-  if (target === moreGhBtn) {
-    event.stopPropagation();
-    if (ghBtn && ghBtn.href) {
-      window.open(ghBtn.href, '_blank', 'noopener,noreferrer');
-    }
-    if (moreMenu) moreMenu.style.display = 'none';
-    return;
-  }
-
-  if (target === moreRawBtn) {
-    event.stopPropagation();
-    if (rawBtn && rawBtn.href) {
-      window.open(rawBtn.href, '_blank', 'noopener,noreferrer');
-    }
-    if (moreMenu) moreMenu.style.display = 'none';
-    return;
-  }
-
-  if (copenMenu) copenMenu.style.display = 'none';
-  if (moreMenu) moreMenu.style.display = 'none';
+  // More menu handling replaced by registerDropdown
 }
 
 async function handleBranchChanged() {

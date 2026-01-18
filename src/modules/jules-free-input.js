@@ -5,6 +5,7 @@ import { addToJulesQueue, handleQueueAction } from './jules-queue.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';
+import { registerDropdown } from './dropdown.js';
 
 let _lastSelectedSourceId = null;
 let _lastSelectedBranch = null;
@@ -323,28 +324,25 @@ export function showFreeInputForm() {
 
   const copenMenu = document.getElementById('freeInputCopenMenu');
   
-  copenBtn.onclick = (e) => {
-    e.stopPropagation();
-    copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
-  };
-  
-  if (copenMenu) {
+  if (copenBtn && copenMenu) {
+    const copenDropdown = registerDropdown('free-input-copen-dropdown', {
+      trigger: copenBtn,
+      menu: copenMenu
+    });
+
     copenMenu.querySelectorAll('.custom-dropdown-item').forEach(item => {
-      item.onclick = async (e) => {
+      item.setAttribute('tabindex', '0');
+      item.setAttribute('role', 'menuitem');
+      item.addEventListener('click', async (e) => {
         e.stopPropagation();
         const target = item.dataset.target;
         await handleCopen(target);
-        copenMenu.style.display = 'none';
-      };
+        copenDropdown.close();
+      });
     });
   }
   
-  const closeCopenMenu = (e) => {
-    if (!copenBtn.contains(e.target) && !copenMenu.contains(e.target)) {
-      copenMenu.style.display = 'none';
-    }
-  };
-  document.addEventListener('click', closeCopenMenu);
+  // Previous manual listener 'closeCopenMenu' is removed as dropdown.js handles it.
 
   submitBtn.onclick = handleSubmit;
   queueBtn.onclick = handleQueue;

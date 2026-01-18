@@ -260,3 +260,9 @@ a:hover { text-decoration: underline; }
 /* Danger zone variations */
 .danger-title { font-size:15px; font-weight:600; color:var(--danger); margin-bottom:10px; }
 .danger-desc { font-size:13px; color:var(--muted); margin-bottom:14px; }
+
+/* Unified Dropdown support for menu-panel */
+.menu-panel.open,
+.menu-panel.dropdown-open {
+  display: block;
+}

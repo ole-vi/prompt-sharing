@@ -1,5 +1,6 @@
 import { getCurrentUser } from './auth.js';
 import { showToast } from './toast.js';
+import { registerDropdown } from './dropdown.js';
 
 function extractDefaultBranch(source) {
   const defaultBranchObj = source?.githubRepo?.defaultBranch ||
@@ -9,23 +10,6 @@ function extractDefaultBranch(source) {
   return typeof defaultBranchObj === 'string' 
     ? defaultBranchObj 
     : (defaultBranchObj?.displayName || 'main');
-}
-
-function setupClickOutsideClose(targetBtn, targetMenu) {
-  // Remove any previously registered handler for this button, if present
-  if (targetBtn._closeDropdownHandler) {
-    document.removeEventListener('click', targetBtn._closeDropdownHandler);
-  }
-  
-  const closeDropdown = (e) => {
-    if (!targetBtn.contains(e.target) && !targetMenu.contains(e.target)) {
-      targetMenu.style.display = 'none';
-    }
-  };
-  
-  // Store handler on the button so we can remove it on re-initialization
-  targetBtn._closeDropdownHandler = closeDropdown;
-  document.addEventListener('click', closeDropdown);
 }
 
 export class RepoSelector {
@@ -42,6 +26,7 @@ export class RepoSelector {
     this.allReposLoaded = false;
     this.sourcesCache = null;
     this.selectedSourceId = null;
+    this.dropdownController = null;
   }
 
   saveToStorage() {
@@ -140,26 +125,22 @@ export class RepoSelector {
   }
 
   setupDropdownToggle() {
-    this.dropdownBtn.onclick = async (e) => {
-      e.stopPropagation();
-      if (this.dropdownMenu.style.display === 'block') {
-        this.dropdownMenu.style.display = 'none';
-        return;
-      }
-      
-      // Position dropdown menu if it's fixed (e.g., in modals)
-      const computedStyle = window.getComputedStyle(this.dropdownMenu);
-      if (computedStyle.position === 'fixed') {
-        const rect = this.dropdownBtn.getBoundingClientRect();
-        this.dropdownMenu.style.top = `${rect.bottom + 4}px`;
-        this.dropdownMenu.style.left = `${rect.left}px`;
-        this.dropdownMenu.style.width = `${rect.width}px`;
-      }
-      
-      await this.populateDropdown();
-    };
+    this.dropdownController = registerDropdown(`repo-selector-${Math.random().toString(36).substr(2, 8)}`, {
+      trigger: this.dropdownBtn,
+      menu: this.dropdownMenu,
+      onOpen: async () => {
+        // Position dropdown menu if it's fixed (e.g., in modals)
+        const computedStyle = window.getComputedStyle(this.dropdownMenu);
+        if (computedStyle.position === 'fixed') {
+          const rect = this.dropdownBtn.getBoundingClientRect();
+          this.dropdownMenu.style.top = `${rect.bottom + 4}px`;
+          this.dropdownMenu.style.left = `${rect.left}px`;
+          this.dropdownMenu.style.width = `${rect.width}px`;
+        }
 
-    setupClickOutsideClose(this.dropdownBtn, this.dropdownMenu);
+        await this.populateDropdown();
+      }
+    });
   }
 
   async populateDropdown() {
@@ -169,7 +150,7 @@ export class RepoSelector {
     loadingIndicator.style.cssText = 'padding:12px; text-align:center; color:var(--muted); font-size:13px;';
     loadingIndicator.textContent = 'Loading...';
     this.dropdownMenu.appendChild(loadingIndicator);
-    this.dropdownMenu.style.display = 'block';
+    // Visibility handled by dropdown.js
     
     await new Promise(resolve => setTimeout(resolve, 0));
     
@@ -183,7 +164,11 @@ export class RepoSelector {
       this.renderAllRepos();
     }
     
-    this.dropdownMenu.style.display = 'block';
+    // Ensure items are accessible
+    this.dropdownMenu.querySelectorAll('.custom-dropdown-item').forEach(item => {
+        if (!item.hasAttribute('tabindex')) item.setAttribute('tabindex', '0');
+        if (!item.hasAttribute('role')) item.setAttribute('role', 'menuitem');
+    });
   }
 
   async renderFavorites() {
@@ -191,7 +176,7 @@ export class RepoSelector {
       const item = this.createRepoItem(fav.name, fav.id, true, async () => {
         this.selectedSourceId = fav.id;
         this.dropdownText.textContent = fav.name;
-        this.dropdownMenu.style.display = 'none';
+        this.dropdownController.close();
         
         // Save repo selection
         this.saveToStorage();
@@ -229,8 +214,10 @@ export class RepoSelector {
     const showMoreBtn = document.createElement('div');
     showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
     showMoreBtn.textContent = '▼ Show more...';
+    showMoreBtn.setAttribute('tabindex', '0');
+    showMoreBtn.setAttribute('role', 'button');
     
-    showMoreBtn.onclick = async () => {
+    const clickHandler = async () => {
       if (!this.allReposLoaded) {
         showMoreBtn.textContent = 'Loading...';
         showMoreBtn.style.pointerEvents = 'none';
@@ -247,6 +234,19 @@ export class RepoSelector {
       
       showMoreBtn.style.display = 'none';
       this.renderAllRepos();
+      // Add accessibility attributes to newly added items
+      this.dropdownMenu.querySelectorAll('.custom-dropdown-item').forEach(item => {
+        if (!item.hasAttribute('tabindex')) item.setAttribute('tabindex', '0');
+        if (!item.hasAttribute('role')) item.setAttribute('role', 'menuitem');
+      });
+    };
+
+    showMoreBtn.onclick = clickHandler;
+    showMoreBtn.onkeydown = (e) => {
+        if(e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            clickHandler();
+        }
     };
     
     this.dropdownMenu.appendChild(showMoreBtn);
@@ -296,7 +296,7 @@ export class RepoSelector {
       const item = this.createRepoItem(repoName, source.name || source.id, false, () => {
         this.selectedSourceId = source.name || source.id;
         this.dropdownText.textContent = repoName;
-        this.dropdownMenu.style.display = 'none';
+        this.dropdownController.close();
         
         // Save repo selection
         this.saveToStorage();
@@ -314,6 +314,8 @@ export class RepoSelector {
     const item = document.createElement('div');
     item.className = 'custom-dropdown-item';
     item.style.cssText = 'display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer;';
+    item.setAttribute('tabindex', '0');
+    item.setAttribute('role', 'menuitem');
     
     if (id === this.selectedSourceId) {
       item.classList.add('selected');
@@ -324,19 +326,40 @@ export class RepoSelector {
       ? '<span class="icon icon-inline" aria-hidden="true">star</span>'
       : '<span class="icon icon-inline" aria-hidden="true">star_border</span>';
     star.style.cssText = `font-size:18px; cursor:pointer; color:${isFavorite ? 'var(--accent)' : 'var(--muted)'}; flex-shrink:0;`;
+    star.setAttribute('role', 'button');
+    star.setAttribute('tabindex', '0');
+
+    const toggleFavorite = async () => {
+        if (isFavorite) {
+          await this.removeFavorite(id);
+          this.dropdownController.close();
+          setTimeout(() => this.dropdownController.open(), 0); // Re-open to refresh? Or just refresh in place?
+          // The original code re-called populateDropdown().
+          // If we close, it's gone.
+          // Better to just refresh content without closing?
+          // Original: this.dropdownMenu.style.display = 'none'; setTimeout(() => this.populateDropdown(), 0);
+          // This implies it closed and reopened immediately or just refreshed.
+          // Let's try to just refresh.
+          await this.populateDropdown();
+        } else {
+          const defaultBranch = extractDefaultBranch(this.allSources.find(s => (s.name || s.id) === id));
+          await this.addFavorite(id, name, defaultBranch);
+          item.remove();
+        }
+    };
+
     star.onclick = async (e) => {
       e.stopPropagation();
-      if (isFavorite) {
-        await this.removeFavorite(id);
-        this.dropdownMenu.style.display = 'none';
-        setTimeout(() => this.populateDropdown(), 0);
-      } else {
-        const defaultBranch = extractDefaultBranch(this.allSources.find(s => (s.name || s.id) === id));
-        await this.addFavorite(id, name, defaultBranch);
-        item.remove();
-      }
+      await toggleFavorite();
     };
     
+    star.onkeydown = async (e) => {
+        if(e.key === 'Enter' || e.key === ' ') {
+            e.stopPropagation();
+            await toggleFavorite();
+        }
+    }
+
     const nameSpan = document.createElement('span');
     nameSpan.textContent = name;
     nameSpan.style.flex = '1';
@@ -352,6 +375,7 @@ export class RepoSelector {
     return item;
   }
 
+  // ... methods verifyDefaultBranch, saveFavorites, addFavorite, removeFavorite ...
   async verifyDefaultBranch(favorite, updateUI = false) {
     try {
       const user = getCurrentUser();
@@ -462,6 +486,7 @@ export class BranchSelector {
     this.selectedBranch = null;
     this.sourceId = null;
     this.allBranchesLoaded = false;
+    this.dropdownController = null;
   }
 
   saveToStorage() {
@@ -523,26 +548,21 @@ export class BranchSelector {
   }
 
   setupDropdownToggle() {
-    this.dropdownBtn.onclick = (e) => {
-      e.stopPropagation();
-      if (this.dropdownMenu.style.display === 'block') {
-        this.dropdownMenu.style.display = 'none';
-        return;
-      }
-      
-      // Position dropdown menu if it's fixed (e.g., in modals)
-      const computedStyle = window.getComputedStyle(this.dropdownMenu);
-      if (computedStyle.position === 'fixed') {
-        const rect = this.dropdownBtn.getBoundingClientRect();
-        this.dropdownMenu.style.top = `${rect.bottom + 4}px`;
-        this.dropdownMenu.style.left = `${rect.left}px`;
-        this.dropdownMenu.style.width = `${rect.width}px`;
-      }
-      
-      this.populateDropdown();
-    };
-
-    setupClickOutsideClose(this.dropdownBtn, this.dropdownMenu);
+    this.dropdownController = registerDropdown(`branch-selector-${Math.random().toString(36).substr(2, 8)}`, {
+        trigger: this.dropdownBtn,
+        menu: this.dropdownMenu,
+        onOpen: async () => {
+            // Position dropdown menu if it's fixed (e.g., in modals)
+            const computedStyle = window.getComputedStyle(this.dropdownMenu);
+            if (computedStyle.position === 'fixed') {
+                const rect = this.dropdownBtn.getBoundingClientRect();
+                this.dropdownMenu.style.top = `${rect.bottom + 4}px`;
+                this.dropdownMenu.style.left = `${rect.left}px`;
+                this.dropdownMenu.style.width = `${rect.width}px`;
+            }
+            this.populateDropdown();
+        }
+    });
   }
 
   populateDropdown() {
@@ -556,16 +576,20 @@ export class BranchSelector {
     const currentItem = document.createElement('div');
     currentItem.className = 'custom-dropdown-item selected';
     currentItem.textContent = this.selectedBranch;
+    currentItem.setAttribute('tabindex', '0');
+    currentItem.setAttribute('role', 'menuitem');
     currentItem.onclick = () => {
-      this.dropdownMenu.style.display = 'none';
+      this.dropdownController.close();
     };
     this.dropdownMenu.appendChild(currentItem);
     
     const showMoreBtn = document.createElement('div');
     showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
     showMoreBtn.textContent = '▼ Show more branches...';
+    showMoreBtn.setAttribute('tabindex', '0');
+    showMoreBtn.setAttribute('role', 'button');
     
-    showMoreBtn.onclick = async () => {
+    const clickHandler = async () => {
       if (this.allBranchesLoaded) return;
       
       showMoreBtn.textContent = 'Loading...';
@@ -595,10 +619,12 @@ export class BranchSelector {
           const item = document.createElement('div');
           item.className = 'custom-dropdown-item';
           item.textContent = branch.name;
+          item.setAttribute('tabindex', '0');
+          item.setAttribute('role', 'menuitem');
           
           item.onclick = () => {
             this.setSelectedBranch(branch.name);
-            this.dropdownMenu.style.display = 'none';
+            this.dropdownController.close();
           };
           
           this.dropdownMenu.appendChild(item);
@@ -611,9 +637,16 @@ export class BranchSelector {
       }
     };
     
-    this.dropdownMenu.appendChild(showMoreBtn);
+    showMoreBtn.onclick = clickHandler;
+    showMoreBtn.onkeydown = (e) => {
+        if(e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            clickHandler();
+        }
+    };
     
-    this.dropdownMenu.style.display = 'block';
+    this.dropdownMenu.appendChild(showMoreBtn);
+    // Visibility handled by dropdown.js
   }
 
   setSelectedBranch(branch) {

@@ -43,6 +43,13 @@
 .custom-dropdown-item:last-child { border-bottom: none; }
 .custom-dropdown-item:hover { background: rgba(77, 217, 255, 0.08); color: var(--accent); }
 .custom-dropdown .custom-dropdown-menu .custom-dropdown-item:hover { background: rgba(77, 217, 255, 0.08); color: var(--accent); }
+.custom-dropdown-item:focus {
+    outline: none;
+    background: rgba(77, 217, 255, 0.08);
+    color: var(--accent);
+    box-shadow: inset 3px 0 0 var(--accent);
+}
+
 .custom-dropdown-item.selected { background: linear-gradient(135deg, rgba(77,217,255,0.2), rgba(77,217,255,0.1)); color: var(--accent); font-weight: 600; border-left: 3px solid var(--accent); }
 
 /* Utility: compact trigger width */
@@ -62,6 +69,7 @@
 .dropdown-item { display: flex; align-items: center; gap: 8px; }
 
 /* State for open dropdown */
-.custom-dropdown-menu.open {
+.custom-dropdown-menu.open,
+.custom-dropdown-menu.dropdown-open {
   display: block;
 }
