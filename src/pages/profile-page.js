@@ -29,6 +29,10 @@ async function loadProfile() {
     await loadProfileDirectly(user);
   } catch (err) {
     console.error('Profile loading error:', err);
+    const profileUserName = document.getElementById('profileUserName');
+    if (profileUserName) {
+      profileUserName.textContent = 'Error loading profile';
+    }
   }
 }
 

@@ -1,8 +1,4 @@
 import { getCurrentUser } from './auth.js';
-import { checkJulesKey } from './jules-keys.js';
-import { showJulesKeyModal, showSubtaskErrorModal } from './jules-modal.js';
-import { addToJulesQueue, handleQueueAction } from './jules-queue.js';
-import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { JULES_MESSAGES } from '../utils/constants.js';
 
@@ -39,9 +35,11 @@ export async function handleFreeInputAfterAuth() {
   }
 
   try {
+    const { checkJulesKey } = await import('./jules-keys.js');
     const hasKey = await checkJulesKey(user.uid);
     
     if (!hasKey) {
+      const { showJulesKeyModal } = await import('./jules-modal.js');
       showJulesKeyModal(() => {
         showFreeInputForm();
       });
@@ -82,7 +80,7 @@ export function showFreeInputForm() {
 
   textarea.value = '';
   
-  populateFreeInputRepoSelection();
+  initializeLazyRepoSelection();
   
   textarea.focus();
 
@@ -141,6 +139,7 @@ export function showFreeInputForm() {
           retryCount++;
 
           if (retryCount < maxRetries) {
+            const { showSubtaskErrorModal } = await import('./jules-modal.js');
             const result = await showSubtaskErrorModal(1, 1, error);
 
             if (result.action === 'cancel') {
@@ -150,6 +149,7 @@ export function showFreeInputForm() {
               showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
               return;
             } else if (result.action === 'queue') {
+              const { handleQueueAction } = await import('./jules-queue.js');
               await handleQueueAction({
                 type: 'single',
                 prompt: promptText,
@@ -165,6 +165,7 @@ export function showFreeInputForm() {
               }
             }
           } else {
+            const { showSubtaskErrorModal } = await import('./jules-modal.js');
             const result = await showSubtaskErrorModal(1, 1, error);
 
             if (result.action === 'cancel') {
@@ -174,6 +175,7 @@ export function showFreeInputForm() {
               showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
               return;
             } else if (result.action === 'queue') {
+              const { handleQueueAction } = await import('./jules-queue.js');
               await handleQueueAction({
                 type: 'single',
                 prompt: promptText,
@@ -304,6 +306,7 @@ export function showFreeInputForm() {
     }
 
     try {
+      const { addToJulesQueue } = await import('./jules-queue.js');
       await addToJulesQueue(user.uid, {
         type: 'single',
         prompt: promptText,
@@ -373,10 +376,42 @@ export function hideFreeInputForm() {
   if (content) content.style.display = '';
 }
 
-async function populateFreeInputRepoSelection() {
+let repoSelectorInitialized = false;
+
+async function initializeLazyRepoSelection() {
   _lastSelectedSourceId = null;
   _lastSelectedBranch = null;
   
+  const repoDropdownBtn = document.getElementById('freeInputRepoDropdownBtn');
+  const repoDropdownText = document.getElementById('freeInputRepoDropdownText');
+  
+  if (!repoDropdownBtn || !repoDropdownText) {
+    return;
+  }
+
+  const user = window.auth?.currentUser;
+  if (!user) {
+    repoDropdownText.textContent = 'Please sign in first';
+    repoDropdownBtn.disabled = true;
+    return;
+  }
+
+  // Initialize immediately to show cached last repo
+  repoDropdownBtn.disabled = true;
+  repoDropdownText.textContent = 'Loading...';
+  
+  try {
+    await populateFreeInputRepoSelection();
+    repoSelectorInitialized = true;
+  } catch (error) {
+    console.error('Failed to load repo selector:', error);
+    showToast('Failed to load repository selector', 'error');
+    repoDropdownBtn.disabled = false;
+    repoDropdownText.textContent = 'Select repository...';
+  }
+}
+
+async function populateFreeInputRepoSelection() {
   const repoDropdownText = document.getElementById('freeInputRepoDropdownText');
   const repoDropdownBtn = document.getElementById('freeInputRepoDropdownBtn');
   const repoDropdownMenu = document.getElementById('freeInputRepoDropdownMenu');
@@ -389,12 +424,7 @@ async function populateFreeInputRepoSelection() {
     return;
   }
 
-  const user = getCurrentUser();
-  if (!user) {
-    repoDropdownText.textContent = 'Please sign in first';
-    repoDropdownBtn.disabled = true;
-    return;
-  }
+  const { RepoSelector, BranchSelector } = await import('./repo-branch-selector.js');
 
   const branchSelector = new BranchSelector({
     dropdownBtn: branchDropdownBtn,
@@ -420,6 +450,5 @@ async function populateFreeInputRepoSelection() {
 
   await repoSelector.initialize();
   branchSelector.initialize(null, null);
+  repoDropdownBtn.disabled = false;
 }
-
-window.populateFreeInputRepoSelection = populateFreeInputRepoSelection;

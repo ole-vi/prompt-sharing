@@ -62,8 +62,8 @@ export function showJulesKeyModal(onSave) {
     }
 
     try {
-      saveBtn.textContent = 'Saving...';
       saveBtn.disabled = true;
+      saveBtn.textContent = 'Loading...';
 
       const user = window.auth ? window.auth.currentUser : null;
       if (!user) {
@@ -73,8 +73,29 @@ export function showJulesKeyModal(onSave) {
         return;
       }
 
-      const { encryptAndStoreKey } = await import('./jules-keys.js');
-      await encryptAndStoreKey(apiKey, user.uid);
+      let encryptAndStoreKey;
+      try {
+        const module = await import('./jules-keys.js');
+        encryptAndStoreKey = module.encryptAndStoreKey;
+      } catch (importError) {
+        console.error('Failed to load jules-keys module:', importError);
+        showToast('Failed to load key management', 'error');
+        saveBtn.textContent = 'Save & Continue';
+        saveBtn.disabled = false;
+        return;
+      }
+
+      saveBtn.textContent = 'Saving...';
+
+      try {
+        await encryptAndStoreKey(apiKey, user.uid);
+      } catch (saveError) {
+        console.error('Failed to save key:', saveError);
+        showToast('Failed to save API key', 'error');
+        saveBtn.textContent = 'Save & Continue';
+        saveBtn.disabled = false;
+        return;
+      }
 
       showToast('Jules API key saved successfully', 'success');
       hideJulesKeyModal();
@@ -110,14 +131,30 @@ export async function showJulesEnvModal(promptText) {
   const queueBtn = document.getElementById('julesEnvQueueBtn');
   const cancelBtn = document.getElementById('julesEnvCancelBtn');
   
-  // Initialize buttons
+  // Initialize buttons with loading state
   submitBtn.disabled = true;
   queueBtn.disabled = true;
+  submitBtn.textContent = 'Loading...';
+  queueBtn.textContent = 'Loading...';
   
   let selectedSourceId = null;
   let selectedBranch = null;
 
-  const { RepoSelector, BranchSelector } = await import('./repo-branch-selector.js');
+  let RepoSelector, BranchSelector;
+  try {
+    const module = await import('./repo-branch-selector.js');
+    RepoSelector = module.RepoSelector;
+    BranchSelector = module.BranchSelector;
+  } catch (importError) {
+    console.error('Failed to load repo/branch selector:', importError);
+    showToast('Failed to load repository selector', 'error');
+    hideJulesEnvModal();
+    return;
+  }
+
+  // Reset button text after successful load
+  submitBtn.textContent = 'Send to Jules';
+  queueBtn.textContent = 'Add to Queue';
 
   // Initialize BranchSelector first
   const branchSelector = new BranchSelector({

@@ -79,15 +79,34 @@ function initApp() {
   const addJulesKeyBtnProminent = document.getElementById('addJulesKeyBtnProminent');
   const resetJulesKeyBtn = document.getElementById('resetJulesKeyBtn');
   
-  const addKeyHandler = async () => {
-    const { showJulesKeyModal } = await import('../modules/jules-modal.js');
-    showJulesKeyModal(() => {
-      // Reload Jules info after saving key
-      const user = window.auth?.currentUser;
-      if (user) {
-        loadJulesInfo();
+  const addKeyHandler = async (event) => {
+    const btn = event?.currentTarget;
+    const originalText = btn?.textContent;
+    const originalDisabled = btn?.disabled;
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Loading...';
+    }
+
+    try {
+      const { showJulesKeyModal } = await import('../modules/jules-modal.js');
+      showJulesKeyModal(() => {
+        // Reload Jules info after saving key
+        const user = window.auth?.currentUser;
+        if (user) {
+          loadJulesInfo();
+        }
+      });
+    } catch (error) {
+      console.error('Failed to load Jules modal:', error);
+      showToast('Failed to open key modal', 'error');
+    } finally {
+      if (btn) {
+        btn.textContent = originalText;
+        btn.disabled = originalDisabled;
       }
-    });
+    }
   };
   
   if (addJulesKeyBtnProminent) {
@@ -96,7 +115,25 @@ function initApp() {
   
   if (resetJulesKeyBtn) {
     resetJulesKeyBtn.onclick = async () => {
-      const { showConfirm } = await import('../modules/confirm-modal.js');
+      const originalText = resetJulesKeyBtn.textContent;
+      resetJulesKeyBtn.disabled = true;
+      resetJulesKeyBtn.textContent = 'Loading...';
+
+      let showConfirm;
+      try {
+        const module = await import('../modules/confirm-modal.js');
+        showConfirm = module.showConfirm;
+      } catch (error) {
+        console.error('Failed to load confirm modal:', error);
+        showToast('Failed to open confirmation dialog', 'error');
+        resetJulesKeyBtn.textContent = originalText;
+        resetJulesKeyBtn.disabled = false;
+        return;
+      }
+
+      resetJulesKeyBtn.textContent = originalText;
+      resetJulesKeyBtn.disabled = false;
+
       const confirmed = await showConfirm(`This will delete your stored Jules API key. You'll need to enter a new one next time.`, {
         title: 'Delete API Key',
         confirmText: 'Delete',
@@ -111,7 +148,18 @@ function initApp() {
         resetJulesKeyBtn.disabled = true;
         resetJulesKeyBtn.textContent = 'Deleting...';
         
-        const { deleteStoredJulesKey } = await import('../modules/jules-keys.js');
+        let deleteStoredJulesKey;
+        try {
+          const module = await import('../modules/jules-keys.js');
+          deleteStoredJulesKey = module.deleteStoredJulesKey;
+        } catch (error) {
+          console.error('Failed to load Jules keys module:', error);
+          showToast('Failed to load key management', 'error');
+          resetJulesKeyBtn.textContent = 'Delete Jules API Key';
+          resetJulesKeyBtn.disabled = false;
+          return;
+        }
+
         const deleted = await deleteStoredJulesKey(user.uid);
         if (deleted) {
           const julesKeyStatus = document.getElementById('julesKeyStatus');

@@ -24,8 +24,13 @@ export function initApp() {
   setSelectFileCallback(selectFile);
 
   setHandleTryInJulesCallback(async (...args) => {
-    const { handleTryInJules } = await import('./modules/jules-api.js');
-    return handleTryInJules(...args);
+    try {
+      const { handleTryInJules } = await import('./modules/jules-api.js');
+      return handleTryInJules(...args);
+    } catch (error) {
+      console.error('Failed to load Jules API module:', error);
+      throw error; // Re-throw to let prompt-renderer handle it
+    }
   });
 
   // Initialize modules

@@ -63,7 +63,7 @@ export function destroyPromptRenderer() {
   }
 }
 
-function handleDocumentClick(event) {
+async function handleDocumentClick(event) {
   const target = event.target;
   const copenMenu = document.getElementById('copenMenu');
   const moreMenu = document.getElementById('moreMenu');
