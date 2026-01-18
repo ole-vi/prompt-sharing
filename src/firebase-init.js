@@ -28,7 +28,7 @@ function initFirebaseWhenReady() {
       // Get services - compat API doesn't require app parameter
       window.auth = firebase.auth();
       window.db = firebase.firestore();
-      window.functions = firebase.functions();
+      // Functions removed - not used in this app (uses direct REST API calls)
       
       // Port 5000 = dev server with emulators, port 3000 = production
       const isDevServer = window.location.port === '5000';
@@ -38,8 +38,7 @@ function initFirebaseWhenReady() {
           // Use the same hostname as the page to avoid CORS issues
           const emulatorHost = window.location.hostname;
           window.db.useEmulator(emulatorHost, 8080);
-          window.functions.useEmulator(emulatorHost, 5001);
-          console.log('🔧 Connected to Firebase Emulators (Firestore, Functions)');
+          console.log('🔧 Connected to Firebase Emulators (Firestore)');
           console.log('⚠️ Dev server - using test data only');
         } catch (emulatorError) {
           console.error('Failed to connect to Firebase emulators:', emulatorError);
