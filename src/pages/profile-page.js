@@ -5,15 +5,7 @@
 
 import { waitForFirebase } from '../shared-init.js';
 import { loadProfileDirectly } from '../modules/jules-account.js';
-import { TIMEOUTS } from '../utils/constants.js';
-
-function waitForComponents() {
-  if (document.querySelector('header')) {
-    initApp();
-  } else {
-    setTimeout(waitForComponents, TIMEOUTS.componentCheck);
-  }
-}
+import { initPage } from '../modules/page-init.js';
 
 async function loadProfile() {
   const user = window.auth?.currentUser;
@@ -56,8 +48,4 @@ function initApp() {
   });
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', waitForComponents);
-} else {
-  waitForComponents();
-}
+initPage(initApp);

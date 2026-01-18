@@ -9,15 +9,7 @@ import { showJulesKeyModal } from '../modules/jules-modal.js';
 import { deleteStoredJulesKey, checkJulesKey } from '../modules/jules-keys.js';
 import { showToast } from '../modules/toast.js';
 import { showConfirm } from '../modules/confirm-modal.js';
-import { TIMEOUTS } from '../utils/constants.js';
-
-function waitForComponents() {
-  if (document.querySelector('header')) {
-    initApp();
-  } else {
-    setTimeout(waitForComponents, TIMEOUTS.componentCheck);
-  }
-}
+import { initPage } from '../modules/page-init.js';
 
 async function loadJulesInfo() {
   const user = window.auth?.currentUser;
@@ -165,8 +157,4 @@ function initApp() {
   });
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', waitForComponents);
-} else {
-  waitForComponents();
-}
+initPage(initApp);
