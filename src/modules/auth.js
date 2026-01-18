@@ -1,8 +1,8 @@
 // ===== Firebase Authentication Module =====
 
-import { clearJulesKeyCache } from './jules-api.js';
 import { showToast } from './toast.js';
 import { setCache, getCache } from '../utils/session-cache.js';
+// Lazy loaded: jules-api.js (for clearJulesKeyCache)
 
 let currentUser = null;
 
@@ -49,6 +49,7 @@ export async function signOutUser() {
     if (window.auth) {
       // Clear Jules API key cache on logout
       if (window.auth.currentUser) {
+        const { clearJulesKeyCache } = await import('./jules-api.js');
         clearJulesKeyCache(window.auth.currentUser.uid);
       }
       await window.auth.signOut();

@@ -1,10 +1,8 @@
 import { getCurrentUser } from './auth.js';
-import { checkJulesKey } from './jules-keys.js';
-import { showJulesKeyModal, showSubtaskErrorModal } from './jules-modal.js';
-import { addToJulesQueue, handleQueueAction } from './jules-queue.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';
+// Lazy loaded: jules-keys, jules-modal, jules-queue
 
 let _lastSelectedSourceId = null;
 let _lastSelectedBranch = null;
@@ -39,9 +37,11 @@ export async function handleFreeInputAfterAuth() {
   }
 
   try {
+    const { checkJulesKey } = await import('./jules-keys.js');
     const hasKey = await checkJulesKey(user.uid);
     
     if (!hasKey) {
+      const { showJulesKeyModal } = await import('./jules-modal.js');
       showJulesKeyModal(() => {
         showFreeInputForm();
       });
@@ -141,6 +141,7 @@ export function showFreeInputForm() {
           retryCount++;
 
           if (retryCount < maxRetries) {
+            const { showSubtaskErrorModal } = await import('./jules-modal.js');
             const result = await showSubtaskErrorModal(1, 1, error);
 
             if (result.action === 'cancel') {
@@ -150,6 +151,7 @@ export function showFreeInputForm() {
               showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
               return;
             } else if (result.action === 'queue') {
+              const { handleQueueAction } = await import('./jules-queue.js');
               await handleQueueAction({
                 type: 'single',
                 prompt: promptText,
@@ -165,6 +167,7 @@ export function showFreeInputForm() {
               }
             }
           } else {
+            const { showSubtaskErrorModal } = await import('./jules-modal.js');
             const result = await showSubtaskErrorModal(1, 1, error);
 
             if (result.action === 'cancel') {
@@ -174,6 +177,7 @@ export function showFreeInputForm() {
               showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
               return;
             } else if (result.action === 'queue') {
+              const { handleQueueAction } = await import('./jules-queue.js');
               await handleQueueAction({
                 type: 'single',
                 prompt: promptText,
@@ -307,6 +311,7 @@ export function showFreeInputForm() {
     }
 
     try {
+      const { addToJulesQueue } = await import('./jules-queue.js');
       await addToJulesQueue(user.uid, {
         type: 'single',
         prompt: promptText,
