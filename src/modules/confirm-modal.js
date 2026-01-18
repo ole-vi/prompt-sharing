@@ -1,35 +1,41 @@
 // ===== Confirmation Modal Module =====
 // Provides styled confirmation dialogs to replace confirm() calls
 
+import { createElement, createIconElement } from '../utils/dom-helpers.js';
+import { TIMEOUTS } from '../utils/constants.js';
+
 let confirmModal = null;
 let confirmResolve = null;
 
 function createConfirmModal() {
-  const modal = document.createElement('div');
-  modal.id = 'confirmModal';
-  modal.className = 'modal';
-  modal.style.zIndex = '10000';
-  modal.innerHTML = `
-    <div class="modal-content" style="max-width: 480px;">
-      <div class="modal-header">
-        <h3 id="confirmModalTitle">Confirm Action</h3>
-        <button class="btn-icon close-modal" id="confirmModalClose" title="Close">✕</button>
-      </div>
-      <div class="modal-body">
-        <p id="confirmModalMessage" style="line-height: 1.6; white-space: pre-wrap;"></p>
-      </div>
-      <div class="modal-buttons">
-        <button id="confirmModalCancel" class="btn">Cancel</button>
-        <button id="confirmModalConfirm" class="btn danger">Confirm</button>
-      </div>
-    </div>
-  `;
+  const modal = createElement('div', { id: 'confirmModal', class: 'modal', style: { zIndex: '10000' } });
+
+  const content = createElement('div', { class: 'modal-content', style: { maxWidth: '480px' } });
+
+  // Header
+  const header = createElement('div', { class: 'modal-header' });
+  header.appendChild(createElement('h3', { id: 'confirmModalTitle' }, 'Confirm Action'));
+
+  const closeBtn = createElement('button', { class: 'btn-icon close-modal', id: 'confirmModalClose', title: 'Close' }, '✕');
+  header.appendChild(closeBtn);
+  content.appendChild(header);
+
+  // Body
+  const body = createElement('div', { class: 'modal-body' });
+  body.appendChild(createElement('p', { id: 'confirmModalMessage', style: { lineHeight: '1.6', whiteSpace: 'pre-wrap' } }));
+  content.appendChild(body);
+
+  // Buttons
+  const buttons = createElement('div', { class: 'modal-buttons' });
+  buttons.appendChild(createElement('button', { id: 'confirmModalCancel', class: 'btn' }, 'Cancel'));
+  buttons.appendChild(createElement('button', { id: 'confirmModalConfirm', class: 'btn danger' }, 'Confirm'));
+  content.appendChild(buttons);
+
+  modal.appendChild(content);
   
   document.body.appendChild(modal);
   return modal;
 }
-
-import { TIMEOUTS } from '../utils/constants.js';
 
 function showConfirmModal() {
   if (!confirmModal) {

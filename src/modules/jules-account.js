@@ -10,6 +10,7 @@ import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { attachPromptViewerHandlers } from './prompt-viewer.js';
 import { TIMEOUTS } from '../utils/constants.js';
+import { createElement, createIconElement, clearElement } from '../utils/dom-helpers.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -40,10 +41,16 @@ export function showUserProfileModal() {
 
   checkJulesKey(user.uid).then(async (hasKey) => {
     if (julesKeyStatus) {
-      julesKeyStatus.innerHTML = hasKey 
-        ? '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Saved'
-        : '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
-      julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+      clearElement(julesKeyStatus);
+      if (hasKey) {
+        julesKeyStatus.appendChild(createIconElement('check_circle'));
+        julesKeyStatus.appendChild(document.createTextNode(' Saved'));
+        julesKeyStatus.style.color = 'var(--accent)';
+      } else {
+        julesKeyStatus.appendChild(createIconElement('cancel'));
+        julesKeyStatus.appendChild(document.createTextNode(' Not saved'));
+        julesKeyStatus.style.color = 'var(--muted)';
+      }
     }
     
     if (hasKey) {
@@ -79,14 +86,22 @@ export function showUserProfileModal() {
       
       try {
         resetBtn.disabled = true;
-        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span> Deleting...';
+        clearElement(resetBtn);
+        resetBtn.appendChild(createIconElement('hourglass_top'));
+        resetBtn.appendChild(document.createTextNode(' Deleting...'));
+
         const deleted = await deleteStoredJulesKey(user.uid);
         if (deleted) {
           if (julesKeyStatus) {
-            julesKeyStatus.innerHTML = '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
+            clearElement(julesKeyStatus);
+            julesKeyStatus.appendChild(createIconElement('cancel'));
+            julesKeyStatus.appendChild(document.createTextNode(' Not saved'));
             julesKeyStatus.style.color = 'var(--muted)';
           }
-          resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key';
+
+          clearElement(resetBtn);
+          resetBtn.appendChild(createIconElement('delete'));
+          resetBtn.appendChild(document.createTextNode(' Delete Jules API Key'));
           resetBtn.disabled = false;
           
           if (addBtn) addBtn.style.display = 'block';
@@ -99,7 +114,9 @@ export function showUserProfileModal() {
         }
       } catch (error) {
         showToast('Failed to reset API key: ' + error.message, 'error');
-        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">refresh</span> Reset Jules API Key';
+        clearElement(resetBtn);
+        resetBtn.appendChild(createIconElement('refresh'));
+        resetBtn.appendChild(document.createTextNode(' Reset Jules API Key'));
         resetBtn.disabled = false;
       }
     };
@@ -149,6 +166,29 @@ export function showUserProfileModal() {
   }
 }
 
+export function hideUserProfileModal() {
+  const modal = document.getElementById('userProfileModal');
+  modal.classList.remove('show');
+}
+
+export function showJulesSessionsHistoryModal() {
+  const modal = document.getElementById('julesSessionsHistoryModal');
+  const searchInput = document.getElementById('sessionSearchInput');
+
+  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+
+  allSessionsCache = [];
+  sessionNextPageToken = null;
+  searchInput.value = '';
+
+  loadSessionsPage();
+}
+
+export function hideJulesSessionsHistoryModal() {
+  const modal = document.getElementById('julesSessionsHistoryModal');
+  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+}
+
 function attachViewAllSessionsHandler() {
   const viewAllSessionsLink = document.getElementById('viewAllSessionsLink');
   if (viewAllSessionsLink) {
@@ -181,15 +221,22 @@ async function loadAndDisplayJulesProfile(uid) {
     let profileData = getCache(CACHE_KEYS.JULES_ACCOUNT, uid);
     
     if (!profileData) {
-      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sources...</div>';
-      sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
+      clearElement(sourcesListDiv);
+      sourcesListDiv.appendChild(createElement('div', { style: { color: 'var(--muted)', fontSize: '13px' } }, 'Loading sources...'));
+
+      clearElement(sessionsListDiv);
+      sessionsListDiv.appendChild(createElement('div', { style: { color: 'var(--muted)', fontSize: '13px' } }, 'Loading sessions...'));
       
       profileData = await loadJulesProfileInfo(uid);
       setCache(CACHE_KEYS.JULES_ACCOUNT, profileData, uid);
     }
 
+    // Render Sources
+    clearElement(sourcesListDiv);
     if (profileData.sources && profileData.sources.length > 0) {
-      const sourcesHtml = profileData.sources.map((source, index) => {
+      const vList = createElement('div', { class: 'vlist' });
+
+      profileData.sources.forEach((source, index) => {
         const repoName = source.githubRepo?.name || source.name || source.id;
         const githubPath = repoName.includes('github/')
           ? repoName.split('github/')[1]
@@ -201,45 +248,86 @@ async function loadAndDisplayJulesProfile(uid) {
           ? `(${branches.length} ${branches.length === 1 ? 'branch' : 'branches'})`
           : '(no branches)';
 
-        const branchesHtml = branches.length > 0
-          ? `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted);">
-               <div style="margin-bottom:4px; color:var(--text);"><span class="icon icon-inline" aria-hidden="true">account_tree</span> Branches (${branches.length}):</div>
-               ${branches.map(b => `<div style="padding:3px 0 3px 8px; cursor:pointer;"
-                  onclick="window.open('https://github.com/${githubPath}/tree/${encodeURIComponent(b.displayName || b.name)}', '_blank')">
-                  • ${b.displayName || b.name}
-                </div>`).join('')}
-             </div>`
-          : `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted); font-style:italic;">No branches found</div>`;
+        // Build branch list
+        let branchesEl;
+        if (branches.length > 0) {
+          branchesEl = createElement('div', {
+            id: `${sourceId}-branches`,
+            style: { display: 'none', marginTop: '6px', paddingLeft: '10px', fontSize: '11px', color: 'var(--muted)' }
+          });
 
-        const cardHtml = `
-          <div class="queue-card">
-            <div class="queue-row">
-              <div class="queue-content">
-                <div class="queue-title" style="cursor:pointer; user-select:none;"
-                    onclick="(function(){
-                      const el = document.getElementById('${sourceId}-branches');
-                      const arrow = document.getElementById('${sourceId}-arrow');
-                      if (el.style.display === 'none') { el.style.display = 'block'; arrow.textContent = '▼'; }
-                      else { el.style.display = 'none'; arrow.textContent = '▶'; }
-                    })()">
-                  <span id="${sourceId}-arrow" style="display:inline-block; width:12px; font-size:10px; margin-right:6px;">▶</span>
-                  <span class="icon icon-inline" aria-hidden="true">folder</span> ${githubPath}
-                  <span class="queue-status">${branchSummaryText}</span>
-                </div>
-              </div>
-            </div>
-            ${branchesHtml}
-          </div>
-        `;
-        return cardHtml;
-      }).join('');
-      sourcesListDiv.innerHTML = `<div class="vlist">${sourcesHtml}</div>`;
+          const branchesHeader = createElement('div', { style: { marginBottom: '4px', color: 'var(--text)' } });
+          branchesHeader.appendChild(createIconElement('account_tree'));
+          branchesHeader.appendChild(document.createTextNode(` Branches (${branches.length}):`));
+          branchesEl.appendChild(branchesHeader);
+
+          branches.forEach(b => {
+            const branchItem = createElement('div', {
+              style: { padding: '3px 0 3px 8px', cursor: 'pointer' },
+              onclick: () => window.open(`https://github.com/${githubPath}/tree/${encodeURIComponent(b.displayName || b.name)}`, '_blank')
+            }, `• ${b.displayName || b.name}`);
+            branchesEl.appendChild(branchItem);
+          });
+        } else {
+          branchesEl = createElement('div', {
+            id: `${sourceId}-branches`,
+            style: { display: 'none', marginTop: '6px', paddingLeft: '10px', fontSize: '11px', color: 'var(--muted)', fontStyle: 'italic' }
+          }, 'No branches found');
+        }
+
+        // Build Card
+        const card = createElement('div', { class: 'queue-card' });
+        const row = createElement('div', { class: 'queue-row' });
+        const content = createElement('div', { class: 'queue-content' });
+
+        const title = createElement('div', {
+          class: 'queue-title',
+          style: { cursor: 'pointer', userSelect: 'none' },
+          onclick: function() {
+            const el = document.getElementById(`${sourceId}-branches`);
+            const arrow = document.getElementById(`${sourceId}-arrow`);
+            if (el.style.display === 'none') {
+              el.style.display = 'block';
+              arrow.textContent = '▼';
+            } else {
+              el.style.display = 'none';
+              arrow.textContent = '▶';
+            }
+          }
+        });
+
+        const arrow = createElement('span', {
+          id: `${sourceId}-arrow`,
+          style: { display: 'inline-block', width: '12px', fontSize: '10px', marginRight: '6px' }
+        }, '▶');
+
+        title.appendChild(arrow);
+        title.appendChild(createIconElement('folder'));
+        title.appendChild(document.createTextNode(` ${githubPath} `));
+        title.appendChild(createElement('span', { class: 'queue-status' }, branchSummaryText));
+
+        content.appendChild(title);
+        row.appendChild(content);
+        card.appendChild(row);
+        card.appendChild(branchesEl);
+
+        vList.appendChild(card);
+      });
+      sourcesListDiv.appendChild(vList);
     } else {
-      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No connected repositories found.<br><small>Connect repos in the Jules UI.</small></div>';
+      const emptyDiv = createElement('div', { style: { color: 'var(--muted)', fontSize: '13px', textAlign: 'center', padding: '16px' } });
+      emptyDiv.appendChild(document.createTextNode('No connected repositories found.'));
+      emptyDiv.appendChild(document.createElement('br'));
+      emptyDiv.appendChild(createElement('small', {}, 'Connect repos in the Jules UI.'));
+      sourcesListDiv.appendChild(emptyDiv);
     }
 
+    // Render Sessions
+    clearElement(sessionsListDiv);
     if (profileData.sessions && profileData.sessions.length > 0) {
-      const sessionsHtml = profileData.sessions.map(session => {
+      const vList = createElement('div', { class: 'vlist' });
+
+      profileData.sessions.forEach(session => {
         const state = session.state || 'UNKNOWN';
         const stateIcon = {
           'COMPLETED': 'check_circle',
@@ -267,111 +355,87 @@ async function loadAndDisplayJulesProfile(uid) {
         const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
         const cleanId = sessionId.replace(/[^a-zA-Z0-9]/g, '_');
 
-        const cardHtml = `
-          <div class="session-card" onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
-            <div class="session-meta">${createdAt}</div>
-            <div class="session-prompt">${displayPrompt}</div>
-            <div class="session-row">
-              <span class="session-pill"><span class="icon icon-inline" aria-hidden="true">${stateIcon}</span> ${stateLabel}</span>
-              ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" onclick="event.stopPropagation()"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a>` : ''}
-              <span class="session-hint"><span class="icon icon-inline" aria-hidden="true">info</span> Click to view session</span>
-              <button class="btn-icon session-view-btn" onclick="event.stopPropagation(); window.viewPrompt_${cleanId}()" title="View full prompt"><span class="icon" aria-hidden="true">visibility</span></button>
-            </div>
-          </div>
-        `;
-        return cardHtml;
-      }).join('');
+        const card = createElement('div', {
+          class: 'session-card',
+          onclick: () => window.open(sessionUrl, '_blank', 'noopener')
+        });
+
+        card.appendChild(createElement('div', { class: 'session-meta' }, createdAt));
+        card.appendChild(createElement('div', { class: 'session-prompt' }, displayPrompt));
+
+        const row = createElement('div', { class: 'session-row' });
+
+        const pill = createElement('span', { class: 'session-pill' });
+        pill.appendChild(createIconElement(stateIcon));
+        pill.appendChild(document.createTextNode(` ${stateLabel}`));
+        row.appendChild(pill);
+
+        if (prUrl) {
+          const prLink = createElement('a', {
+            href: prUrl,
+            target: '_blank',
+            rel: 'noopener',
+            class: 'small-text',
+            onclick: (e) => e.stopPropagation()
+          });
+          prLink.appendChild(createIconElement('link'));
+          prLink.appendChild(document.createTextNode(' View PR'));
+          row.appendChild(document.createTextNode(' '));
+          row.appendChild(prLink);
+        }
+
+        const hint = createElement('span', { class: 'session-hint' });
+        hint.appendChild(createIconElement('info'));
+        hint.appendChild(document.createTextNode(' Click to view session'));
+        row.appendChild(hint);
+
+        const viewBtn = createElement('button', {
+          class: 'btn-icon session-view-btn',
+          title: 'View full prompt',
+          onclick: (e) => {
+            e.stopPropagation();
+            if (window[`viewPrompt_${cleanId}`]) {
+              window[`viewPrompt_${cleanId}`]();
+            }
+          }
+        });
+        viewBtn.appendChild(createIconElement('visibility', 'icon'));
+        row.appendChild(viewBtn);
+
+        card.appendChild(row);
+        vList.appendChild(card);
+      });
       
       // Attach prompt viewer handlers using shared module
       attachPromptViewerHandlers(profileData.sessions);
       
-      sessionsListDiv.innerHTML = `<div class="vlist">${sessionsHtml}</div>`;
+      sessionsListDiv.appendChild(vList);
     } else {
-      sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No recent sessions found.</div>';
+      sessionsListDiv.appendChild(createElement('div', {
+        style: { color: 'var(--muted)', fontSize: '13px', textAlign: 'center', padding: '16px' }
+      }, 'No recent sessions found.'));
     }
 
     loadBtn.disabled = false;
-    loadBtn.innerHTML = '<span class="icon" aria-hidden="true">sync</span>';
+    clearElement(loadBtn);
+    loadBtn.appendChild(createIconElement('sync', 'icon'));
     
     attachViewAllSessionsHandler();
 
   } catch (error) {
-    sourcesListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
-      Failed to load sources: ${error.message}
-    </div>`;
-    sessionsListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
-      Failed to load sessions: ${error.message}
-    </div>`;
+    clearElement(sourcesListDiv);
+    sourcesListDiv.appendChild(createElement('div', {
+      style: { color: '#e74c3c', fontSize: '13px', textAlign: 'center', padding: '16px' }
+    }, `Failed to load sources: ${error.message}`));
+
+    clearElement(sessionsListDiv);
+    sessionsListDiv.appendChild(createElement('div', {
+      style: { color: '#e74c3c', fontSize: '13px', textAlign: 'center', padding: '16px' }
+    }, `Failed to load sessions: ${error.message}`));
 
     loadBtn.disabled = false;
-    loadBtn.innerHTML = '<span class="icon" aria-hidden="true">sync</span>';
-  }
-}
-
-export function hideUserProfileModal() {
-  const modal = document.getElementById('userProfileModal');
-  modal.classList.remove('show');
-}
-
-export function showJulesSessionsHistoryModal() {
-  const modal = document.getElementById('julesSessionsHistoryModal');
-  const searchInput = document.getElementById('sessionSearchInput');
-  
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
-  
-  allSessionsCache = [];
-  sessionNextPageToken = null;
-  searchInput.value = '';
-  
-  loadSessionsPage();
-}
-
-export function hideJulesSessionsHistoryModal() {
-  const modal = document.getElementById('julesSessionsHistoryModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
-}
-
-async function loadSessionsPage() {
-  const user = window.auth?.currentUser;
-  if (!user) return;
-  
-  const allSessionsList = document.getElementById('allSessionsList');
-  const loadMoreSection = document.getElementById('sessionsLoadMore');
-  const loadMoreBtn = document.getElementById('loadMoreSessionsBtn');
-  
-  try {
-    loadMoreBtn.disabled = true;
-    loadMoreBtn.textContent = 'Loading...';
-    
-    const apiKey = await getDecryptedJulesKey(user.uid);
-    if (!apiKey) {
-      throw new Error('Jules API key not found');
-    }
-    
-    const result = await listJulesSessions(apiKey, 50, sessionNextPageToken);
-    
-    if (result.sessions && result.sessions.length > 0) {
-      allSessionsCache = [...allSessionsCache, ...result.sessions];
-      sessionNextPageToken = result.nextPageToken || null;
-      
-      renderAllSessions(allSessionsCache);
-      
-      if (sessionNextPageToken) {
-        loadMoreSection.style.display = 'block';
-        loadMoreBtn.disabled = false;
-        loadMoreBtn.textContent = 'Load More';
-      } else {
-        loadMoreSection.style.display = 'none';
-      }
-    } else if (allSessionsCache.length === 0) {
-      allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions found</div>';
-    }
-  } catch (error) {
-    if (allSessionsCache.length === 0) {
-      allSessionsList.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">Failed to load sessions: ${error.message}</div>`;
-    }
-    loadMoreBtn.disabled = false;
-    loadMoreBtn.textContent = 'Load More';
+    clearElement(loadBtn);
+    loadBtn.appendChild(createIconElement('sync', 'icon'));
   }
 }
 
@@ -380,6 +444,8 @@ function renderAllSessions(sessions) {
   const searchInput = document.getElementById('sessionSearchInput');
   const searchTerm = searchInput.value.toLowerCase();
   
+  clearElement(allSessionsList);
+
   const filteredSessions = searchTerm 
     ? sessions.filter(s => {
         const promptText = s.prompt || s.displayName || '';
@@ -389,7 +455,9 @@ function renderAllSessions(sessions) {
     : sessions;
   
   if (filteredSessions.length === 0) {
-    allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions match your search</div>';
+    allSessionsList.appendChild(createElement('div', {
+      style: { color: 'var(--muted)', textAlign: 'center', padding: '24px' }
+    }, 'No sessions match your search'));
     return;
   }
   
@@ -411,10 +479,8 @@ function renderAllSessions(sessions) {
     'CANCELLED': 'CANCELLED'
   };
   
-  allSessionsList.innerHTML = filteredSessions.map(session => {
-    if (session.parentTask) {
-      return '';
-    }
+  filteredSessions.forEach(session => {
+    if (session.parentTask) return;
     
     const sessionId = session.name?.split('/').pop() || '';
     const state = session.state || 'UNKNOWN';
@@ -428,31 +494,66 @@ function renderAllSessions(sessions) {
     const updateTime = session.updateTime ? new Date(session.updateTime).toLocaleString() : 'Unknown';
     
     const prUrl = session.githubPrUrl || null;
-    const prLink = prUrl 
-      ? `<div style="margin-top:4px;" onclick="event.stopPropagation();"><a href="${prUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none;"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a></div>`
-      : '';
     
     const subtaskCount = session.childTasks?.length || 0;
-    const subtaskInfo = subtaskCount > 0 
-      ? `<div style="font-size:11px; color:var(--muted); margin-top:4px;"><span class="icon icon-inline" aria-hidden="true">list_alt</span> ${subtaskCount} subtask${subtaskCount > 1 ? 's' : ''}</div>`
-      : '';
+
+    const card = createElement('div', {
+      style: {
+        padding: '12px',
+        border: '1px solid var(--border)',
+        borderRadius: '8px',
+        background: 'rgba(255,255,255,0.03)',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        marginBottom: '8px' // Added some spacing between items
+      },
+      onmouseover: function() {
+        this.style.borderColor = 'var(--accent)';
+        this.style.background = 'rgba(255,255,255,0.06)';
+      },
+      onmouseout: function() {
+        this.style.borderColor = 'var(--border)';
+        this.style.background = 'rgba(255,255,255,0.03)';
+      },
+      onclick: () => window.open(`https://jules.google.com/session/${sessionId}`, '_blank')
+    });
+
+    // Header
+    const header = createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '6px' } });
+    header.appendChild(createElement('div', { style: { fontWeight: '600', fontSize: '13px', flex: '1', marginRight: '8px' } }, displayTitle));
     
-    return `<div style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.03); cursor:pointer; transition:all 0.2s;"
-                 onmouseover="this.style.borderColor='var(--accent)'; this.style.background='rgba(255,255,255,0.06)'"
-                 onmouseout="this.style.borderColor='var(--border)'; this.style.background='rgba(255,255,255,0.03)'"
-                 onclick="window.open('https://jules.google.com/session/${sessionId}', '_blank')">
-      <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:6px;">
-        <div style="font-weight:600; font-size:13px; flex:1; margin-right:8px;">${displayTitle}</div>
-        <div style="font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(255,255,255,0.1); white-space:nowrap; margin-left:8px; display:flex; align-items:center;">
-          <span class="icon icon-inline" aria-hidden="true">${icon}</span> ${label}
-        </div>
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-bottom:2px;">Created: ${createTime}</div>
-      <div style="font-size:11px; color:var(--muted);">Updated: ${updateTime}</div>
-      ${subtaskInfo}
-      ${prLink}
-    </div>`;
-  }).filter(html => html).join('');
+    const statusPill = createElement('div', {
+      style: { fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', whiteSpace: 'nowrap', marginLeft: '8px', display: 'flex', alignItems: 'center' }
+    });
+    statusPill.appendChild(createIconElement(icon));
+    statusPill.appendChild(document.createTextNode(` ${label}`));
+    header.appendChild(statusPill);
+    card.appendChild(header);
+
+    // Meta
+    card.appendChild(createElement('div', { style: { fontSize: '11px', color: 'var(--muted)', marginBottom: '2px' } }, `Created: ${createTime}`));
+    card.appendChild(createElement('div', { style: { fontSize: '11px', color: 'var(--muted)' } }, `Updated: ${updateTime}`));
+
+    // Subtasks
+    if (subtaskCount > 0) {
+      const subtaskInfo = createElement('div', { style: { fontSize: '11px', color: 'var(--muted)', marginTop: '4px' } });
+      subtaskInfo.appendChild(createIconElement('list_alt'));
+      subtaskInfo.appendChild(document.createTextNode(` ${subtaskCount} subtask${subtaskCount > 1 ? 's' : ''}`));
+      card.appendChild(subtaskInfo);
+    }
+
+    // PR Link
+    if (prUrl) {
+      const prLinkDiv = createElement('div', { style: { marginTop: '4px' }, onclick: (e) => e.stopPropagation() });
+      const link = createElement('a', { href: prUrl, target: '_blank', style: { fontSize: '11px', color: 'var(--accent)', textDecoration: 'none' } });
+      link.appendChild(createIconElement('link'));
+      link.appendChild(document.createTextNode(' View PR'));
+      prLinkDiv.appendChild(link);
+      card.appendChild(prLinkDiv);
+    }
+
+    allSessionsList.appendChild(card);
+  });
 }
 
 export async function loadProfileDirectly(user) {
@@ -471,10 +572,16 @@ export async function loadProfileDirectly(user) {
   const hasKey = await checkJulesKey(user.uid);
   
   if (julesKeyStatus) {
-    julesKeyStatus.innerHTML = hasKey
-      ? '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Saved'
-      : '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
-    julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+    clearElement(julesKeyStatus);
+    if (hasKey) {
+      julesKeyStatus.appendChild(createIconElement('check_circle'));
+      julesKeyStatus.appendChild(document.createTextNode(' Saved'));
+      julesKeyStatus.style.color = 'var(--accent)';
+    } else {
+      julesKeyStatus.appendChild(createIconElement('cancel'));
+      julesKeyStatus.appendChild(document.createTextNode(' Not saved'));
+      julesKeyStatus.style.color = 'var(--muted)';
+    }
   }
   
   if (hasKey) {
@@ -510,13 +617,20 @@ export async function loadProfileDirectly(user) {
       
       try {
         resetBtn.disabled = true;
-        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span> Deleting...';
+        clearElement(resetBtn);
+        resetBtn.appendChild(createIconElement('hourglass_top'));
+        resetBtn.appendChild(document.createTextNode(' Deleting...'));
+
         const deleted = await deleteStoredJulesKey(user.uid);
         if (deleted) {
           if (julesKeyStatus) {
-            julesKeyStatus.innerHTML = '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
+            clearElement(julesKeyStatus);
+            julesKeyStatus.appendChild(createIconElement('cancel'));
+            julesKeyStatus.appendChild(document.createTextNode(' Not saved'));
             julesKeyStatus.style.color = 'var(--muted)';
           }
+
+          clearElement(resetBtn);
           resetBtn.innerHTML = originalResetLabel;
           resetBtn.disabled = false;
           
