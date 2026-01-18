@@ -1,12 +1,16 @@
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
-import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
+import { CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { JULES_MESSAGES, TIMEOUTS } from '../utils/constants.js';
+import { addDoc, updateDoc, deleteDoc, queryCollection, getDoc, setDoc, runBatch } from '../utils/firestore-helpers.js';
 
 let queueCache = [];
+
+// Helper for queue cache key
+const getQueueCacheKey = (uid) => `${CACHE_KEYS.QUEUE_ITEMS}_${uid}`;
 
 export async function handleQueueAction(queueItemData) {
   const user = window.auth?.currentUser;
@@ -25,18 +29,14 @@ export async function handleQueueAction(queueItemData) {
 }
 
 export async function addToJulesQueue(uid, queueItem) {
-  if (!window.db) throw new Error('Firestore not initialized');
   try {
-    const collectionRef = window.db.collection('julesQueues').doc(uid).collection('items');
-    const docRef = await collectionRef.add({
+    const docId = await addDoc(`julesQueues/${uid}/items`, {
       ...queueItem,
       autoOpen: queueItem.autoOpen !== false,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       status: 'pending'
-    });
-    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
-    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
-    return docRef.id;
+    }, { invalidateCacheKey: getQueueCacheKey(uid) });
+    return docId;
   } catch (err) {
     console.error('Failed to add to queue', err);
     throw err;
@@ -44,12 +44,8 @@ export async function addToJulesQueue(uid, queueItem) {
 }
 
 export async function updateJulesQueueItem(uid, docId, updates) {
-  if (!window.db) throw new Error('Firestore not initialized');
   try {
-    const docRef = window.db.collection('julesQueues').doc(uid).collection('items').doc(docId);
-    await docRef.update(updates);
-    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
-    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
+    await updateDoc(`julesQueues/${uid}/items`, docId, updates, { invalidateCacheKey: getQueueCacheKey(uid) });
     return true;
   } catch (err) {
     console.error('Failed to update queue item', err);
@@ -58,11 +54,8 @@ export async function updateJulesQueueItem(uid, docId, updates) {
 }
 
 export async function deleteFromJulesQueue(uid, docId) {
-  if (!window.db) throw new Error('Firestore not initialized');
   try {
-    await window.db.collection('julesQueues').doc(uid).collection('items').doc(docId).delete();
-    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
-    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
+    await deleteDoc(`julesQueues/${uid}/items`, docId, { invalidateCacheKey: getQueueCacheKey(uid) });
     return true;
   } catch (err) {
     console.error('Failed to delete queue item', err);
@@ -71,10 +64,8 @@ export async function deleteFromJulesQueue(uid, docId) {
 }
 
 export async function listJulesQueue(uid) {
-  if (!window.db) throw new Error('Firestore not initialized');
   try {
-    const snapshot = await window.db.collection('julesQueues').doc(uid).collection('items').orderBy('createdAt', 'desc').get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return await queryCollection(`julesQueues/${uid}/items`, { orderBy: ['createdAt', 'desc'] }, getQueueCacheKey(uid));
   } catch (err) {
     console.error('Failed to list queue', err);
     throw err;
@@ -600,13 +591,9 @@ async function loadQueuePage() {
   }
 
   try {
-    let items = getCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
-    
-    if (!items) {
-      listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Loading queue...</div>';
-      items = await listJulesQueue(user.uid);
-      setCache(CACHE_KEYS.QUEUE_ITEMS, items, user.uid);
-    }
+    listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Loading queue...</div>';
+    // queryCollection handles caching now
+    const items = await listJulesQueue(user.uid);
     
     queueCache = items;
     renderQueueList(items);
@@ -627,17 +614,12 @@ async function getUserTimeZone() {
   if (!user) return 'America/New_York';
   
   try {
-    const profileDoc = await window.db.collection('userProfiles').doc(user.uid).get();
-    if (profileDoc.exists && profileDoc.data().preferredTimeZone) {
-      return profileDoc.data().preferredTimeZone;
+    const profileDoc = await getDoc('userProfiles', user.uid, `${CACHE_KEYS.USER_PROFILE}_${user.uid}`);
+    if (profileDoc && profileDoc.preferredTimeZone) {
+      return profileDoc.preferredTimeZone;
     }
   } catch (err) {
     console.warn('Failed to fetch user timezone preference', err);
-  }
-  
-  const cached = getCache(CACHE_KEYS.USER_PROFILE, user.uid);
-  if (cached?.preferredTimeZone) {
-    return cached.preferredTimeZone;
   }
   
   return 'America/New_York';
@@ -648,13 +630,13 @@ async function saveUserTimeZone(timeZone) {
   if (!user) return;
   
   try {
-    await window.db.collection('userProfiles').doc(user.uid).set({
+    await setDoc('userProfiles', user.uid, {
       preferredTimeZone: timeZone,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-    
-    const cached = getCache(CACHE_KEYS.USER_PROFILE, user.uid) || {};
-    setCache(CACHE_KEYS.USER_PROFILE, { ...cached, preferredTimeZone: timeZone }, user.uid);
+    }, {
+      merge: true,
+      invalidateCacheKey: `${CACHE_KEYS.USER_PROFILE}_${user.uid}`
+    });
   } catch (err) {
     console.warn('Failed to save timezone preference', err);
   }
@@ -1247,23 +1229,20 @@ async function unscheduleSelectedQueueItems() {
   if (!confirmed) return;
   
   try {
-    const batch = firebase.firestore().batch();
-    
-    for (const docId of queueSelections) {
-      const docRef = firebase.firestore().collection('julesQueues').doc(user.uid).collection('items').doc(docId);
-      batch.update(docRef, {
+    const operations = queueSelections.map(docId => ({
+      type: 'update',
+      collection: `julesQueues/${user.uid}/items`,
+      docId: docId,
+      data: {
         status: 'pending',
         scheduledAt: firebase.firestore.FieldValue.delete(),
         scheduledTimeZone: firebase.firestore.FieldValue.delete(),
         activatedAt: firebase.firestore.FieldValue.delete(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }
-    
-    await batch.commit();
-    
-    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
-    clearCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
+      }
+    }));
+
+    await runBatch(operations, getQueueCacheKey(user.uid));
     
     showToast(`${queueSelections.length} ${itemText} unscheduled`, 'success');
     await loadQueuePage();
