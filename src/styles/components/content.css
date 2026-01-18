@@ -128,6 +128,7 @@ a:hover { text-decoration: underline; }
 .text-center { text-align:center; }
 .pad-lg { padding:24px; }
 .pad-xl { padding:48px; }
+.hidden-initially { display:none; }
 .muted { color:var(--muted); }
 .font-16 { font-size:16px; }
 .font-48 { font-size:48px; }
