@@ -60,7 +60,6 @@ export async function fetchJSON(url) {
     return res.json();
   } catch (e) {
     console.error('GitHub API fetch failed:', e);
-    // Returns null on error to prevent crashing, but logs for debugging
     return null;
   }
 }
