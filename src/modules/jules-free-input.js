@@ -1,7 +1,8 @@
 import { getCurrentUser } from './auth.js';
 import { checkJulesKey } from './jules-keys.js';
 import { showJulesKeyModal, showSubtaskErrorModal } from './jules-modal.js';
-import { addToJulesQueue, handleQueueAction } from './jules-queue.js';
+import { handleQueueAction } from './jules-queue.js';
+import { addToJulesQueue } from './jules-queue-api.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';

@@ -6,7 +6,7 @@
 import { analyzePromptStructure, buildSubtaskSequence, validateSubtasks } from './subtask-manager.js';
 import { showSubtaskErrorModal, openUrlInBackground } from './jules-modal.js';
 import { getLastSelectedSource } from './jules-free-input.js';
-import { addToJulesQueue } from './jules-queue.js';
+import { addToJulesQueue } from './jules-queue-api.js';
 import { callRunJulesFunction } from './jules-api.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';

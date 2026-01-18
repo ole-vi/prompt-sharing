@@ -4,7 +4,8 @@
  */
 
 import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
-import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly } from '../modules/jules-queue.js';
+import { attachQueueHandlers, renderQueueListDirectly } from '../modules/jules-queue.js';
+import { listJulesQueue } from '../modules/jules-queue-api.js';
 import { loadSubtaskErrorModal } from '../modules/jules-modal.js';
 import { TIMEOUTS } from '../utils/constants.js';
 
