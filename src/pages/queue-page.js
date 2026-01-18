@@ -7,12 +7,20 @@ import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
 import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly } from '../modules/jules-queue.js';
 import { loadSubtaskErrorModal } from '../modules/jules-modal.js';
 import { TIMEOUTS } from '../utils/constants.js';
+import { createElement, clearElement } from '../utils/dom-helpers.js';
 
 // Initialize checkbox mutual exclusivity
 initMutualExclusivity();
 
 // Load the subtask error modal partial
 loadSubtaskErrorModal();
+
+function createEmptyStatePanel(message, isError = false) {
+  const className = isError
+    ? 'panel text-center pad-xl'
+    : 'panel text-center pad-xl muted-text';
+  return createElement('div', className, message);
+}
 
 function waitForComponents() {
   if (document.querySelector('header')) {
@@ -59,19 +67,22 @@ async function loadQueue() {
   }
   
   if (!user) {
-    listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Please sign in to view your queue.</div>';
+    clearElement(listDiv);
+    listDiv.appendChild(createEmptyStatePanel('Please sign in to view your queue.'));
     return;
   }
 
   try {
-    listDiv.innerHTML = '<div class="panel text-center pad-xl muted-text">Loading queue...</div>';
+    clearElement(listDiv);
+    listDiv.appendChild(createEmptyStatePanel('Loading queue...'));
 
     const items = await listJulesQueue(user.uid);
     renderQueueListDirectly(items);
     attachQueueHandlers();
   } catch (err) {
     console.error('Queue loading error:', err);
-    listDiv.innerHTML = `<div class="panel text-center pad-xl">Failed to load queue: ${err.message}</div>`;
+    clearElement(listDiv);
+    listDiv.appendChild(createEmptyStatePanel(`Failed to load queue: ${err.message}`, true));
   }
 }
 
