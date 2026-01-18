@@ -1,8 +1,10 @@
 import { waitForFirebase } from '../shared-init.js';
 import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js';
-import { attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
+import { showPromptViewer } from '../modules/prompt-viewer.js';
 import { debounce } from '../utils/debounce.js';
 import { TIMEOUTS } from '../utils/constants.js';
+import { createSessionCard, createEmptyState, createErrorState } from '../utils/dom-builders.js';
+import { clearElement } from '../utils/dom-helpers.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -52,11 +54,18 @@ async function loadSessionsPage() {
         loadMoreSection.classList.add('hidden');
       }
     } else if (allSessionsCache.length === 0) {
-      allSessionsList.innerHTML = '<div class="muted text-center pad-lg">No sessions found</div>';
+      clearElement(allSessionsList);
+      allSessionsList.appendChild(createEmptyState('No sessions found'));
     }
   } catch (error) {
     if (allSessionsCache.length === 0) {
-      allSessionsList.innerHTML = `<div class="text-center pad-lg" style="color:#e74c3c;">Failed to load sessions: ${error.message}</div>`;
+      clearElement(allSessionsList);
+      // Using inline style to match previous behavior but could move to css if needed
+      const errorDiv = createErrorState(`Failed to load sessions: ${error.message}`);
+      errorDiv.style.color = '#e74c3c';
+      errorDiv.classList.remove('panel', 'pad-xl'); // adjust classes to match previous styling
+      errorDiv.classList.add('pad-lg');
+      allSessionsList.appendChild(errorDiv);
     }
     loadMoreBtn.disabled = false;
     loadMoreBtn.textContent = 'Load More';
@@ -88,55 +97,61 @@ function renderAllSessions(sessions) {
     filteredSessions = cachedFuseInstance.search(searchTerm).map(result => result.item);
   }
   
+  clearElement(allSessionsList);
+
   if (filteredSessions.length === 0 && searchTerm) {
-    allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions match your search</div>';
+    // Styling from previous code: style="color:var(--muted); text-align:center; padding:24px;"
+    const noMatchDiv = document.createElement('div');
+    noMatchDiv.style.color = 'var(--muted)';
+    noMatchDiv.style.textAlign = 'center';
+    noMatchDiv.style.padding = '24px';
+    noMatchDiv.textContent = 'No sessions match your search';
+    allSessionsList.appendChild(noMatchDiv);
     return;
   }
   
-  allSessionsList.innerHTML = filteredSessions.map(session => {
-    const state = session.state || 'UNKNOWN';
-    const stateIcons = {
-      'COMPLETED': 'check_circle',
-      'FAILED': 'cancel',
-      'IN_PROGRESS': 'schedule',
-      'PLANNING': 'schedule',
-      'QUEUED': 'pause_circle',
-      'AWAITING_USER_FEEDBACK': 'chat_bubble'
-    };
-    const stateIcon = stateIcons[state] || 'help';
-    
-    const stateLabel = {
-      'COMPLETED': 'COMPLETED',
-      'FAILED': 'FAILED',
-      'IN_PROGRESS': 'IN PROGRESS',
-      'PLANNING': 'IN PROGRESS',
-      'QUEUED': 'QUEUED',
-      'AWAITING_USER_FEEDBACK': 'AWAITING USER FEEDBACK'
-    }[state] || state.replace(/_/g, ' ');
-    
-    const promptPreview = (session.prompt || 'No prompt text').substring(0, 150);
-    const displayPrompt = promptPreview.length < (session.prompt || '').length ? promptPreview + '...' : promptPreview;
-    const createdAt = session.createTime ? new Date(session.createTime).toLocaleString() : 'Unknown';
-    const prUrl = session.outputs?.[0]?.pullRequest?.url;
-    
-    const sessionId = session.name?.split('sessions/')[1] || session.id?.split('sessions/')[1] || session.id;
-    const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
-    
-    return `
-      <div class="session-card" onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
-        <div class="session-meta">${createdAt}</div>
-        <div class="session-prompt">${displayPrompt}</div>
-        <div class="session-row">
-          <span class="session-pill"><span class="icon icon-inline" aria-hidden="true">${stateIcon}</span> ${stateLabel}</span>
-          ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" onclick="event.stopPropagation()"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a>` : ''}
-          <span class="session-hint"><span class="icon icon-inline" aria-hidden="true">info</span> Click to view session</span>
-          <button class="btn-icon session-view-btn" onclick="event.stopPropagation(); window.viewPrompt_${sessionId.replace(/[^a-zA-Z0-9]/g, '_')}()" title="View full prompt"><span class="icon" aria-hidden="true">visibility</span></button>
-        </div>
-      </div>
-    `;
-  }).join('');
+  filteredSessions.forEach(session => {
+    allSessionsList.appendChild(createSessionCard(session));
+  });
+
+  // Ensure delegated listener is attached once
+  if (allSessionsList && !allSessionsList.dataset.hasHandlers) {
+    allSessionsList.dataset.hasHandlers = 'true';
+    allSessionsList.addEventListener('click', handleSessionListClick);
+  }
+}
+
+function handleSessionListClick(e) {
+  const target = e.target;
   
-  attachPromptViewerHandlers(filteredSessions);
+  // Handle View Button Click
+  const viewBtn = target.closest('.session-view-btn');
+  if (viewBtn) {
+    e.stopPropagation();
+    const sessionId = viewBtn.dataset.sessionId;
+    const session = allSessionsCache.find(s =>
+      (s.name?.split('sessions/')[1] || s.id?.split('sessions/')[1] || s.id) === sessionId
+    );
+    if (session) {
+      showPromptViewer(session.prompt || 'No prompt text available', sessionId);
+    }
+    return;
+  }
+
+  // Handle Link Click (should be handled by browser but we stop propagation of card click)
+  if (target.closest('a')) {
+    e.stopPropagation();
+    return;
+  }
+
+  // Handle Card Click
+  const card = target.closest('.session-card');
+  if (card) {
+    const url = card.dataset.sessionUrl;
+    if (url) {
+      window.open(url, '_blank', 'noopener');
+    }
+  }
 }
 
 async function loadSessions() {
