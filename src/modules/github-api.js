@@ -36,7 +36,8 @@ async function getGitHubAccessToken() {
     }
 
     return token;
-  } catch {
+  } catch (error) {
+    console.error('GitHub API token retrieval failed:', error);
     return null;
   }
 }
@@ -58,6 +59,8 @@ export async function fetchJSON(url) {
     if (!res.ok) return null;
     return res.json();
   } catch (e) {
+    console.error('GitHub API fetch failed:', e);
+    // Returns null on error to prevent crashing, but logs for debugging
     return null;
   }
 }
@@ -95,6 +98,7 @@ export async function fetchJSONWithETag(url, etag = null) {
     
     return { data, etag: newEtag, notModified: false };
   } catch (e) {
+    console.error('GitHub API fetch with ETag failed:', e);
     return { data: null, etag: null, error: e };
   }
 }
