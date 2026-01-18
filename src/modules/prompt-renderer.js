@@ -1,6 +1,6 @@
 import { slugify } from '../utils/slug.js';
 import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './github-api.js';
-import { CODEX_URL_REGEX, TIMEOUTS } from '../utils/constants.js';
+import { CODEX_URL_REGEX, TIMEOUTS, UI_ICONS, STATUS_MESSAGES } from '../utils/constants.js';
 import { setElementDisplay } from '../utils/dom-helpers.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
@@ -298,14 +298,14 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   const moreRawBtn = document.getElementById('moreRawBtn');
   
   if (isGistContent && gistUrl) {
-    editBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
+    editBtn.innerHTML = `${UI_ICONS.edit} ${STATUS_MESSAGES.EDIT_LINK}`;
     editBtn.title = 'Edit the gist link';
-    if (moreEditBtn) moreEditBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
+    if (moreEditBtn) moreEditBtn.innerHTML = `${UI_ICONS.edit} ${STATUS_MESSAGES.EDIT_LINK}`;
     
-    ghBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on Gist';
+    ghBtn.innerHTML = `${UI_ICONS.folder} ${STATUS_MESSAGES.VIEW_ON_GIST}`;
     ghBtn.title = 'Open the gist on GitHub';
     ghBtn.href = gistUrl;
-    if (moreGhBtn) moreGhBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on Gist';
+    if (moreGhBtn) moreGhBtn.innerHTML = `${UI_ICONS.folder} ${STATUS_MESSAGES.VIEW_ON_GIST}`;
     
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
@@ -318,15 +318,15 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     rawBtn.removeAttribute('download');
     rawBtn.title = 'Open gist content in new tab';
   } else if (isCodexContent && codexUrl) {
-    editBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
+    editBtn.innerHTML = `${UI_ICONS.edit} ${STATUS_MESSAGES.EDIT_LINK}`;
     editBtn.title = 'Edit the codex link';
-    if (moreEditBtn) moreEditBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
+    if (moreEditBtn) moreEditBtn.innerHTML = `${UI_ICONS.edit} ${STATUS_MESSAGES.EDIT_LINK}`;
     
-    ghBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">chat_bubble</span> View on Codex';
+    ghBtn.innerHTML = `${UI_ICONS.chat_bubble} ${STATUS_MESSAGES.VIEW_ON_CODEX}`;
     ghBtn.title = 'Open the conversation on Codex';
     ghBtn.href = codexUrl;
     ghBtn.target = '_blank';
-    if (moreGhBtn) moreGhBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">chat_bubble</span> View on Codex';
+    if (moreGhBtn) moreGhBtn.innerHTML = `${UI_ICONS.chat_bubble} ${STATUS_MESSAGES.VIEW_ON_CODEX}`;
     
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
@@ -340,14 +340,14 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     rawBtn.removeAttribute('download');
     rawBtn.title = 'Open raw link in new tab';
   } else {
-    editBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub';
+    editBtn.innerHTML = `${UI_ICONS.edit} ${STATUS_MESSAGES.EDIT_ON_GITHUB}`;
     editBtn.title = 'Edit the file on GitHub';
-    if (moreEditBtn) moreEditBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit on GitHub';
+    if (moreEditBtn) moreEditBtn.innerHTML = `${UI_ICONS.edit} ${STATUS_MESSAGES.EDIT_ON_GITHUB}`;
     
-    ghBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub';
+    ghBtn.innerHTML = `${UI_ICONS.folder} ${STATUS_MESSAGES.VIEW_ON_GITHUB}`;
     ghBtn.title = 'Open the file on GitHub';
     ghBtn.href = `https://github.com/${owner}/${repo}/blob/${branch}/${f.path}`;
-    if (moreGhBtn) moreGhBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">folder</span> View on GitHub';
+    if (moreGhBtn) moreGhBtn.innerHTML = `${UI_ICONS.folder} ${STATUS_MESSAGES.VIEW_ON_GITHUB}`;
     
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
@@ -360,11 +360,11 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
 
   if (isCodexContent) {
     copyBtn.classList.add('hidden');
-    shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
+    shareBtn.innerHTML = `${UI_ICONS.link} ${STATUS_MESSAGES.COPY_LINK}`;
   } else {
     copyBtn.classList.remove('hidden');
-    copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy prompt';
-    shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
+    copyBtn.innerHTML = `${UI_ICONS.copy} ${STATUS_MESSAGES.COPY_PROMPT}`;
+    shareBtn.innerHTML = `${UI_ICONS.link} ${STATUS_MESSAGES.COPY_LINK}`;
   }
 
   // Update title and content
@@ -394,7 +394,7 @@ function enhanceCodeBlocks() {
   pres.forEach((pre) => {
     if (pre.querySelector('.copy-code-btn')) return;
     const btn = document.createElement('button');
-    btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">content_copy</span>';
+    btn.innerHTML = UI_ICONS.copy;
     btn.className = 'copy-code-btn';
     btn.dataset.action = 'copy-code';
     btn.title = 'Copy code';
@@ -415,7 +415,7 @@ function enhanceCodeBlocks() {
           try {
             await navigator.clipboard.writeText(code);
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span>';
+            btn.innerHTML = UI_ICONS.check_circle;
             btn.classList.add('copied');
             setTimeout(() => {
               btn.innerHTML = originalHTML;
@@ -426,7 +426,7 @@ function enhanceCodeBlocks() {
               error,
               context: 'enhanceCodeBlocks.copy',
             });
-            statusBar.showMessage('Failed to copy to clipboard', { type: 'error' });
+            statusBar.showMessage(STATUS_MESSAGES.COPY_FAILED, { type: 'error' });
           }
         }
       }
@@ -443,17 +443,17 @@ async function handleCopyPrompt() {
     const isCodex = getCurrentPromptText() && CODEX_URL_REGEX.test(getCurrentPromptText().trim());
     if (isCodex) {
       contentToCopy = getCurrentPromptText();
-      buttonText = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy link';
+      buttonText = `${UI_ICONS.copy} ${STATUS_MESSAGES.COPY_LINK}`;
     } else {
       contentToCopy = getCurrentPromptText();
-      buttonText = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy prompt';
+      buttonText = `${UI_ICONS.copy} ${STATUS_MESSAGES.COPY_PROMPT}`;
     }
 
     await navigator.clipboard.writeText(contentToCopy);
-    copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied';
+    copyBtn.innerHTML = `${UI_ICONS.check_circle} ${STATUS_MESSAGES.COPIED}`;
     setTimeout(() => (copyBtn.innerHTML = buttonText), TIMEOUTS.copyFeedback);
   } catch {
-    showToast('Clipboard blocked. Select and copy manually.', 'warn');
+    showToast(STATUS_MESSAGES.CLIPBOARD_BLOCKED_MANUAL, 'warn');
   }
 }
 
@@ -461,13 +461,13 @@ async function handleCopenPrompt(target) {
   try {
     const promptText = getCurrentPromptText();
     if (!promptText) {
-      showToast('No prompt available.', 'warn');
+      showToast(STATUS_MESSAGES.NO_PROMPT_AVAILABLE, 'warn');
       return;
     }
 
     // Copy to clipboard
     await navigator.clipboard.writeText(promptText);
-    copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied!';
+    copenBtn.innerHTML = `${UI_ICONS.check_circle} ${STATUS_MESSAGES.COPIED_EXCLAMATION}`;
     setTimeout(() => (copenBtn.innerHTML = originalCopenLabel), TIMEOUTS.copyFeedback);
 
     // Open appropriate tab based on target
@@ -495,18 +495,18 @@ async function handleCopenPrompt(target) {
     }
     window.open(url, '_blank', 'noopener,noreferrer');
   } catch {
-    showToast('Clipboard blocked. Could not copy prompt.', 'warn');
+    showToast(STATUS_MESSAGES.CLIPBOARD_BLOCKED_PROMPT, 'warn');
   }
 }
 
 async function handleShareLink() {
   try {
     await navigator.clipboard.writeText(location.href);
-    shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Link copied';
+    shareBtn.innerHTML = `${UI_ICONS.check_circle} ${STATUS_MESSAGES.LINK_COPIED}`;
   } catch {
-    showToast('Could not copy link.', 'warn');
+    showToast(STATUS_MESSAGES.COPY_LINK_FAILED, 'warn');
   } finally {
-    const originalText = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
+    const originalText = `${UI_ICONS.link} ${STATUS_MESSAGES.COPY_LINK}`;
     setTimeout(() => (shareBtn.innerHTML = originalText), TIMEOUTS.copyFeedback);
   }
 }

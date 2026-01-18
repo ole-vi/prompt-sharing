@@ -217,3 +217,135 @@ export const CACHE_DURATIONS = {
   short: 300000, // 5 minutes
   session: 0
 };
+
+/**
+ * Icon HTML strings for use in innerHTML.
+ */
+export const UI_ICONS = {
+  check_circle: '<span class="icon icon-inline" aria-hidden="true">check_circle</span>',
+  cancel: '<span class="icon icon-inline" aria-hidden="true">cancel</span>',
+  hourglass_top: '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span>',
+  delete: '<span class="icon icon-inline" aria-hidden="true">delete</span>',
+  refresh: '<span class="icon icon-inline" aria-hidden="true">refresh</span>',
+  sync: '<span class="icon" aria-hidden="true">sync</span>',
+  account_tree: '<span class="icon icon-inline" aria-hidden="true">account_tree</span>',
+  folder: '<span class="icon icon-inline" aria-hidden="true">folder</span>',
+  schedule: '<span class="icon icon-inline" aria-hidden="true">schedule</span>',
+  pause_circle: '<span class="icon icon-inline" aria-hidden="true">pause_circle</span>',
+  chat_bubble: '<span class="icon icon-inline" aria-hidden="true">chat_bubble</span>',
+  help: '<span class="icon icon-inline" aria-hidden="true">help</span>',
+  link: '<span class="icon icon-inline" aria-hidden="true">link</span>',
+  info: '<span class="icon icon-inline" aria-hidden="true">info</span>',
+  visibility: '<span class="icon" aria-hidden="true">visibility</span>',
+  edit_note: '<span class="icon icon-inline" aria-hidden="true">edit_note</span>',
+  settings: '<span class="icon icon-inline" aria-hidden="true">settings</span>',
+  block: '<span class="icon icon-inline" aria-hidden="true">block</span>',
+  list_alt: '<span class="icon icon-inline" aria-hidden="true">list_alt</span>',
+  copy: '<span class="icon icon-inline" aria-hidden="true">content_copy</span>',
+  edit: '<span class="icon icon-inline" aria-hidden="true">edit</span>',
+  close: '<span class="icon" aria-hidden="true">close</span>',
+  inventory_2: '<span class="icon icon-inline" aria-hidden="true">inventory_2</span>',
+  error: '<span class="icon icon-inline" aria-hidden="true">error</span>',
+  warning: '<span class="icon icon-inline" aria-hidden="true">warning</span>'
+};
+
+/**
+ * Status and Toast messages.
+ */
+export const STATUS_MESSAGES = {
+  NOT_LOGGED_IN: "Not logged in.",
+  API_KEY_DELETED: "Jules API key has been deleted. You can enter a new one next time.",
+  API_KEY_RESET_FAILED: "Failed to reset API key: ",
+  LOAD_SOURCES_FAILED: "Failed to load sources: ",
+  LOAD_SESSIONS_FAILED: "Failed to load sessions: ",
+  API_KEY_NOT_FOUND: "Jules API key not found",
+  NO_MATCHING_SESSIONS: "No sessions match your search",
+  CLIPBOARD_BLOCKED_MANUAL: "Clipboard blocked. Select and copy manually.",
+  NO_PROMPT_AVAILABLE: "No prompt available.",
+  CLIPBOARD_BLOCKED_PROMPT: "Clipboard blocked. Could not copy prompt.",
+  COPY_LINK_FAILED: "Could not copy link.",
+  COPY_FAILED: "Failed to copy to clipboard",
+  ITEM_MARKED_UNSCHEDULE: "Item marked for unscheduling. Click Save to confirm.",
+  SUBTASK_SCHEDULE_WARNING: "Individual subtasks cannot be scheduled separately. Please select the parent batch to schedule all subtasks together.",
+  NO_ITEMS_SCHEDULE: "No items selected to schedule",
+  DATE_TIME_REQUIRED: "Date and time are required",
+  SCHEDULE_FUTURE_ERROR: "Scheduled time must be in the future",
+  SCHEDULED_SUCCESS: (count, date) => `Scheduled ${count} ${count === 1 ? 'item' : 'items'} for ${date}`,
+  SCHEDULE_FAILED: "Failed to schedule items: ",
+  UNSCHEDULED_SUCCESS: (count) => `${count} ${count === 1 ? 'item' : 'items'} unscheduled`,
+  UNSCHEDULE_FAILED: "Failed to unschedule: ",
+  PAUSING_QUEUE: "Pausing queue processing after the current subtask",
+  PROCESSING_QUEUE: "Processing queue...",
+  PAUSING_SUBTASK: "Pausing after current subtask",
+  PAUSED_SAVED: "Paused — progress saved",
+  PROCESSING_SUBTASK: (current, total) => `Processing subtask ${current}/${total}`,
+  REMAINDER_QUEUED: "Remainder queued for later",
+  LOADING_SOURCES: "Loading sources...",
+  LOADING_SESSIONS: "Loading sessions...",
+  NO_CONNECTED_REPOS: "No connected repositories found.",
+  NO_RECENT_SESSIONS: "No recent sessions found.",
+  LOADING: "Loading...",
+  LOAD_MORE: "Load More",
+  NO_SESSIONS_FOUND: "No sessions found",
+  SAVED: "Saved",
+  NOT_SAVED: "Not saved",
+  DELETING: "Deleting...",
+  DELETE_API_KEY: "Delete Jules API Key",
+  RESET_API_KEY: "Reset Jules API Key",
+  COPIED: "Copied",
+  COPIED_EXCLAMATION: "Copied!",
+  LINK_COPIED: "Link copied",
+  COPY_PROMPT: "Copy prompt",
+  COPY_LINK: "Copy link",
+  EDIT_LINK: "Edit Link",
+  VIEW_ON_GIST: "View on Gist",
+  VIEW_ON_CODEX: "View on Codex",
+  VIEW_ON_GITHUB: "View on GitHub",
+  EDIT_ON_GITHUB: "Edit on GitHub",
+  NO_BRANCHES: "No branches found",
+  CONNECT_REPOS_HINT: "Connect repos in the Jules UI.",
+  UNKNOWN_USER: "Unknown User",
+  UNKNOWN: "Unknown"
+};
+
+/**
+ * Modal configuration constants.
+ */
+export const MODAL_CONFIG = {
+  DELETE_API_KEY: {
+    title: 'Delete API Key',
+    confirmText: 'Delete',
+    confirmStyle: 'error',
+    message: "This will delete your stored Jules API key. You'll need to enter a new one next time."
+  },
+  CONVERT_TO_SINGLE: {
+    title: 'Convert to Single Prompt',
+    confirmText: 'Convert',
+    confirmStyle: 'warn',
+    message: 'This will combine all subtasks into a single prompt. Continue?'
+  },
+  REMOVE_LAST_SUBTASK: {
+    title: 'Remove Last Subtask',
+    confirmText: 'Remove',
+    confirmStyle: 'warn',
+    message: 'This is the last subtask. Removing it will leave no subtasks. Continue?'
+  },
+  UNSAVED_CHANGES: {
+    title: 'Unsaved Changes',
+    confirmText: 'Close Anyway',
+    confirmStyle: 'warn',
+    message: 'You have unsaved changes. Are you sure you want to close?'
+  },
+  UNSCHEDULE_ITEMS: {
+    title: 'Unschedule Items',
+    confirmText: 'Unschedule',
+    confirmStyle: 'warn',
+    message: (count, itemText) => `Unschedule ${count} selected ${itemText}?`
+  },
+  DELETE_ITEMS: {
+    title: 'Delete Items',
+    confirmText: 'Delete',
+    confirmStyle: 'error',
+    message: (count) => `Delete ${count} selected item(s)?`
+  }
+};

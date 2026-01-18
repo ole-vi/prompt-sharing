@@ -9,7 +9,7 @@ import { getCache, setCache, clearCache, CACHE_KEYS } from '../utils/session-cac
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { attachPromptViewerHandlers } from './prompt-viewer.js';
-import { TIMEOUTS } from '../utils/constants.js';
+import { TIMEOUTS, UI_ICONS, STATUS_MESSAGES, MODAL_CONFIG } from '../utils/constants.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -19,7 +19,7 @@ export function showUserProfileModal() {
   const user = window.auth?.currentUser;
 
   if (!user) {
-    showToast('Not logged in.', 'error');
+    showToast(STATUS_MESSAGES.NOT_LOGGED_IN, 'error');
     return;
   }
 
@@ -35,14 +35,14 @@ export function showUserProfileModal() {
   const julesProfileInfoSection = document.getElementById('julesProfileInfoSection');
 
   if (profileUserName) {
-    profileUserName.textContent = user.displayName || user.email || 'Unknown User';
+    profileUserName.textContent = user.displayName || user.email || STATUS_MESSAGES.UNKNOWN_USER;
   }
 
   checkJulesKey(user.uid).then(async (hasKey) => {
     if (julesKeyStatus) {
       julesKeyStatus.innerHTML = hasKey 
-        ? '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Saved'
-        : '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
+        ? `${UI_ICONS.check_circle} ${STATUS_MESSAGES.SAVED}`
+        : `${UI_ICONS.cancel} ${STATUS_MESSAGES.NOT_SAVED}`;
       julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
     }
     
@@ -70,36 +70,32 @@ export function showUserProfileModal() {
 
   if (resetBtn) {
     resetBtn.onclick = async () => {
-      const confirmed = await showConfirm(`This will delete your stored Jules API key. You'll need to enter a new one next time.`, {
-        title: 'Delete API Key',
-        confirmText: 'Delete',
-        confirmStyle: 'error'
-      });
+      const confirmed = await showConfirm(MODAL_CONFIG.DELETE_API_KEY.message, MODAL_CONFIG.DELETE_API_KEY);
       if (!confirmed) return;
       
       try {
         resetBtn.disabled = true;
-        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span> Deleting...';
+        resetBtn.innerHTML = `${UI_ICONS.hourglass_top} ${STATUS_MESSAGES.DELETING}`;
         const deleted = await deleteStoredJulesKey(user.uid);
         if (deleted) {
           if (julesKeyStatus) {
-            julesKeyStatus.innerHTML = '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
+            julesKeyStatus.innerHTML = `${UI_ICONS.cancel} ${STATUS_MESSAGES.NOT_SAVED}`;
             julesKeyStatus.style.color = 'var(--muted)';
           }
-          resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key';
+          resetBtn.innerHTML = `${UI_ICONS.delete} ${STATUS_MESSAGES.DELETE_API_KEY}`;
           resetBtn.disabled = false;
           
           if (addBtn) addBtn.style.display = 'block';
           if (dangerZoneSection) dangerZoneSection.style.display = 'none';
           if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
           
-          showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
+          showToast(STATUS_MESSAGES.API_KEY_DELETED, 'success');
         } else {
           throw new Error('Failed to delete key');
         }
       } catch (error) {
-        showToast('Failed to reset API key: ' + error.message, 'error');
-        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">refresh</span> Reset Jules API Key';
+        showToast(STATUS_MESSAGES.API_KEY_RESET_FAILED + error.message, 'error');
+        resetBtn.innerHTML = `${UI_ICONS.refresh} ${STATUS_MESSAGES.RESET_API_KEY}`;
         resetBtn.disabled = false;
       }
     };
@@ -181,8 +177,8 @@ async function loadAndDisplayJulesProfile(uid) {
     let profileData = getCache(CACHE_KEYS.JULES_ACCOUNT, uid);
     
     if (!profileData) {
-      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sources...</div>';
-      sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
+      sourcesListDiv.innerHTML = `<div style="color:var(--muted); font-size:13px;">${STATUS_MESSAGES.LOADING_SOURCES}</div>`;
+      sessionsListDiv.innerHTML = `<div style="color:var(--muted); font-size:13px;">${STATUS_MESSAGES.LOADING_SESSIONS}</div>`;
       
       profileData = await loadJulesProfileInfo(uid);
       setCache(CACHE_KEYS.JULES_ACCOUNT, profileData, uid);
@@ -203,13 +199,13 @@ async function loadAndDisplayJulesProfile(uid) {
 
         const branchesHtml = branches.length > 0
           ? `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted);">
-               <div style="margin-bottom:4px; color:var(--text);"><span class="icon icon-inline" aria-hidden="true">account_tree</span> Branches (${branches.length}):</div>
+               <div style="margin-bottom:4px; color:var(--text);">${UI_ICONS.account_tree} Branches (${branches.length}):</div>
                ${branches.map(b => `<div style="padding:3px 0 3px 8px; cursor:pointer;"
                   onclick="window.open('https://github.com/${githubPath}/tree/${encodeURIComponent(b.displayName || b.name)}', '_blank')">
                   • ${b.displayName || b.name}
                 </div>`).join('')}
              </div>`
-          : `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted); font-style:italic;">No branches found</div>`;
+          : `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted); font-style:italic;">${STATUS_MESSAGES.NO_BRANCHES}</div>`;
 
         const cardHtml = `
           <div class="queue-card">
@@ -223,7 +219,7 @@ async function loadAndDisplayJulesProfile(uid) {
                       else { el.style.display = 'none'; arrow.textContent = '▶'; }
                     })()">
                   <span id="${sourceId}-arrow" style="display:inline-block; width:12px; font-size:10px; margin-right:6px;">▶</span>
-                  <span class="icon icon-inline" aria-hidden="true">folder</span> ${githubPath}
+                  ${UI_ICONS.folder} ${githubPath}
                   <span class="queue-status">${branchSummaryText}</span>
                 </div>
               </div>
@@ -235,7 +231,7 @@ async function loadAndDisplayJulesProfile(uid) {
       }).join('');
       sourcesListDiv.innerHTML = `<div class="vlist">${sourcesHtml}</div>`;
     } else {
-      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No connected repositories found.<br><small>Connect repos in the Jules UI.</small></div>';
+      sourcesListDiv.innerHTML = `<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">${STATUS_MESSAGES.NO_CONNECTED_REPOS}<br><small>${STATUS_MESSAGES.CONNECT_REPOS_HINT}</small></div>`;
     }
 
     if (profileData.sessions && profileData.sessions.length > 0) {
@@ -272,10 +268,10 @@ async function loadAndDisplayJulesProfile(uid) {
             <div class="session-meta">${createdAt}</div>
             <div class="session-prompt">${displayPrompt}</div>
             <div class="session-row">
-              <span class="session-pill"><span class="icon icon-inline" aria-hidden="true">${stateIcon}</span> ${stateLabel}</span>
-              ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" onclick="event.stopPropagation()"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a>` : ''}
-              <span class="session-hint"><span class="icon icon-inline" aria-hidden="true">info</span> Click to view session</span>
-              <button class="btn-icon session-view-btn" onclick="event.stopPropagation(); window.viewPrompt_${cleanId}()" title="View full prompt"><span class="icon" aria-hidden="true">visibility</span></button>
+              <span class="session-pill">${UI_ICONS[stateIcon]} ${stateLabel}</span>
+              ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" onclick="event.stopPropagation()">${UI_ICONS.link} View PR</a>` : ''}
+              <span class="session-hint">${UI_ICONS.info} Click to view session</span>
+              <button class="btn-icon session-view-btn" onclick="event.stopPropagation(); window.viewPrompt_${cleanId}()" title="View full prompt">${UI_ICONS.visibility}</button>
             </div>
           </div>
         `;
@@ -287,24 +283,24 @@ async function loadAndDisplayJulesProfile(uid) {
       
       sessionsListDiv.innerHTML = `<div class="vlist">${sessionsHtml}</div>`;
     } else {
-      sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No recent sessions found.</div>';
+      sessionsListDiv.innerHTML = `<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">${STATUS_MESSAGES.NO_RECENT_SESSIONS}</div>`;
     }
 
     loadBtn.disabled = false;
-    loadBtn.innerHTML = '<span class="icon" aria-hidden="true">sync</span>';
+    loadBtn.innerHTML = UI_ICONS.sync;
     
     attachViewAllSessionsHandler();
 
   } catch (error) {
     sourcesListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
-      Failed to load sources: ${error.message}
+      ${STATUS_MESSAGES.LOAD_SOURCES_FAILED}${error.message}
     </div>`;
     sessionsListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
-      Failed to load sessions: ${error.message}
+      ${STATUS_MESSAGES.LOAD_SESSIONS_FAILED}${error.message}
     </div>`;
 
     loadBtn.disabled = false;
-    loadBtn.innerHTML = '<span class="icon" aria-hidden="true">sync</span>';
+    loadBtn.innerHTML = UI_ICONS.sync;
   }
 }
 
@@ -341,11 +337,11 @@ async function loadSessionsPage() {
   
   try {
     loadMoreBtn.disabled = true;
-    loadMoreBtn.textContent = 'Loading...';
+    loadMoreBtn.textContent = STATUS_MESSAGES.LOADING;
     
     const apiKey = await getDecryptedJulesKey(user.uid);
     if (!apiKey) {
-      throw new Error('Jules API key not found');
+      throw new Error(STATUS_MESSAGES.API_KEY_NOT_FOUND);
     }
     
     const result = await listJulesSessions(apiKey, 50, sessionNextPageToken);
@@ -359,19 +355,19 @@ async function loadSessionsPage() {
       if (sessionNextPageToken) {
         loadMoreSection.style.display = 'block';
         loadMoreBtn.disabled = false;
-        loadMoreBtn.textContent = 'Load More';
+        loadMoreBtn.textContent = STATUS_MESSAGES.LOAD_MORE;
       } else {
         loadMoreSection.style.display = 'none';
       }
     } else if (allSessionsCache.length === 0) {
-      allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions found</div>';
+      allSessionsList.innerHTML = `<div style="color:var(--muted); text-align:center; padding:24px;">${STATUS_MESSAGES.NO_SESSIONS_FOUND}</div>`;
     }
   } catch (error) {
     if (allSessionsCache.length === 0) {
-      allSessionsList.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">Failed to load sessions: ${error.message}</div>`;
+      allSessionsList.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">${STATUS_MESSAGES.LOAD_SESSIONS_FAILED}${error.message}</div>`;
     }
     loadMoreBtn.disabled = false;
-    loadMoreBtn.textContent = 'Load More';
+    loadMoreBtn.textContent = STATUS_MESSAGES.LOAD_MORE;
   }
 }
 
@@ -389,7 +385,7 @@ function renderAllSessions(sessions) {
     : sessions;
   
   if (filteredSessions.length === 0) {
-    allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions match your search</div>';
+    allSessionsList.innerHTML = `<div style="color:var(--muted); text-align:center; padding:24px;">${STATUS_MESSAGES.NO_MATCHING_SESSIONS}</div>`;
     return;
   }
   
@@ -429,12 +425,12 @@ function renderAllSessions(sessions) {
     
     const prUrl = session.githubPrUrl || null;
     const prLink = prUrl 
-      ? `<div style="margin-top:4px;" onclick="event.stopPropagation();"><a href="${prUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none;"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a></div>`
+      ? `<div style="margin-top:4px;" onclick="event.stopPropagation();"><a href="${prUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none;">${UI_ICONS.link} View PR</a></div>`
       : '';
     
     const subtaskCount = session.childTasks?.length || 0;
     const subtaskInfo = subtaskCount > 0 
-      ? `<div style="font-size:11px; color:var(--muted); margin-top:4px;"><span class="icon icon-inline" aria-hidden="true">list_alt</span> ${subtaskCount} subtask${subtaskCount > 1 ? 's' : ''}</div>`
+      ? `<div style="font-size:11px; color:var(--muted); margin-top:4px;">${UI_ICONS.list_alt} ${subtaskCount} subtask${subtaskCount > 1 ? 's' : ''}</div>`
       : '';
     
     return `<div style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.03); cursor:pointer; transition:all 0.2s;"
@@ -444,7 +440,7 @@ function renderAllSessions(sessions) {
       <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:6px;">
         <div style="font-weight:600; font-size:13px; flex:1; margin-right:8px;">${displayTitle}</div>
         <div style="font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(255,255,255,0.1); white-space:nowrap; margin-left:8px; display:flex; align-items:center;">
-          <span class="icon icon-inline" aria-hidden="true">${icon}</span> ${label}
+          ${UI_ICONS[icon] || UI_ICONS.help} ${label}
         </div>
       </div>
       <div style="font-size:11px; color:var(--muted); margin-bottom:2px;">Created: ${createTime}</div>
@@ -465,15 +461,15 @@ export async function loadProfileDirectly(user) {
   const julesProfileInfoSection = document.getElementById('julesProfileInfoSection');
 
   if (profileUserName) {
-    profileUserName.textContent = user.displayName || user.email || 'Unknown User';
+    profileUserName.textContent = user.displayName || user.email || STATUS_MESSAGES.UNKNOWN_USER;
   }
 
   const hasKey = await checkJulesKey(user.uid);
   
   if (julesKeyStatus) {
     julesKeyStatus.innerHTML = hasKey
-      ? '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Saved'
-      : '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
+      ? `${UI_ICONS.check_circle} ${STATUS_MESSAGES.SAVED}`
+      : `${UI_ICONS.cancel} ${STATUS_MESSAGES.NOT_SAVED}`;
     julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
   }
   
@@ -501,20 +497,16 @@ export async function loadProfileDirectly(user) {
   if (resetBtn) {
     const originalResetLabel = resetBtn.innerHTML;
     resetBtn.onclick = async () => {
-      const confirmed = await showConfirm(`This will delete your stored Jules API key. You'll need to enter a new one next time.`, {
-        title: 'Delete API Key',
-        confirmText: 'Delete',
-        confirmStyle: 'error'
-      });
+      const confirmed = await showConfirm(MODAL_CONFIG.DELETE_API_KEY.message, MODAL_CONFIG.DELETE_API_KEY);
       if (!confirmed) return;
       
       try {
         resetBtn.disabled = true;
-        resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">hourglass_top</span> Deleting...';
+        resetBtn.innerHTML = `${UI_ICONS.hourglass_top} ${STATUS_MESSAGES.DELETING}`;
         const deleted = await deleteStoredJulesKey(user.uid);
         if (deleted) {
           if (julesKeyStatus) {
-            julesKeyStatus.innerHTML = '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
+            julesKeyStatus.innerHTML = `${UI_ICONS.cancel} ${STATUS_MESSAGES.NOT_SAVED}`;
             julesKeyStatus.style.color = 'var(--muted)';
           }
           resetBtn.innerHTML = originalResetLabel;
@@ -524,12 +516,12 @@ export async function loadProfileDirectly(user) {
           if (dangerZoneSection) dangerZoneSection.style.display = 'none';
           if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
           
-          showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
+          showToast(STATUS_MESSAGES.API_KEY_DELETED, 'success');
         } else {
           throw new Error('Failed to delete key');
         }
       } catch (error) {
-        showToast('Failed to reset API key: ' + error.message, 'error');
+        showToast(STATUS_MESSAGES.API_KEY_RESET_FAILED + error.message, 'error');
         resetBtn.innerHTML = originalResetLabel;
         resetBtn.disabled = false;
       }

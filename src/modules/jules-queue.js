@@ -4,7 +4,7 @@ import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
-import { JULES_MESSAGES, TIMEOUTS } from '../utils/constants.js';
+import { JULES_MESSAGES, TIMEOUTS, UI_ICONS, STATUS_MESSAGES, MODAL_CONFIG } from '../utils/constants.js';
 
 let queueCache = [];
 
@@ -218,7 +218,7 @@ function unscheduleQueueItem() {
   editModalState.isUnscheduled = true;
   editModalState.hasUnsavedChanges = true;
   
-  showToast('Item marked for unscheduling. Click Save to confirm.', 'info');
+  showToast(STATUS_MESSAGES.ITEM_MARKED_UNSCHEDULE, 'info');
 }
 
 async function openEditQueueModal(docId) {
@@ -401,11 +401,7 @@ async function convertToSingle() {
   const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => textarea.value);
   
   if (currentSubtasks.length > 1) {
-    const confirmed = await showConfirm('This will combine all subtasks into a single prompt. Continue?', {
-      title: 'Convert to Single Prompt',
-      confirmText: 'Convert',
-      confirmStyle: 'warn'
-    });
+    const confirmed = await showConfirm(MODAL_CONFIG.CONVERT_TO_SINGLE.message, MODAL_CONFIG.CONVERT_TO_SINGLE);
     if (!confirmed) return;
   }
   
@@ -451,7 +447,7 @@ function renderSubtasksList(subtasks) {
     <div class="form-group subtask-item" data-index="${index}">
       <div class="subtask-item-header">
         <label class="form-label">Subtask ${index + 1}:</label>
-        <button type="button" class="remove-subtask-btn" data-index="${index}" title="Remove this subtask"><span class="icon" aria-hidden="true">close</span></button>
+        <button type="button" class="remove-subtask-btn" data-index="${index}" title="Remove this subtask">${UI_ICONS.close}</button>
       </div>
       <textarea class="form-control edit-subtask-content" rows="5">${escapeHtml(subtask.fullContent || '')}</textarea>
     </div>
@@ -489,11 +485,7 @@ async function removeSubtask(index) {
   }));
   
   if (currentSubtasks.length <= 1) {
-    const confirmed = await showConfirm('This is the last subtask. Removing it will leave no subtasks. Continue?', {
-      title: 'Remove Last Subtask',
-      confirmText: 'Remove',
-      confirmStyle: 'warn'
-    });
+    const confirmed = await showConfirm(MODAL_CONFIG.REMOVE_LAST_SUBTASK.message, MODAL_CONFIG.REMOVE_LAST_SUBTASK);
     if (!confirmed) return;
   }
   
@@ -509,11 +501,7 @@ async function closeEditModal(force = false) {
   if (!modal) return;
   
   if (!force && editModalState.hasUnsavedChanges) {
-    const confirmed = await showConfirm('You have unsaved changes. Are you sure you want to close?', {
-      title: 'Unsaved Changes',
-      confirmText: 'Close Anyway',
-      confirmStyle: 'warn'
-    });
+    const confirmed = await showConfirm(MODAL_CONFIG.UNSAVED_CHANGES.message, MODAL_CONFIG.UNSAVED_CHANGES);
     if (!confirmed) return;
   }
   modal.style.display = 'none';
@@ -714,12 +702,12 @@ async function showScheduleModal() {
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0 && Object.keys(subtaskSelections).length > 0) {
-    showToast('Individual subtasks cannot be scheduled separately. Please select the parent batch to schedule all subtasks together.', 'warn');
+    showToast(STATUS_MESSAGES.SUBTASK_SCHEDULE_WARNING, 'warn');
     return;
   }
   
   if (queueSelections.length === 0) {
-    showToast('No items selected to schedule', 'warn');
+    showToast(STATUS_MESSAGES.NO_ITEMS_SCHEDULE, 'warn');
     return;
   }
   
@@ -869,7 +857,7 @@ async function confirmScheduleItems() {
   errorDiv.textContent = '';
   
   if (!dateInput.value || !timeInput.value) {
-    errorDiv.textContent = 'Date and time are required';
+    errorDiv.textContent = STATUS_MESSAGES.DATE_TIME_REQUIRED;
     errorDiv.classList.remove('hidden');
     return;
   }
@@ -883,7 +871,7 @@ async function confirmScheduleItems() {
   
   const now = new Date();
   if (scheduledDate < now) {
-    errorDiv.textContent = 'Scheduled time must be in the future';
+    errorDiv.textContent = STATUS_MESSAGES.SCHEDULE_FUTURE_ERROR;
     errorDiv.classList.remove('hidden');
     return;
   }
@@ -919,12 +907,11 @@ async function confirmScheduleItems() {
       timeZoneName: 'short'
     }).format(scheduledDate);
     
-    const itemText = totalScheduled === 1 ? 'item' : 'items';
-    showToast(`Scheduled ${totalScheduled} ${itemText} for ${formattedScheduledAt}`, 'success');
+    showToast(STATUS_MESSAGES.SCHEDULED_SUCCESS(totalScheduled, formattedScheduledAt), 'success');
     hideScheduleModal();
     await loadQueuePage();
   } catch (err) {
-    errorDiv.textContent = `Failed to schedule items: ${err.message}`;
+    errorDiv.textContent = STATUS_MESSAGES.SCHEDULE_FAILED + err.message;
     errorDiv.classList.remove('hidden');
   }
 }
@@ -956,14 +943,14 @@ function renderQueueList(items) {
       });
       const retryCount = item.retryCount || 0;
       const retryInfo = retryCount > 0 ? ` (Retry ${retryCount}/3)` : '';
-      scheduledInfo = `<div class="queue-scheduled-info"><span class="icon icon-inline" aria-hidden="true">schedule</span> Scheduled: ${dateStr} (${timeZone})${retryInfo}</div>`;
+      scheduledInfo = `<div class="queue-scheduled-info">${UI_ICONS.schedule} Scheduled: ${dateStr} (${timeZone})${retryInfo}</div>`;
     }
     
     let errorInfo = '';
     if (status === 'error' && item.error) {
-      errorInfo = `<div class="queue-error-info"><span class="icon icon-inline" aria-hidden="true">error</span> ${escapeHtml(item.error)}</div>`;
+      errorInfo = `<div class="queue-error-info">${UI_ICONS.error} ${escapeHtml(item.error)}</div>`;
     } else if (status === 'scheduled' && item.lastError && item.retryCount > 0) {
-      errorInfo = `<div class="queue-error-info"><span class="icon icon-inline" aria-hidden="true">warning</span> Last attempt failed: ${escapeHtml(item.lastError)}</div>`;
+      errorInfo = `<div class="queue-error-info">${UI_ICONS.warning} Last attempt failed: ${escapeHtml(item.lastError)}</div>`;
     }
     
     if (item.type === 'subtasks' && Array.isArray(item.remaining) && item.remaining.length > 0) {
@@ -982,7 +969,7 @@ function renderQueueList(items) {
         `;
       }).join('');
 
-      const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+      const repoDisplay = item.sourceId ? `<div class="queue-repo">${UI_ICONS.inventory_2} ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
       
       const statusClass = status === 'scheduled' ? 'queue-status-scheduled' : '';
       
@@ -996,7 +983,7 @@ function renderQueueList(items) {
               <div class="queue-title">
                 Subtasks Batch <span class="queue-status">${status}</span>
                 <span class="queue-status">(${remainingCount} remaining)</span>
-                <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item"><span class="icon icon-inline" aria-hidden="true">edit</span></button>
+                <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item">${UI_ICONS.edit}</button>
               </div>
               <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
               ${repoDisplay}
@@ -1012,7 +999,7 @@ function renderQueueList(items) {
     }
 
     const promptPreview = (item.prompt || '').substring(0, 200);
-    const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
+    const repoDisplay = item.sourceId ? `<div class="queue-repo">${UI_ICONS.inventory_2} ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
     
     const statusClass = status === 'scheduled' ? 'queue-status-scheduled' : '';
     
@@ -1025,7 +1012,7 @@ function renderQueueList(items) {
           <div class="queue-content">
             <div class="queue-title">
               Single Prompt <span class="queue-status">${status}</span>
-              <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item"><span class="icon icon-inline" aria-hidden="true">edit</span></button>
+              <button class="btn-icon edit-queue-item" data-docid="${item.id}" title="Edit queue item">${UI_ICONS.edit}</button>
             </div>
             <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
             ${repoDisplay}
@@ -1213,11 +1200,11 @@ function updateScheduleButton() {
   });
   
   if (allScheduled && queueSelections.length > 0) {
-    scheduleBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">schedule</span> Unschedule';
+    scheduleBtn.innerHTML = `${UI_ICONS.schedule} Unschedule`;
     scheduleBtn.setAttribute('aria-label', 'Unschedule selected items');
     scheduleBtn.dataset.mode = 'unschedule';
   } else {
-    scheduleBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">schedule</span> Schedule';
+    scheduleBtn.innerHTML = `${UI_ICONS.schedule} Schedule`;
     scheduleBtn.setAttribute('aria-label', 'Schedule selected items');
     scheduleBtn.dataset.mode = 'schedule';
   }
@@ -1233,16 +1220,12 @@ async function unscheduleSelectedQueueItems() {
   const { queueSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0) {
-    showToast('No items selected', 'warn');
+    showToast(STATUS_MESSAGES.NO_ITEMS_SELECTED, 'warn');
     return;
   }
   
   const itemText = queueSelections.length === 1 ? 'item' : 'items';
-  const confirmed = await showConfirm(`Unschedule ${queueSelections.length} selected ${itemText}?`, {
-    title: 'Unschedule Items',
-    confirmText: 'Unschedule',
-    confirmStyle: 'warn'
-  });
+  const confirmed = await showConfirm(MODAL_CONFIG.UNSCHEDULE_ITEMS.message(queueSelections.length, itemText), MODAL_CONFIG.UNSCHEDULE_ITEMS);
   
   if (!confirmed) return;
   
@@ -1265,10 +1248,10 @@ async function unscheduleSelectedQueueItems() {
     const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
     clearCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
     
-    showToast(`${queueSelections.length} ${itemText} unscheduled`, 'success');
+    showToast(STATUS_MESSAGES.UNSCHEDULED_SUCCESS(queueSelections.length), 'success');
     await loadQueuePage();
   } catch (err) {
-    showToast(`Failed to unschedule: ${err.message}`, 'error');
+    showToast(STATUS_MESSAGES.UNSCHEDULE_FAILED + err.message, 'error');
   }
 }
 
@@ -1299,16 +1282,12 @@ async function deleteSelectedQueueItems() {
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0 && Object.keys(subtaskSelections).length === 0) {
-    showToast('No items selected', 'warn');
+    showToast(STATUS_MESSAGES.NO_ITEMS_SELECTED, 'warn');
     return;
   }
   
   const totalCount = queueSelections.length + Object.values(subtaskSelections).reduce((sum, arr) => sum + arr.length, 0);
-  const confirmed = await showConfirm(`Delete ${totalCount} selected item(s)?`, {
-    title: 'Delete Items',
-    confirmText: 'Delete',
-    confirmStyle: 'error'
-  });
+  const confirmed = await showConfirm(MODAL_CONFIG.DELETE_ITEMS.message(totalCount), MODAL_CONFIG.DELETE_ITEMS);
   if (!confirmed) return;
   
   try {
@@ -1357,14 +1336,14 @@ async function runSelectedQueueItems() {
     pauseBtn.onclick = () => {
       paused = true;
       pauseBtn.disabled = true;
-      statusBar.showMessage('Pausing queue processing after the current subtask', { timeout: TIMEOUTS.longDelay });
+      statusBar.showMessage(STATUS_MESSAGES.PAUSING_QUEUE, { timeout: TIMEOUTS.longDelay });
     };
   }
 
-  statusBar.showMessage('Processing queue...', { timeout: 0 });
+  statusBar.showMessage(STATUS_MESSAGES.PROCESSING_QUEUE, { timeout: 0 });
   statusBar.setAction('Pause', () => {
     paused = true;
-    statusBar.showMessage('Pausing after current subtask', { timeout: TIMEOUTS.statusBar });
+    statusBar.showMessage(STATUS_MESSAGES.PAUSING_SUBTASK, { timeout: TIMEOUTS.statusBar });
     statusBar.clearAction();
     if (pauseBtn) pauseBtn.disabled = true;
   });
@@ -1481,7 +1460,7 @@ async function runSelectedQueueItems() {
             } catch (e) {
               console.warn('Failed to persist paused state for queue item', id, e.message || e);
             }
-            statusBar.showMessage('Paused — progress saved', { timeout: TIMEOUTS.statusBar });
+            statusBar.showMessage(STATUS_MESSAGES.PAUSED_SAVED, { timeout: TIMEOUTS.statusBar });
             statusBar.clearProgress();
             statusBar.clearAction();
             await loadQueuePage();
@@ -1521,7 +1500,7 @@ async function runSelectedQueueItems() {
                 const done = initialCount - remaining.length;
                 const percent = initialCount > 0 ? Math.round((done / initialCount) * 100) : 100;
                 statusBar.setProgress(`${done}/${initialCount}`, percent);
-                statusBar.showMessage(`Processing subtask ${done}/${initialCount}`, { timeout: 0 });
+                statusBar.showMessage(STATUS_MESSAGES.PROCESSING_SUBTASK(done, initialCount), { timeout: 0 });
               } catch (e) {
                 console.error('Failed to update UI progress for queue item', id, e);
               }
@@ -1558,7 +1537,7 @@ async function runSelectedQueueItems() {
                 } catch (e) {
                   console.warn('Failed to persist queue state', e);
                 }
-                statusBar.showMessage('Remainder queued for later', { timeout: TIMEOUTS.statusBar });
+                statusBar.showMessage(STATUS_MESSAGES.REMAINDER_QUEUED, { timeout: TIMEOUTS.statusBar });
                 statusBar.clearProgress();
                 statusBar.clearAction();
                 await loadQueuePage();
