@@ -25,13 +25,16 @@
         <h1 class="section-title-lg"><span class="icon icon-inline" aria-hidden="true">list_alt</span> Jules Queue</h1>
       </div>
 
+      <!-- Loading Message -->
+      <div id="queueLoading" class="panel text-center pad-xl muted-text hidden">Loading queue...</div>
+
       <!-- Not Signed In Message -->
       <div id="queueNotSignedIn" class="panel text-center pad-xl hidden">
         <div class="muted-text small-text">Please sign in to view your queue.</div>
       </div>
 
       <!-- Queue Controls (hidden when not signed in) -->
-      <div id="queueControls">
+      <div id="queueControls" class="hidden">
         <div class="toolbar">
           <div class="toolbar-actions">
             <label class="form-label small-text"><input id="queueSelectAll" type="checkbox" /> Select All</label>
@@ -47,7 +50,6 @@
         </div>
 
         <div id="allQueueList" class="vlist scrollable-list list-lg min-h-400">
-          <div class="panel text-center pad-xl muted-text">Loading queue...</div>
         </div>
       </div>
     </main>
