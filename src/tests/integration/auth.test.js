@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getCurrentUser, setCurrentUser, signInWithGitHub, signOutUser, updateAuthUI } from '../../modules/auth.js';
+import { getCurrentUser, signInWithGitHub, signOutUser, updateAuthUI } from '../../modules/auth.js';
 
 // Mock dependencies
 vi.mock('../../modules/toast.js', () => ({
@@ -95,7 +95,6 @@ describe('Auth Module', () => {
           updateAuthUI(user);
 
           const avatar = document.getElementById('userAvatar');
-          const userDisplay = document.getElementById('userDisplay');
           const signIn = document.getElementById('headerSignIn');
           const signOut = document.getElementById('headerSignOut');
           const ddName = document.getElementById('dropdownUserName');
