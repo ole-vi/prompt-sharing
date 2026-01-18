@@ -1,8 +1,8 @@
 import { slugify } from '../utils/slug.js';
 import { STORAGE_KEYS, TAG_DEFINITIONS } from '../utils/constants.js';
 import { debounce } from '../utils/debounce.js';
-import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
-import { clearElement, stopPropagation, setElementDisplay, toggleClass } from '../utils/dom-helpers.js';
+import { loadPrompts, getPromptFolder } from './prompt-service.js';
+import { clearElement, stopPropagation, setElementDisplay, toggleClass, createElement } from '../utils/dom-helpers.js';
 import * as folderSubmenu from './folder-submenu.js';
 
 let files = [];
@@ -230,10 +230,6 @@ function ancestorPaths(path) {
     ancestors.push(parts.slice(0, i).join('/'));
   }
   return ancestors;
-}
-
-function getPromptFolder(branch) {
-  return branch === 'web-captures' ? 'webcaptures' : 'prompts';
 }
 
 function buildTree(items, folder = 'prompts') {
@@ -467,45 +463,13 @@ export function renderList(items, owner, repo, branch) {
 
 export async function loadList(owner, repo, branch, cacheKey) {
   try {
-    const cached = sessionStorage.getItem(cacheKey);
-    const now = Date.now();
-    const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
-    
-    if (cached) {
-      let cacheData;
-      try {
-        cacheData = JSON.parse(cached);
-        if (!cacheData || typeof cacheData !== 'object' || Array.isArray(cacheData) || !Array.isArray(cacheData.files)) {
-          console.warn('Old cache format detected, clearing cache');
-          sessionStorage.removeItem(cacheKey);
-          cacheData = null;
-        }
-      } catch (e) {
-        console.warn('Corrupted cache data detected, clearing cache', e);
-        sessionStorage.removeItem(cacheKey);
-        cacheData = null;
-      }
-      
-      if (cacheData) {
-        const cacheAge = now - (cacheData.timestamp || 0);
-        files = cacheData.files || [];
-        renderList(files, owner, repo, branch);
-        
-        if (cacheAge > CACHE_DURATION) {
-          refreshList(owner, repo, branch, cacheKey).catch(error => {
-            console.error('Background list refresh failed:', {
-              error,
-              context: 'loadList.backgroundRefresh',
-              owner, repo, branch
-            });
-          });
-        }
-        
-        return files;
-      }
-    }
+    const onBackgroundUpdate = (newFiles) => {
+      files = newFiles;
+      renderList(files, owner, repo, branch);
+    };
 
-    await refreshList(owner, repo, branch, cacheKey);
+    files = await loadPrompts(owner, repo, branch, cacheKey, onBackgroundUpdate);
+    renderList(files, owner, repo, branch);
     return files;
   } catch (e) {
     const folder = getPromptFolder(branch);
@@ -521,64 +485,4 @@ export async function loadList(owner, repo, branch, cacheKey) {
     listEl.appendChild(createStatusMessage(msgContainer));
     return [];
   }
-}
-
-export async function refreshList(owner, repo, branch, cacheKey) {
-  let result;
-  const folder = getPromptFolder(branch);
-  
-  // Get cached ETag if available
-  const cached = sessionStorage.getItem(cacheKey);
-  let cachedETag = null;
-  let parsedCache = null;
-  
-  if (cached) {
-    try {
-      parsedCache = JSON.parse(cached);
-      // Validate cache structure - handle migration from old formats
-      if (!parsedCache || typeof parsedCache !== 'object' || Array.isArray(parsedCache)) {
-        console.warn('Old cache format detected, clearing cache');
-        sessionStorage.removeItem(cacheKey);
-        parsedCache = null;
-      } else {
-        cachedETag = parsedCache.etag || null;
-      }
-    } catch (e) {
-      console.warn('Corrupted cache data detected, clearing cache', e);
-      sessionStorage.removeItem(cacheKey);
-    }
-  }
-  
-  try {
-    result = await listPromptsViaTrees(owner, repo, branch, folder, cachedETag);
-    
-    // If not modified, keep using cached data (0 API calls used!)
-    if (result.notModified && parsedCache) {
-      // Update timestamp to extend cache validity
-      parsedCache.timestamp = Date.now();
-      sessionStorage.setItem(cacheKey, JSON.stringify(parsedCache));
-      return;
-    }
-    
-    // New data received
-    files = (result.files || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
-  } catch (e) {
-    console.warn('Trees API failed, using Contents fallback');
-    try {
-      const data = await listPromptsViaContents(owner, repo, branch, folder);
-      files = (data || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
-      result = { files, etag: null }; // Contents API doesn't provide ETag
-    } catch (contentsError) {
-      console.error('Both API strategies failed:', contentsError);
-      throw contentsError;
-    }
-  }
-  
-  const cacheData = {
-    files,
-    etag: result.etag,
-    timestamp: Date.now()
-  };
-  sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
-  renderList(files, owner, repo, branch);
 }
