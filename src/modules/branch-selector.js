@@ -159,8 +159,6 @@ async function handleBranchChange(e) {
   const newUrl = `${location.pathname}?${qs.toString()}${slug ? '#p=' + encodeURIComponent(slug) : ''}`;
   history.replaceState(null, '', newUrl);
 
-  const oldCacheKey = STORAGE_KEYS.promptsCache(currentOwner, currentRepo, oldBranch);
-  sessionStorage.removeItem(oldCacheKey);
   window.dispatchEvent(new CustomEvent('branchChanged', { detail: { branch: currentBranch } }));
 }
 

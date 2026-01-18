@@ -7,7 +7,7 @@ import { handleTryInJules } from './modules/jules-api.js';
 import statusBar from './modules/status-bar.js';
 import { initPromptList, loadList, loadExpandedState, renderList, setSelectFileCallback, setRepoContext } from './modules/prompt-list.js';
 import { initPromptRenderer, selectBySlug, selectFile, setHandleTryInJulesCallback } from './modules/prompt-renderer.js';
-import { setCurrentBranch, setCurrentRepo, loadBranchFromStorage } from './modules/branch-selector.js';
+import { setCurrentBranch, setCurrentRepo, loadBranchFromStorage, loadBranches } from './modules/branch-selector.js';
 import { initSidebar } from './modules/sidebar.js';
 
 // App state
@@ -38,6 +38,14 @@ export function initApp() {
 
   // Load prompts
   loadPrompts();
+
+  // Cache warming: fetch default branch in background if not current
+  if (currentBranch !== BRANCH) {
+     import('./modules/github-api.js').then(({ fetchPrompts }) => {
+        fetchPrompts(currentOwner, currentRepo, BRANCH)
+          .catch(e => console.warn('Background cache warming failed', e));
+     });
+  }
 
   // Setup event listeners
   setupEventListeners();
@@ -77,8 +85,7 @@ function setupEventListeners() {
       if (repoChanged || branchChanged) {
         setCurrentRepo(currentOwner, currentRepo);
         setCurrentBranch(currentBranch);
-        const cacheKey = STORAGE_KEYS.promptsCache(currentOwner, currentRepo, currentBranch);
-        sessionStorage.removeItem(cacheKey);
+        // Removed cache clearing to support ETag caching
         await loadPrompts();
         await loadBranches();
       } else {
@@ -112,8 +119,7 @@ function setupEventListeners() {
         currentBranch = p.branch || currentBranch;
         setCurrentRepo(currentOwner, currentRepo);
         setCurrentBranch(currentBranch);
-        const cacheKey = STORAGE_KEYS.promptsCache(currentOwner, currentRepo, currentBranch);
-        sessionStorage.removeItem(cacheKey);
+        // Removed cache clearing to support ETag caching
         await loadPrompts();
         await loadBranches();
       }

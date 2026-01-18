@@ -1,3 +1,6 @@
+import { STORAGE_KEYS } from '../utils/constants.js';
+import { getCacheWithETag, setCacheWithETag, updateCacheTimestamp } from '../utils/session-cache.js';
+
 let viaProxy = (url) => url;
 
 export function setViaProxy(proxyFn) {
@@ -250,4 +253,58 @@ export async function getBranches(owner, repo) {
   }
 
   return branches;
+}
+
+function getPromptFolder(branch) {
+  return branch === 'web-captures' ? 'webcaptures' : 'prompts';
+}
+
+const inflightRequests = new Map();
+
+export async function fetchPrompts(owner, repo, branch) {
+  const cacheKey = STORAGE_KEYS.promptsCache(owner, repo, branch);
+  const folder = getPromptFolder(branch);
+
+  if (inflightRequests.has(cacheKey)) {
+    return inflightRequests.get(cacheKey);
+  }
+
+  const promise = (async () => {
+    try {
+      const cached = getCacheWithETag(cacheKey);
+      let etag = null;
+      if (cached) {
+        etag = cached.etag;
+      }
+
+      let result;
+      try {
+        result = await listPromptsViaTrees(owner, repo, branch, folder, etag);
+
+        if (result.notModified) {
+          updateCacheTimestamp(cacheKey);
+          return cached.data;
+        }
+      } catch (e) {
+        console.warn('Trees API failed, checking fallback...', e);
+        try {
+            const files = await listPromptsViaContents(owner, repo, branch, folder);
+            setCacheWithETag(cacheKey, files, null);
+            return files;
+        } catch (contentsError) {
+             console.error('Both API strategies failed:', contentsError);
+             throw contentsError;
+        }
+      }
+
+      const files = (result.files || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
+      setCacheWithETag(cacheKey, files, result.etag);
+      return files;
+    } finally {
+      inflightRequests.delete(cacheKey);
+    }
+  })();
+
+  inflightRequests.set(cacheKey, promise);
+  return promise;
 }

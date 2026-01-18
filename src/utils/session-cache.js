@@ -22,6 +22,13 @@ const KEY_DURATIONS = {
   DEFAULT: CACHE_DURATIONS.short
 };
 
+// Metrics for cache performance
+const cacheStats = {
+  hits: 0,
+  misses: 0,
+  revalidations: 0
+};
+
 function getCacheKey(key, userId) {
   return userId ? `${key}_${userId}` : key;
 }
@@ -43,7 +50,10 @@ export function getCache(key, userId = null) {
   try {
     const cacheKey = getCacheKey(key, userId);
     const cached = sessionStorage.getItem(cacheKey);
-    if (!cached) return null;
+    if (!cached) {
+      cacheStats.misses++;
+      return null;
+    }
 
     const { data, timestamp } = JSON.parse(cached);
     
@@ -51,21 +61,83 @@ export function getCache(key, userId = null) {
     
     // A duration of 0 means session-only cache
     if (duration === CACHE_DURATIONS.session) {
+      cacheStats.hits++;
+      if (cacheStats.hits % 5 === 0) logCacheStats();
       return data;
     }
     
     const age = Date.now() - timestamp;
     if (age < duration) {
+      cacheStats.hits++;
+      if (cacheStats.hits % 5 === 0) logCacheStats();
       return data;
     }
 
     // Clear expired cache
     sessionStorage.removeItem(cacheKey);
+    cacheStats.misses++;
     return null;
   } catch (error) {
     console.error('Error getting cache:', error);
+    cacheStats.misses++;
     return null;
   }
+}
+
+export function setCacheWithETag(key, data, etag) {
+  try {
+    const cacheData = {
+      data,
+      etag,
+      timestamp: Date.now()
+    };
+    sessionStorage.setItem(key, JSON.stringify(cacheData));
+  } catch (error) {
+    console.error('Error setting cache with ETag:', error);
+  }
+}
+
+export function getCacheWithETag(key) {
+  try {
+    const cached = sessionStorage.getItem(key);
+    if (!cached) {
+      cacheStats.misses++;
+      return null;
+    }
+
+    const parsed = JSON.parse(cached);
+    if (!parsed || typeof parsed !== 'object') {
+       sessionStorage.removeItem(key);
+       cacheStats.misses++;
+       return null;
+    }
+
+    // Migration for legacy cache which used 'files' instead of 'data'
+    if (parsed.files && !parsed.data) {
+        parsed.data = parsed.files;
+    }
+
+    return parsed;
+  } catch (error) {
+    console.error('Error getting cache with ETag:', error);
+    cacheStats.misses++;
+    return null;
+  }
+}
+
+export function updateCacheTimestamp(key) {
+    try {
+        const cached = sessionStorage.getItem(key);
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            parsed.timestamp = Date.now();
+            sessionStorage.setItem(key, JSON.stringify(parsed));
+            cacheStats.revalidations++;
+            if (cacheStats.revalidations % 5 === 0) logCacheStats();
+        }
+    } catch (error) {
+        console.error('Error updating cache timestamp:', error);
+    }
 }
 
 export function clearCache(key, userId = null) {
@@ -83,6 +155,12 @@ export function clearAllCache() {
   } catch (error) {
     console.error('Error clearing all cache:', error);
   }
+}
+
+export function logCacheStats() {
+    const total = cacheStats.hits + cacheStats.misses + cacheStats.revalidations;
+    const hitRate = total > 0 ? (((cacheStats.hits + cacheStats.revalidations) / total) * 100).toFixed(1) : 0;
+    console.log(`Cache Stats: Hits=${cacheStats.hits}, Revalidations=${cacheStats.revalidations}, Misses=${cacheStats.misses}, Effective Hit Rate=${hitRate}%`);
 }
 
 export { CACHE_KEYS };
