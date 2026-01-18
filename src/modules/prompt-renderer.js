@@ -2,6 +2,7 @@ import { slugify } from '../utils/slug.js';
 import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './github-api.js';
 import { CODEX_URL_REGEX, TIMEOUTS } from '../utils/constants.js';
 import { setElementDisplay } from '../utils/dom-helpers.js';
+import { loadMarked } from '../utils/lazy-loaders.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
 import statusBar from './status-bar.js';
@@ -227,7 +228,7 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
 
   const expanded = ensureAncestorsExpanded(f.path);
   if (expanded) {
-    renderList(getFiles(), owner, repo, branch);
+    await renderList(getFiles(), owner, repo, branch);
   } else {
     updateActiveItem();
   }
@@ -373,6 +374,9 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     titleEl.textContent = firstLine.replace(/^#\s+/, '');
   }
 
+  // Lazy load marked.js
+  const marked = await loadMarked();
+
   if (isGistContent) {
     const looksLikeMarkdown = /^#|^\*|^-|^\d+\.|```/.test(raw.trim());
     if (!looksLikeMarkdown) {
@@ -405,33 +409,34 @@ function enhanceCodeBlocks() {
     wrapper.appendChild(btn);
   });
   
-if (!contentEl.dataset.codeBlockListenerAttached) {
-  contentEl.addEventListener('click', async (event) => {
-    const btn = event.target.closest('[data-action="copy-code"]');
-    if (btn) {
-      const pre = btn. previousElementSibling;
-      if (pre && pre.tagName === 'PRE') {
-        const code = pre.innerText;
-        try {
-          await navigator.clipboard.writeText(code);
-          const originalHTML = btn.innerHTML;
-          btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span>';
-          btn.classList.add('copied');
-          setTimeout(() => {
-            btn.innerHTML = originalHTML;
-            btn.classList.remove('copied');
-          }, TIMEOUTS. copyFeedback);
-        } catch (error) {
-          console.error('Error copying code to clipboard:', {
-            error,
-            context: 'enhanceCodeBlocks.copy',
-          });
-          statusBar.showMessage('Failed to copy to clipboard', { type:  'error' });
+  if (!contentEl.dataset.codeBlockListenerAttached) {
+    contentEl.addEventListener('click', async (event) => {
+      const btn = event.target.closest('[data-action="copy-code"]');
+      if (btn) {
+        const pre = btn.previousElementSibling;
+        if (pre && pre.tagName === 'PRE') {
+          const code = pre.innerText;
+          try {
+            await navigator.clipboard.writeText(code);
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span>';
+            btn.classList.add('copied');
+            setTimeout(() => {
+              btn.innerHTML = originalHTML;
+              btn.classList.remove('copied');
+            }, TIMEOUTS.copyFeedback);
+          } catch (error) {
+            console.error('Error copying code to clipboard:', {
+              error,
+              context: 'enhanceCodeBlocks.copy',
+            });
+            statusBar.showMessage('Failed to copy to clipboard', { type: 'error' });
+          }
         }
       }
-    }
-  });
-  contentEl.dataset. codeBlockListenerAttached = 'true';
+    });
+    contentEl.dataset.codeBlockListenerAttached = 'true';
+  }
 }
 
 async function handleCopyPrompt() {
