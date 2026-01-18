@@ -7,6 +7,19 @@ export function createElement(tag, className = '', textContent = '') {
   return el;
 }
 
+export function createIcon(iconName, classes = [], ariaHidden = true) {
+  const span = document.createElement('span');
+  span.className = 'icon';
+  if (Array.isArray(classes)) {
+    classes.forEach(c => span.classList.add(c));
+  } else if (typeof classes === 'string' && classes) {
+    span.classList.add(classes);
+  }
+  span.textContent = iconName;
+  if (ariaHidden) span.setAttribute('aria-hidden', 'true');
+  return span;
+}
+
 /**
  * Toggles the visibility of an element by adding or removing the '.hidden' class.
  * Note: This relies on a global '.hidden' class with 'display: none !important;'.

@@ -10,6 +10,7 @@ import { deleteStoredJulesKey, checkJulesKey } from '../modules/jules-keys.js';
 import { showToast } from '../modules/toast.js';
 import { showConfirm } from '../modules/confirm-modal.js';
 import { TIMEOUTS } from '../utils/constants.js';
+import { renderStatus, STATUS_TYPES } from '../modules/status-renderer.js';
 
 function waitForComponents() {
   if (document.querySelector('header')) {
@@ -46,10 +47,11 @@ async function loadJulesInfo() {
     const hasKey = await checkJulesKey(user.uid);
     
     if (julesKeyStatus) {
-      julesKeyStatus.innerHTML = hasKey 
-        ? '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Saved'
-        : '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
-      julesKeyStatus.style.color = hasKey ? 'var(--accent)' : 'var(--muted)';
+      renderStatus(
+        julesKeyStatus,
+        hasKey ? STATUS_TYPES.SAVED : STATUS_TYPES.NOT_SAVED,
+        hasKey ? 'Saved' : 'Not saved'
+      );
     }
     
     loadingDiv.classList.add('hidden');
@@ -61,7 +63,7 @@ async function loadJulesInfo() {
       if (noJulesKeySection) noJulesKeySection.classList.add('hidden');
       if (julesContentSection) julesContentSection.classList.remove('hidden');
       if (dangerZoneSection) dangerZoneSection.classList.remove('hidden');
-      if (loadJulesInfoBtn) loadJulesInfoBtn.style.display = 'block';
+      if (loadJulesInfoBtn) loadJulesInfoBtn.classList.remove('hidden');
       
       // Load Jules account information
       await loadJulesAccountInfo(user);
@@ -69,7 +71,7 @@ async function loadJulesInfo() {
       if (noJulesKeySection) noJulesKeySection.classList.remove('hidden');
       if (julesContentSection) julesContentSection.classList.add('hidden');
       if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
-      if (loadJulesInfoBtn) loadJulesInfoBtn.style.display = 'none';
+      if (loadJulesInfoBtn) loadJulesInfoBtn.classList.add('hidden');
     }
   } catch (err) {
     console.error('Jules info loading error:', err);
@@ -116,11 +118,18 @@ function initApp() {
         if (deleted) {
           const julesKeyStatus = document.getElementById('julesKeyStatus');
           if (julesKeyStatus) {
-            julesKeyStatus.innerHTML = '<span class="icon icon-inline" aria-hidden="true">cancel</span> Not saved';
-            julesKeyStatus.style.color = 'var(--muted)';
+            renderStatus(julesKeyStatus, STATUS_TYPES.NOT_SAVED, 'Not saved');
           }
           
-          resetJulesKeyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key';
+          // Restore button
+          resetJulesKeyBtn.innerHTML = '';
+          const icon = document.createElement('span');
+          icon.className = 'icon icon-inline';
+          icon.setAttribute('aria-hidden', 'true');
+          icon.textContent = 'delete';
+          resetJulesKeyBtn.appendChild(icon);
+          resetJulesKeyBtn.appendChild(document.createTextNode(' Delete Jules API Key'));
+
           resetJulesKeyBtn.disabled = false;
           
           const noJulesKeySection = document.getElementById('noJulesKeySection');
@@ -136,7 +145,7 @@ function initApp() {
         }
       } catch (error) {
         showToast('Failed to delete API key: ' + error.message, 'error');
-        resetJulesKeyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key';
+        renderStatus(resetJulesKeyBtn, STATUS_TYPES.RESET, 'Delete Jules API Key');
         resetJulesKeyBtn.disabled = false;
       }
     };
