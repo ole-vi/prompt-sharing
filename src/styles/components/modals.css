@@ -1,6 +1,10 @@
 /* Modals & Jules Key Modal */
 #julesKeyModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; display: none !important; align-items: center; justify-content: center; }
 #julesKeyModal.show { display: flex !important; }
+
+#julesEnvModal { display: none; }
+#julesEnvModal.show { display: flex !important; }
+
 #julesKeyModal > div { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; max-width: 400px; width: 90%; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
 #julesKeyModal h2 { margin: 0 0 12px; font-size: 18px; }
 #julesKeyModal p { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
@@ -11,6 +15,23 @@
 .modal { display: none !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
 .modal.show { display: flex !important; }
 
+/* New class to replace inline styles */
+.modal-overlay-fixed {
+  position: fixed;
+  inset: 0; /* shorthand for top:0; right:0; bottom:0; left:0 */
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1001;
+  display: flex !important; /* Force display flex when this class is added, similar to .show but explicit for the replacement */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* High Z-Index for critical modals */
+.modal-high-z {
+  z-index: 10000 !important;
+}
+
 /* User Profile Modal specific */
 #userProfileModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1001; display: none; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 20px; }
 #userProfileModal.show { display: flex !important; }
@@ -19,8 +40,16 @@
 #allSessionsModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1002; display: none; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 20px; }
 #allSessionsModal.show { display: flex !important; }
 
+/* Jules Sessions History Modal (uses same styles as allSessionsModal) */
+#julesSessionsHistoryModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1002; display: none; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 20px; }
+#julesSessionsHistoryModal.show { display: flex !important; }
+
 /* Edit Queue Modal specific */
 #editQueueItemModal { z-index: 1003; }
+
+/* Jules Queue Modal specific */
+#julesQueueModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1003; display: none; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 20px; }
+#julesQueueModal.show { display: flex !important; }
 
 .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; max-width: 400px; width: 90%; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
 .modal-content.modal-lg { max-width: 600px; max-height: 85vh; display: flex; flex-direction: column; overflow-y: auto; }
@@ -61,6 +90,8 @@
 
 /* Modal overlay and dialog structure */
 .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1001; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+.modal-overlay.show { display: flex !important; }
+
 .modal-dialog { background: var(--card); border: 1px solid var(--border); border-radius: 14px; max-width: 600px; width: 100%; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
 .modal-dialog-sm { max-width: 500px; }
 .modal-dialog-lg { max-width: 700px; }

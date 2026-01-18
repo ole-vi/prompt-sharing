@@ -89,9 +89,9 @@ export function showUserProfileModal() {
           resetBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key';
           resetBtn.disabled = false;
           
-          if (addBtn) addBtn.style.display = 'block';
-          if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-          if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+          if (addBtn) addBtn.classList.remove('d-none');
+          if (dangerZoneSection) dangerZoneSection.classList.add('d-none');
+          if (julesProfileInfoSection) julesProfileInfoSection.classList.add('d-none');
           
           showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
         } else {
@@ -317,7 +317,7 @@ export function showJulesSessionsHistoryModal() {
   const modal = document.getElementById('julesSessionsHistoryModal');
   const searchInput = document.getElementById('sessionSearchInput');
   
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  modal.classList.add('show');
   
   allSessionsCache = [];
   sessionNextPageToken = null;
@@ -328,7 +328,7 @@ export function showJulesSessionsHistoryModal() {
 
 export function hideJulesSessionsHistoryModal() {
   const modal = document.getElementById('julesSessionsHistoryModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1002; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+  modal.classList.remove('show');
 }
 
 async function loadSessionsPage() {
@@ -478,15 +478,15 @@ export async function loadProfileDirectly(user) {
   }
   
   if (hasKey) {
-    if (addBtn) addBtn.style.display = 'none';
-    if (dangerZoneSection) dangerZoneSection.style.display = 'block';
-    if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'block';
+    if (addBtn) addBtn.classList.add('d-none');
+    if (dangerZoneSection) dangerZoneSection.classList.remove('d-none');
+    if (julesProfileInfoSection) julesProfileInfoSection.classList.remove('d-none');
     
     await loadAndDisplayJulesProfile(user.uid);
   } else {
-    if (addBtn) addBtn.style.display = 'block';
-    if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-    if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+    if (addBtn) addBtn.classList.remove('d-none');
+    if (dangerZoneSection) dangerZoneSection.classList.add('d-none');
+    if (julesProfileInfoSection) julesProfileInfoSection.classList.add('d-none');
   }
 
   // Attach event handlers
@@ -520,9 +520,9 @@ export async function loadProfileDirectly(user) {
           resetBtn.innerHTML = originalResetLabel;
           resetBtn.disabled = false;
           
-          if (addBtn) addBtn.style.display = 'block';
-          if (dangerZoneSection) dangerZoneSection.style.display = 'none';
-          if (julesProfileInfoSection) julesProfileInfoSection.style.display = 'none';
+          if (addBtn) addBtn.classList.remove('d-none');
+          if (dangerZoneSection) dangerZoneSection.classList.add('d-none');
+          if (julesProfileInfoSection) julesProfileInfoSection.classList.add('d-none');
           
           showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
         } else {
@@ -560,13 +560,13 @@ export async function loadJulesAccountInfo(user) {
   
   if (!hasKey) {
     if (julesProfileInfoSection) {
-      julesProfileInfoSection.style.display = 'none';
+      julesProfileInfoSection.classList.add('d-none');
     }
     return;
   }
 
   if (julesProfileInfoSection) {
-    julesProfileInfoSection.style.display = 'block';
+    julesProfileInfoSection.classList.remove('d-none');
   }
 
   await loadAndDisplayJulesProfile(user.uid);

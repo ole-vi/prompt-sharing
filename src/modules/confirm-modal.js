@@ -7,8 +7,7 @@ let confirmResolve = null;
 function createConfirmModal() {
   const modal = document.createElement('div');
   modal.id = 'confirmModal';
-  modal.className = 'modal';
-  modal.style.zIndex = '10000';
+  modal.className = 'modal modal-high-z';
   modal.innerHTML = `
     <div class="modal-content" style="max-width: 480px;">
       <div class="modal-header">
