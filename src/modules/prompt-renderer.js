@@ -1,6 +1,6 @@
 import { slugify } from '../utils/slug.js';
 import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './github-api.js';
-import { CODEX_URL_REGEX } from '../utils/constants.js';
+import { CODEX_URL_REGEX, TIMEOUTS } from '../utils/constants.js';
 import { setElementDisplay } from '../utils/dom-helpers.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
@@ -405,34 +405,33 @@ function enhanceCodeBlocks() {
     wrapper.appendChild(btn);
   });
   
-  if (!contentEl.dataset.codeBlockListenerAttached) {
-    contentEl.addEventListener('click', async (event) => {
-      const btn = event.target.closest('[data-action="copy-code"]');
-      if (btn) {
-        const pre = btn.previousElementSibling;
-        if (pre && pre.tagName === 'PRE') {
-          const code = pre.innerText;
-          try {
-            await navigator.clipboard.writeText(code);
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span>';
-            btn.classList.add('copied');
-            setTimeout(() => {
-              btn.innerHTML = originalHTML;
-              btn.classList.remove('copied');
-            }, 900);
-          } catch (error) {
-            console.error('Error copying code to clipboard:', {
-              error,
-              context: 'enhanceCodeBlocks.copy',
-            });
-            statusBar.showMessage('Failed to copy to clipboard', { type: 'error' });
-          }
+if (!contentEl.dataset.codeBlockListenerAttached) {
+  contentEl.addEventListener('click', async (event) => {
+    const btn = event.target.closest('[data-action="copy-code"]');
+    if (btn) {
+      const pre = btn. previousElementSibling;
+      if (pre && pre.tagName === 'PRE') {
+        const code = pre.innerText;
+        try {
+          await navigator.clipboard.writeText(code);
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span>';
+          btn.classList.add('copied');
+          setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('copied');
+          }, TIMEOUTS. copyFeedback);
+        } catch (error) {
+          console.error('Error copying code to clipboard:', {
+            error,
+            context: 'enhanceCodeBlocks.copy',
+          });
+          statusBar.showMessage('Failed to copy to clipboard', { type:  'error' });
         }
       }
-    });
-    contentEl.dataset.codeBlockListenerAttached = 'true';
-  }
+    }
+  });
+  contentEl.dataset. codeBlockListenerAttached = 'true';
 }
 
 async function handleCopyPrompt() {
@@ -451,7 +450,7 @@ async function handleCopyPrompt() {
 
     await navigator.clipboard.writeText(contentToCopy);
     copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied';
-    setTimeout(() => (copyBtn.innerHTML = buttonText), 1000);
+    setTimeout(() => (copyBtn.innerHTML = buttonText), TIMEOUTS.copyFeedback);
   } catch {
     showToast('Clipboard blocked. Select and copy manually.', 'warn');
   }
@@ -468,7 +467,7 @@ async function handleCopenPrompt(target) {
     // Copy to clipboard
     await navigator.clipboard.writeText(promptText);
     copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied!';
-    setTimeout(() => (copenBtn.innerHTML = originalCopenLabel), 1000);
+    setTimeout(() => (copenBtn.innerHTML = originalCopenLabel), TIMEOUTS.copyFeedback);
 
     // Open appropriate tab based on target
     let url;
@@ -478,6 +477,9 @@ async function handleCopenPrompt(target) {
         break;
       case 'codex':
         url = 'https://chatgpt.com/codex';
+        break;
+      case 'copilot':
+        url = 'https://github.com/copilot/agents';
         break;
       case 'gemini':
         url = 'https://gemini.google.com/app';
@@ -504,6 +506,6 @@ async function handleShareLink() {
     showToast('Could not copy link.', 'warn');
   } finally {
     const originalText = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
-    setTimeout(() => (shareBtn.innerHTML = originalText), 1000);
+    setTimeout(() => (shareBtn.innerHTML = originalText), TIMEOUTS.copyFeedback);
   }
 }

@@ -3,6 +3,8 @@
  * Processes GitHub OAuth callbacks for both web app and browser extension
  */
 
+import { TIMEOUTS } from '../utils/constants.js';
+
 (async function() {
   const statusDiv = document.getElementById('status');
   
@@ -43,7 +45,7 @@
 
             if (response && response.success) {
               showSuccess('Successfully connected to GitHub!');
-              setTimeout(() => window.close(), 2000);
+              setTimeout(() => window.close(), TIMEOUTS.windowClose);
             } else {
               showError(response?.error || 'Failed to complete authentication');
             }

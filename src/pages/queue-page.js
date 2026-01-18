@@ -6,6 +6,7 @@
 import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
 import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly } from '../modules/jules-queue.js';
 import { loadSubtaskErrorModal } from '../modules/jules-modal.js';
+import { TIMEOUTS } from '../utils/constants.js';
 
 // Initialize checkbox mutual exclusivity
 initMutualExclusivity();
@@ -17,7 +18,7 @@ function waitForComponents() {
   if (document.querySelector('header')) {
     initApp();
   } else {
-    setTimeout(waitForComponents, 50);
+    setTimeout(waitForComponents, TIMEOUTS.componentCheck);
   }
 }
 

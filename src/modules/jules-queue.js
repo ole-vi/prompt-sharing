@@ -4,7 +4,7 @@ import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
-import { JULES_MESSAGES } from '../utils/constants.js';
+import { JULES_MESSAGES, TIMEOUTS } from '../utils/constants.js';
 
 let queueCache = [];
 
@@ -118,7 +118,8 @@ let editModalState = {
   currentDocId: null,
   currentType: null,
   repoSelector: null,
-  branchSelector: null
+  branchSelector: null,
+  isUnscheduled: false
 };
 
 async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu) {
@@ -177,6 +178,49 @@ function setupSubtasksEventDelegation() {
   });
 }
 
+function displayScheduleStatus(item) {
+  const statusGroup = document.getElementById('editQueueStatusGroup');
+  const scheduleText = document.getElementById('editQueueScheduleText');
+  const unscheduleBtn = document.getElementById('unscheduleBtn');
+  
+  if (!statusGroup || !scheduleText) return;
+  
+  if (item.status === 'scheduled' && item.scheduledAt) {
+    const scheduledDate = new Date(item.scheduledAt.seconds * 1000);
+    const timeZone = item.scheduledTimeZone || 'America/New_York';
+    const dateStr = scheduledDate.toLocaleString('en-US', {
+      timeZone: timeZone,
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    scheduleText.textContent = `Scheduled for ${dateStr} (${timeZone})`;
+    statusGroup.classList.remove('hidden');
+    
+    if (unscheduleBtn) {
+      unscheduleBtn.onclick = () => {
+        unscheduleQueueItem();
+      };
+    }
+  } else {
+    statusGroup.classList.add('hidden');
+  }
+}
+
+function unscheduleQueueItem() {
+  const statusGroup = document.getElementById('editQueueStatusGroup');
+  if (statusGroup) {
+    statusGroup.classList.add('hidden');
+  }
+  
+  editModalState.isUnscheduled = true;
+  editModalState.hasUnsavedChanges = true;
+  
+  showToast('Item marked for unscheduling. Click Save to confirm.', 'info');
+}
+
 async function openEditQueueModal(docId) {
   const item = queueCache.find(i => i.id === docId);
   if (!item) {
@@ -193,7 +237,7 @@ async function openEditQueueModal(docId) {
     modal.id = 'editQueueItemModal';
     modal.className = 'modal-overlay';
     modal.innerHTML = `
-      <div class="modal-dialog" style="max-width: 700px;">
+      <div class="modal-dialog modal-dialog-lg">
         <div class="modal-header">
           <h2 class="modal-title">Edit Queue Item</h2>
           <button class="btn-icon close-modal" id="closeEditQueueModal" title="Close"><span class="icon" aria-hidden="true">close</span></button>
@@ -203,17 +247,24 @@ async function openEditQueueModal(docId) {
             <label class="form-section-label">Type:</label>
             <div id="editQueueType" class="form-text"></div>
           </div>
-          <div class="form-group" id="editPromptGroup">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <label class="form-section-label" style="margin-bottom: 0;">Prompt:</label>
-              <button type="button" id="convertToSubtasksBtn" class="btn btn-secondary" style="font-size: 12px; padding: 4px 12px;">Split into Subtasks</button>
+          <div class="form-group" id="editQueueStatusGroup" class="hidden">
+            <label class="form-section-label">Schedule:</label>
+            <div id="editQueueScheduleInfo" class="form-text schedule-info-row">
+              <div id="editQueueScheduleText"></div>
+              <button type="button" id="unscheduleBtn" class="btn btn-secondary btn-xs">Unschedule</button>
             </div>
-            <textarea id="editQueuePrompt" class="form-control" rows="10" style="font-family: monospace; font-size: 13px;"></textarea>
           </div>
-          <div class="form-group" id="editSubtasksGroup" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <label class="form-section-label" style="margin-bottom: 0;">Subtasks:</label>
-              <button type="button" id="convertToSingleBtn" class="btn btn-secondary" style="font-size: 12px; padding: 4px 12px; display: none;">Convert to Single Prompt</button>
+          <div class="form-group" id="editPromptGroup">
+            <div class="form-group-header">
+              <label class="form-section-label">Prompt:</label>
+              <button type="button" id="convertToSubtasksBtn" class="btn btn-secondary btn-xs">Split into Subtasks</button>
+            </div>
+            <textarea id="editQueuePrompt" class="form-control form-control-mono" rows="10"></textarea>
+          </div>
+          <div class="form-group" id="editSubtasksGroup" class="hidden">
+            <div class="form-group-header">
+              <label class="form-section-label">Subtasks:</label>
+              <button type="button" id="convertToSingleBtn" class="btn btn-secondary btn-xs hidden">Convert to Single Prompt</button>
             </div>
             <div id="editQueueSubtasksList"></div>
           </div>
@@ -276,8 +327,8 @@ async function openEditQueueModal(docId) {
 
   if (item.type === 'single') {
     typeDiv.textContent = 'Single Prompt';
-    promptGroup.style.display = 'block';
-    subtasksGroup.style.display = 'none';
+    promptGroup.classList.remove('hidden');
+    subtasksGroup.classList.add('hidden');
     promptTextarea.value = item.prompt || '';
     editModalState.originalData = { prompt: item.prompt || '' };
     editModalState.currentType = 'single';
@@ -285,8 +336,8 @@ async function openEditQueueModal(docId) {
     document.getElementById('convertToSubtasksBtn').onclick = convertToSubtasks;
   } else if (item.type === 'subtasks') {
     typeDiv.textContent = 'Subtasks Batch';
-    promptGroup.style.display = 'none';
-    subtasksGroup.style.display = 'block';
+    promptGroup.classList.add('hidden');
+    subtasksGroup.classList.remove('hidden');
     
     const subtasks = item.remaining || [];
     renderSubtasksList(subtasks);
@@ -302,6 +353,8 @@ async function openEditQueueModal(docId) {
 
   editModalState.originalData.sourceId = item.sourceId || '';
   editModalState.originalData.branch = item.branch || 'master';
+
+  displayScheduleStatus(item);
 
   await initializeEditRepoAndBranch(item.sourceId, item.branch || 'master', repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu);
 
@@ -327,8 +380,8 @@ function convertToSubtasks() {
   const subtasksGroup = document.getElementById('editSubtasksGroup');
   const typeDiv = document.getElementById('editQueueType');
   
-  promptGroup.style.display = 'none';
-  subtasksGroup.style.display = 'block';
+  promptGroup.classList.add('hidden');
+  subtasksGroup.classList.remove('hidden');
   typeDiv.textContent = 'Subtasks Batch';
   
   const subtasks = promptContent ? [{ fullContent: promptContent }] : [{ fullContent: '' }];
@@ -363,8 +416,8 @@ async function convertToSingle() {
   
   const combinedPrompt = currentSubtasks.join('\n\n---\n\n');
   
-  subtasksGroup.style.display = 'none';
-  promptGroup.style.display = 'block';
+  subtasksGroup.classList.add('hidden');
+  promptGroup.classList.remove('hidden');
   typeDiv.textContent = 'Single Prompt';
   promptTextarea.value = combinedPrompt;
   
@@ -379,7 +432,11 @@ function updateConvertToSingleButtonVisibility() {
   const subtaskCount = document.querySelectorAll('.edit-subtask-content').length;
   
   if (convertBtn) {
-    convertBtn.style.display = subtaskCount === 1 ? 'block' : 'none';
+    if (subtaskCount === 1) {
+      convertBtn.classList.remove('hidden');
+    } else {
+      convertBtn.classList.add('hidden');
+    }
   }
 }
 
@@ -466,6 +523,7 @@ async function closeEditModal(force = false) {
   editModalState.currentType = null;
   editModalState.repoSelector = null;
   editModalState.branchSelector = null;
+  editModalState.isUnscheduled = false;
 }
 
 async function saveQueueItemEdit(docId, closeModalCallback) {
@@ -490,6 +548,13 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
       branch: branch || item.branch || 'master',
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
+    
+    if (editModalState.isUnscheduled) {
+      updates.status = 'pending';
+      updates.scheduledAt = firebase.firestore.FieldValue.delete();
+      updates.scheduledTimeZone = firebase.firestore.FieldValue.delete();
+      updates.activatedAt = firebase.firestore.FieldValue.delete();
+    }
 
     const currentType = editModalState.currentType || item.type;
     
@@ -557,6 +622,313 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+async function getUserTimeZone() {
+  const user = window.auth?.currentUser;
+  if (!user) return 'America/New_York';
+  
+  try {
+    const profileDoc = await window.db.collection('userProfiles').doc(user.uid).get();
+    if (profileDoc.exists && profileDoc.data().preferredTimeZone) {
+      return profileDoc.data().preferredTimeZone;
+    }
+  } catch (err) {
+    console.warn('Failed to fetch user timezone preference', err);
+  }
+  
+  const cached = getCache(CACHE_KEYS.USER_PROFILE, user.uid);
+  if (cached?.preferredTimeZone) {
+    return cached.preferredTimeZone;
+  }
+  
+  return 'America/New_York';
+}
+
+async function saveUserTimeZone(timeZone) {
+  const user = window.auth?.currentUser;
+  if (!user) return;
+  
+  try {
+    await window.db.collection('userProfiles').doc(user.uid).set({
+      preferredTimeZone: timeZone,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    
+    const cached = getCache(CACHE_KEYS.USER_PROFILE, user.uid) || {};
+    setCache(CACHE_KEYS.USER_PROFILE, { ...cached, preferredTimeZone: timeZone }, user.uid);
+  } catch (err) {
+    console.warn('Failed to save timezone preference', err);
+  }
+}
+
+function parseDateInTimeZone(dateTimeStr, timeZone) {
+  const parts = dateTimeStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/);
+  if (!parts) {
+    throw new Error('Invalid date format');
+  }
+  
+  const [, year, month, day, hour, minute, second] = parts;
+  const dateInTz = new Date(new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`).toLocaleString('en-US', { timeZone }));
+  const dateInLocal = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`);
+  const offset = dateInLocal - dateInTz;
+  
+  return new Date(dateInLocal.getTime() - offset);
+}
+
+function getCommonTimeZones() {
+  return [
+    { value: 'America/New_York', label: 'New York (ET)' },
+    { value: 'America/Chicago', label: 'Chicago (CT)' },
+    { value: 'America/Denver', label: 'Denver (MT)' },
+    { value: 'America/Los_Angeles', label: 'Los Angeles (PT)' },
+    { value: 'America/Anchorage', label: 'Anchorage (AKT)' },
+    { value: 'Pacific/Honolulu', label: 'Honolulu (HT)' },
+    { value: 'America/Mexico_City', label: 'Mexico City (CST)' },
+    { value: 'America/Toronto', label: 'Toronto (ET)' },
+    { value: 'America/Sao_Paulo', label: 'São Paulo (BRT)' },
+    { value: 'America/Buenos_Aires', label: 'Buenos Aires (ART)' },
+    { value: 'Europe/London', label: 'London (GMT/BST)' },
+    { value: 'Europe/Paris', label: 'Paris (CET/CEST)' },
+    { value: 'Europe/Berlin', label: 'Berlin (CET/CEST)' },
+    { value: 'Europe/Moscow', label: 'Moscow (MSK)' },
+    { value: 'Africa/Cairo', label: 'Cairo (EET)' },
+    { value: 'Africa/Johannesburg', label: 'Johannesburg (SAST)' },
+    { value: 'Asia/Dubai', label: 'Dubai (GST)' },
+    { value: 'Asia/Kolkata', label: 'India (IST)' },
+    { value: 'Asia/Singapore', label: 'Singapore (SGT)' },
+    { value: 'Asia/Bangkok', label: 'Bangkok (ICT)' },
+    { value: 'Asia/Shanghai', label: 'Shanghai (CST)' },
+    { value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
+    { value: 'Australia/Sydney', label: 'Sydney (AEDT/AEST)' },
+    { value: 'Pacific/Auckland', label: 'Auckland (NZDT/NZST)' },
+    { value: 'UTC', label: 'UTC' }
+  ];
+}
+
+async function showScheduleModal() {
+  const user = window.auth?.currentUser;
+  if (!user) {
+    showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
+    return;
+  }
+  
+  const { queueSelections, subtaskSelections } = getSelectedQueueIds();
+  
+  if (queueSelections.length === 0 && Object.keys(subtaskSelections).length > 0) {
+    showToast('Individual subtasks cannot be scheduled separately. Please select the parent batch to schedule all subtasks together.', 'warn');
+    return;
+  }
+  
+  if (queueSelections.length === 0) {
+    showToast('No items selected to schedule', 'warn');
+    return;
+  }
+  
+  const userTimeZone = await getUserTimeZone();
+  
+  let modal = document.getElementById('scheduleQueueModal');
+  if (!modal) {
+    await loadScheduleModal();
+    modal = document.getElementById('scheduleQueueModal');
+    if (!modal) {
+      console.error('Failed to load schedule modal');
+      return;
+    }
+  }
+  
+  populateTimeZoneDropdown(userTimeZone);
+  initializeScheduleModalInputs();
+  attachScheduleModalHandlers();
+  
+  modal.style.display = 'flex';
+}
+
+async function loadScheduleModal() {
+  const container = document.getElementById('scheduleQueueModalContainer');
+  if (!container) {
+    console.error('Schedule modal container not found');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/partials/schedule-queue-modal.html');
+    if (!response.ok) throw new Error('Failed to load modal');
+    const html = await response.text();
+    container.innerHTML = html;
+  } catch (err) {
+    console.error('Error loading schedule modal:', err);
+  }
+}
+
+function populateTimeZoneDropdown(selectedTimeZone) {
+  const tzSelect = document.getElementById('scheduleTimeZone');
+  if (!tzSelect) return;
+  
+  const timeZones = getCommonTimeZones();
+  tzSelect.innerHTML = timeZones.map(tz => 
+    `<option value="${tz.value}" ${tz.value === selectedTimeZone ? 'selected' : ''}>${tz.label}</option>`
+  ).join('');
+}
+
+function initializeScheduleModalInputs() {
+  const dateInput = document.getElementById('scheduleDate');
+  const timeInput = document.getElementById('scheduleTime');
+  const tzSelect = document.getElementById('scheduleTimeZone');
+  
+  const updateMinDate = () => {
+    if (!dateInput || !tzSelect) return;
+    
+    const selectedTz = tzSelect.value;
+    const nowInTz = new Date().toLocaleString('en-US', { timeZone: selectedTz });
+    const minDate = new Date(nowInTz).toISOString().split('T')[0];
+    dateInput.min = minDate;
+    dateInput.value = minDate;
+  };
+  
+  const updateDefaultTime = () => {
+    if (!timeInput || !tzSelect) return;
+    
+    try {
+      const selectedTz = tzSelect.value;
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: selectedTz
+      });
+      const parts = formatter.formatToParts(now);
+      let hour = parseInt(parts.find(p => p.type === 'hour')?.value ?? '0', 10);
+      hour = (hour + 1) % 24;
+      timeInput.value = `${hour.toString().padStart(2, '0')}:00`;
+    } catch (e) {
+      const now = new Date();
+      now.setHours(now.getHours() + 1);
+      now.setMinutes(0);
+      timeInput.value = now.toTimeString().slice(0, 5);
+    }
+  };
+  
+  if (dateInput) {
+    updateMinDate();
+  }
+  
+  if (timeInput) {
+    updateDefaultTime();
+  }
+  
+  if (tzSelect) {
+    const handleTzChange = () => {
+      updateMinDate();
+      updateDefaultTime();
+    };
+    tzSelect.removeEventListener('change', handleTzChange);
+    tzSelect.addEventListener('change', handleTzChange);
+  }
+}
+
+function attachScheduleModalHandlers() {
+  const modal = document.getElementById('scheduleQueueModal');
+  if (!modal) return;
+  
+  const closeBtn = document.getElementById('closeScheduleModal');
+  const cancelBtn = document.getElementById('cancelSchedule');
+  const confirmBtn = document.getElementById('confirmSchedule');
+  
+  if (closeBtn) closeBtn.onclick = hideScheduleModal;
+  if (cancelBtn) cancelBtn.onclick = hideScheduleModal;
+  if (confirmBtn) confirmBtn.onclick = confirmScheduleItems;
+  
+  modal.onclick = (e) => {
+    if (e.target === modal) hideScheduleModal();
+  };
+}
+
+function hideScheduleModal() {
+  const modal = document.getElementById('scheduleQueueModal');
+  if (modal) {
+    modal.style.display = 'none';
+    const errorDiv = document.getElementById('scheduleError');
+    if (errorDiv) {
+      errorDiv.classList.add('hidden');
+      errorDiv.textContent = '';
+    }
+  }
+}
+
+async function confirmScheduleItems() {
+  const user = window.auth?.currentUser;
+  if (!user) return;
+  
+  const dateInput = document.getElementById('scheduleDate');
+  const timeInput = document.getElementById('scheduleTime');
+  const timeZoneSelect = document.getElementById('scheduleTimeZone');
+  const retryCheckbox = document.getElementById('scheduleRetryOnFailure');
+  const errorDiv = document.getElementById('scheduleError');
+  
+  errorDiv.classList.add('hidden');
+  errorDiv.textContent = '';
+  
+  if (!dateInput.value || !timeInput.value) {
+    errorDiv.textContent = 'Date and time are required';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+  
+  const selectedDate = dateInput.value;
+  const selectedTime = timeInput.value;
+  const selectedTimeZone = timeZoneSelect.value;
+  
+  const dateTimeStr = `${selectedDate}T${selectedTime}:00`;
+  const scheduledDate = parseDateInTimeZone(dateTimeStr, selectedTimeZone);
+  
+  const now = new Date();
+  if (scheduledDate < now) {
+    errorDiv.textContent = 'Scheduled time must be in the future';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+  
+  await saveUserTimeZone(selectedTimeZone);
+  
+  const { queueSelections } = getSelectedQueueIds();
+  
+  try {
+    const scheduledAt = firebase.firestore.Timestamp.fromDate(scheduledDate);
+    const retryOnFailure = retryCheckbox ? retryCheckbox.checked : false;
+    
+    for (const docId of queueSelections) {
+      await updateJulesQueueItem(user.uid, docId, {
+        status: 'scheduled',
+        scheduledAt: scheduledAt,
+        scheduledTimeZone: selectedTimeZone,
+        retryOnFailure: retryOnFailure,
+        retryCount: 0,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    
+    const totalScheduled = queueSelections.length;
+    
+    const formattedScheduledAt = new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: selectedTimeZone,
+      timeZoneName: 'short'
+    }).format(scheduledDate);
+    
+    const itemText = totalScheduled === 1 ? 'item' : 'items';
+    showToast(`Scheduled ${totalScheduled} ${itemText} for ${formattedScheduledAt}`, 'success');
+    hideScheduleModal();
+    await loadQueuePage();
+  } catch (err) {
+    errorDiv.textContent = `Failed to schedule items: ${err.message}`;
+    errorDiv.classList.remove('hidden');
+  }
+}
+
 function renderQueueList(items) {
   const listDiv = document.getElementById('allQueueList');
   if (!listDiv) return;
@@ -569,6 +941,30 @@ function renderQueueList(items) {
     const created = item.createdAt ? new Date(item.createdAt.seconds ? item.createdAt.seconds * 1000 : item.createdAt).toLocaleString() : 'Unknown';
     const status = item.status || 'pending';
     const remainingCount = Array.isArray(item.remaining) ? item.remaining.length : 0;
+    
+    let scheduledInfo = '';
+    if (status === 'scheduled' && item.scheduledAt) {
+      const scheduledDate = new Date(item.scheduledAt.seconds * 1000);
+      const timeZone = item.scheduledTimeZone || 'America/New_York';
+      const dateStr = scheduledDate.toLocaleString('en-US', { 
+        timeZone: timeZone,
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      const retryCount = item.retryCount || 0;
+      const retryInfo = retryCount > 0 ? ` (Retry ${retryCount}/3)` : '';
+      scheduledInfo = `<div class="queue-scheduled-info"><span class="icon icon-inline" aria-hidden="true">schedule</span> Scheduled: ${dateStr} (${timeZone})${retryInfo}</div>`;
+    }
+    
+    let errorInfo = '';
+    if (status === 'error' && item.error) {
+      errorInfo = `<div class="queue-error-info"><span class="icon icon-inline" aria-hidden="true">error</span> ${escapeHtml(item.error)}</div>`;
+    } else if (status === 'scheduled' && item.lastError && item.retryCount > 0) {
+      errorInfo = `<div class="queue-error-info"><span class="icon icon-inline" aria-hidden="true">warning</span> Last attempt failed: ${escapeHtml(item.lastError)}</div>`;
+    }
     
     if (item.type === 'subtasks' && Array.isArray(item.remaining) && item.remaining.length > 0) {
       const subtasksHtml = item.remaining.map((subtask, index) => {
@@ -588,8 +984,10 @@ function renderQueueList(items) {
 
       const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
       
+      const statusClass = status === 'scheduled' ? 'queue-status-scheduled' : '';
+      
       return `
-        <div class="queue-card queue-item" data-docid="${item.id}">
+        <div class="queue-card queue-item ${statusClass}" data-docid="${item.id}">
           <div class="queue-row">
             <div class="queue-checkbox-col">
               <input class="queue-checkbox" type="checkbox" data-docid="${item.id}" />
@@ -602,6 +1000,8 @@ function renderQueueList(items) {
               </div>
               <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
               ${repoDisplay}
+              ${scheduledInfo}
+              ${errorInfo}
             </div>
           </div>
           <div class="queue-subtasks">
@@ -614,8 +1014,10 @@ function renderQueueList(items) {
     const promptPreview = (item.prompt || '').substring(0, 200);
     const repoDisplay = item.sourceId ? `<div class="queue-repo"><span class="icon icon-inline" aria-hidden="true">inventory_2</span> ${item.sourceId.split('/').slice(-2).join('/')} (${item.branch || 'master'})</div>` : '';
     
+    const statusClass = status === 'scheduled' ? 'queue-status-scheduled' : '';
+    
     return `
-      <div class="queue-card queue-item" data-docid="${item.id}">
+      <div class="queue-card queue-item ${statusClass}" data-docid="${item.id}">
         <div class="queue-row">
           <div class="queue-checkbox-col">
             <input class="queue-checkbox" type="checkbox" data-docid="${item.id}" />
@@ -627,6 +1029,8 @@ function renderQueueList(items) {
             </div>
             <div class="queue-meta">Created: ${created} • ID: <span class="mono">${item.id}</span></div>
             ${repoDisplay}
+            ${scheduledInfo}
+            ${errorInfo}
             <div class="queue-prompt">${escapeHtml(promptPreview)}${promptPreview.length >= 200 ? '...' : ''}</div>
           </div>
         </div>
@@ -694,13 +1098,13 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
           }
         }
         successfulIndices.push(originalIndex);
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise(r => setTimeout(r, TIMEOUTS.queueDelay));
         retry = false;
       } catch (err) {
         const result = await showSubtaskErrorModal(i + 1, toRun.length, err, true);
         
         if (result.action === 'retry') {
-          if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
+          if (result.shouldDelay) await new Promise(r => setTimeout(r, TIMEOUTS.longDelay));
           continue;
         } else if (result.action === 'skip') {
           skippedIndices.push(originalIndex);
@@ -733,6 +1137,7 @@ function attachQueueModalHandlers() {
   const selectAll = document.getElementById('queueSelectAll');
   const runBtn = document.getElementById('queueRunBtn');
   const deleteBtn = document.getElementById('queueDeleteBtn');
+  const scheduleBtn = document.getElementById('queueScheduleBtn');
   const closeBtn = document.getElementById('closeQueueBtn');
 
   if (selectAll) {
@@ -740,6 +1145,7 @@ function attachQueueModalHandlers() {
       const checked = selectAll.checked;
       document.querySelectorAll('.queue-checkbox').forEach(cb => cb.checked = checked);
       document.querySelectorAll('.subtask-checkbox').forEach(cb => cb.checked = checked);
+      updateScheduleButton();
     };
   }
 
@@ -751,10 +1157,16 @@ function attachQueueModalHandlers() {
       document.querySelectorAll(`.subtask-checkbox[data-docid="${docId}"]`).forEach(subtaskCb => {
         subtaskCb.checked = checked;
       });
+      updateScheduleButton();
+    };
+  });
+  
+  document.querySelectorAll('.subtask-checkbox').forEach(subtaskCb => {
+    subtaskCb.onclick = () => {
+      updateScheduleButton();
     };
   });
 
-  // Attach edit handlers
   document.querySelectorAll('.edit-queue-item').forEach(editBtn => {
     editBtn.onclick = (e) => {
       e.stopPropagation();
@@ -765,10 +1177,99 @@ function attachQueueModalHandlers() {
 
   const runHandler = async () => { await runSelectedQueueItems(); };
   const deleteHandler = async () => { await deleteSelectedQueueItems(); };
+  const scheduleHandler = async () => {
+    if (scheduleBtn.dataset.mode === 'unschedule') {
+      await unscheduleSelectedQueueItems();
+    } else {
+      await showScheduleModal();
+    }
+  };
 
   if (runBtn) runBtn.onclick = runHandler;
   if (deleteBtn) deleteBtn.onclick = deleteHandler;
+  if (scheduleBtn) scheduleBtn.onclick = scheduleHandler;
   if (closeBtn) closeBtn.onclick = hideJulesQueueModal;
+  
+  updateScheduleButton();
+}
+
+function updateScheduleButton() {
+  const scheduleBtn = document.getElementById('queueScheduleBtn');
+  if (!scheduleBtn) return;
+  
+  const { queueSelections } = getSelectedQueueIds();
+  const hasSelections = queueSelections.length > 0;
+  
+  if (!hasSelections) {
+    scheduleBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">schedule</span> Schedule';
+    scheduleBtn.setAttribute('aria-label', 'Schedule selected items');
+    scheduleBtn.dataset.mode = 'schedule';
+    return;
+  }
+  
+  const allScheduled = queueSelections.every(docId => {
+    const item = queueCache.find(i => i.id === docId);
+    return item && item.status === 'scheduled';
+  });
+  
+  if (allScheduled && queueSelections.length > 0) {
+    scheduleBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">schedule</span> Unschedule';
+    scheduleBtn.setAttribute('aria-label', 'Unschedule selected items');
+    scheduleBtn.dataset.mode = 'unschedule';
+  } else {
+    scheduleBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">schedule</span> Schedule';
+    scheduleBtn.setAttribute('aria-label', 'Schedule selected items');
+    scheduleBtn.dataset.mode = 'schedule';
+  }
+}
+
+async function unscheduleSelectedQueueItems() {
+  const user = window.auth?.currentUser;
+  if (!user) {
+    showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error');
+    return;
+  }
+  
+  const { queueSelections } = getSelectedQueueIds();
+  
+  if (queueSelections.length === 0) {
+    showToast('No items selected', 'warn');
+    return;
+  }
+  
+  const itemText = queueSelections.length === 1 ? 'item' : 'items';
+  const confirmed = await showConfirm(`Unschedule ${queueSelections.length} selected ${itemText}?`, {
+    title: 'Unschedule Items',
+    confirmText: 'Unschedule',
+    confirmStyle: 'warn'
+  });
+  
+  if (!confirmed) return;
+  
+  try {
+    const batch = firebase.firestore().batch();
+    
+    for (const docId of queueSelections) {
+      const docRef = firebase.firestore().collection('julesQueues').doc(user.uid).collection('items').doc(docId);
+      batch.update(docRef, {
+        status: 'pending',
+        scheduledAt: firebase.firestore.FieldValue.delete(),
+        scheduledTimeZone: firebase.firestore.FieldValue.delete(),
+        activatedAt: firebase.firestore.FieldValue.delete(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    
+    await batch.commit();
+    
+    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
+    clearCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
+    
+    showToast(`${queueSelections.length} ${itemText} unscheduled`, 'success');
+    await loadQueuePage();
+  } catch (err) {
+    showToast(`Failed to unschedule: ${err.message}`, 'error');
+  }
 }
 
 function getSelectedQueueIds() {
@@ -856,14 +1357,14 @@ async function runSelectedQueueItems() {
     pauseBtn.onclick = () => {
       paused = true;
       pauseBtn.disabled = true;
-      statusBar.showMessage('Pausing queue processing after the current subtask', { timeout: 4000 });
+      statusBar.showMessage('Pausing queue processing after the current subtask', { timeout: TIMEOUTS.longDelay });
     };
   }
 
   statusBar.showMessage('Processing queue...', { timeout: 0 });
   statusBar.setAction('Pause', () => {
     paused = true;
-    statusBar.showMessage('Pausing after current subtask', { timeout: 3000 });
+    statusBar.showMessage('Pausing after current subtask', { timeout: TIMEOUTS.statusBar });
     statusBar.clearAction();
     if (pauseBtn) pauseBtn.disabled = true;
   });
@@ -896,6 +1397,8 @@ async function runSelectedQueueItems() {
   for (const [docId, indices] of sortedSubtaskEntries) {
     if (paused) break;
     if (queueSelections.includes(docId)) continue;
+    
+    const item = queueCache.find(i => i.id === docId);
     
     try {
       const result = await runSelectedSubtasks(docId, indices.slice().sort((a, b) => a - b), suppressPopups, openInBackground);
@@ -946,7 +1449,7 @@ async function runSelectedQueueItems() {
           } catch (singleErr) {
             const result = await showSubtaskErrorModal(currentItemNumber, totalItems, singleErr, true);
             if (result.action === 'retry') {
-              if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
+              if (result.shouldDelay) await new Promise(r => setTimeout(r, TIMEOUTS.longDelay));
               continue;
             } else if (result.action === 'skip') {
               totalSkipped++;
@@ -978,7 +1481,7 @@ async function runSelectedQueueItems() {
             } catch (e) {
               console.warn('Failed to persist paused state for queue item', id, e.message || e);
             }
-            statusBar.showMessage('Paused — progress saved', { timeout: 3000 });
+            statusBar.showMessage('Paused — progress saved', { timeout: TIMEOUTS.statusBar });
             statusBar.clearProgress();
             statusBar.clearAction();
             await loadQueuePage();
@@ -1023,13 +1526,13 @@ async function runSelectedQueueItems() {
                 console.error('Failed to update UI progress for queue item', id, e);
               }
 
-              await new Promise(r => setTimeout(r, 800));
+              await new Promise(r => setTimeout(r, TIMEOUTS.queueDelay));
               subtaskRetry = false;
             } catch (err) {
               const result = await showSubtaskErrorModal(subtaskNumber, initialCount, err, true);
               
               if (result.action === 'retry') {
-                if (result.shouldDelay) await new Promise(r => setTimeout(r, 5000));
+                if (result.shouldDelay) await new Promise(r => setTimeout(r, TIMEOUTS.longDelay));
                 continue;
               } else if (result.action === 'skip') {
                 totalSkipped++;
@@ -1043,7 +1546,7 @@ async function runSelectedQueueItems() {
                 } catch (e) {
                   console.warn('Failed to persist remaining after skip', e);
                 }
-                statusBar.showMessage(JULES_MESSAGES.SKIPPED_SUBTASK, { timeout: 2000 });
+                statusBar.showMessage(JULES_MESSAGES.SKIPPED_SUBTASK, { timeout: TIMEOUTS.actionFeedback });
                 subtaskRetry = false;
               } else if (result.action === 'queue') {
                 try {
@@ -1055,7 +1558,7 @@ async function runSelectedQueueItems() {
                 } catch (e) {
                   console.warn('Failed to persist queue state', e);
                 }
-                statusBar.showMessage('Remainder queued for later', { timeout: 3000 });
+                statusBar.showMessage('Remainder queued for later', { timeout: TIMEOUTS.statusBar });
                 statusBar.clearProgress();
                 statusBar.clearAction();
                 await loadQueuePage();

@@ -5,6 +5,7 @@
 
 import { createElement } from '../utils/dom-helpers.js';
 import { showToast } from './toast.js';
+import { TIMEOUTS } from '../utils/constants.js';
 
 let currentEscapeHandler = null;
 let promptViewerHandlers = new Map();
@@ -82,7 +83,7 @@ export function showPromptViewer(prompt, sessionId) {
       setTimeout(() => {
         copyBtn.innerHTML = originalText;
         copyBtn.disabled = false;
-      }, 2000);
+      }, TIMEOUTS.actionFeedback);
     } catch (err) {
       console.error('Copy failed:', err);
       showToast('Failed to copy prompt to clipboard', 'error');
@@ -129,7 +130,7 @@ export function showPromptViewer(prompt, sessionId) {
   modal.classList.add('show');
   
   // Focus the copy button
-  setTimeout(() => newCopyBtn.focus(), 100);
+  setTimeout(() => newCopyBtn.focus(), TIMEOUTS.modalFocus);
 }
 
 /**

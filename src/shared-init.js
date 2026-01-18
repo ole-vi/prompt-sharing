@@ -4,17 +4,17 @@
 import { loadHeader } from './modules/header.js';
 import { initAuthStateListener } from './modules/auth.js';
 import { initBranchSelector, loadBranches, loadBranchFromStorage } from './modules/branch-selector.js';
-import { OWNER, REPO, BRANCH } from './utils/constants.js';
+import { OWNER, REPO, BRANCH, TIMEOUTS, LIMITS } from './utils/constants.js';
 import { parseParams } from './utils/url-params.js';
 import statusBar from './modules/status-bar.js';
 
 let isInitialized = false;
 
-function waitForFirebase(callback, attempts = 0, maxAttempts = 100) {
+function waitForFirebase(callback, attempts = 0, maxAttempts = LIMITS.componentMaxAttempts) {
   if (window.firebaseReady) {
     callback();
   } else if (attempts < maxAttempts) {
-    setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), 100);
+    setTimeout(() => waitForFirebase(callback, attempts + 1, maxAttempts), TIMEOUTS.firebaseRetry);
   } else {
     console.error('Firebase failed to initialize after', maxAttempts, 'attempts');
     callback();
@@ -90,7 +90,6 @@ async function fetchVersion() {
         currentDate = new Date(metaDate);
         currentDateStr = new Date(metaDate).toLocaleDateString('en-CA');
       }
-    } else {
     }
 
     if (currentDate < latestDate) {
@@ -114,7 +113,6 @@ async function fetchVersion() {
     }
     if (currentDate < latestDate) {
       showUpdateBanner(latestDateStr, latestSha);
-    } else {
     }
     
   } catch (error) {
