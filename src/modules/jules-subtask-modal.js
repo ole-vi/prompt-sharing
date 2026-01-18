@@ -13,10 +13,52 @@ import { showConfirm } from './confirm-modal.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';
+import { modalManager } from '../utils/modal-manager.js';
 
 // Module state
 let currentFullPrompt = '';
 let currentSubtasks = [];
+
+const SPLIT_MODAL_ID = 'subtaskSplitModal';
+const PREVIEW_MODAL_ID = 'subtaskPreviewModal';
+
+const SPLIT_MODAL_CONTENT = `
+    <div class="modal-content modal-lg">
+      <h2>Break into Subtasks</h2>
+
+      <!-- Subtask list for editing -->
+      <div id="splitEditPanel" class="panel mb-md split-panel" style="max-height:400px; overflow-y:auto;">
+        <div id="splitEditList" class="pad-lg" style="padding:8px;"></div>
+      </div>
+
+      <div style="margin-bottom: 12px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+          <input id="splitSuppressPopupsCheckbox" type="checkbox" style="cursor: pointer;" data-exclusive-group="split" />
+          <span>Suppress popups</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; margin-top: 8px;">
+          <input id="splitOpenInBackgroundCheckbox" type="checkbox" style="cursor: pointer;" data-exclusive-group="split" />
+          <span>Open in background</span>
+        </label>
+      </div>
+
+      <div class="modal-buttons">
+        <button id="splitCancelBtn" class="btn">Cancel</button>
+        <button id="splitQueueBtn" class="btn">Queue Subtasks</button>
+        <button id="splitConfirmBtn" class="btn primary">Send Subtasks</button>
+      </div>
+    </div>
+`;
+
+const PREVIEW_MODAL_CONTENT = `
+    <div class="modal-content modal-xl">
+      <h2 id="subtaskPreviewTitle">Subtask Preview</h2>
+      <div id="subtaskPreviewContent" class="scroll-box"></div>
+      <div class="modal-buttons mt-md">
+        <button id="subtaskPreviewCloseBtn" class="btn">Close</button>
+      </div>
+    </div>
+`;
 
 /**
  * Show the subtask split modal for a given prompt
@@ -26,8 +68,12 @@ export function showSubtaskSplitModal(promptText) {
   console.log('showSubtaskSplitModal called with promptText:', promptText);
   currentFullPrompt = promptText;
   
-  const modal = document.getElementById('subtaskSplitModal');
-  console.log('Modal element:', modal);
+  modalManager.destroyModal(SPLIT_MODAL_ID);
+  const modal = modalManager.createModal(SPLIT_MODAL_ID, {
+    content: SPLIT_MODAL_CONTENT,
+    classes: ['modal']
+  });
+
   const confirmBtn = document.getElementById('splitConfirmBtn');
   const queueBtn = document.getElementById('splitQueueBtn');
   const cancelBtn = document.getElementById('splitCancelBtn');
@@ -36,13 +82,9 @@ export function showSubtaskSplitModal(promptText) {
   console.log('Analysis result:', analysis);
   currentSubtasks = analysis.subtasks;
   
-  console.log('Setting modal display to flex');
-  modal.classList.add('show');
-  console.log('Modal should now be visible');
-
   renderSplitEdit(currentSubtasks, promptText);
 
-  confirmBtn.onclick = async () => {
+  modalManager.addListener(SPLIT_MODAL_ID, confirmBtn, 'click', async () => {
     if (!currentSubtasks || currentSubtasks.length === 0) {
       hideSubtaskSplitModal();
       await submitSubtasks([]);
@@ -67,13 +109,11 @@ export function showSubtaskSplitModal(promptText) {
     const subtasksToSubmit = [...currentSubtasks];
     hideSubtaskSplitModal();
     await submitSubtasks(subtasksToSubmit);
-  };
+  });
 
-  cancelBtn.onclick = () => {
-    hideSubtaskSplitModal();
-  };
+  modalManager.addListener(SPLIT_MODAL_ID, cancelBtn, 'click', hideSubtaskSplitModal);
 
-  queueBtn.onclick = async () => {
+  modalManager.addListener(SPLIT_MODAL_ID, queueBtn, 'click', async () => {
     const user = window.auth?.currentUser;
     if (!user) {
       showToast(JULES_MESSAGES.SIGN_IN_REQUIRED_SUBTASKS, 'warn');
@@ -144,15 +184,21 @@ export function showSubtaskSplitModal(promptText) {
     } catch (err) {
       showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
     }
-  };
+  });
+
+  // Close on background click
+  modalManager.addListener(SPLIT_MODAL_ID, modal, 'click', (e) => {
+    if (e.target === modal) hideSubtaskSplitModal();
+  });
+
+  modalManager.showModal(SPLIT_MODAL_ID);
 }
 
 /**
  * Hide the subtask split modal
  */
 export function hideSubtaskSplitModal() {
-  const modal = document.getElementById('subtaskSplitModal');
-  modal.classList.remove('show');
+  modalManager.destroyModal(SPLIT_MODAL_ID);
   currentSubtasks = [];
 }
 
@@ -220,7 +266,12 @@ function renderSplitEdit(subtasks, promptText) {
  * @param {number} partNumber - The part number to display
  */
 function showSubtaskPreview(subtask, partNumber) {
-  const modal = document.getElementById('subtaskPreviewModal');
+  modalManager.destroyModal(PREVIEW_MODAL_ID);
+  const modal = modalManager.createModal(PREVIEW_MODAL_ID, {
+    content: PREVIEW_MODAL_CONTENT,
+    classes: ['modal']
+  });
+
   const title = document.getElementById('subtaskPreviewTitle');
   const content = document.getElementById('subtaskPreviewContent');
   const closeBtn = document.getElementById('subtaskPreviewCloseBtn');
@@ -228,17 +279,17 @@ function showSubtaskPreview(subtask, partNumber) {
   title.textContent = `Part ${partNumber}: ${subtask.title || `Part ${partNumber}`}`;
   content.textContent = subtask.fullContent || subtask.content || '';
   
-  modal.classList.add('show');
+  modalManager.addListener(PREVIEW_MODAL_ID, closeBtn, 'click', () => {
+    modalManager.destroyModal(PREVIEW_MODAL_ID);
+  });
   
-  closeBtn.onclick = () => {
-    modal.classList.remove('show');
-  };
-  
-  modal.addEventListener('click', (e) => {
+  modalManager.addListener(PREVIEW_MODAL_ID, modal, 'click', (e) => {
     if (e.target === modal) {
-      modal.classList.remove('show');
+      modalManager.destroyModal(PREVIEW_MODAL_ID);
     }
   });
+
+  modalManager.showModal(PREVIEW_MODAL_ID);
 }
 
 /**

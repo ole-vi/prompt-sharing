@@ -1,15 +1,14 @@
 // ===== Confirmation Modal Module =====
 // Provides styled confirmation dialogs to replace confirm() calls
 
-let confirmModal = null;
-let confirmResolve = null;
+import { modalManager } from '../utils/modal-manager.js';
+import { TIMEOUTS } from '../utils/constants.js';
 
-function createConfirmModal() {
-  const modal = document.createElement('div');
-  modal.id = 'confirmModal';
-  modal.className = 'modal';
-  modal.style.zIndex = '10000';
-  modal.innerHTML = `
+let confirmResolve = null;
+const MODAL_ID = 'confirmModal';
+
+function getModalContent() {
+  return `
     <div class="modal-content" style="max-width: 480px;">
       <div class="modal-header">
         <h3 id="confirmModalTitle">Confirm Action</h3>
@@ -24,31 +23,6 @@ function createConfirmModal() {
       </div>
     </div>
   `;
-  
-  document.body.appendChild(modal);
-  return modal;
-}
-
-import { TIMEOUTS } from '../utils/constants.js';
-
-function showConfirmModal() {
-  if (!confirmModal) {
-    confirmModal = createConfirmModal();
-  }
-  
-  confirmModal.classList.add('show');
-  
-  // Focus the confirm button
-  setTimeout(() => {
-    const confirmBtn = document.getElementById('confirmModalConfirm');
-    if (confirmBtn) confirmBtn.focus();
-  }, TIMEOUTS.modalFocus);
-}
-
-function hideConfirmModal() {
-  if (confirmModal) {
-    confirmModal.classList.remove('show');
-  }
 }
 
 /**
@@ -63,9 +37,12 @@ function hideConfirmModal() {
  */
 export function showConfirm(message, options = {}) {
   return new Promise((resolve) => {
-    if (!confirmModal) {
-      confirmModal = createConfirmModal();
-    }
+    // Create or get modal
+    const modal = modalManager.createModal(MODAL_ID, {
+      content: getModalContent(),
+      classes: ['modal'],
+      styles: { zIndex: '10000' }
+    });
     
     const title = options.title || 'Confirm Action';
     const confirmText = options.confirmText || 'Confirm';
@@ -78,83 +55,70 @@ export function showConfirm(message, options = {}) {
     const cancelBtn = document.getElementById('confirmModalCancel');
     const closeBtn = document.getElementById('confirmModalClose');
     
-    titleEl.textContent = title;
-    messageEl.textContent = message;
-    confirmBtn.textContent = confirmText;
-    cancelBtn.textContent = cancelText;
+    if (titleEl) titleEl.textContent = title;
+    if (messageEl) messageEl.textContent = message;
+    if (confirmBtn) confirmBtn.textContent = confirmText;
+    if (cancelBtn) cancelBtn.textContent = cancelText;
     
     // Set button style
-    confirmBtn.className = 'btn';
-    if (confirmStyle === 'error' || confirmStyle === 'danger') {
-      confirmBtn.classList.add('danger');
-    } else if (confirmStyle === 'warn') {
-      confirmBtn.classList.add('warn');
-    } else if (confirmStyle === 'primary') {
-      confirmBtn.classList.add('primary');
-    } else if (confirmStyle === 'success') {
-      confirmBtn.classList.add('success');
+    if (confirmBtn) {
+      confirmBtn.className = 'btn';
+      if (confirmStyle === 'error' || confirmStyle === 'danger') {
+        confirmBtn.classList.add('danger');
+      } else if (confirmStyle === 'warn') {
+        confirmBtn.classList.add('warn');
+      } else if (confirmStyle === 'primary') {
+        confirmBtn.classList.add('primary');
+      } else if (confirmStyle === 'success') {
+        confirmBtn.classList.add('success');
+      }
     }
     
     confirmResolve = resolve;
     
-    // Remove old event listeners by cloning
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    const newCancelBtn = cancelBtn.cloneNode(true);
-    const newCloseBtn = closeBtn.cloneNode(true);
+    // Clean up any existing listeners just in case (though we destroy on close)
+    modalManager.cleanupListeners(MODAL_ID);
     
-    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
-    
-    newConfirmBtn.onclick = () => {
-      hideConfirmModal();
+    const cleanupAndResolve = (result) => {
+      modalManager.destroyModal(MODAL_ID);
       if (confirmResolve) {
-        confirmResolve(true);
+        confirmResolve(result);
         confirmResolve = null;
       }
     };
     
-    newCancelBtn.onclick = () => {
-      hideConfirmModal();
-      if (confirmResolve) {
-        confirmResolve(false);
-        confirmResolve = null;
-      }
-    };
+    if (confirmBtn) {
+      modalManager.addListener(MODAL_ID, confirmBtn, 'click', () => cleanupAndResolve(true));
+    }
     
-    newCloseBtn.onclick = () => {
-      hideConfirmModal();
-      if (confirmResolve) {
-        confirmResolve(false);
-        confirmResolve = null;
-      }
-    };
+    if (cancelBtn) {
+      modalManager.addListener(MODAL_ID, cancelBtn, 'click', () => cleanupAndResolve(false));
+    }
+
+    if (closeBtn) {
+      modalManager.addListener(MODAL_ID, closeBtn, 'click', () => cleanupAndResolve(false));
+    }
     
     // Close on background click
-    confirmModal.onclick = (e) => {
-      if (e.target === confirmModal) {
-        hideConfirmModal();
-        if (confirmResolve) {
-          confirmResolve(false);
-          confirmResolve = null;
-        }
+    modalManager.addListener(MODAL_ID, modal, 'click', (e) => {
+      if (e.target === modal) {
+        cleanupAndResolve(false);
       }
-    };
+    });
     
     // Handle Escape key
-    const handleEscape = (e) => {
+    modalManager.addListener(MODAL_ID, document, 'keydown', (e) => {
       if (e.key === 'Escape') {
-        hideConfirmModal();
-        if (confirmResolve) {
-          confirmResolve(false);
-          confirmResolve = null;
-        }
-        document.removeEventListener('keydown', handleEscape);
+        cleanupAndResolve(false);
       }
-    };
+    });
     
-    document.addEventListener('keydown', handleEscape);
+    modalManager.showModal(MODAL_ID);
     
-    showConfirmModal();
+    // Focus the confirm button
+    setTimeout(() => {
+      const btn = document.getElementById('confirmModalConfirm');
+      if (btn) btn.focus();
+    }, TIMEOUTS.modalFocus);
   });
 }

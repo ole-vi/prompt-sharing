@@ -7,21 +7,80 @@ import { addToJulesQueue } from './jules-queue.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import { RETRY_CONFIG, TIMEOUTS, JULES_MESSAGES } from '../utils/constants.js';
 import { showToast } from './toast.js';
+import { modalManager } from '../utils/modal-manager.js';
 
 let lastSelectedSourceId = 'sources/github/promptroot/promptroot';
 let lastSelectedBranch = 'main';
 
-export async function loadSubtaskErrorModal() {
-  try {
-    const response = await fetch('/partials/subtask-error-modal.html');
-    if (response.ok) {
-      const html = await response.text();
-      document.body.insertAdjacentHTML('beforeend', html);
-    }
-  } catch (err) {
-    console.error('Error loading subtask error modal:', err);
-  }
-}
+const KEY_MODAL_ID = 'julesKeyModal';
+const ENV_MODAL_ID = 'julesEnvModal';
+const ERROR_MODAL_ID = 'subtaskErrorModal';
+
+const KEY_MODAL_CONTENT = `
+    <div class="modal-content">
+      <h2>Save Jules API Key</h2>
+      <p>Enter your Jules API key. This will be encrypted and stored securely.</p>
+      <input id="julesKeyInput" type="password" class="modal-input" placeholder="Paste your Jules API key..." />
+      <div class="modal-buttons">
+        <button id="julesCancelBtn" class="btn">Cancel</button>
+        <button id="julesSaveBtn" class="btn primary">Save & Continue</button>
+      </div>
+    </div>
+`;
+
+const ENV_MODAL_CONTENT = `
+    <div class="modal-content">
+      <h2>Choose Repository</h2>
+      <p>Select a connected repository to open in Jules.</p>
+
+      <div id="favoriteReposContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
+
+      <div id="allReposContainer" class="mb-md">
+        <div class="form-row">
+          <!-- Repository Selection -->
+          <div class="form-col">
+            <label class="form-label">Repository:</label>
+            <div id="julesRepoDropdown" class="custom-dropdown">
+              <button id="julesRepoDropdownBtn" class="custom-dropdown-btn w-full" type="button">
+                <span id="julesRepoDropdownText">Select a repository...</span>
+                <span class="custom-dropdown-caret" aria-hidden="true">▼</span>
+              </button>
+              <div id="julesRepoDropdownMenu" class="custom-dropdown-menu" role="menu"></div>
+            </div>
+          </div>
+
+          <!-- Branch Selection -->
+          <div class="form-col">
+            <label class="form-label">Branch:</label>
+            <div id="julesBranchDropdown" class="custom-dropdown">
+              <button id="julesBranchDropdownBtn" class="custom-dropdown-btn w-full" type="button" disabled>
+                <span id="julesBranchDropdownText">Select branch...</span>
+                <span class="custom-dropdown-caret" aria-hidden="true">▼</span>
+              </button>
+              <div id="julesBranchDropdownMenu" class="custom-dropdown-menu" role="menu"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="options-box">
+        <label class="form-label small-text"><input type="checkbox" id="julesEnvSuppressPopupsCheckbox" data-exclusive-group="jules-env" /> Suppress Popups</label>
+        <label class="form-label small-text"><input type="checkbox" id="julesEnvOpenInBackgroundCheckbox" data-exclusive-group="jules-env" /> Open in Background</label>
+      </div>
+
+      <div class="modal-buttons">
+        <button id="julesEnvCancelBtn" class="btn">Cancel</button>
+        <button id="julesEnvQueueBtn" class="btn" disabled>Queue</button>
+        <button id="julesEnvSubmitBtn" class="btn primary" disabled>Submit</button>
+      </div>
+    </div>
+`;
+
+let errorModalHtml = null;
+let envModalState = {
+  repoSelector: null,
+  branchSelector: null
+};
 
 export function openUrlInBackground(url) {
   const a = document.createElement('a');
@@ -47,12 +106,15 @@ export function openUrlInBackground(url) {
 }
 
 export function showJulesKeyModal(onSave) {
-  const modal = document.getElementById('julesKeyModal');
+  modalManager.destroyModal(KEY_MODAL_ID);
+  const modal = modalManager.createModal(KEY_MODAL_ID, {
+    content: KEY_MODAL_CONTENT,
+    classes: ['modal'],
+    styles: { zIndex: '1001' }
+  });
+
   const input = document.getElementById('julesKeyInput');
-  
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
   input.value = '';
-  input.focus();
 
   const saveBtn = document.getElementById('julesSaveBtn');
   const cancelBtn = document.getElementById('julesCancelBtn');
@@ -95,18 +157,38 @@ export function showJulesKeyModal(onSave) {
     hideJulesKeyModal();
   };
 
-  saveBtn.onclick = handleSave;
-  cancelBtn.onclick = handleCancel;
+  modalManager.addListener(KEY_MODAL_ID, saveBtn, 'click', handleSave);
+  modalManager.addListener(KEY_MODAL_ID, cancelBtn, 'click', handleCancel);
+
+  modalManager.addListener(KEY_MODAL_ID, input, 'keypress', (e) => {
+    if (e.key === 'Enter') handleSave();
+  });
+
+  // Close on background click
+  modalManager.addListener(KEY_MODAL_ID, modal, 'click', (e) => {
+    if (e.target === modal) hideJulesKeyModal();
+  });
+
+  // Escape key
+  modalManager.addListener(KEY_MODAL_ID, document, 'keydown', (e) => {
+    if (e.key === 'Escape') hideJulesKeyModal();
+  });
+
+  modalManager.showModal(KEY_MODAL_ID, { displayStyle: 'flex' });
+  input.focus();
 }
 
 export function hideJulesKeyModal() {
-  const modal = document.getElementById('julesKeyModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modalManager.destroyModal(KEY_MODAL_ID);
 }
 
 export async function showJulesEnvModal(promptText) {
-  const modal = document.getElementById('julesEnvModal');
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  modalManager.destroyModal(ENV_MODAL_ID);
+  const modal = modalManager.createModal(ENV_MODAL_ID, {
+    content: ENV_MODAL_CONTENT,
+    classes: ['modal'],
+    styles: { zIndex: '1001' }
+  });
 
   const submitBtn = document.getElementById('julesEnvSubmitBtn');
   const queueBtn = document.getElementById('julesEnvQueueBtn');
@@ -144,19 +226,22 @@ export async function showJulesEnvModal(promptText) {
     }
   });
 
+  envModalState.repoSelector = repoSelector;
+  envModalState.branchSelector = branchSelector;
+
   // Load favorites and populate dropdown
   await repoSelector.initialize();
   branchSelector.initialize(null, null);
 
-  submitBtn.onclick = () => {
+  modalManager.addListener(ENV_MODAL_ID, submitBtn, 'click', () => {
     if (selectedSourceId && selectedBranch) {
       const suppressPopups = document.getElementById('julesEnvSuppressPopupsCheckbox')?.checked || false;
       const openInBackground = document.getElementById('julesEnvOpenInBackgroundCheckbox')?.checked || false;
       handleRepoSelect(selectedSourceId, selectedBranch, promptText, suppressPopups, openInBackground);
     }
-  };
+  });
   
-  queueBtn.onclick = async () => {
+  modalManager.addListener(ENV_MODAL_ID, queueBtn, 'click', async () => {
     if (!selectedSourceId || !selectedBranch) return;
     
     const user = window.auth?.currentUser;
@@ -178,11 +263,21 @@ export async function showJulesEnvModal(promptText) {
     } catch (err) {
       showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
     }
-  };
+  });
   
-  cancelBtn.onclick = () => {
-    hideJulesEnvModal();
-  };
+  modalManager.addListener(ENV_MODAL_ID, cancelBtn, 'click', hideJulesEnvModal);
+
+  // Background click
+  modalManager.addListener(ENV_MODAL_ID, modal, 'click', (e) => {
+    if (e.target === modal) hideJulesEnvModal();
+  });
+
+  // Escape key
+  modalManager.addListener(ENV_MODAL_ID, document, 'keydown', (e) => {
+    if (e.key === 'Escape') hideJulesEnvModal();
+  });
+
+  modalManager.showModal(ENV_MODAL_ID, { displayStyle: 'flex' });
 }
 
 async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = false, openInBackground = false) {
@@ -298,17 +393,43 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
 }
 
 export function hideJulesEnvModal() {
-  const modal = document.getElementById('julesEnvModal');
-  modal.setAttribute('style', 'display: none !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1001; flex-direction:column; align-items:center; justify-content:center;');
+  // Cleanup listeners for selectors
+  if (envModalState.repoSelector?.dropdownBtn?._closeDropdownHandler) {
+    document.removeEventListener('click', envModalState.repoSelector.dropdownBtn._closeDropdownHandler);
+  }
+  if (envModalState.branchSelector?.dropdownBtn?._closeDropdownHandler) {
+    document.removeEventListener('click', envModalState.branchSelector.dropdownBtn._closeDropdownHandler);
+  }
+
+  modalManager.destroyModal(ENV_MODAL_ID);
 }
 
 export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error, hideQueueButton = false) {
-  let modal = document.getElementById('subtaskErrorModal');
-  if (!modal) {
-    await loadSubtaskErrorModal();
-    modal = document.getElementById('subtaskErrorModal');
-  }
+  modalManager.destroyModal(ERROR_MODAL_ID);
   
+  if (!errorModalHtml) {
+    try {
+      const response = await fetch('/partials/subtask-error-modal.html');
+      if (response.ok) {
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const modalEl = doc.getElementById('subtaskErrorModal');
+        errorModalHtml = modalEl ? modalEl.innerHTML : html;
+      }
+    } catch (err) {
+      console.error('Error loading subtask error modal:', err);
+    }
+  }
+
+  if (!errorModalHtml) return { action: 'cancel', shouldDelay: false };
+
+  const modal = modalManager.createModal(ERROR_MODAL_ID, {
+    content: errorModalHtml,
+    classes: ['modal'],
+    styles: { zIndex: '10000' }
+  });
+
   const subtaskNumDiv = document.getElementById('errorSubtaskNumber');
   const messageDiv = document.getElementById('errorMessage');
   const detailsDiv = document.getElementById('errorDetails');
@@ -319,10 +440,6 @@ export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error,
   const closeBtn = document.getElementById('errorModalClose');
   const retryDelayCheckbox = document.getElementById('errorRetryDelayCheckbox');
 
-  if (!modal) {
-    return { action: 'cancel', shouldDelay: false };
-  }
-
   if (hideQueueButton && queueBtn) {
     queueBtn.style.display = 'none';
   } else if (queueBtn) {
@@ -330,75 +447,52 @@ export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error,
   }
 
   return new Promise((resolve) => {
-    subtaskNumDiv.textContent = `Task ${subtaskNumber} of ${totalSubtasks}`;
-    messageDiv.textContent = error.message || String(error);
-    detailsDiv.textContent = error.toString();
-
-    modal.style.zIndex = '10000';
-    modal.classList.add('show');
+    if (subtaskNumDiv) subtaskNumDiv.textContent = `Task ${subtaskNumber} of ${totalSubtasks}`;
+    if (messageDiv) messageDiv.textContent = error.message || String(error);
+    if (detailsDiv) detailsDiv.textContent = error.toString();
 
     const handleAction = (action) => {
-      retryBtn.onclick = null;
-      skipBtn.onclick = null;
-      cancelBtn.onclick = null;
-      closeBtn.onclick = null;
-      if (queueBtn) queueBtn.onclick = null;
-
       hideSubtaskErrorModal();
-
       const shouldDelay = action === 'retry' ? retryDelayCheckbox.checked : false;
       resolve({ action, shouldDelay });
     };
 
-    retryBtn.onclick = () => handleAction('retry');
-    skipBtn.onclick = () => handleAction('skip');
-    cancelBtn.onclick = () => handleAction('cancel');
-    closeBtn.onclick = () => handleAction('cancel');
-    if (queueBtn) queueBtn.onclick = () => handleAction('queue');
+    if (retryBtn) modalManager.addListener(ERROR_MODAL_ID, retryBtn, 'click', () => handleAction('retry'));
+    if (skipBtn) modalManager.addListener(ERROR_MODAL_ID, skipBtn, 'click', () => handleAction('skip'));
+    if (cancelBtn) modalManager.addListener(ERROR_MODAL_ID, cancelBtn, 'click', () => handleAction('cancel'));
+    if (closeBtn) modalManager.addListener(ERROR_MODAL_ID, closeBtn, 'click', () => handleAction('cancel'));
+    if (queueBtn) modalManager.addListener(ERROR_MODAL_ID, queueBtn, 'click', () => handleAction('queue'));
     
     // Handle Escape key
-    const escapeHandler = (e) => {
-      if (e.key === 'Escape') {
-        document.removeEventListener('keydown', escapeHandler);
-        handleAction('cancel');
-      }
-    };
-    document.addEventListener('keydown', escapeHandler);
+    modalManager.addListener(ERROR_MODAL_ID, document, 'keydown', (e) => {
+      if (e.key === 'Escape') handleAction('cancel');
+    });
     
     // Handle background click
-    const backgroundClickHandler = (e) => {
-      if (e.target === modal) {
-        modal.removeEventListener('click', backgroundClickHandler);
-        handleAction('cancel');
-      }
-    };
-    modal.addEventListener('click', backgroundClickHandler);
+    modalManager.addListener(ERROR_MODAL_ID, modal, 'click', (e) => {
+      if (e.target === modal) handleAction('cancel');
+    });
+
+    modalManager.showModal(ERROR_MODAL_ID);
   });
 }
 
 export function hideSubtaskErrorModal() {
-  const modal = document.getElementById('subtaskErrorModal');
-  if (modal) {
-    modal.classList.remove('show');
-  }
+  modalManager.destroyModal(ERROR_MODAL_ID);
 }
 
 export function initJulesKeyModalListeners() {
-  const keyModal = document.getElementById('julesKeyModal');
-  const envModal = document.getElementById('julesEnvModal');
+  // Deprecated: Modals are now dynamic and handle their own listeners.
+  // Kept empty to avoid breaking calls from other modules.
+  // We can add global listeners here if strictly necessary for other modals like userProfileModal,
+  // but preferably those should be refactored too.
+
+  // Handling remaining static modals (userProfileModal, julesSessionsHistoryModal, freeInputSection)
   const profileModal = document.getElementById('userProfileModal');
   const sessionsHistoryModal = document.getElementById('julesSessionsHistoryModal');
-  const errorModal = document.getElementById('subtaskErrorModal');
-  const keyInput = document.getElementById('julesKeyInput');
 
   document.addEventListener('keydown', async (e) => {
     if (e.key === 'Escape') {
-      if (keyModal && keyModal.style.display === 'flex') {
-        hideJulesKeyModal();
-      }
-      if (envModal && envModal.style.display === 'flex') {
-        hideJulesEnvModal();
-      }
       const freeInputSection = document.getElementById('freeInputSection');
       if (freeInputSection && !freeInputSection.classList.contains('hidden')) {
         const { hideFreeInputForm } = await import('./jules-free-input.js?v=' + Date.now());
@@ -415,22 +509,6 @@ export function initJulesKeyModalListeners() {
     }
   });
 
-  if (keyModal) {
-    keyModal.addEventListener('click', (e) => {
-      if (e.target === keyModal) {
-        hideJulesKeyModal();
-      }
-    });
-  }
-
-  if (envModal) {
-    envModal.addEventListener('click', (e) => {
-      if (e.target === envModal) {
-        hideJulesEnvModal();
-      }
-    });
-  }
-
   if (profileModal) {
     profileModal.addEventListener('click', async (e) => {
       if (e.target === profileModal) {
@@ -445,22 +523,6 @@ export function initJulesKeyModalListeners() {
       if (e.target === sessionsHistoryModal) {
         const { hideJulesSessionsHistoryModal } = await import('./jules-account.js');
         hideJulesSessionsHistoryModal();
-      }
-    });
-  }
-
-  if (errorModal) {
-    errorModal.addEventListener('click', (e) => {
-      if (e.target === errorModal) {
-        e.preventDefault();
-      }
-    });
-  }
-
-  if (keyInput) {
-    keyInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('julesSaveBtn').click();
       }
     });
   }
