@@ -5,6 +5,8 @@ import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { JULES_MESSAGES, TIMEOUTS } from '../utils/constants.js';
+import { callRunJulesFunction } from './jules-api.js';
+import { openUrlInBackground, showSubtaskErrorModal } from './jules-modal.js';
 
 let queueCache = [];
 
@@ -1075,9 +1077,6 @@ async function runSelectedSubtasks(docId, indices, suppressPopups = false, openI
   const sortedIndices = indices.sort((a, b) => a - b);
   const toRun = sortedIndices.map(i => item.remaining[i]).filter(Boolean);
 
-  const { callRunJulesFunction } = await import('./jules-api.js');
-  const { openUrlInBackground, showSubtaskErrorModal } = await import('./jules-modal.js');
-
   const successfulIndices = [];
   const skippedIndices = [];
 
@@ -1368,9 +1367,6 @@ async function runSelectedQueueItems() {
     statusBar.clearAction();
     if (pauseBtn) pauseBtn.disabled = true;
   });
-
-  const { callRunJulesFunction } = await import('./jules-api.js');
-  const { openUrlInBackground, showSubtaskErrorModal } = await import('./jules-modal.js');
 
   const sortedSubtaskEntries = Object.entries(subtaskSelections).sort(([a], [b]) => 
     (queueCache.find(i => i.id === a)?.createdAt?.seconds || 0) - (queueCache.find(i => i.id === b)?.createdAt?.seconds || 0)
