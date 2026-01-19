@@ -1,5 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { createElement, clearElement } from '../../utils/dom-helpers.js';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { 
+  createElement, 
+  createIcon, 
+  setElementDisplay, 
+  toggleClass, 
+  clearElement, 
+  onElement, 
+  stopPropagation 
+} from '../../utils/dom-helpers.js';
 
 describe('DOM Helpers', () => {
   describe('createElement', () => {
@@ -37,6 +45,155 @@ describe('DOM Helpers', () => {
       expect(el.className).toBe('');
       expect(el.textContent).toBe('Text only');
     });
+
+    it('should handle empty text content', () => {
+      const el = createElement('div', 'test-class', '');
+      expect(el.textContent).toBe('');
+    });
+
+    it('should handle only tag parameter', () => {
+      const el = createElement('section');
+      expect(el.tagName).toBe('SECTION');
+      expect(el.className).toBe('');
+      expect(el.textContent).toBe('');
+    });
+
+    it('should handle numeric text content', () => {
+      const el = createElement('span', '', '0');
+      expect(el.textContent).toBe('0');
+    });
+  });
+
+  describe('createIcon', () => {
+    it('should create icon element with default values', () => {
+      const icon = createIcon('check');
+      
+      expect(icon.tagName).toBe('SPAN');
+      expect(icon.classList.contains('icon')).toBe(true);
+      expect(icon.textContent).toBe('check');
+      expect(icon.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('should add single class from array', () => {
+      const icon = createIcon('star', ['favorite']);
+      
+      expect(icon.classList.contains('icon')).toBe(true);
+      expect(icon.classList.contains('favorite')).toBe(true);
+    });
+
+    it('should add multiple classes from array', () => {
+      const icon = createIcon('alert', ['warning', 'urgent', 'large']);
+      
+      expect(icon.classList.contains('icon')).toBe(true);
+      expect(icon.classList.contains('warning')).toBe(true);
+      expect(icon.classList.contains('urgent')).toBe(true);
+      expect(icon.classList.contains('large')).toBe(true);
+    });
+
+    it('should add single class from string', () => {
+      const icon = createIcon('info', 'tooltip');
+      
+      expect(icon.classList.contains('icon')).toBe(true);
+      expect(icon.classList.contains('tooltip')).toBe(true);
+    });
+
+    it('should not add class from empty string', () => {
+      const icon = createIcon('home', '');
+      
+      expect(icon.className).toBe('icon');
+    });
+
+    it('should handle empty classes array', () => {
+      const icon = createIcon('menu', []);
+      
+      expect(icon.className).toBe('icon');
+    });
+
+    it('should set aria-hidden to false when specified', () => {
+      const icon = createIcon('accessible', [], false);
+      
+      expect(icon.hasAttribute('aria-hidden')).toBe(false);
+    });
+
+    it('should set aria-hidden to true by default', () => {
+      const icon = createIcon('default');
+      
+      expect(icon.getAttribute('aria-hidden')).toBe('true');
+    });
+  });
+
+  describe('setElementDisplay', () => {
+    it('should show element by default', () => {
+      const el = document.createElement('div');
+      el.classList.add('hidden');
+      
+      setElementDisplay(el);
+      
+      expect(el.classList.contains('hidden')).toBe(false);
+    });
+
+    it('should show element when show=true', () => {
+      const el = document.createElement('div');
+      el.classList.add('hidden');
+      
+      setElementDisplay(el, true);
+      
+      expect(el.classList.contains('hidden')).toBe(false);
+    });
+
+    it('should hide element when show=false', () => {
+      const el = document.createElement('div');
+      
+      setElementDisplay(el, false);
+      
+      expect(el.classList.contains('hidden')).toBe(true);
+    });
+
+    it('should toggle visibility correctly', () => {
+      const el = document.createElement('div');
+      
+      setElementDisplay(el, false);
+      expect(el.classList.contains('hidden')).toBe(true);
+      
+      setElementDisplay(el, true);
+      expect(el.classList.contains('hidden')).toBe(false);
+      
+      setElementDisplay(el, false);
+      expect(el.classList.contains('hidden')).toBe(true);
+    });
+  });
+
+  describe('toggleClass', () => {
+    it('should toggle class without force', () => {
+      const el = document.createElement('div');
+      
+      toggleClass(el, 'active');
+      expect(el.classList.contains('active')).toBe(true);
+      
+      toggleClass(el, 'active');
+      expect(el.classList.contains('active')).toBe(false);
+    });
+
+    it('should add class when force=true', () => {
+      const el = document.createElement('div');
+      
+      toggleClass(el, 'active', true);
+      expect(el.classList.contains('active')).toBe(true);
+      
+      toggleClass(el, 'active', true);
+      expect(el.classList.contains('active')).toBe(true);
+    });
+
+    it('should remove class when force=false', () => {
+      const el = document.createElement('div');
+      el.classList.add('active');
+      
+      toggleClass(el, 'active', false);
+      expect(el.classList.contains('active')).toBe(false);
+      
+      toggleClass(el, 'active', false);
+      expect(el.classList.contains('active')).toBe(false);
+    });
   });
 
   describe('clearElement', () => {
@@ -60,6 +217,104 @@ describe('DOM Helpers', () => {
       clearElement(parent);
 
       expect(parent.children.length).toBe(0);
+    });
+
+    it('should remove deeply nested children', () => {
+      const parent = document.createElement('div');
+      const child1 = document.createElement('div');
+      const grandchild = document.createElement('span');
+      const child2 = document.createElement('p');
+      
+      child1.appendChild(grandchild);
+      parent.appendChild(child1);
+      parent.appendChild(child2);
+      
+      expect(parent.children.length).toBe(2);
+      
+      clearElement(parent);
+      
+      expect(parent.children.length).toBe(0);
+    });
+
+    it('should remove text nodes', () => {
+      const parent = document.createElement('div');
+      parent.appendChild(document.createTextNode('Text 1'));
+      parent.appendChild(document.createElement('span'));
+      parent.appendChild(document.createTextNode('Text 2'));
+      
+      clearElement(parent);
+      
+      expect(parent.childNodes.length).toBe(0);
+    });
+  });
+
+  describe('onElement', () => {
+    it('should add event listener to element', () => {
+      const el = document.createElement('button');
+      const handler = vi.fn();
+      
+      onElement(el, 'click', handler);
+      el.click();
+      
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle multiple event types', () => {
+      const el = document.createElement('input');
+      const handler = vi.fn();
+      
+      onElement(el, 'input', handler);
+      el.dispatchEvent(new Event('input'));
+      
+      expect(handler).toHaveBeenCalled();
+    });
+
+    it('should do nothing if element is null', () => {
+      const handler = vi.fn();
+      
+      expect(() => {
+        onElement(null, 'click', handler);
+      }).not.toThrow();
+      
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('should do nothing if element is undefined', () => {
+      const handler = vi.fn();
+      
+      expect(() => {
+        onElement(undefined, 'click', handler);
+      }).not.toThrow();
+      
+      expect(handler).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('stopPropagation', () => {
+    it('should call stopPropagation on event', () => {
+      const event = new Event('click', { bubbles: true });
+      const spy = vi.spyOn(event, 'stopPropagation');
+      
+      stopPropagation(event);
+      
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('should prevent event bubbling', () => {
+      const parent = document.createElement('div');
+      const child = document.createElement('button');
+      parent.appendChild(child);
+      
+      const parentHandler = vi.fn();
+      const childHandler = vi.fn((e) => stopPropagation(e));
+      
+      parent.addEventListener('click', parentHandler);
+      child.addEventListener('click', childHandler);
+      
+      child.click();
+      
+      expect(childHandler).toHaveBeenCalled();
+      expect(parentHandler).not.toHaveBeenCalled();
     });
   });
 });
