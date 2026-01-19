@@ -82,11 +82,6 @@ export const JULES_UI_TEXT = {
   NO_SEARCH_RESULTS: 'No sessions match your search',
   NO_SUBTASKS_DETECTED: 'No subtasks detected. This prompt will be sent as a single task.',
   
-  // Queue card labels
-  SUBTASKS_BATCH: 'Subtasks Batch ',
-  SINGLE_PROMPT: 'Single Prompt ',
-  REMAINING_COUNT: (count) => `(${count} remaining)`,
-  
   // Error states
   FETCH_SOURCES_ERROR: 'Failed to fetch sources',
   FETCH_SESSIONS_ERROR: 'Failed to load sessions',
@@ -148,8 +143,8 @@ export const JULES_UI_TEXT = {
   BRANCHES_HEADER: (count) => `Branches (${count}):`,
   
   // Queue item types
-  SUBTASKS_BATCH: 'Subtasks Batch',
-  SINGLE_PROMPT: 'Single Prompt',
+  SUBTASKS_BATCH: 'Subtasks Batch ',
+  SINGLE_PROMPT: 'Single Prompt ',
   REMAINING_COUNT: (count) => `(${count} remaining)`
 };
 
