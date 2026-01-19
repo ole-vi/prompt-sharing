@@ -192,7 +192,7 @@ describe('github-api', () => {
         json: () => Promise.resolve({ data: 'test' })
       });
 
-      const result = await fetchJSON('https://api.github.com/test');
+      await fetchJSON('https://api.github.com/test');
 
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('github_access_token');
       expect(mockFetch).toHaveBeenCalledWith(
@@ -215,7 +215,7 @@ describe('github-api', () => {
         json: () => Promise.resolve({ data: 'test' })
       });
 
-      const result = await fetchJSON('https://api.github.com/test');
+      await fetchJSON('https://api.github.com/test');
 
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.github.com/test',
@@ -236,7 +236,7 @@ describe('github-api', () => {
         json: () => Promise.resolve({ data: 'test' })
       });
 
-      const result = await fetchJSON('https://api.github.com/test');
+      await fetchJSON('https://api.github.com/test');
 
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.github.com/test',

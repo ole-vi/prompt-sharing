@@ -3,16 +3,9 @@ import {
   clearJulesKeyCache,
   getDecryptedJulesKey,
   listJulesSources,
-  getJulesSourceDetails,
-  listJulesSessions,
-  getJulesSession,
-  getJulesSessionActivities,
-  createJulesSession,
-  approveJulesSessionPlan,
   loadJulesProfileInfo,
   callRunJulesFunction,
-  handleTryInJules,
-  handleTryInJulesAfterAuth
+  handleTryInJules
 } from '../../modules/jules-api.js';
 
 // Mock global fetch

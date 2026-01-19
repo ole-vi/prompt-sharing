@@ -320,7 +320,7 @@ describe('dropdown', () => {
       // Create second dropdown
       const mockBtn2 = document.createElement('button');
       const mockMenu2 = document.createElement('div');
-      const dropdown2 = initDropdown(mockBtn2, mockMenu2);
+      initDropdown(mockBtn2, mockMenu2);
       
       // Open first dropdown
       dropdown.open();

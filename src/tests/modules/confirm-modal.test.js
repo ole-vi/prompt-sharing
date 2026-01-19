@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock DOM helpers to avoid complex DOM manipulation issues
 vi.mock('../../utils/dom-helpers.js', () => ({

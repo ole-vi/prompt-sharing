@@ -630,10 +630,6 @@ describe('prompt-list', () => {
     });
 
     it('should handle file selection workflow', () => {
-      const mockFiles = [
-        { type: 'file', path: 'prompts/test.md', name: 'test.md' }
-      ];
-      
       setCurrentSlug('test');
       const files = getFiles();
       
