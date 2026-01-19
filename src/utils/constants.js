@@ -44,7 +44,6 @@ export const TAG_DEFINITIONS = {
 };
 
 // Branch classification
-export const USER_BRANCHES = ["dogi", "jesse", "saksham"];
 export const FEATURE_PATTERNS = ["codex/", "feature/", "fix/", "bugfix/", "hotfix/"];
 
 // SessionStorage keys

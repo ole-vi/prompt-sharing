@@ -1,4 +1,4 @@
-import { USER_BRANCHES, FEATURE_PATTERNS, STORAGE_KEYS } from '../utils/constants.js';
+import { FEATURE_PATTERNS, STORAGE_KEYS } from '../utils/constants.js';
 import { getBranches } from './github-api.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { initDropdown } from './dropdown.js';
@@ -97,10 +97,6 @@ export function setCurrentRepo(owner, repo) {
 function classifyBranch(branchName) {
   if (branchName === 'main' || branchName === 'master' || branchName === 'web-captures') {
     return 'main';
-  }
-
-  if (USER_BRANCHES.includes(branchName)) {
-    return 'user';
   }
 
   if (
