@@ -19,14 +19,6 @@ export function createIcon(iconName, classes = [], ariaHidden = true) {
   if (ariaHidden) span.setAttribute('aria-hidden', 'true');
   return span;
 }
-
-/**
- * Toggles the visibility of an element by adding or removing the '.hidden' class.
- * Note: This relies on a global '.hidden' class with 'display: none !important;'.
- * @param {HTMLElement} el The element to show or hide.
- * @param {boolean} show If true, the element will be shown; otherwise, it will be hidden.
- * @deprecated Consider using `element.classList.toggle('hidden', !show)` directly for clarity.
- */
 export function setElementDisplay(el, show = true) {
   el.classList.toggle('hidden', !show);
 }

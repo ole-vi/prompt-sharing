@@ -227,7 +227,7 @@ export class RepoSelector {
 
   addShowMoreButton() {
     const showMoreBtn = document.createElement('div');
-    showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
+    showMoreBtn.className = 'dropdown-show-more';
     showMoreBtn.textContent = '▼ Show more...';
     
     showMoreBtn.onclick = async () => {
@@ -280,7 +280,7 @@ export class RepoSelector {
   renderAllRepos() {
     if (!this.favorites || this.favorites.length === 0) {
       const helperDiv = document.createElement('div');
-      helperDiv.style.cssText = 'padding:12px; color:var(--muted); text-align:center; font-size:12px; border-bottom:1px solid var(--border);';
+      helperDiv.className = 'dropdown-helper-text';
       helperDiv.textContent = 'Click ★ next to any repository to add it to favorites';
       this.dropdownMenu.appendChild(helperDiv);
     }
@@ -312,18 +312,16 @@ export class RepoSelector {
 
   createRepoItem(name, id, isFavorite, onClickHandler) {
     const item = document.createElement('div');
-    item.className = 'custom-dropdown-item';
-    item.style.cssText = 'display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer;';
-    
-    if (id === this.selectedSourceId) {
-      item.classList.add('selected');
-    }
+    item.className = 'dropdown-item-with-star';
+    if (id === this.selectedSourceId) item.classList.add('selected');
     
     const star = document.createElement('span');
     star.innerHTML = isFavorite 
       ? '<span class="icon icon-inline" aria-hidden="true">star</span>'
       : '<span class="icon icon-inline" aria-hidden="true">star_border</span>';
-    star.style.cssText = `font-size:18px; cursor:pointer; color:${isFavorite ? 'var(--accent)' : 'var(--muted)'}; flex-shrink:0;`;
+    star.className = 'star-icon';
+    star.dataset.favorited = isFavorite.toString();
+    
     star.onclick = async (e) => {
       e.stopPropagation();
       if (isFavorite) {
@@ -338,13 +336,10 @@ export class RepoSelector {
     };
     
     const nameSpan = document.createElement('span');
+    nameSpan.className = 'item-name';
     nameSpan.textContent = name;
-    nameSpan.style.flex = '1';
     
-    item.onclick = (e) => {
-      if (e.target === star) return;
-      onClickHandler();
-    };
+    item.onclick = () => onClickHandler();
     
     item.appendChild(star);
     item.appendChild(nameSpan);
@@ -554,15 +549,26 @@ export class BranchSelector {
     this.dropdownMenu.innerHTML = '';
     
     const currentItem = document.createElement('div');
-    currentItem.className = 'custom-dropdown-item selected';
-    currentItem.textContent = this.selectedBranch;
+    currentItem.className = 'dropdown-item-with-star selected';
     currentItem.onclick = () => {
       this.dropdownMenu.style.display = 'none';
     };
+    
+    // Hide star for current item
+    const star = document.createElement('span');
+    star.className = 'star-icon';
+    star.style.visibility = 'hidden';
+    
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'item-name';
+    nameSpan.textContent = this.selectedBranch;
+    
+    currentItem.appendChild(star);
+    currentItem.appendChild(nameSpan);
     this.dropdownMenu.appendChild(currentItem);
     
     const showMoreBtn = document.createElement('div');
-    showMoreBtn.style.cssText = 'padding:8px; margin:4px 8px; text-align:center; border-top:1px solid var(--border); color:var(--accent); font-size:12px; cursor:pointer; font-weight:600;';
+    showMoreBtn.className = 'dropdown-show-more';
     showMoreBtn.textContent = '▼ Show more branches...';
     
     showMoreBtn.onclick = async () => {
@@ -593,14 +599,24 @@ export class BranchSelector {
           if (branch.name === this.selectedBranch) return;
           
           const item = document.createElement('div');
-          item.className = 'custom-dropdown-item';
-          item.textContent = branch.name;
+          item.className = 'dropdown-item-with-star';
+          
+          // Hide star for branches (not using favorites here)
+          const star = document.createElement('span');
+          star.className = 'star-icon';
+          star.style.visibility = 'hidden';
+          
+          const nameSpan = document.createElement('span');
+          nameSpan.className = 'item-name';
+          nameSpan.textContent = branch.name;
           
           item.onclick = () => {
             this.setSelectedBranch(branch.name);
             this.dropdownMenu.style.display = 'none';
           };
           
+          item.appendChild(star);
+          item.appendChild(nameSpan);
           this.dropdownMenu.appendChild(item);
         });
       } catch (error) {
