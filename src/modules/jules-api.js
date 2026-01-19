@@ -243,7 +243,13 @@ export async function callRunJulesFunction(promptText, sourceId, branch = 'maste
     return sessionUrl;
   } catch (error) {
     if (julesBtn) {
-      julesBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">smart_toy</span> Try in Jules';
+      julesBtn.replaceChildren();
+      const icon = document.createElement('span');
+      icon.className = 'icon icon-inline';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = 'smart_toy';
+      julesBtn.appendChild(icon);
+      julesBtn.appendChild(document.createTextNode(' Try in Jules'));
       julesBtn.disabled = false;
     }
     throw error;

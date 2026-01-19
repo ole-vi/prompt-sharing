@@ -12,6 +12,9 @@
 @import url('./styles/components/dropdown.css');
 @import url('./styles/components/modals.css');
 @import url('./styles/components/jules-modals.css');
+@import url('./styles/components/jules-account.css');
+@import url('./styles/components/jules-queue.css');
+@import url('./styles/components/jules-subtask-modal.css');
 @import url('./styles/components/card.css');
 @import url('./styles/components/list.css');
 @import url('./styles/components/tree.css');

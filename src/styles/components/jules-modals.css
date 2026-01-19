@@ -17,6 +17,7 @@
 #julesEnvModal.show,
 #subtaskErrorModal.show {
   display: flex !important;
+  z-index: 10000; /* High z-index to ensure modal appears above everything */
 }
 
 /* Modal Content Containers */
