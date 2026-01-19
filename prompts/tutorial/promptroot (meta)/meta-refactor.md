@@ -152,6 +152,30 @@ Before finalizing the plan:
 
 **Prioritization Rule:** Refactors that unblock testing or other refactors get +2 priority levels.
 
+### File Overlap Analysis (Conflict Prevention)
+
+After identifying refactor opportunities and BEFORE finalizing the plan:
+
+1. **Map file dependencies**: For each potential task, list exact files it will modify
+2. **Detect conflicts**: Identify tasks modifying the same files (2+ file overlap = conflict)
+3. **Choose resolution strategy**:
+   - **Split**: Decompose tasks to touch different files (preferred)
+   - **Sequence**: Mark overlapping tasks with order dependency
+   - **Merge**: Combine small overlapping tasks into single larger task
+
+**Conflict Detection Algorithm:**
+```
+for each pair of tasks (A, B):
+  shared_files = files(A) ∩ files(B)
+  if len(shared_files) >= 2:
+    mark as conflict
+    determine optimal sequence or split
+```
+
+**Output Requirement**: Group tasks into:
+- **Independent batch**: Zero file overlap (parallel-safe PRs)
+- **Sequential batch**: File conflicts exist (must complete in order)
+
 ---
 
 ## Refactor Task Requirements
@@ -203,14 +227,31 @@ When producing a refactoring plan, you must emit each plan item as a task using 
 Follow this grammar exactly.
 
 ```
-document := { finding_section }
+document :=
+batch_header
+{ finding_section }
+[ sequential_batch_header
+{ finding_section } ]
+
+batch_header :=
+"## Batch 1: Independent Tasks (parallel-safe)\n\n"
+"These tasks modify different files and can be executed as simultaneous PRs.\n\n"
+
+sequential_batch_header :=
+"## Batch 2: Sequential Tasks (complete in order)\n\n"
+"These tasks share files and must be completed one at a time.\n\n"
 
 finding_section :=
-"### " title "\n"
+"### " task_prefix " " title "\n"
 rationale_paragraph "\n"
+file_metadata "\n"
 { "\n" citation_line }
 "\n"
 task_stub_block "\n"
+
+task_prefix :=
+"[IND-" INT "]"  // for independent tasks
+| "[SEQ-" INT "]"  // for sequential tasks
 
 title :=
 Short descriptive text with no trailing period
@@ -219,6 +260,16 @@ rationale_paragraph :=
 1–3 sentences explaining why this is a refactor priority and its impact.
 Use plain text.
 Focus on correctness, performance, scalability, or maintainability.
+
+file_metadata :=
+"**Files modified:** " file_list
+[ "\n**Depends on:** " dependency_list ]
+
+file_list :=
+"`" PATH "`" { ", `" PATH "`" }
+
+dependency_list :=
+task_prefix { ", " task_prefix }
 
 citation_line :=
 :codex-file-citation[codex-file-citation]{
@@ -253,10 +304,99 @@ test_item :=
 
 Rules:
 - Each finding_section is one refactor task.
+- Tasks are grouped into independent (parallel-safe) and sequential (must order) batches.
+- Each task has `[IND-N]` or `[SEQ-N]` prefix indicating its type.
+- Each task lists exact files it will modify.
+- Sequential tasks include dependency information if ordering matters.
 - Each task-stub must be selectable and executable without extra clarification.
 - Cite the specific code that motivates the refactor.
 - Do not cite docs as the primary citation. Cite implementation files.
 - **Every task MUST include a Testing Checklist** with specific test cases for the changes made.
+
+**Example Output:**
+
+```markdown
+## Batch 1: Independent Tasks (parallel-safe)
+
+These tasks modify different files and can be executed as simultaneous PRs.
+
+### [IND-1] Remove innerHTML from prompt-list.js
+
+This component uses innerHTML for rendering list items, creating XSS risk and CSP violations.
+
+**Files modified:** `src/modules/prompt-list.js`
+
+:codex-file-citation[...]{...}
+
+:::task-stub{title="Remove innerHTML from prompt-list.js"}
+1. Extract hardcoded strings to constants.js
+2. Replace innerHTML with createElement/appendChild
+3. Add event listeners to replace inline handlers
+
+## Testing Checklist
+- [ ] Prompt list renders correctly
+- [ ] Click handlers fire on list items
+:::
+
+### [IND-2] Add accessibility to jules-modal.js
+
+Modal lacks ARIA attributes and keyboard navigation.
+
+**Files modified:** `src/modules/jules-modal.js`, `src/styles/components/jules-modal.css`
+
+:codex-file-citation[...]{...}
+
+:::task-stub{title="Add accessibility to jules-modal.js"}
+1. Add ARIA attributes (role, aria-labelledby, aria-modal)
+2. Implement Escape key handler
+3. Add focus trap
+
+## Testing Checklist
+- [ ] Modal closes on Escape
+- [ ] Focus trapped inside modal when open
+:::
+
+## Batch 2: Sequential Tasks (complete in order)
+
+These tasks share files and must be completed one at a time.
+
+### [SEQ-1] Refactor auth.js state management
+
+Auth module mixes inline styles and classes for state, creating inconsistent behavior.
+
+**Files modified:** `src/modules/auth.js`, `src/utils/constants.js`
+
+:codex-file-citation[...]{...}
+
+:::task-stub{title="Refactor auth.js state management"}
+1. Extract auth-related strings to constants.js
+2. Create CSS classes for auth states
+3. Replace inline style with class toggles
+
+## Testing Checklist
+- [ ] Login flow works
+- [ ] Logout flow works
+:::
+
+### [SEQ-2] Update github-api.js to use new auth pattern
+
+GitHub API module needs to use refactored auth state management.
+
+**Files modified:** `src/modules/github-api.js`, `src/modules/auth.js`
+**Depends on:** [SEQ-1]
+
+:codex-file-citation[...]{...}
+
+:::task-stub{title="Update github-api.js auth integration"}
+1. Import new auth state helpers
+2. Replace direct auth checks with new pattern
+3. Update error handling for auth failures
+
+## Testing Checklist
+- [ ] API calls authenticate correctly
+- [ ] Auth errors surface properly
+:::
+```
 
 ---
 
@@ -265,9 +405,22 @@ Rules:
 If no explicit task is provided:
 
 1. locate the web application entry points and runtime flow (pages and modules)
-2. identify the highest impact refactor opportunities
-3. emit a multi-item refactor plan using the required task grammar
-4. stop after emitting the plan
+2. **Choose ONE focused scope** to minimize file conflicts:
+   - Security audit (CSP violations: inline handlers, innerHTML, inline scripts)
+   - Performance audit (network/render optimization)
+   - Accessibility audit (ARIA/keyboard navigation)
+   - Single feature area (one module family, e.g., jules-*.js)
+3. identify the highest impact refactor opportunities **within chosen scope**
+4. perform file overlap analysis (see above)
+5. emit a focused refactor plan (5-7 tasks max) using the required task grammar
+6. stop after emitting the plan
+
+**Scope Selection Priority**:
+1. Security (CSP violations) - isolated, high-priority
+2. Single feature area - natural module boundaries
+3. Performance - usually cross-cutting (higher conflict risk)
+
+**Batch Size Rule**: Emit 5-7 tasks maximum. Prefer focused batch with zero conflicts over comprehensive plan with many conflicts.
 
 Do not implement automatically.
 Do not select a task on your own.
