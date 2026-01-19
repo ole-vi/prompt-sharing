@@ -1,4 +1,4 @@
-import { USER_BRANCHES, FEATURE_PATTERNS, STORAGE_KEYS, HARDCODED_FAVORITE_BRANCHES, STORAGE_KEY_FAVORITE_BRANCHES } from '../utils/constants.js';
+import { USER_BRANCHES, FEATURE_PATTERNS, STORAGE_KEYS, HARDCODED_FAVORITE_BRANCHES } from '../utils/constants.js';
 import { getBranches } from './github-api.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { initDropdown } from './dropdown.js';
