@@ -474,13 +474,13 @@ async function loadAndDisplayJulesProfile(uid) {
 
   } catch (error) {
     const sourcesErr = document.createElement('div');
-    sourcesErr.style.cssText = 'color:#e74c3c; font-size:13px; text-align:center; padding:16px;';
+    sourcesErr.className = 'jules-error-state';
     sourcesErr.textContent = `Failed to load sources: ${error.message}`;
     sourcesListDiv.replaceChildren();
     sourcesListDiv.appendChild(sourcesErr);
     
     const sessionsErr = document.createElement('div');
-    sessionsErr.style.cssText = 'color:#e74c3c; font-size:13px; text-align:center; padding:16px;';
+    sessionsErr.className = 'jules-error-state';
     sessionsErr.textContent = `Failed to load sessions: ${error.message}`;
     sessionsListDiv.replaceChildren();
     sessionsListDiv.appendChild(sessionsErr);
@@ -552,7 +552,7 @@ async function loadSessionsPage() {
       }
     } else if (allSessionsCache.length === 0) {
       const emptyMsg = document.createElement('div');
-      emptyMsg.style.cssText = 'color:var(--muted); text-align:center; padding:24px;';
+      emptyMsg.className = 'jules-empty-state jules-error-state--large';
       emptyMsg.textContent = 'No sessions found';
       allSessionsList.replaceChildren();
       allSessionsList.appendChild(emptyMsg);
@@ -560,7 +560,7 @@ async function loadSessionsPage() {
   } catch (error) {
     if (allSessionsCache.length === 0) {
       const errMsg = document.createElement('div');
-      errMsg.style.cssText = 'color:#e74c3c; text-align:center; padding:24px;';
+      errMsg.className = 'jules-error-state jules-error-state--large';
       errMsg.textContent = `Failed to load sessions: ${error.message}`;
       allSessionsList.replaceChildren();
       allSessionsList.appendChild(errMsg);

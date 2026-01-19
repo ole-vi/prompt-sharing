@@ -238,7 +238,6 @@ function renderSplitEdit(subtasks, promptText) {
       showSubtaskPreview(subtasks[idx], idx + 1);
     });
   });
-  });
 }
 
 /**

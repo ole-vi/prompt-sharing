@@ -69,6 +69,18 @@
   font-size: 12px;
 }
 
+.jules-error-state {
+  color: #e74c3c;
+  font-size: 13px;
+  text-align: center;
+  padding: 16px;
+}
+
+.jules-error-state--large {
+  font-size: 14px;
+  padding: 24px;
+}
+
 /* Sessions History Modal Styles */
 
 .sessions-history__search {

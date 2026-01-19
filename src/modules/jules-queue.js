@@ -1127,7 +1127,7 @@ function createQueueCard(item) {
   // Title row
   const titleDiv = document.createElement('div');
   titleDiv.className = 'queue-title';
-  const titleText = document.createTextNode(item.type === 'subtasks' ? 'Subtasks Batch ' : 'Single Prompt ');
+  const titleText = document.createTextNode(item.type === 'subtasks' ? JULES_UI_TEXT.SUBTASKS_BATCH : JULES_UI_TEXT.SINGLE_PROMPT);
   titleDiv.appendChild(titleText);
   
   const statusSpan = document.createElement('span');
@@ -1138,7 +1138,7 @@ function createQueueCard(item) {
   if (item.type === 'subtasks') {
     const remainingSpan = document.createElement('span');
     remainingSpan.className = 'queue-status';
-    remainingSpan.textContent = `(${remainingCount} remaining)`;
+    remainingSpan.textContent = JULES_UI_TEXT.REMAINING_COUNT(remainingCount);
     titleDiv.appendChild(document.createTextNode(' '));
     titleDiv.appendChild(remainingSpan);
   }

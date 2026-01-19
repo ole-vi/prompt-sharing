@@ -78,7 +78,9 @@ export function showFreeInputForm() {
   const splitBtn = document.getElementById('freeInputSplitBtn');
   const copenBtn = document.getElementById('freeInputCopenBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
-  const originalCopenLabel = '<span class="icon icon-inline" aria-hidden="true">open_in_new</span> Copen ▼';
+  
+  // Save original button content as nodes, not HTML string
+  const originalCopenContent = Array.from(copenBtn.childNodes).map(node => node.cloneNode(true));
 
   textarea.value = '';
   
@@ -259,7 +261,7 @@ export function showFreeInputForm() {
       copenBtn.appendChild(icon);
       copenBtn.appendChild(document.createTextNode(' Copied!'));
       setTimeout(() => {
-        copenBtn.textContent = originalCopenLabel;
+        copenBtn.replaceChildren(...originalCopenContent.map(node => node.cloneNode(true)));
       }, TIMEOUTS.copyFeedback);
     }
   };
