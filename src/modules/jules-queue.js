@@ -4,7 +4,7 @@ import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
-import { JULES_MESSAGES, TIMEOUTS } from '../utils/constants.js';
+import { JULES_MESSAGES, JULES_UI_TEXT, TIMEOUTS } from '../utils/constants.js';
 import { callRunJulesFunction } from './jules-api.js';
 import { openUrlInBackground, showSubtaskErrorModal } from './jules-modal.js';
 
