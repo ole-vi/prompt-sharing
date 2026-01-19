@@ -384,8 +384,6 @@ describe('status-renderer', () => {
       });
 
       it('should handle saved to not saved transition', async () => {
-        const { createIcon } = await import('../../utils/dom-helpers.js');
-        
         renderStatus(container, STATUS_TYPES.SAVED);
         expect(container.classList.add).toHaveBeenCalledWith('color-accent');
         

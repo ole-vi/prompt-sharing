@@ -474,7 +474,7 @@ describe('prompt-renderer', () => {
       initPromptRenderer();
       
       // Reset mocks for integration tests
-      const { fetchRawFile } = await import('../../modules/github-api.js');
+      await import('../../modules/github-api.js');
       const { loadMarked } = await import('../../utils/lazy-loaders.js');
       
       vi.clearAllMocks();
