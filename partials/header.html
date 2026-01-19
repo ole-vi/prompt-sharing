@@ -1,8 +1,7 @@
 <header>
-  <!-- Mobile Overlay -->
   <div id="mobileOverlay"></div>
   
-  <!-- Mobile Sidebar -->
+  <div id="mobileSidebar">
   <div id="mobileSidebar">
     <div class="mobile-sidebar-header">
       <div class="sidebar-branding">
@@ -39,7 +38,6 @@
   </div>
   
   <div id="headerContainer">
-    <!-- Left: Logo & Tagline -->
     <div class="header-left">
       <button id="mobileMenuBtn" aria-label="Open menu">☰</button>
       <div id="headerBranding">
@@ -61,7 +59,6 @@
       </div>
     </div>
 
-    <!-- Center: Navigation -->
     <nav id="headerNav">
       <a href="/" class="nav-item" data-page="home" title="View and create prompts">
         <span class="nav-icon"><span class="icon" aria-hidden="true">home</span></span>
@@ -81,15 +78,11 @@
       </a>
     </nav>
 
-    <!-- Right: Controls & Auth -->
       <div class="header-right">
       <div id="authStatus">
-        <!-- Branch dropdown placed next to avatar -->
-        <!-- Native select kept for logic fallback; hidden to use custom dropdown -->
         <select id="branchSelect" class="hidden">
           <option>Loading…</option>
         </select>
-        <!-- Custom Branch Dropdown -->
         <div id="branchDropdown" class="custom-dropdown custom-dropdown--compact custom-dropdown--wide-menu">
           <button id="branchDropdownBtn" class="custom-dropdown-btn" type="button" aria-haspopup="listbox" aria-expanded="false" title="Select branch">
             <span id="branchDropdownLabel">Loading…</span>
