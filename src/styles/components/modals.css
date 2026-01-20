@@ -61,6 +61,7 @@
 
 /* Modal overlay and dialog structure */
 .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1001; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+.modal-overlay.show { display: flex; }
 .modal-dialog { background: var(--card); border: 1px solid var(--border); border-radius: 14px; max-width: 600px; width: 100%; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
 .modal-dialog-sm { max-width: 500px; }
 .modal-dialog-lg { max-width: 700px; }
