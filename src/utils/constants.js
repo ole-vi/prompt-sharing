@@ -64,6 +64,90 @@ export const ERRORS = {
   CLIPBOARD_BLOCKED: "Clipboard blocked. Select and copy manually."
 };
 
+// Jules UI text (loading, empty states, labels, confirmations)
+export const JULES_UI_TEXT = {
+  // Loading states
+  LOADING_BRANCHES: 'Loading branches…',
+  LOADING_QUEUE: 'Loading queue...',
+  LOADING_SESSIONS: 'Loading sessions...',
+  LOADING_PROFILE: 'Loading Jules profile...',
+  LOADING_SOURCES: 'Loading sources...',
+  
+  // Empty states
+  NO_BRANCHES: 'No branches found',
+  NO_SOURCES: 'No connected repositories found.',
+  NO_SOURCES_HINT: 'Connect repos in the Jules UI.',
+  NO_SESSIONS: 'No recent sessions found.',
+  NO_QUEUE_ITEMS: 'No queued items.',
+  NO_SEARCH_RESULTS: 'No sessions match your search',
+  NO_SUBTASKS_DETECTED: 'No subtasks detected. This prompt will be sent as a single task.',
+  
+  // Error states
+  FETCH_SOURCES_ERROR: 'Failed to fetch sources',
+  FETCH_SESSIONS_ERROR: 'Failed to load sessions',
+  LOAD_QUEUE_ERROR: 'Failed to load queue',
+  LOAD_PROFILE_ERROR: 'Failed to load Jules profile',
+  
+  // State labels (for session/queue status display)
+  STATE_LABELS: {
+    COMPLETED: 'COMPLETED',
+    FAILED: 'FAILED',
+    IN_PROGRESS: 'IN PROGRESS',
+    PLANNING: 'IN PROGRESS',
+    QUEUED: 'QUEUED',
+    AWAITING_USER_FEEDBACK: 'AWAITING USER FEEDBACK',
+    CANCELLED: 'CANCELLED',
+    UNKNOWN: 'UNKNOWN'
+  },
+  
+  // State icons (Material Icons names)
+  STATE_ICONS: {
+    COMPLETED: 'check_circle',
+    FAILED: 'cancel',
+    IN_PROGRESS: 'schedule',
+    PLANNING: 'schedule',
+    QUEUED: 'pause_circle',
+    AWAITING_USER_FEEDBACK: 'chat_bubble',
+    CANCELLED: 'block',
+    UNKNOWN: 'help'
+  },
+  
+  // Button labels
+  BTN_SCHEDULE: 'Schedule',
+  BTN_UNSCHEDULE: 'Unschedule',
+  BTN_SAVE_CONTINUE: 'Save & Continue',
+  BTN_DELETE_KEY: 'Delete Jules API Key',
+  BTN_SAVING: 'Saving...',
+  BTN_DELETING: 'Deleting...',
+  
+  // Success messages
+  KEY_SAVED_SUCCESS: 'Jules API key saved successfully',
+  
+  // Hints
+  CLICK_VIEW_SESSION: 'Click to view session',
+  VIEW_FULL_PROMPT: 'View full prompt',
+  
+  // Subtask UI
+  SUBTASK_PREVIEW_TITLE: (partNum) => `Part ${partNum}`,
+  
+  // Confirmations
+  DELETE_KEY_CONFIRM: `This will delete your stored Jules API key. You'll need to enter a new one next time.`,
+  VALIDATION_WARNING: (warnings) => `Warnings:\n${warnings.join('\n')}\n\nQueue anyway?`,
+  
+  // Schedule display
+  SCHEDULED_FOR: (dateStr, timeZone) => `Scheduled for ${dateStr} (${timeZone})`,
+  
+  // Branch summary
+  BRANCH_COUNT: (count) => `(${count} ${count === 1 ? 'branch' : 'branches'})`,
+  NO_BRANCHES_PARENS: '(no branches)',
+  BRANCHES_HEADER: (count) => `Branches (${count}):`,
+  
+  // Queue item types
+  SUBTASKS_BATCH: 'Subtasks Batch ',
+  SINGLE_PROMPT: 'Single Prompt ',
+  REMAINING_COUNT: (count) => `(${count} remaining)`
+};
+
 // Jules toast messages
 export const JULES_MESSAGES = {
   // Success messages
@@ -122,6 +206,26 @@ export const UI_TEXT = {
   TRY_JULES: createIconWithText(ICONS.JULES, 'Try in Jules'),
   RUNNING: "Running...",
   SAVE_KEY: "Save & Continue"
+};
+
+// CSS class names for state management
+export const CSS_CLASSES = {
+  HIDDEN: 'hidden',
+  SHOW: 'show',
+  COLLAPSED: 'collapsed',
+  EXPANDED: 'expanded',
+  LOADING: 'loading',
+  ERROR: 'error',
+  // Source card states
+  SOURCE_CARD_BRANCHES_HIDDEN: 'source-card__branches--hidden',
+  SOURCE_CARD_ARROW_EXPANDED: 'source-card__arrow--expanded',
+  // Queue card states
+  QUEUE_CARD_SCHEDULED: 'queue-card--scheduled',
+  QUEUE_CARD_PENDING: 'queue-card--pending',
+  // Session states
+  SESSION_CARD: 'session-card',
+  // Modal visibility
+  MODAL_VISIBLE: 'modal--visible'
 };
 
 /**

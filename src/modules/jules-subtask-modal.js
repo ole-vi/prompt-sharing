@@ -165,27 +165,61 @@ function renderSplitEdit(subtasks, promptText) {
   const editList = document.getElementById('splitEditList');
   
   const promptPreview = promptText.length > 200 ? promptText.substring(0, 200) + '...' : promptText;
-  const promptDisplay = `<div style="padding: 12px; margin-bottom: 8px; background: rgba(77,217,255,0.05); border: 1px solid rgba(77,217,255,0.2); border-radius: 6px;">
-    <div style="font-size: 12px; color: var(--text); line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;">${promptPreview}</div>
-  </div>`;
+  
+  // Create prompt display
+  const promptDisplayDiv = document.createElement('div');
+  promptDisplayDiv.className = 'subtask-modal__prompt-display';
+  const promptContent = document.createElement('div');
+  promptContent.className = 'subtask-modal__prompt-content';
+  promptContent.textContent = promptPreview;
+  promptDisplayDiv.appendChild(promptContent);
+  
+  editList.replaceChildren();
+  editList.appendChild(promptDisplayDiv);
   
   if (!subtasks || subtasks.length === 0) {
-    editList.innerHTML = promptDisplay + '<div style="padding: 16px; text-align: center; color: var(--muted); font-size: 13px;">No subtasks detected. This prompt will be sent as a single task.</div>';
+    const emptyMsg = document.createElement('div');
+    emptyMsg.className = 'subtask-modal__empty-message';
+    emptyMsg.textContent = 'No subtasks detected. This prompt will be sent as a single task.';
+    editList.appendChild(emptyMsg);
     return;
   }
   
-  editList.innerHTML = subtasks
-    .map((st, idx) => `
-      <div style="padding: 8px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center;">
-        <input type="checkbox" id="subtask-${idx}" checked style="cursor: pointer;" />
-        <label for="subtask-${idx}" style="flex: 1; cursor: pointer; font-size: 13px;">
-          <strong>Part ${idx + 1}:</strong> ${st.title || `Part ${idx + 1}`}
-        </label>
-        <span style="font-size: 11px; color: var(--muted);">${st.content.length}c</span>
-        <button class="subtask-preview-btn" data-idx="${idx}" style="background: none; border: none; cursor: pointer; color: var(--accent); font-size: 16px; padding: 4px 8px; transition: transform 0.2s; line-height: 1;" title="Preview subtask" onclick="event.stopPropagation();"><span class="icon icon-inline" aria-hidden="true">visibility</span></button>
-      </div>
-    `)
-    .join('');
+  subtasks.forEach((st, idx) => {
+    const container = document.createElement('div');
+    container.className = 'subtask-modal__item';
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = `subtask-${idx}`;
+    checkbox.checked = true;
+    checkbox.className = 'subtask-modal__checkbox';
+    
+    const label = document.createElement('label');
+    label.htmlFor = `subtask-${idx}`;
+    label.className = 'subtask-modal__item-label';
+    const strong = document.createElement('strong');
+    strong.textContent = `Part ${idx + 1}:`;
+    label.appendChild(strong);
+    label.appendChild(document.createTextNode(` ${st.title || `Part ${idx + 1}`}`));
+    
+    const charCount = document.createElement('span');
+    charCount.className = 'subtask-modal__char-count';
+    charCount.textContent = `${st.content.length}c`;
+    
+    const previewBtn = document.createElement('button');
+    previewBtn.className = 'subtask-preview-btn subtask-modal__preview-btn';
+    previewBtn.dataset.idx = idx;
+    previewBtn.title = 'Preview subtask';
+    const icon = document.createElement('span');
+    icon.className = 'icon icon-inline';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = 'visibility';
+    previewBtn.appendChild(icon);
+    
+    container.append(checkbox, label, charCount, previewBtn);
+    editList.appendChild(container);
+  });
 
   subtasks.forEach((st, idx) => {
     const checkbox = document.getElementById(`subtask-${idx}`);
@@ -202,14 +236,6 @@ function renderSplitEdit(subtasks, promptText) {
       e.stopPropagation();
       const idx = parseInt(btn.dataset.idx);
       showSubtaskPreview(subtasks[idx], idx + 1);
-    });
-    
-    btn.addEventListener('mouseenter', (e) => {
-      e.target.style.transform = 'scale(1.2)';
-    });
-    
-    btn.addEventListener('mouseleave', (e) => {
-      e.target.style.transform = 'scale(1)';
     });
   });
 }

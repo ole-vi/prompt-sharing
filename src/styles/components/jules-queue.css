@@ -1,0 +1,198 @@
+/* Jules Queue Component Styles */
+
+/* Queue Modal Specific Styles */
+
+#julesQueueModal {
+  /* Base modal styling handled by jules-modals.css and modals.css */
+  display: none;
+}
+
+#julesQueueModal.show {
+  display: flex !important;
+}
+
+/* Queue Status Badge Variations */
+
+.queue-status--scheduled {
+  background: rgba(77, 217, 255, 0.15);
+  color: var(--accent);
+}
+
+.queue-status--pending {
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
+}
+
+.queue-status--completed {
+  background: rgba(76, 175, 80, 0.15);
+  color: #4caf50;
+}
+
+.queue-status--failed {
+  background: rgba(192, 80, 77, 0.15);
+  color: var(--danger);
+}
+
+/* Queue Card State Classes */
+
+.queue-card--scheduled {
+  border-left: 3px solid var(--accent);
+}
+
+.queue-card--pending {
+  border-left: 3px solid rgba(255, 193, 7, 0.5);
+}
+
+/* Queue Actions */
+
+.queue-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+/* .queue-actions__btn uses base button styles */
+
+/* Queue Error Info */
+
+.queue-error-info {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(192, 80, 77, 0.1);
+  border: 1px solid var(--danger);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--danger);
+}
+
+.queue-error-info__title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.queue-error-info__message {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.edit-queue-modal__section {
+  margin-bottom: 20px;
+}
+
+.edit-queue-modal__label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.edit-queue-modal__input {
+  width: 100%;
+  padding: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.edit-queue-modal__textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: ui-monospace, monospace;
+  resize: vertical;
+}
+
+/* Schedule Status Display */
+
+.schedule-status {
+  padding: 8px;
+  background: rgba(77, 217, 255, 0.08);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.schedule-status__text {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.schedule-status__timezone {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Timezone Dropdown */
+
+.timezone-dropdown {
+  width: 100%;
+  padding: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.timezone-dropdown:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Queue Loading States */
+
+.queue-loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* .queue-loading__spinner styles if needed */
+
+/* Queue Empty State */
+
+.queue-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+
+.queue-empty__icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.3;
+}
+
+.queue-empty__message {
+  font-size: 14px;
+}
+
+/* Subtask Styles */
+
+.queue-subtasks__header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.queue-subtask--completed {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+.queue-subtask__status {
+  font-size: 11px;
+  color: var(--muted);
+}
