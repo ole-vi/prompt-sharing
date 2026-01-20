@@ -13,6 +13,13 @@ export function setContext(owner, repo, branch) {
 export function init() {
   createSubmenu();
   document.addEventListener('click', handleDocumentClick);
+  
+  // Listen for branch changes from the header branch selector
+  window.addEventListener('branchChanged', (event) => {
+    if (event.detail && event.detail.branch) {
+      currentBranch = event.detail.branch;
+    }
+  });
 }
 
 export function destroy() {
