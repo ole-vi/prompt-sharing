@@ -3,6 +3,7 @@ import statusBar from './status-bar.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
+import { handleError, ErrorCategory } from '../utils/error-handler.js';
 import { showConfirm } from './confirm-modal.js';
 import { JULES_MESSAGES, JULES_UI_TEXT, TIMEOUTS } from '../utils/constants.js';
 import { callRunJulesFunction } from './jules-api.js';
@@ -13,7 +14,7 @@ let queueCache = [];
 export async function handleQueueAction(queueItemData) {
   const user = window.auth?.currentUser;
   if (!user) {
-    showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
+    handleError(JULES_MESSAGES.SIGN_IN_REQUIRED, 'QueueAction', { category: ErrorCategory.AUTH });
     return false;
   }
   try {
@@ -21,7 +22,7 @@ export async function handleQueueAction(queueItemData) {
     showToast(JULES_MESSAGES.QUEUED, 'success');
     return true;
   } catch (err) {
-    showToast(JULES_MESSAGES.QUEUE_FAILED(err.message), 'error');
+    handleError(JULES_MESSAGES.QUEUE_FAILED(err.message), 'QueueAction', { category: ErrorCategory.USER_ACTION });
     return false;
   }
 }
@@ -40,7 +41,7 @@ export async function addToJulesQueue(uid, queueItem) {
     clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return docRef.id;
   } catch (err) {
-    console.error('Failed to add to queue', err);
+    handleError(err, 'AddToQueue', { showToast: false });
     throw err;
   }
 }
@@ -54,7 +55,7 @@ export async function updateJulesQueueItem(uid, docId, updates) {
     clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return true;
   } catch (err) {
-    console.error('Failed to update queue item', err);
+    handleError(err, 'UpdateQueueItem', { showToast: false });
     throw err;
   }
 }
@@ -67,7 +68,7 @@ export async function deleteFromJulesQueue(uid, docId) {
     clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
     return true;
   } catch (err) {
-    console.error('Failed to delete queue item', err);
+    handleError(err, 'DeleteQueueItem', { showToast: false });
     throw err;
   }
 }
@@ -78,7 +79,7 @@ export async function listJulesQueue(uid) {
     const snapshot = await window.db.collection('julesQueues').doc(uid).collection('items').orderBy('createdAt', 'desc').get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (err) {
-    console.error('Failed to list queue', err);
+    handleError(err, 'ListQueue', { showToast: false });
     throw err;
   }
 }
@@ -226,7 +227,7 @@ function unscheduleQueueItem() {
 async function openEditQueueModal(docId) {
   const item = queueCache.find(i => i.id === docId);
   if (!item) {
-    showToast(JULES_MESSAGES.QUEUE_NOT_FOUND, 'error');
+    handleError(JULES_MESSAGES.QUEUE_NOT_FOUND, 'EditQueue', { category: ErrorCategory.UNEXPECTED });
     return;
   }
 
@@ -667,13 +668,13 @@ async function closeEditModal(force = false) {
 async function saveQueueItemEdit(docId, closeModalCallback) {
   const item = queueCache.find(i => i.id === docId);
   if (!item) {
-    showToast(JULES_MESSAGES.QUEUE_NOT_FOUND, 'error');
+    handleError(JULES_MESSAGES.QUEUE_NOT_FOUND, 'SaveEdit', { category: ErrorCategory.UNEXPECTED });
     return;
   }
   
   const user = window.auth?.currentUser;
   if (!user) {
-    showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error');
+    handleError(JULES_MESSAGES.NOT_SIGNED_IN, 'SaveEdit', { category: ErrorCategory.AUTH });
     return;
   }
 
@@ -725,7 +726,7 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
     
     await loadQueuePage();
   } catch (err) {
-    showToast(JULES_MESSAGES.QUEUE_UPDATE_FAILED(err.message), 'error');
+    handleError(JULES_MESSAGES.QUEUE_UPDATE_FAILED(err.message), 'SaveEdit', { category: ErrorCategory.USER_ACTION });
   }
 }
 
@@ -758,9 +759,10 @@ async function loadQueuePage() {
     renderQueueList(items);
     attachQueueModalHandlers();
   } catch (err) {
+    const { message } = handleError(err, 'LoadQueuePage', { showToast: false });
     const error = document.createElement('div');
     error.className = 'panel text-center pad-xl';
-    error.textContent = `Failed to load queue: ${err.message}`;
+    error.textContent = `Failed to load queue: ${message}`;
     listDiv.replaceChildren();
     listDiv.appendChild(error);
   }
@@ -851,19 +853,19 @@ function getCommonTimeZones() {
 async function showScheduleModal() {
   const user = window.auth?.currentUser;
   if (!user) {
-    showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
+    handleError(JULES_MESSAGES.SIGN_IN_REQUIRED, 'ShowSchedule', { category: ErrorCategory.AUTH });
     return;
   }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0 && Object.keys(subtaskSelections).length > 0) {
-    showToast('Individual subtasks cannot be scheduled separately. Please select the parent batch to schedule all subtasks together.', 'warn');
+    handleError('Individual subtasks cannot be scheduled separately. Please select the parent batch to schedule all subtasks together.', 'ShowSchedule', { category: ErrorCategory.VALIDATION });
     return;
   }
   
   if (queueSelections.length === 0) {
-    showToast('No items selected to schedule', 'warn');
+    handleError('No items selected to schedule', 'ShowSchedule', { category: ErrorCategory.VALIDATION });
     return;
   }
   
@@ -1076,7 +1078,8 @@ async function confirmScheduleItems() {
     hideScheduleModal();
     await loadQueuePage();
   } catch (err) {
-    errorDiv.textContent = `Failed to schedule items: ${err.message}`;
+    const { message } = handleError(err, 'ScheduleItems', { showToast: false });
+    errorDiv.textContent = `Failed to schedule items: ${message}`;
     errorDiv.classList.remove('hidden');
   }
 }
@@ -1482,14 +1485,14 @@ function updateScheduleButton() {
 async function unscheduleSelectedQueueItems() {
   const user = window.auth?.currentUser;
   if (!user) {
-    showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error');
+    handleError(JULES_MESSAGES.NOT_SIGNED_IN, 'UnscheduleItems', { category: ErrorCategory.AUTH });
     return;
   }
   
   const { queueSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0) {
-    showToast('No items selected', 'warn');
+    handleError('No items selected', 'UnscheduleItems', { category: ErrorCategory.VALIDATION });
     return;
   }
   
@@ -1524,7 +1527,7 @@ async function unscheduleSelectedQueueItems() {
     showToast(`${queueSelections.length} ${itemText} unscheduled`, 'success');
     await loadQueuePage();
   } catch (err) {
-    showToast(`Failed to unschedule: ${err.message}`, 'error');
+    handleError(`Failed to unschedule: ${err.message}`, 'UnscheduleItems', { category: ErrorCategory.USER_ACTION });
   }
 }
 
@@ -1550,12 +1553,12 @@ function getSelectedQueueIds() {
 
 async function deleteSelectedQueueItems() {
   const user = window.auth?.currentUser;
-  if (!user) { showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error'); return; }
+  if (!user) { handleError(JULES_MESSAGES.NOT_SIGNED_IN, 'DeleteItems', { category: ErrorCategory.AUTH }); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0 && Object.keys(subtaskSelections).length === 0) {
-    showToast('No items selected', 'warn');
+    handleError('No items selected', 'DeleteItems', { category: ErrorCategory.VALIDATION });
     return;
   }
   
@@ -1581,7 +1584,7 @@ async function deleteSelectedQueueItems() {
     showToast(JULES_MESSAGES.deleted(totalCount), 'success');
     await loadQueuePage();
   } catch (err) {
-    showToast(JULES_MESSAGES.DELETE_FAILED(err.message), 'error');
+    handleError(JULES_MESSAGES.DELETE_FAILED(err.message), 'DeleteItems', { category: ErrorCategory.USER_ACTION });
   }
 }
 
@@ -1595,12 +1598,12 @@ function sortByCreatedAt(ids) {
 
 async function runSelectedQueueItems() {
   const user = window.auth?.currentUser;
-  if (!user) { showToast(JULES_MESSAGES.NOT_SIGNED_IN, 'error'); return; }
+  if (!user) { handleError(JULES_MESSAGES.NOT_SIGNED_IN, 'RunItems', { category: ErrorCategory.AUTH }); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
   
   if (queueSelections.length === 0 && Object.keys(subtaskSelections).length === 0) {
-    showToast('No items selected', 'warn');
+    handleError('No items selected', 'RunItems', { category: ErrorCategory.VALIDATION });
     return;
   }
 
@@ -1732,7 +1735,7 @@ async function runSelectedQueueItems() {
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
               });
             } catch (e) {
-              console.warn('Failed to persist paused state for queue item', id, e.message || e);
+              handleError(e, 'PersistPausedState', { showToast: false, updateStatus: false });
             }
             statusBar.showMessage('Paused — progress saved', { timeout: TIMEOUTS.statusBar });
             statusBar.clearProgress();
@@ -1767,7 +1770,7 @@ async function runSelectedQueueItems() {
                   updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
               } catch (e) {
-                console.warn('Failed to persist progress for queue item', id, e.message || e);
+                handleError(e, 'PersistProgress', { showToast: false, updateStatus: false });
               }
 
               try {
@@ -1797,7 +1800,7 @@ async function runSelectedQueueItems() {
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                   });
                 } catch (e) {
-                  console.warn('Failed to persist remaining after skip', e);
+                  handleError(e, 'PersistSkip', { showToast: false, updateStatus: false });
                 }
                 statusBar.showMessage(JULES_MESSAGES.SKIPPED_SUBTASK, { timeout: TIMEOUTS.actionFeedback });
                 subtaskRetry = false;
@@ -1809,7 +1812,7 @@ async function runSelectedQueueItems() {
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                   });
                 } catch (e) {
-                  console.warn('Failed to persist queue state', e);
+                  handleError(e, 'PersistQueueState', { showToast: false, updateStatus: false });
                 }
                 statusBar.showMessage('Remainder queued for later', { timeout: TIMEOUTS.statusBar });
                 statusBar.clearProgress();
@@ -1824,7 +1827,7 @@ async function runSelectedQueueItems() {
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                   });
                 } catch (e) {
-                  console.warn('Failed to persist error state', e);
+                  handleError(e, 'PersistErrorState', { showToast: false, updateStatus: false });
                 }
                 showToast(JULES_MESSAGES.cancelled(totalSuccessful, totalItems), 'warn');
                 statusBar.clear();
@@ -1843,7 +1846,7 @@ async function runSelectedQueueItems() {
               updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
           } catch (e) {
-            console.warn('Failed to save skipped subtasks', e);
+            handleError(e, 'SaveSkippedSubtasks', { showToast: false, updateStatus: false });
           }
         } else if (skippedSubtasks.length === 0 && remaining.length === 0) {
           await deleteFromJulesQueue(user.uid, id);
@@ -1858,8 +1861,7 @@ async function runSelectedQueueItems() {
         await loadQueuePage();
         return;
       }
-      console.error('Unexpected error running queue item', id, err);
-      showToast(JULES_MESSAGES.UNEXPECTED_ERROR(err.message), 'error');
+      handleError(JULES_MESSAGES.UNEXPECTED_ERROR(err.message), 'RunQueueItem', { category: ErrorCategory.UNEXPECTED });
       statusBar.clearProgress();
       statusBar.clearAction();
       await loadQueuePage();
