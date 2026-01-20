@@ -52,6 +52,13 @@ global.document = {
     tagName: tag.toUpperCase(),
     className: '',
     textContent: '',
+    dataset: {},
+    classList: {
+      add: vi.fn(),
+      remove: vi.fn(),
+      contains: vi.fn(),
+      toggle: vi.fn()
+    },
     style: {
       cssText: '',
       display: '',
@@ -89,6 +96,12 @@ const createMockElement = (id = '') => ({
   textContent: '',
   disabled: false,
   onclick: null,
+  classList: {
+    add: vi.fn(),
+    remove: vi.fn(),
+    contains: vi.fn(),
+    toggle: vi.fn()
+  },
   style: {
     display: '',
     opacity: '',
@@ -602,8 +615,7 @@ describe('repo-branch-selector', () => {
         branchSelector.initialize('github.com/test/repo', 'main');
         
         expect(mockBtn.disabled).toBe(false);
-        expect(mockBtn.style.opacity).toBe('1');
-        expect(mockBtn.style.cursor).toBe('pointer');
+        expect(mockBtn.classList.remove).toHaveBeenCalledWith('opacity-half', 'cursor-not-allowed');
       });
 
       it('should disable button if no sourceId', () => {
@@ -611,8 +623,7 @@ describe('repo-branch-selector', () => {
         
         expect(mockBtn.disabled).toBe(true);
         expect(mockText.textContent).toBe('Select repository first');
-        expect(mockBtn.style.opacity).toBe('0.5');
-        expect(mockBtn.style.cursor).toBe('not-allowed');
+        expect(mockBtn.classList.add).toHaveBeenCalledWith('opacity-half', 'cursor-not-allowed');
       });
 
       it('should restore from storage if no sourceId provided', () => {

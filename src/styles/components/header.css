@@ -191,7 +191,7 @@ button.mobile-nav-item { border: none; background: transparent; cursor: pointer;
 
 #appVersion.version-badge--new {
   font-weight: bold;
-  color: #ffe066;
+  color: var(--warn);
 }
 
 .site-title { font-size:16px; font-weight:900; letter-spacing:0.4px; line-height:1.2; }

@@ -166,7 +166,7 @@ export class RepoSelector {
     this.dropdownMenu.innerHTML = '';
     
     const loadingIndicator = document.createElement('div');
-    loadingIndicator.style.cssText = 'padding:12px; text-align:center; color:var(--muted); font-size:13px;';
+    loadingIndicator.className = 'dropdown-loading';
     loadingIndicator.textContent = 'Loading...';
     this.dropdownMenu.appendChild(loadingIndicator);
     this.dropdownMenu.style.display = 'block';
@@ -233,14 +233,14 @@ export class RepoSelector {
     showMoreBtn.onclick = async () => {
       if (!this.allReposLoaded) {
         showMoreBtn.textContent = 'Loading...';
-        showMoreBtn.style.pointerEvents = 'none';
+        showMoreBtn.classList.add('pointer-events-none');
         
         try {
           await this.loadAllRepos();
           this.allReposLoaded = true;
         } catch (error) {
           showMoreBtn.textContent = 'Failed to load - click to retry';
-          showMoreBtn.style.pointerEvents = 'auto';
+          showMoreBtn.classList.remove('pointer-events-none');
           return;
         }
       }
@@ -501,15 +501,13 @@ export class BranchSelector {
     if (!sourceId) {
       this.dropdownText.textContent = 'Select repository first';
       this.dropdownBtn.disabled = true;
-      this.dropdownBtn.style.opacity = '0.5';
-      this.dropdownBtn.style.cursor = 'not-allowed';
+      this.dropdownBtn.classList.add('opacity-half', 'cursor-not-allowed');
       return;
     }
     
     this.dropdownText.textContent = defaultBranch || 'Select a branch...';
     this.dropdownBtn.disabled = false;
-    this.dropdownBtn.style.opacity = '1';
-    this.dropdownBtn.style.cursor = 'pointer';
+    this.dropdownBtn.classList.remove('opacity-half', 'cursor-not-allowed');
     
     // Save to storage
     this.saveToStorage();
@@ -556,8 +554,7 @@ export class BranchSelector {
     
     // Hide star for current item
     const star = document.createElement('span');
-    star.className = 'star-icon';
-    star.style.visibility = 'hidden';
+    star.className = 'star-icon visibility-hidden';
     
     const nameSpan = document.createElement('span');
     nameSpan.className = 'item-name';
@@ -575,7 +572,7 @@ export class BranchSelector {
       if (this.allBranchesLoaded) return;
       
       showMoreBtn.textContent = 'Loading...';
-      showMoreBtn.style.pointerEvents = 'none';
+      showMoreBtn.classList.add('pointer-events-none');
       
       try {
         const pathParts = this.sourceId.split('/');
@@ -587,8 +584,8 @@ export class BranchSelector {
 
         if (!allBranches || allBranches.length === 0) {
           showMoreBtn.textContent = allBranches === null ? 'GitHub API rate limited - try later' : 'No branches found';
-          showMoreBtn.style.color = 'var(--muted)';
-          showMoreBtn.style.pointerEvents = 'auto';
+          showMoreBtn.classList.add('status-muted');
+          showMoreBtn.classList.remove('pointer-events-none');
           return;
         }
 
@@ -603,8 +600,7 @@ export class BranchSelector {
           
           // Hide star for branches (not using favorites here)
           const star = document.createElement('span');
-          star.className = 'star-icon';
-          star.style.visibility = 'hidden';
+          star.className = 'star-icon visibility-hidden';
           
           const nameSpan = document.createElement('span');
           nameSpan.className = 'item-name';
@@ -622,8 +618,8 @@ export class BranchSelector {
       } catch (error) {
         console.error('Failed to load branches:', error);
         showMoreBtn.textContent = 'Failed to load - click to retry';
-        showMoreBtn.style.color = 'var(--muted)';
-        showMoreBtn.style.pointerEvents = 'auto';
+        showMoreBtn.classList.add('status-muted');
+        showMoreBtn.classList.remove('pointer-events-none');
       }
     };
     

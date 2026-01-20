@@ -16,12 +16,12 @@ export const STATUS_TYPES = {
 };
 
 const STATUS_CONFIG = {
-  [STATUS_TYPES.SAVED]: { icon: 'check_circle', colorClass: 'color-accent' },
-  [STATUS_TYPES.NOT_SAVED]: { icon: 'cancel', colorClass: 'color-muted' },
-  [STATUS_TYPES.LOADING]: { icon: 'hourglass_top', colorClass: '' },
-  [STATUS_TYPES.ERROR]: { icon: 'error', colorClass: 'color-error' },
-  [STATUS_TYPES.SUCCESS]: { icon: 'check_circle', colorClass: 'color-success' },
-  [STATUS_TYPES.DELETING]: { icon: 'hourglass_top', colorClass: '' },
+  [STATUS_TYPES.SAVED]: { icon: 'check_circle', colorClass: 'status-saved' },
+  [STATUS_TYPES.NOT_SAVED]: { icon: 'cancel', colorClass: 'status-not-saved' },
+  [STATUS_TYPES.LOADING]: { icon: 'hourglass_top', colorClass: 'status-loading' },
+  [STATUS_TYPES.ERROR]: { icon: 'error', colorClass: 'status-error' },
+  [STATUS_TYPES.SUCCESS]: { icon: 'check_circle', colorClass: 'status-success' },
+  [STATUS_TYPES.DELETING]: { icon: 'hourglass_top', colorClass: 'status-loading' },
   [STATUS_TYPES.RESET]: { icon: 'refresh', colorClass: '' }
 };
 
@@ -39,7 +39,10 @@ export function renderStatus(container, type, labelOverride = null) {
   const config = STATUS_CONFIG[type] || { icon: 'info', colorClass: '' };
 
   // Remove existing color classes
-  container.classList.remove('color-accent', 'color-muted', 'color-error', 'color-success');
+  container.classList.remove(
+    'color-accent', 'color-muted', 'color-error', 'color-success',
+    'status-saved', 'status-not-saved', 'status-loading', 'status-error', 'status-success', 'status-outdated'
+  );
 
   // Apply new color class if specified
   if (config.colorClass) {

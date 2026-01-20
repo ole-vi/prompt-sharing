@@ -1,0 +1,56 @@
+/* Semantic Status Indicators */
+.status-saved {
+  color: var(--accent);
+}
+
+.status-not-saved {
+  color: var(--muted);
+}
+
+.status-outdated {
+  color: var(--warn);
+}
+
+.status-loading {
+  color: var(--muted);
+}
+
+.status-error {
+  color: var(--error);
+}
+
+.status-success {
+  color: var(--success);
+}
+
+.status-muted {
+  color: var(--muted);
+}
+
+.status-action {
+  color: var(--accent);
+}
+
+/* Helper classes for dropdowns and interactive elements */
+.dropdown-loading {
+  padding: 12px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.opacity-half {
+  opacity: 0.5;
+}
+
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
+
+.pointer-events-none {
+  pointer-events: none;
+}
+
+.visibility-hidden {
+  visibility: hidden;
+}
