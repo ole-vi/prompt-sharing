@@ -3,77 +3,7 @@
 
 import { TIMEOUTS } from '../utils/constants.js';
 import { createElement } from '../utils/dom-helpers.js';
-
-let confirmModal = null;
-let confirmResolve = null;
-let confirmController = null;
-
-function createConfirmModal() {
-  const modal = createElement('div', 'modal');
-  modal.id = 'confirmModal';
-  modal.style.zIndex = '10000';
-
-  const modalContent = createElement('div', 'modal-content');
-  modalContent.style.maxWidth = '480px';
-
-  const modalHeader = createElement('div', 'modal-header');
-  const title = createElement('h3', '', 'Confirm Action');
-  title.id = 'confirmModalTitle';
-
-  const closeBtn = createElement('button', 'btn-icon close-modal', '✕');
-  closeBtn.id = 'confirmModalClose';
-  closeBtn.title = 'Close';
-
-  modalHeader.appendChild(title);
-  modalHeader.appendChild(closeBtn);
-
-  const modalBody = createElement('div', 'modal-body');
-  const message = createElement('p');
-  message.id = 'confirmModalMessage';
-  message.style.lineHeight = '1.6';
-  message.style.whiteSpace = 'pre-wrap';
-
-  modalBody.appendChild(message);
-
-  const modalButtons = createElement('div', 'modal-buttons');
-  const cancelBtn = createElement('button', 'btn', 'Cancel');
-  cancelBtn.id = 'confirmModalCancel';
-
-  const confirmBtn = createElement('button', 'btn danger', 'Confirm');
-  confirmBtn.id = 'confirmModalConfirm';
-
-  modalButtons.appendChild(cancelBtn);
-  modalButtons.appendChild(confirmBtn);
-
-  modalContent.appendChild(modalHeader);
-  modalContent.appendChild(modalBody);
-  modalContent.appendChild(modalButtons);
-
-  modal.appendChild(modalContent);
-  
-  document.body.appendChild(modal);
-  return modal;
-}
-
-function showConfirmModal() {
-  if (!confirmModal) {
-    confirmModal = createConfirmModal();
-  }
-  
-  confirmModal.classList.add('show');
-  
-  // Focus the confirm button
-  setTimeout(() => {
-    const confirmBtn = document.getElementById('confirmModalConfirm');
-    if (confirmBtn) confirmBtn.focus();
-  }, TIMEOUTS.modalFocus);
-}
-
-function hideConfirmModal() {
-  if (confirmModal) {
-    confirmModal.classList.remove('show');
-  }
-}
+import { createModal } from '../utils/modal-manager.js';
 
 /**
  * Show a styled confirmation dialog
@@ -87,28 +17,56 @@ function hideConfirmModal() {
  */
 export function showConfirm(message, options = {}) {
   return new Promise((resolve) => {
-    if (!confirmModal) {
-      confirmModal = createConfirmModal();
-    }
+    let resolved = false;
     
+    const cleanup = () => {
+      if (!resolved) {
+        resolved = true;
+        resolve(false);
+      }
+    };
+
     const title = options.title || 'Confirm Action';
     const confirmText = options.confirmText || 'Confirm';
     const confirmStyle = options.confirmStyle || 'error';
     const cancelText = options.cancelText || 'Cancel';
+
+    const modal = createModal({
+      title: title,
+      className: 'modal', // Use legacy class to maintain high z-index and flex behavior if css matches
+      dialogClass: 'modal-content',
+      closeable: true,
+      hasFooter: true,
+      onClose: cleanup
+    });
     
-    const titleEl = document.getElementById('confirmModalTitle');
-    const messageEl = document.getElementById('confirmModalMessage');
-    const confirmBtn = document.getElementById('confirmModalConfirm');
-    const cancelBtn = document.getElementById('confirmModalCancel');
-    const closeBtn = document.getElementById('confirmModalClose');
+    // Ensure high z-index as per original implementation
+    modal.element.style.zIndex = '10000';
+
+    // Body Message
+    const msgP = createElement('p');
+    msgP.style.lineHeight = '1.6';
+    msgP.style.whiteSpace = 'pre-wrap';
+    msgP.textContent = message;
+    modal.body.appendChild(msgP);
+
+    // Buttons (appended to footer)
+    // We use a container to match 'modal-buttons' spacing if needed,
+    // but modal-footer has its own spacing.
+    // Original used 'modal-buttons' div.
+    // Let's try appending directly to footer first.
+    // If styling is off, we can adjust.
+    // modal-footer: justify-content: flex-end; gap: 8px;
     
-    titleEl.textContent = title;
-    messageEl.textContent = message;
-    confirmBtn.textContent = confirmText;
-    cancelBtn.textContent = cancelText;
+    const cancelBtn = createElement('button', 'btn', cancelText);
+    modal.addListener(cancelBtn, 'click', () => {
+      resolved = true;
+      resolve(false);
+      modal.destroy();
+    });
+
+    const confirmBtn = createElement('button', 'btn', confirmText);
     
-    // Set button style
-    confirmBtn.className = 'btn';
     if (confirmStyle === 'error' || confirmStyle === 'danger') {
       confirmBtn.classList.add('danger');
     } else if (confirmStyle === 'warn') {
@@ -118,57 +76,35 @@ export function showConfirm(message, options = {}) {
     } else if (confirmStyle === 'success') {
       confirmBtn.classList.add('success');
     }
-    
-    confirmResolve = resolve;
 
-    // Use AbortController for cleanup
-    if (confirmController) {
-      confirmController.abort();
-    }
-    confirmController = new AbortController();
-    const { signal } = confirmController;
+    modal.addListener(confirmBtn, 'click', () => {
+      resolved = true;
+      resolve(true);
+      modal.destroy();
+    });
 
-    const cleanup = () => {
-      hideConfirmModal();
-      if (confirmController) {
-        confirmController.abort();
-        confirmController = null;
-      }
-      confirmResolve = null;
-    };
+    modal.footer.appendChild(cancelBtn);
+    modal.footer.appendChild(confirmBtn);
 
-    const handleConfirm = () => {
-      if (confirmResolve) {
-        confirmResolve(true);
-      }
-      cleanup();
-    };
-
-    const handleCancel = () => {
-      if (confirmResolve) {
-        confirmResolve(false);
-      }
-      cleanup();
-    };
-    
-    confirmBtn.addEventListener('click', handleConfirm, { signal });
-    cancelBtn.addEventListener('click', handleCancel, { signal });
-    closeBtn.addEventListener('click', handleCancel, { signal });
-
-    // Close on background click
-    confirmModal.addEventListener('click', (e) => {
-      if (e.target === confirmModal) {
-        handleCancel();
-      }
-    }, { signal });
-    
-    // Handle Escape key
-    document.addEventListener('keydown', (e) => {
+    // Escape Key
+    modal.addListener(document, 'keydown', (e) => {
       if (e.key === 'Escape') {
-        handleCancel();
+        modal.destroy(); // Trigger onClose -> resolve(false)
       }
-    }, { signal });
-    
-    showConfirmModal();
+    });
+
+    // Outside Click
+    modal.addListener(modal.element, 'click', (e) => {
+      if (e.target === modal.element) {
+        modal.destroy(); // Trigger onClose -> resolve(false)
+      }
+    });
+
+    modal.show();
+
+    // Focus confirm button
+    setTimeout(() => {
+      if (confirmBtn) confirmBtn.focus();
+    }, TIMEOUTS.modalFocus);
   });
 }

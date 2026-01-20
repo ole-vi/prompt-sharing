@@ -7,8 +7,12 @@ import { showConfirm } from './confirm-modal.js';
 import { JULES_MESSAGES, JULES_UI_TEXT, TIMEOUTS } from '../utils/constants.js';
 import { callRunJulesFunction } from './jules-api.js';
 import { openUrlInBackground, showSubtaskErrorModal } from './jules-modal.js';
+import { createModal } from '../utils/modal-manager.js';
+import { createElement } from '../utils/dom-helpers.js';
 
 let queueCache = [];
+let activeEditModal = null;
+let activeScheduleModal = null;
 
 export async function handleQueueAction(queueItemData) {
   const user = window.auth?.currentUser;
@@ -233,203 +237,147 @@ async function openEditQueueModal(docId) {
   editModalState.currentDocId = docId;
   editModalState.hasUnsavedChanges = false;
 
-  let modal = document.getElementById('editQueueItemModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'editQueueItemModal';
-    modal.className = 'modal-overlay';
-    
-    const dialog = document.createElement('div');
-    dialog.className = 'modal-dialog modal-dialog-lg';
-    
-    // Header
-    const header = document.createElement('div');
-    header.className = 'modal-header';
-    const title = document.createElement('h2');
-    title.className = 'modal-title';
-    title.textContent = 'Edit Queue Item';
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'btn-icon close-modal';
-    closeBtn.id = 'closeEditQueueModal';
-    closeBtn.title = 'Close';
-    const closeIcon = document.createElement('span');
-    closeIcon.className = 'icon';
-    closeIcon.setAttribute('aria-hidden', 'true');
-    closeIcon.textContent = 'close';
-    closeBtn.appendChild(closeIcon);
-    header.append(title, closeBtn);
-    
-    // Body
-    const body = document.createElement('div');
-    body.className = 'modal-body';
-    
-    // Type field
-    const typeGroup = document.createElement('div');
-    typeGroup.className = 'form-group';
-    const typeLabel = document.createElement('label');
-    typeLabel.className = 'form-section-label';
-    typeLabel.textContent = 'Type:';
-    const typeText = document.createElement('div');
-    typeText.id = 'editQueueType';
-    typeText.className = 'form-text';
-    typeGroup.append(typeLabel, typeText);
-    
-    // Schedule info
-    const scheduleGroup = document.createElement('div');
-    scheduleGroup.className = 'form-group hidden';
-    scheduleGroup.id = 'editQueueStatusGroup';
-    const scheduleLabel = document.createElement('label');
-    scheduleLabel.className = 'form-section-label';
-    scheduleLabel.textContent = 'Schedule:';
-    const scheduleInfo = document.createElement('div');
-    scheduleInfo.id = 'editQueueScheduleInfo';
-    scheduleInfo.className = 'form-text schedule-info-row';
-    const scheduleText = document.createElement('div');
-    scheduleText.id = 'editQueueScheduleText';
-    const unscheduleBtn = document.createElement('button');
-    unscheduleBtn.type = 'button';
-    unscheduleBtn.id = 'unscheduleBtn';
-    unscheduleBtn.className = 'btn btn-secondary btn-xs';
-    unscheduleBtn.textContent = 'Unschedule';
-    scheduleInfo.append(scheduleText, unscheduleBtn);
-    scheduleGroup.append(scheduleLabel, scheduleInfo);
-    
-    // Prompt field
-    const promptGroup = document.createElement('div');
-    promptGroup.className = 'form-group';
-    promptGroup.id = 'editPromptGroup';
-    const promptHeader = document.createElement('div');
-    promptHeader.className = 'form-group-header';
-    const promptLabel = document.createElement('label');
-    promptLabel.className = 'form-section-label';
-    promptLabel.textContent = 'Prompt:';
-    const convertToSubtasksBtn = document.createElement('button');
-    convertToSubtasksBtn.type = 'button';
-    convertToSubtasksBtn.id = 'convertToSubtasksBtn';
-    convertToSubtasksBtn.className = 'btn btn-secondary btn-xs';
-    convertToSubtasksBtn.textContent = 'Split into Subtasks';
-    promptHeader.append(promptLabel, convertToSubtasksBtn);
-    const promptTextarea = document.createElement('textarea');
-    promptTextarea.id = 'editQueuePrompt';
-    promptTextarea.className = 'form-control form-control-mono';
-    promptTextarea.rows = 10;
-    promptGroup.append(promptHeader, promptTextarea);
-    
-    // Subtasks field
-    const subtasksGroup = document.createElement('div');
-    subtasksGroup.className = 'form-group hidden';
-    subtasksGroup.id = 'editSubtasksGroup';
-    const subtasksHeader = document.createElement('div');
-    subtasksHeader.className = 'form-group-header';
-    const subtasksLabel = document.createElement('label');
-    subtasksLabel.className = 'form-section-label';
-    subtasksLabel.textContent = 'Subtasks:';
-    const convertToSingleBtn = document.createElement('button');
-    convertToSingleBtn.type = 'button';
-    convertToSingleBtn.id = 'convertToSingleBtn';
-    convertToSingleBtn.className = 'btn btn-secondary btn-xs hidden';
-    convertToSingleBtn.textContent = 'Convert to Single Prompt';
-    subtasksHeader.append(subtasksLabel, convertToSingleBtn);
-    const subtasksList = document.createElement('div');
-    subtasksList.id = 'editQueueSubtasksList';
-    subtasksGroup.append(subtasksHeader, subtasksList);
-    
-    // Repository field
-    const repoGroup = document.createElement('div');
-    repoGroup.className = 'form-group';
-    const repoLabel = document.createElement('label');
-    repoLabel.className = 'form-section-label';
-    repoLabel.textContent = 'Repository:';
-    const repoDropdown = document.createElement('div');
-    repoDropdown.id = 'editQueueRepoDropdown';
-    repoDropdown.className = 'custom-dropdown';
-    const repoBtn = document.createElement('button');
-    repoBtn.id = 'editQueueRepoDropdownBtn';
-    repoBtn.className = 'custom-dropdown-btn w-full';
-    repoBtn.type = 'button';
-    const repoText = document.createElement('span');
-    repoText.id = 'editQueueRepoDropdownText';
-    repoText.textContent = 'Loading...';
-    const repoCaret = document.createElement('span');
-    repoCaret.className = 'custom-dropdown-caret';
-    repoCaret.setAttribute('aria-hidden', 'true');
-    repoCaret.textContent = '▼';
-    repoBtn.append(repoText, repoCaret);
-    const repoMenu = document.createElement('div');
-    repoMenu.id = 'editQueueRepoDropdownMenu';
-    repoMenu.className = 'custom-dropdown-menu';
-    repoMenu.setAttribute('role', 'menu');
-    repoDropdown.append(repoBtn, repoMenu);
-    repoGroup.append(repoLabel, repoDropdown);
-    
-    // Branch field
-    const branchGroup = document.createElement('div');
-    branchGroup.className = 'form-group space-below';
-    const branchLabel = document.createElement('label');
-    branchLabel.className = 'form-section-label';
-    branchLabel.textContent = 'Branch:';
-    const branchDropdown = document.createElement('div');
-    branchDropdown.id = 'editQueueBranchDropdown';
-    branchDropdown.className = 'custom-dropdown';
-    const branchBtn = document.createElement('button');
-    branchBtn.id = 'editQueueBranchDropdownBtn';
-    branchBtn.className = 'custom-dropdown-btn w-full';
-    branchBtn.type = 'button';
-    const branchText = document.createElement('span');
-    branchText.id = 'editQueueBranchDropdownText';
-    branchText.textContent = 'Loading branches...';
-    const branchCaret = document.createElement('span');
-    branchCaret.className = 'custom-dropdown-caret';
-    branchCaret.setAttribute('aria-hidden', 'true');
-    branchCaret.textContent = '▼';
-    branchBtn.append(branchText, branchCaret);
-    const branchMenu = document.createElement('div');
-    branchMenu.id = 'editQueueBranchDropdownMenu';
-    branchMenu.className = 'custom-dropdown-menu';
-    branchMenu.setAttribute('role', 'menu');
-    branchDropdown.append(branchBtn, branchMenu);
-    branchGroup.append(branchLabel, branchDropdown);
-    
-    body.append(typeGroup, scheduleGroup, promptGroup, subtasksGroup, repoGroup, branchGroup);
-    
-    // Footer
-    const footer = document.createElement('div');
-    footer.className = 'modal-footer';
-    const cancelBtn = document.createElement('button');
-    cancelBtn.id = 'cancelEditQueue';
-    cancelBtn.className = 'btn';
-    cancelBtn.textContent = 'Cancel';
-    const saveBtn = document.createElement('button');
-    saveBtn.id = 'saveEditQueue';
-    saveBtn.className = 'btn primary';
-    saveBtn.textContent = 'Save';
-    footer.append(cancelBtn, saveBtn);
-    
-    dialog.append(header, body, footer);
-    modal.appendChild(dialog);
-    document.body.appendChild(modal);
-    
-    document.getElementById('closeEditQueueModal').onclick = () => closeEditModal();
-    document.getElementById('cancelEditQueue').onclick = () => closeEditModal();
-    
-    modal.onclick = (e) => {
-      if (e.target === modal) {
-        closeEditModal();
-      }
-    };
-    
-    document.getElementById('saveEditQueue').onclick = async () => {
-      await saveQueueItemEdit(editModalState.currentDocId, closeEditModal);
-    };    
-    setupSubtasksEventDelegation();    
-    setupSubtasksEventDelegation();
-  }
+  activeEditModal = createModal({
+    id: 'editQueueItemModal',
+    title: 'Edit Queue Item',
+    dialogClass: 'modal-dialog modal-dialog-lg',
+    closeable: true,
+    hasFooter: true,
+    onClose: () => {
+       editModalState.hasUnsavedChanges = false;
+       editModalState.originalData = null;
+       editModalState.currentDocId = null;
+       editModalState.currentType = null;
+       editModalState.repoSelector = null;
+       editModalState.branchSelector = null;
+       editModalState.isUnscheduled = false;
+       activeEditModal = null;
+    }
+  });
 
-  const typeDiv = document.getElementById('editQueueType');
-  const promptGroup = document.getElementById('editPromptGroup');
-  const subtasksGroup = document.getElementById('editSubtasksGroup');
-  const promptTextarea = document.getElementById('editQueuePrompt');
-  const subtasksList = document.getElementById('editQueueSubtasksList');
+  const body = activeEditModal.body;
+  const footer = activeEditModal.footer;
+
+  // Type field
+  const typeGroup = createElement('div', 'form-group');
+  const typeLabel = createElement('label', 'form-section-label', 'Type:');
+  const typeText = createElement('div', 'form-text');
+  typeText.id = 'editQueueType';
+  typeGroup.append(typeLabel, typeText);
+
+  // Schedule info
+  const scheduleGroup = createElement('div', 'form-group hidden');
+  scheduleGroup.id = 'editQueueStatusGroup';
+  const scheduleLabel = createElement('label', 'form-section-label', 'Schedule:');
+  const scheduleInfo = createElement('div', 'form-text schedule-info-row');
+  scheduleInfo.id = 'editQueueScheduleInfo';
+  const scheduleText = createElement('div');
+  scheduleText.id = 'editQueueScheduleText';
+  const unscheduleBtn = createElement('button', 'btn btn-secondary btn-xs', 'Unschedule');
+  unscheduleBtn.type = 'button';
+  unscheduleBtn.id = 'unscheduleBtn';
+  scheduleInfo.append(scheduleText, unscheduleBtn);
+  scheduleGroup.append(scheduleLabel, scheduleInfo);
+
+  // Prompt field
+  const promptGroup = createElement('div', 'form-group');
+  promptGroup.id = 'editPromptGroup';
+  const promptHeader = createElement('div', 'form-group-header');
+  const promptLabel = createElement('label', 'form-section-label', 'Prompt:');
+  const convertToSubtasksBtn = createElement('button', 'btn btn-secondary btn-xs', 'Split into Subtasks');
+  convertToSubtasksBtn.type = 'button';
+  convertToSubtasksBtn.id = 'convertToSubtasksBtn';
+  promptHeader.append(promptLabel, convertToSubtasksBtn);
+  const promptTextarea = createElement('textarea', 'form-control form-control-mono');
+  promptTextarea.id = 'editQueuePrompt';
+  promptTextarea.rows = 10;
+  promptGroup.append(promptHeader, promptTextarea);
+
+  // Subtasks field
+  const subtasksGroup = createElement('div', 'form-group hidden');
+  subtasksGroup.id = 'editSubtasksGroup';
+  const subtasksHeader = createElement('div', 'form-group-header');
+  const subtasksLabel = createElement('label', 'form-section-label', 'Subtasks:');
+  const convertToSingleBtn = createElement('button', 'btn btn-secondary btn-xs hidden', 'Convert to Single Prompt');
+  convertToSingleBtn.type = 'button';
+  convertToSingleBtn.id = 'convertToSingleBtn';
+  subtasksHeader.append(subtasksLabel, convertToSingleBtn);
+  const subtasksList = createElement('div');
+  subtasksList.id = 'editQueueSubtasksList';
+  subtasksGroup.append(subtasksHeader, subtasksList);
+
+  // Repository field
+  const repoGroup = createElement('div', 'form-group');
+  const repoLabel = createElement('label', 'form-section-label', 'Repository:');
+  const repoDropdown = createElement('div', 'custom-dropdown');
+  repoDropdown.id = 'editQueueRepoDropdown';
+  const repoBtn = createElement('button', 'custom-dropdown-btn w-full');
+  repoBtn.id = 'editQueueRepoDropdownBtn';
+  repoBtn.type = 'button';
+  const repoTextSpan = createElement('span', '', 'Loading...');
+  repoTextSpan.id = 'editQueueRepoDropdownText';
+  const repoCaret = createElement('span', 'custom-dropdown-caret', '▼');
+  repoCaret.setAttribute('aria-hidden', 'true');
+  repoBtn.append(repoTextSpan, repoCaret);
+  const repoMenu = createElement('div', 'custom-dropdown-menu');
+  repoMenu.id = 'editQueueRepoDropdownMenu';
+  repoMenu.setAttribute('role', 'menu');
+  repoDropdown.append(repoBtn, repoMenu);
+  repoGroup.append(repoLabel, repoDropdown);
+
+  // Branch field
+  const branchGroup = createElement('div', 'form-group space-below');
+  const branchLabel = createElement('label', 'form-section-label', 'Branch:');
+  const branchDropdown = createElement('div', 'custom-dropdown');
+  branchDropdown.id = 'editQueueBranchDropdown';
+  const branchBtn = createElement('button', 'custom-dropdown-btn w-full');
+  branchBtn.id = 'editQueueBranchDropdownBtn';
+  branchBtn.type = 'button';
+  const branchTextSpan = createElement('span', '', 'Loading branches...');
+  branchTextSpan.id = 'editQueueBranchDropdownText';
+  const branchCaret = createElement('span', 'custom-dropdown-caret', '▼');
+  branchCaret.setAttribute('aria-hidden', 'true');
+  branchBtn.append(branchTextSpan, branchCaret);
+  const branchMenu = createElement('div', 'custom-dropdown-menu');
+  branchMenu.id = 'editQueueBranchDropdownMenu';
+  branchMenu.setAttribute('role', 'menu');
+  branchDropdown.append(branchBtn, branchMenu);
+  branchGroup.append(branchLabel, branchDropdown);
+
+  body.append(typeGroup, scheduleGroup, promptGroup, subtasksGroup, repoGroup, branchGroup);
+
+  // Footer Buttons
+  const cancelBtn = createElement('button', 'btn', 'Cancel');
+  cancelBtn.id = 'cancelEditQueue';
+  const saveBtn = createElement('button', 'btn primary', 'Save');
+  saveBtn.id = 'saveEditQueue';
+  footer.append(cancelBtn, saveBtn);
+
+  // Attach listeners using the variables directly when possible, or by ID after show()
+  cancelBtn.onclick = () => closeEditModal();
+  saveBtn.onclick = async () => {
+    await saveQueueItemEdit(editModalState.currentDocId, closeEditModal);
+  };
+
+  // Close on background click
+  activeEditModal.addListener(activeEditModal.element, 'click', (e) => {
+    if (e.target === activeEditModal.element) {
+      closeEditModal();
+    }
+  });
+
+  // Close on Escape key
+  activeEditModal.addListener(document, 'keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeEditModal();
+    }
+  });
+
+  activeEditModal.show();
+
+  // Now that it's in the DOM, we can proceed with logic that uses getElementById
+  setupSubtasksEventDelegation();
+
   const repoDropdownBtn = document.getElementById('editQueueRepoDropdownBtn');
   const repoDropdownText = document.getElementById('editQueueRepoDropdownText');
   const repoDropdownMenu = document.getElementById('editQueueRepoDropdownMenu');
@@ -438,7 +386,7 @@ async function openEditQueueModal(docId) {
   const branchDropdownMenu = document.getElementById('editQueueBranchDropdownMenu');
 
   if (item.type === 'single') {
-    typeDiv.textContent = 'Single Prompt';
+    typeText.textContent = 'Single Prompt';
     promptGroup.classList.remove('hidden');
     subtasksGroup.classList.add('hidden');
     promptTextarea.value = item.prompt || '';
@@ -447,7 +395,7 @@ async function openEditQueueModal(docId) {
     
     document.getElementById('convertToSubtasksBtn').onclick = convertToSubtasks;
   } else if (item.type === 'subtasks') {
-    typeDiv.textContent = 'Subtasks Batch';
+    typeText.textContent = 'Subtasks Batch';
     promptGroup.classList.add('hidden');
     subtasksGroup.classList.remove('hidden');
     
@@ -469,8 +417,6 @@ async function openEditQueueModal(docId) {
   displayScheduleStatus(item);
 
   await initializeEditRepoAndBranch(item.sourceId, item.branch || 'master', repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu);
-
-  modal.classList.add('show');
 
   const trackChanges = () => {
     editModalState.hasUnsavedChanges = true;
@@ -643,8 +589,7 @@ async function removeSubtask(index) {
 }
 
 async function closeEditModal(force = false) {
-  const modal = document.getElementById('editQueueItemModal');
-  if (!modal) return;
+  if (!activeEditModal) return;
   
   if (!force && editModalState.hasUnsavedChanges) {
     const confirmed = await showConfirm('You have unsaved changes. Are you sure you want to close?', {
@@ -654,14 +599,7 @@ async function closeEditModal(force = false) {
     });
     if (!confirmed) return;
   }
-  modal.classList.remove('show');
-  editModalState.hasUnsavedChanges = false;
-  editModalState.originalData = null;
-  editModalState.currentDocId = null;
-  editModalState.currentType = null;
-  editModalState.repoSelector = null;
-  editModalState.branchSelector = null;
-  editModalState.isUnscheduled = false;
+  activeEditModal.destroy();
 }
 
 async function saveQueueItemEdit(docId, closeModalCallback) {
@@ -869,38 +807,91 @@ async function showScheduleModal() {
   
   const userTimeZone = await getUserTimeZone();
   
-  let modal = document.getElementById('scheduleQueueModal');
-  if (!modal) {
-    await loadScheduleModal();
-    modal = document.getElementById('scheduleQueueModal');
-    if (!modal) {
-      console.error('Failed to load schedule modal');
-      return;
+  activeScheduleModal = createModal({
+    id: 'scheduleQueueModal',
+    title: 'Schedule Queue Items',
+    dialogClass: 'modal-dialog modal-dialog-sm',
+    closeable: true,
+    hasFooter: true,
+    onClose: () => {
+      activeScheduleModal = null;
     }
-  }
+  });
+
+  const body = activeScheduleModal.body;
+  const footer = activeScheduleModal.footer;
+
+  // Help text
+  body.appendChild(createElement('p', 'form-help-text', 'Schedule selected items to run automatically at a specific time.'));
+
+  // Date
+  const dateGroup = createElement('div', 'form-group');
+  const dateLabel = createElement('label', 'form-label', 'Date:');
+  dateLabel.htmlFor = 'scheduleDate';
+  const dateInput = createElement('input', 'form-control');
+  dateInput.type = 'date';
+  dateInput.id = 'scheduleDate';
+  dateInput.required = true;
+  dateGroup.append(dateLabel, dateInput);
+
+  // Time
+  const timeGroup = createElement('div', 'form-group');
+  const timeLabel = createElement('label', 'form-label', 'Time:');
+  timeLabel.htmlFor = 'scheduleTime';
+  const timeInput = createElement('input', 'form-control');
+  timeInput.type = 'time';
+  timeInput.id = 'scheduleTime';
+  timeInput.required = true;
+  timeGroup.append(timeLabel, timeInput);
+
+  // TimeZone
+  const tzGroup = createElement('div', 'form-group');
+  const tzLabel = createElement('label', 'form-label', 'Time Zone:');
+  tzLabel.htmlFor = 'scheduleTimeZone';
+  const tzSelect = createElement('select', 'form-control');
+  tzSelect.id = 'scheduleTimeZone';
+  tzGroup.append(tzLabel, tzSelect);
+
+  // Retry
+  const retryGroup = createElement('div', 'form-group');
+  const retryLabel = createElement('label', 'form-label');
+  const retryCheckbox = createElement('input');
+  retryCheckbox.type = 'checkbox';
+  retryCheckbox.id = 'scheduleRetryOnFailure';
+  retryLabel.append(retryCheckbox, document.createTextNode(' Retry on failure (every 10 minutes, max 3 attempts)'));
+  retryGroup.appendChild(retryLabel);
+
+  // Error div
+  const errorDiv = createElement('div', 'form-error hidden');
+  errorDiv.id = 'scheduleError';
+
+  body.append(dateGroup, timeGroup, tzGroup, retryGroup, errorDiv);
+
+  // Buttons
+  const cancelBtn = createElement('button', 'btn', 'Cancel');
+  cancelBtn.id = 'cancelSchedule';
+  const confirmBtn = createElement('button', 'btn primary', 'Schedule');
+  confirmBtn.id = 'confirmSchedule';
+  footer.append(cancelBtn, confirmBtn);
+
+  // Listeners
+  cancelBtn.onclick = hideScheduleModal;
+  confirmBtn.onclick = confirmScheduleItems;
+  activeScheduleModal.addListener(activeScheduleModal.element, 'click', (e) => {
+    if (e.target === activeScheduleModal.element) hideScheduleModal();
+  });
+  
+  // Close on Escape key
+  activeScheduleModal.addListener(document, 'keydown', (e) => {
+    if (e.key === 'Escape') {
+      hideScheduleModal();
+    }
+  });
+
+  activeScheduleModal.show();
   
   populateTimeZoneDropdown(userTimeZone);
   initializeScheduleModalInputs();
-  attachScheduleModalHandlers();
-  
-  modal.classList.add('show');
-}
-
-async function loadScheduleModal() {
-  const container = document.getElementById('scheduleQueueModalContainer');
-  if (!container) {
-    console.error('Schedule modal container not found');
-    return;
-  }
-  
-  try {
-    const response = await fetch('/partials/schedule-queue-modal.html');
-    if (!response.ok) throw new Error('Failed to load modal');
-    const html = await response.text();
-    container.innerHTML = html;
-  } catch (err) {
-    console.error('Error loading schedule modal:', err);
-  }
 }
 
 function populateTimeZoneDropdown(selectedTimeZone) {
@@ -979,31 +970,12 @@ function initializeScheduleModalInputs() {
 }
 
 function attachScheduleModalHandlers() {
-  const modal = document.getElementById('scheduleQueueModal');
-  if (!modal) return;
-  
-  const closeBtn = document.getElementById('closeScheduleModal');
-  const cancelBtn = document.getElementById('cancelSchedule');
-  const confirmBtn = document.getElementById('confirmSchedule');
-  
-  if (closeBtn) closeBtn.onclick = hideScheduleModal;
-  if (cancelBtn) cancelBtn.onclick = hideScheduleModal;
-  if (confirmBtn) confirmBtn.onclick = confirmScheduleItems;
-  
-  modal.onclick = (e) => {
-    if (e.target === modal) hideScheduleModal();
-  };
+  // Deprecated/Unused in new modal flow
 }
 
 function hideScheduleModal() {
-  const modal = document.getElementById('scheduleQueueModal');
-  if (modal) {
-    modal.classList.remove('show');
-    const errorDiv = document.getElementById('scheduleError');
-    if (errorDiv) {
-      errorDiv.classList.add('hidden');
-      errorDiv.textContent = '';
-    }
+  if (activeScheduleModal) {
+    activeScheduleModal.destroy();
   }
 }
 
