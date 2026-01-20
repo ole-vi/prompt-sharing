@@ -179,10 +179,9 @@ function createBranchItem(branchName, isSelected, onClickItem, onClickStar) {
   if (isSelected) item.classList.add('selected');
   
   const star = document.createElement('span');
-  star.innerHTML = isFav 
-    ? '<span class="icon icon-inline" aria-hidden="true">star</span>'
-    : '<span class="icon icon-inline" aria-hidden="true">star_border</span>';
-  star.className = 'star-icon';
+  star.className = 'icon icon-inline star-icon';
+  star.setAttribute('aria-hidden', 'true');
+  star.textContent = 'star';
   star.dataset.favorited = isFav.toString();
   
   if (!canToggle) {
@@ -466,7 +465,7 @@ async function populateCustomDropdownMenu(branches) {
     showMoreBtn.textContent = favBranches.length > 0 ? '▼ Show more branches...' : '▼ Show all branches...';
     
     showMoreBtn.onclick = () => {
-      showMoreBtn.style.display = 'none';
+      showMoreBtn.classList.add('hidden');
       renderAllBranches(nonFavBranches);
     };
     
