@@ -334,7 +334,7 @@ export function showFreeInputForm() {
   copenBtn.onclick = (e) => {
     e.stopPropagation();
     if (copenMenu) {
-      copenMenu.style.display = copenMenu.style.display === 'none' || copenMenu.style.display === '' ? 'block' : 'none';
+      copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
     }
   };
   
