@@ -58,6 +58,9 @@ a:hover { text-decoration: underline; }
 .menu-panel--below-left { top: 100%; left: 0; margin-top: 4px; }
 .menu-panel--below-right { top: 100%; right: 0; margin-top: 4px; }
 
+/* Visible state for menu panels when JS toggles the 'open' class */
+.menu-panel.open { display: block; }
+
 /* Scroll box utility for content preview blocks */
 .scroll-box { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; color: var(--text); }
 .scroll-box-sm { max-height: 150px; }
