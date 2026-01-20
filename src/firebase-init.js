@@ -33,7 +33,7 @@ function initFirebaseWhenReady() {
         try {
           // Use the same hostname as the page to avoid CORS issues
           const emulatorHost = window.location.hostname;
-          window.db.useEmulator(emulatorHost, 8080);
+          window.db.useEmulator(emulatorHost, 8090);
           console.log('🔧 Connected to Firebase Emulators (Firestore)');
           console.log('⚠️ Dev server - using test data only');
         } catch (emulatorError) {
