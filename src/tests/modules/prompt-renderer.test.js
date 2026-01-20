@@ -62,8 +62,13 @@ vi.mock('../../modules/copen.js', () => ({
 vi.mock('../../modules/status-bar.js', () => ({
   default: {
     setActivity: vi.fn(),
-    clearActivity: vi.fn()
+    clearActivity: vi.fn(),
+    showMessage: vi.fn()
   }
+}));
+
+vi.mock('../../utils/clipboard.js', () => ({
+  copyText: vi.fn().mockResolvedValue(true)
 }));
 
 // Global mocks
@@ -88,11 +93,7 @@ global.window = {
   }
 };
 
-global.navigator = {
-  clipboard: {
-    writeText: vi.fn().mockResolvedValue()
-  }
-};
+global.navigator = {};
 
 global.URL = global.window.URL;
 
@@ -441,6 +442,9 @@ describe('prompt-renderer', () => {
     it('should handle copy button click', async () => {
       setCurrentPromptText('test content to copy');
       
+      // Import the mocked function
+      const { copyText } = await import('../../utils/clipboard.js');
+
       // Simulate click event on copy button
       const clickEvent = { target: mockButtons.copyBtn, preventDefault: vi.fn(), stopPropagation: vi.fn() };
       const documentClickHandlers = global.document.addEventListener.mock.calls.filter(call => call[0] === 'click');
@@ -448,7 +452,7 @@ describe('prompt-renderer', () => {
         await documentClickHandlers[0][1](clickEvent);
       }
 
-      expect(global.navigator.clipboard.writeText).toHaveBeenCalledWith('test content to copy');
+      expect(copyText).toHaveBeenCalledWith('test content to copy');
     });
 
     it('should handle jules button click', async () => {
