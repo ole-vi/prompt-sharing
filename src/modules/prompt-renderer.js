@@ -8,51 +8,30 @@ import { showToast } from './toast.js';
 import { copyAndOpen } from './copen.js';
 import statusBar from './status-bar.js';
 
-/**
- * Sanitizes HTML content to prevent XSS attacks.
- * Uses DOMPurify to strip dangerous tags, attributes, and URI schemes.
- * 
- * @param {string} html - The HTML string to sanitize (typically from marked.parse)
- * @returns {string} - Sanitized HTML safe for innerHTML insertion
- */
 function sanitizeHtml(html) {
-  // Check if DOMPurify is loaded
   if (typeof window.DOMPurify === 'undefined') {
     console.error('DOMPurify not loaded - stripping all HTML tags as safety fallback');
-    // Fallback: strip all HTML tags if DOMPurify unavailable
     const div = document.createElement('div');
     div.textContent = html;
     return div.innerHTML;
   }
 
-  // Configure allowed tags and attributes for markdown content
   const config = {
     ALLOWED_TAGS: [
-      // Headings
       'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-      // Text formatting
       'p', 'br', 'hr', 'strong', 'em', 'u', 's', 'del', 'ins', 'sub', 'sup',
-      // Code
       'code', 'pre',
-      // Quotes
       'blockquote',
-      // Lists
       'ul', 'ol', 'li',
-      // Links and media
       'a', 'img',
-      // Tables
       'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
-      // Containers
       'div', 'span'
     ],
     ALLOWED_ATTR: [
       'href', 'title', 'alt', 'src', 'class', 'id', 'target', 'rel',
-      // Table attributes
       'colspan', 'rowspan', 'align'
     ],
-    // Block dangerous URI schemes
     ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
-    // Force target="_blank" on links for security
     ADD_ATTR: ['target'],
     FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'base', 'link', 'meta'],
     FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur']
