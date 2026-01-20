@@ -334,7 +334,7 @@ export function showFreeInputForm() {
   copenBtn.onclick = (e) => {
     e.stopPropagation();
     if (copenMenu) {
-      copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
+      copenMenu.classList.toggle('hidden');
     }
   };
   
@@ -344,14 +344,14 @@ export function showFreeInputForm() {
         e.stopPropagation();
         const target = item.dataset.target;
         await handleCopen(target);
-        copenMenu.style.display = 'none';
+        copenMenu.classList.add('hidden');
       };
     });
   }
   
   const closeCopenMenu = (e) => {
     if (copenMenu && !copenBtn.contains(e.target) && !copenMenu.contains(e.target)) {
-      copenMenu.style.display = 'none';
+      copenMenu.classList.add('hidden');
     }
   };
   document.addEventListener('click', closeCopenMenu);
