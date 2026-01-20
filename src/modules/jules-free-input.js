@@ -76,6 +76,7 @@ export function showFreeInputForm() {
   const submitBtn = document.getElementById('freeInputSubmitBtn');
   const queueBtn = document.getElementById('freeInputQueueBtn');
   const splitBtn = document.getElementById('freeInputSplitBtn');
+  const saveBtn = document.getElementById('freeInputSaveBtn');
   const copenBtn = document.getElementById('freeInputCopenBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
   
@@ -88,12 +89,18 @@ export function showFreeInputForm() {
   
   textarea.focus();
 
-  const handleSubmit = async () => {
+  const validatePromptText = (customMessage = 'Please enter a prompt.') => {
     const promptText = textarea.value.trim();
     if (!promptText) {
-      showToast('Please enter a prompt.', 'warn');
-      return;
+      showToast(customMessage, 'warn');
+      return null;
     }
+    return promptText;
+  };
+
+  const handleSubmit = async () => {
+    const promptText = validatePromptText();
+    if (!promptText) return;
 
     if (!_lastSelectedSourceId) {
       showToast('Please select a repository.', 'warn');
@@ -218,11 +225,8 @@ export function showFreeInputForm() {
   };
 
   const handleSplit = async () => {
-    const promptText = textarea.value.trim();
-    if (!promptText) {
-      showToast('Please enter a prompt.', 'warn');
-      return;
-    }
+    const promptText = validatePromptText();
+    if (!promptText) return;
 
     if (!_lastSelectedSourceId) {
       showToast('Please select a repository.', 'warn');
@@ -244,11 +248,8 @@ export function showFreeInputForm() {
   };
 
   const handleCopen = async (target) => {
-    const promptText = textarea.value.trim();
-    if (!promptText) {
-      showToast('Please enter a prompt.', 'warn');
-      return;
-    }
+    const promptText = validatePromptText();
+    if (!promptText) return;
 
     const success = await copyAndOpen(target, promptText);
 
@@ -270,12 +271,31 @@ export function showFreeInputForm() {
     hideFreeInputForm();
   };
 
+  const handleSave = () => {
+    const promptText = validatePromptText('Please enter content to save.');
+    if (!promptText) return;
+
+    // Use selected repo/branch if available, otherwise default to promptroot
+    const sourceId = _lastSelectedSourceId || 'sources/github/promptroot/promptroot';
+    const branch = _lastSelectedBranch || 'main';
+    
+    // Extract owner and repo from sourceId (format: "sources/github/owner/repo")
+    const parts = sourceId.split('/');
+    const owner = parts[parts.length - 2];
+    const repo = parts[parts.length - 1];
+    
+    // Use the prompt text as the file content
+    const encoded = encodeURIComponent(promptText);
+    const newFilePath = 'prompts/new-prompt.md';
+    const ghUrl = `https://github.com/${owner}/${repo}/new/${branch}?filename=${encodeURIComponent(newFilePath)}&value=${encoded}&ref=${encodeURIComponent(branch)}`;
+    
+    window.open(ghUrl, '_blank', 'noopener,noreferrer');
+    showToast('Opening GitHub to save your prompt...', 'success');
+  };
+
   const handleQueue = async () => {
-    const promptText = textarea.value.trim();
-    if (!promptText) {
-      showToast('Please enter a prompt.', 'warn');
-      return;
-    }
+    const promptText = validatePromptText();
+    if (!promptText) return;
 
     if (!_lastSelectedSourceId) {
       showToast('Please select a repository.', 'warn');
@@ -337,6 +357,7 @@ export function showFreeInputForm() {
   submitBtn.onclick = handleSubmit;
   queueBtn.onclick = handleQueue;
   splitBtn.onclick = handleSplit;
+  saveBtn.onclick = handleSave;
   cancelBtn.onclick = handleCancel;
 
   textarea.addEventListener('keydown', (e) => {
