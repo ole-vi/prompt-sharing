@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    container_name: prompt-sharing-dev
+    container_name: promptroot-dev
     ports:
       - "4000:4000"  # Emulator UI
       - "5000:5000"  # Hosting
@@ -26,8 +26,8 @@ services:
       # Exclude node_modules from host
       - /app/functions/node_modules
     environment:
-      - FIREBASE_CONFIG='{"projectId":"demo-prompt-sharing","storageBucket":"demo-prompt-sharing.appspot.com"}'
-      - GCLOUD_PROJECT=demo-prompt-sharing
+      - FIREBASE_CONFIG='{"projectId":"demo-promptroot","storageBucket":"demo-promptroot.appspot.com"}'
+      - GCLOUD_PROJECT=demo-promptroot
     networks:
       - firebase-net
     stdin_open: true
