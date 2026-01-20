@@ -86,5 +86,3 @@ export function clearAllCache() {
     console.error('Error clearing all cache:', error);
   }
 }
-
-export { CACHE_KEYS };
