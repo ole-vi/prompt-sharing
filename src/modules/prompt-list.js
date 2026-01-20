@@ -65,6 +65,7 @@ export function initPromptList() {
   }
   folderSubmenu.init();
   listEl.addEventListener('click', handleListClick);
+  listEl.addEventListener('keydown', handleListKeydown);
 }
 
 export function destroyPromptList() {
@@ -158,6 +159,18 @@ export async function toggleDirectory(path, expand) {
     persistExpandedState();
   }
   await renderList(files, currentOwner, currentRepo, currentBranch);
+}
+
+function handleListKeydown(event) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    const target = event.target;
+    // Handle specific role="button" elements (like icons)
+    if (target.getAttribute('role') === 'button') {
+      event.preventDefault();
+      event.stopPropagation();
+      target.click();
+    }
+  }
 }
 
 function handleListClick(event) {
@@ -287,6 +300,8 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       toggle.type = 'button';
       const isForced = forcedExpanded.has(entry.path);
       const isExpanded = isForced || expandedState.has(entry.path);
+      toggle.setAttribute('aria-expanded', String(!!isExpanded));
+      toggle.setAttribute('aria-label', `Toggle ${entry.name}`);
       toggle.innerHTML = isExpanded 
         ? '<span class="icon" aria-hidden="true">expand_more</span>'
         : '<span class="icon" aria-hidden="true">chevron_right</span>';
@@ -303,7 +318,9 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       const ghIcon = document.createElement('span');
       ghIcon.className = 'github-folder-icon icon icon-inline';
       ghIcon.textContent = 'folder';
-      ghIcon.setAttribute('aria-hidden', 'true');
+      ghIcon.setAttribute('role', 'button');
+      ghIcon.setAttribute('tabindex', '0');
+      ghIcon.setAttribute('aria-label', 'Open directory on GitHub');
       ghIcon.title = 'Open directory on GitHub';
       ghIcon.dataset.action = 'open-github';
       ghIcon.dataset.path = entry.path;
@@ -311,7 +328,9 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       const addIcon = document.createElement('span');
       addIcon.className = 'add-file-icon icon icon-inline';
       addIcon.textContent = 'add';
-      addIcon.setAttribute('aria-hidden', 'true');
+      addIcon.setAttribute('role', 'button');
+      addIcon.setAttribute('tabindex', '0');
+      addIcon.setAttribute('aria-label', 'Create new file in this directory');
       addIcon.title = 'Create new file in this directory';
       addIcon.dataset.action = 'show-submenu';
       addIcon.dataset.path = entry.path;

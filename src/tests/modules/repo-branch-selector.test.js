@@ -69,8 +69,10 @@ global.document = {
       left: '',
       width: ''
     },
+    dataset: {},
     onclick: null,
     appendChild: vi.fn(),
+    setAttribute: vi.fn(),
     contains: vi.fn(() => false),
     getBoundingClientRect: vi.fn(() => ({
       top: 100,
@@ -106,6 +108,7 @@ const createMockElement = (id = '') => ({
     width: 200
   })),
   appendChild: vi.fn(),
+  setAttribute: vi.fn(),
   innerHTML: '',
   _closeDropdownHandler: null
 });

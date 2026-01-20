@@ -20,6 +20,7 @@ function setupClickOutsideClose(targetBtn, targetMenu) {
   const closeDropdown = (e) => {
     if (!targetBtn.contains(e.target) && !targetMenu.contains(e.target)) {
       targetMenu.style.display = 'none';
+      targetBtn.setAttribute('aria-expanded', 'false');
     }
   };
   
@@ -72,6 +73,8 @@ export class RepoSelector {
     }
 
     this.dropdownBtn.disabled = false;
+    this.dropdownBtn.setAttribute('aria-haspopup', 'true');
+    this.dropdownBtn.setAttribute('aria-expanded', 'false');
 
     const { DEFAULT_FAVORITE_REPOS } = await import('../utils/constants.js');
     
@@ -144,9 +147,12 @@ export class RepoSelector {
       e.stopPropagation();
       if (this.dropdownMenu.style.display === 'block') {
         this.dropdownMenu.style.display = 'none';
+        this.dropdownBtn.setAttribute('aria-expanded', 'false');
         return;
       }
       
+      this.dropdownBtn.setAttribute('aria-expanded', 'true');
+
       // Position dropdown menu if it's fixed (e.g., in modals)
       const computedStyle = window.getComputedStyle(this.dropdownMenu);
       if (computedStyle.position === 'fixed') {
@@ -320,6 +326,9 @@ export class RepoSelector {
       ? '<span class="icon icon-inline" aria-hidden="true">star</span>'
       : '<span class="icon icon-inline" aria-hidden="true">star_border</span>';
     star.className = 'star-icon';
+    star.setAttribute('role', 'button');
+    star.setAttribute('tabindex', '0');
+    star.setAttribute('aria-label', isFavorite ? 'Remove from favorites' : 'Add to favorites');
     star.dataset.favorited = isFavorite.toString();
     
     star.onclick = async (e) => {
@@ -332,6 +341,14 @@ export class RepoSelector {
         const defaultBranch = extractDefaultBranch(this.allSources.find(s => (s.name || s.id) === id));
         await this.addFavorite(id, name, defaultBranch);
         item.remove();
+      }
+    };
+
+    star.onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        star.click();
       }
     };
     
@@ -508,6 +525,8 @@ export class BranchSelector {
     
     this.dropdownText.textContent = defaultBranch || 'Select a branch...';
     this.dropdownBtn.disabled = false;
+    this.dropdownBtn.setAttribute('aria-haspopup', 'true');
+    this.dropdownBtn.setAttribute('aria-expanded', 'false');
     this.dropdownBtn.style.opacity = '1';
     this.dropdownBtn.style.cursor = 'pointer';
     
@@ -522,9 +541,12 @@ export class BranchSelector {
       e.stopPropagation();
       if (this.dropdownMenu.style.display === 'block') {
         this.dropdownMenu.style.display = 'none';
+        this.dropdownBtn.setAttribute('aria-expanded', 'false');
         return;
       }
       
+      this.dropdownBtn.setAttribute('aria-expanded', 'true');
+
       // Position dropdown menu if it's fixed (e.g., in modals)
       const computedStyle = window.getComputedStyle(this.dropdownMenu);
       if (computedStyle.position === 'fixed') {

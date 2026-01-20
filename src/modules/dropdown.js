@@ -61,6 +61,10 @@ export function initDropdown(btn, menu, container = null) {
   const dropdownContainer = container || menu.parentNode;
   const dropdown = { btn, menu, container: dropdownContainer };
 
+  // Add ARIA attributes
+  btn.setAttribute('aria-haspopup', 'true');
+  btn.setAttribute('aria-expanded', 'false');
+
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
     toggleDropdown(dropdown);

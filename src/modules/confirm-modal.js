@@ -13,6 +13,12 @@ function createConfirmModal() {
   modal.id = 'confirmModal';
   modal.style.zIndex = '10000';
 
+  // Accessibility attributes
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-labelledby', 'confirmModalTitle');
+  modal.setAttribute('aria-describedby', 'confirmModalMessage');
+
   const modalContent = createElement('div', 'modal-content');
   modalContent.style.maxWidth = '480px';
 
