@@ -225,10 +225,6 @@ function classifyBranch(branchName) {
     return 'main';
   }
 
-  if (USER_BRANCHES.includes(branchName)) {
-    return 'user';
-  }
-
   if (
     branchName.startsWith('codex/') ||
     /^\d+-/.test(branchName) ||
