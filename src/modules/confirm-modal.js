@@ -11,10 +11,11 @@ let confirmController = null;
 function createConfirmModal() {
   const modal = createElement('div', 'modal');
   modal.id = 'confirmModal';
-  modal.style.zIndex = '10000';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-labelledby', 'confirmModalTitle');
 
   const modalContent = createElement('div', 'modal-content');
-  modalContent.style.maxWidth = '480px';
 
   const modalHeader = createElement('div', 'modal-header');
   const title = createElement('h3', '', 'Confirm Action');
@@ -30,8 +31,6 @@ function createConfirmModal() {
   const modalBody = createElement('div', 'modal-body');
   const message = createElement('p');
   message.id = 'confirmModalMessage';
-  message.style.lineHeight = '1.6';
-  message.style.whiteSpace = 'pre-wrap';
 
   modalBody.appendChild(message);
 
@@ -81,7 +80,7 @@ function hideConfirmModal() {
  * @param {Object} options - Optional configuration
  * @param {string} options.title - Modal title (default: "Confirm Action")
  * @param {string} options.confirmText - Confirm button text (default: "Confirm")
- * @param {string} options.confirmStyle - Confirm button style: 'danger', 'warn', 'primary', 'success' (default: 'danger')
+ * @param {string} options.confirmStyle - Confirm button style: 'danger', 'warn', 'primary', 'success' (default: 'error')
  * @param {string} options.cancelText - Cancel button text (default: "Cancel")
  * @returns {Promise<boolean>} - Resolves to true if confirmed, false if cancelled
  */
@@ -90,6 +89,9 @@ export function showConfirm(message, options = {}) {
     if (!confirmModal) {
       confirmModal = createConfirmModal();
     }
+    
+    // Store active element for focus restoration
+    const previouslyFocusedElement = document.activeElement;
     
     const title = options.title || 'Confirm Action';
     const confirmText = options.confirmText || 'Confirm';
@@ -135,6 +137,20 @@ export function showConfirm(message, options = {}) {
         confirmController = null;
       }
       confirmResolve = null;
+      
+      // Restore focus to previously focused element
+      if (previouslyFocusedElement && 
+          typeof previouslyFocusedElement.focus === 'function' &&
+          document.body.contains(previouslyFocusedElement)) {
+        setTimeout(() => {
+          try {
+            previouslyFocusedElement.focus();
+          } catch (err) {
+            // Fallback if focus fails (element might be removed from DOM)
+            console.warn('Failed to restore focus:', err);
+          }
+        }, TIMEOUTS.modalFocus);
+      }
     };
 
     const handleConfirm = () => {
@@ -162,10 +178,42 @@ export function showConfirm(message, options = {}) {
       }
     }, { signal });
     
-    // Handle Escape key
+    // Handle keyboard events (Escape and focus trap)
     document.addEventListener('keydown', (e) => {
+      // Safety check - only handle events if modal is visible
+      if (!confirmModal || !confirmModal.classList.contains('show')) {
+        return;
+      }
+      
       if (e.key === 'Escape') {
         handleCancel();
+        return;
+      }
+      
+      // Focus trap implementation
+      if (e.key === 'Tab') {
+        const focusableElements = confirmModal.querySelectorAll(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+        );
+        
+        if (focusableElements.length === 0) return; // Safety check
+        
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+        
+        if (e.shiftKey) {
+          // Shift + Tab - move backward
+          if (document.activeElement === firstElement || !confirmModal.contains(document.activeElement)) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          // Tab - move forward
+          if (document.activeElement === lastElement || !confirmModal.contains(document.activeElement)) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
       }
     }, { signal });
     
