@@ -2,6 +2,7 @@
 // This file initializes Firebase using the modular SDK
 
 import { TIMEOUTS, LIMITS } from './utils/constants.js';
+import { initServices } from './modules/firebase-service.js';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -22,8 +23,46 @@ function initFirebaseWhenReady() {
       const app = firebase.initializeApp(firebaseConfig);
       
       // Get services - compat API doesn't require app parameter
-      window.auth = firebase.auth();
-      window.db = firebase.firestore();
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      // Initialize services module
+      initServices(auth, db, null);
+
+      // Backwards compatibility with deprecation warning
+      let authWarned = false;
+      let dbWarned = false;
+
+      try {
+        Object.defineProperty(window, 'auth', {
+          configurable: true,
+          enumerable: true,
+          get: () => {
+            if (!authWarned) {
+              console.warn('Deprecation Warning: window.auth is deprecated. Use import { getAuth } from "./modules/firebase-service.js" instead.');
+              authWarned = true;
+            }
+            return auth;
+          }
+        });
+
+        Object.defineProperty(window, 'db', {
+          configurable: true,
+          enumerable: true,
+          get: () => {
+            if (!dbWarned) {
+              console.warn('Deprecation Warning: window.db is deprecated. Use import { getDb } from "./modules/firebase-service.js" instead.');
+              dbWarned = true;
+            }
+            return db;
+          }
+        });
+      } catch (e) {
+        console.error('Failed to define deprecated window properties:', e);
+        window.auth = auth;
+        window.db = db;
+      }
+
       // Functions removed - not used in this app (uses direct REST API calls)
       
       // Port 5000 = dev server with emulators, port 3000 = production
@@ -33,7 +72,7 @@ function initFirebaseWhenReady() {
         try {
           // Use the same hostname as the page to avoid CORS issues
           const emulatorHost = window.location.hostname;
-          window.db.useEmulator(emulatorHost, 8080);
+          db.useEmulator(emulatorHost, 8080);
           console.log('🔧 Connected to Firebase Emulators (Firestore)');
           console.log('⚠️ Dev server - using test data only');
         } catch (emulatorError) {
