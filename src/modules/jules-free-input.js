@@ -317,7 +317,9 @@ export function showFreeInputForm() {
     const repo = parts[parts.length - 1];
     
     const encoded = encodeURIComponent(promptText);
-    const newFilePath = 'prompts/new-prompt.md';
+    const now = new Date();
+    const timestamp = `${now.getFullYear().toString().slice(-2)}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}-${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
+    const newFilePath = `prompts/prompt-${timestamp}.md`;
     const ghUrl = `https://github.com/${owner}/${repo}/new/${branch}?filename=${encodeURIComponent(newFilePath)}&value=${encoded}&ref=${encodeURIComponent(branch)}`;
     
     window.open(ghUrl, '_blank', 'noopener,noreferrer');
