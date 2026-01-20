@@ -480,6 +480,16 @@ Utilities in `src/utils/` provide shared helpers:
 - **dom-helpers.js**: Reusable DOM manipulation functions
 - **title.js**: Extract titles from markdown content
 
+### Firestore Data Model
+
+The application stores user-specific data in Cloud Firestore:
+
+- **users/{uid}**: User profile and preferences
+  - `favoriteRepos`: Array of favorite repository objects `[{id, name, branch}]`
+  - `favoriteBranches`: Array of favorite branch names (user-specific; "main" and "web-captures" are hardcoded)
+- **apiKeys/{uid}**: Encrypted Jules API keys (AES-GCM)
+- **julesQueues/{uid}/items**: User's queued Jules tasks
+
 ### Code style
 
 - ES6 modules with explicit imports/exports

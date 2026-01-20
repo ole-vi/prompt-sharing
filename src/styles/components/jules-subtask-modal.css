@@ -1,0 +1,66 @@
+/* Jules Subtask Modal Styles */
+
+.subtask-modal__checkbox {
+  cursor: pointer;
+}
+
+.subtask-modal__prompt-display {
+  padding: 12px;
+  margin-bottom: 8px;
+  background: rgba(77, 217, 255, 0.05);
+  border: 1px solid rgba(77, 217, 255, 0.2);
+  border-radius: 6px;
+}
+
+.subtask-modal__prompt-content {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.subtask-modal__empty-message {
+  padding: 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.subtask-modal__item {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.subtask-modal__item-label {
+  flex: 1;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.subtask-modal__char-count {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.subtask-modal__preview-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 16px;
+  padding: 4px 8px;
+  transition: transform 0.2s;
+  line-height: 1;
+}
+
+.subtask-modal__preview-btn:hover {
+  transform: scale(1.2);
+}
+
+.subtask-modal__preview-btn:active {
+  transform: scale(1);
+}

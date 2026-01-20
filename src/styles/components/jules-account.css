@@ -1,0 +1,172 @@
+/* Jules Account Source Card Styles */
+/* .source-card uses base styles from content.css */
+
+.source-card__header {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+}
+
+.source-card__arrow {
+  display: inline-block;
+  width: 12px;
+  font-size: 10px;
+  margin-right: 6px;
+  transition: transform 0.2s ease;
+}
+
+.source-card__arrow--expanded {
+  transform: rotate(90deg);
+}
+
+.source-card__branches {
+  margin-top: 6px;
+  padding-left: 10px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.source-card__branches--hidden {
+  display: none;
+}
+
+.source-card__branches-header {
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.source-card__branch-item {
+  padding: 3px 0 3px 8px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.source-card__branch-item:hover {
+  color: var(--accent);
+}
+
+.source-card__branch-item::before {
+  content: '• ';
+}
+
+.source-card__empty {
+  font-style: italic;
+}
+
+/* Jules Account Empty States */
+
+.jules-empty-state {
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 16px;
+}
+
+.jules-empty-state__hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.jules-error-state {
+  color: #e74c3c;
+  font-size: 13px;
+  text-align: center;
+  padding: 16px;
+}
+
+.jules-error-state--large {
+  font-size: 14px;
+  padding: 24px;
+}
+
+/* Sessions History Modal Styles */
+
+.sessions-history__search {
+  margin-bottom: 16px;
+}
+
+.sessions-history__header {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+/* Session hover effects - moved from inline onmouseover/onmouseout */
+
+.session-card {
+  /* Base styles already in content.css */
+  transition: background 0.2s, border-color 0.2s, transform 0.1s;
+}
+
+/* .session-card:hover styles already in content.css */
+
+.session-card:active {
+  transform: scale(0.99);
+}
+
+/* All Sessions Modal Styles */
+
+.all-sessions__card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 6px;
+}
+
+.all-sessions__title {
+  font-weight: 600;
+  font-size: 13px;
+  flex: 1;
+  margin-right: 8px;
+}
+
+.all-sessions__status-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.all-sessions__meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.all-sessions__meta--no-margin {
+  margin-bottom: 0;
+}
+
+.all-sessions__subtask-info {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.all-sessions__pr-container {
+  margin-top: 4px;
+}
+
+.all-sessions__pr-link {
+  font-size: 11px;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.all-sessions__pr-link:hover {
+  text-decoration: underline;
+}
+
+/* Loading States */
+
+.jules-loading-text {
+  color: var(--muted);
+  font-size: 13px;
+}

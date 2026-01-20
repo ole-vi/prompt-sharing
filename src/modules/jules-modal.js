@@ -24,26 +24,8 @@ export async function loadSubtaskErrorModal() {
 }
 
 export function openUrlInBackground(url) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  
-  const evt = new MouseEvent('click', {
-    view: window,
-    bubbles: true,
-    cancelable: true,
-    ctrlKey: true,
-    metaKey: true
-  });
-  
-  a.dispatchEvent(evt);
-  
-  setTimeout(() => {
-    document.body.removeChild(a);
-  }, 100);
+  // Open URL in background tab/window
+  window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 export function showJulesKeyModal(onSave) {
@@ -324,9 +306,9 @@ export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error,
   }
 
   if (hideQueueButton && queueBtn) {
-    queueBtn.style.display = 'none';
+    queueBtn.classList.add('hidden');
   } else if (queueBtn) {
-    queueBtn.style.display = '';
+    queueBtn.classList.remove('hidden');
   }
 
   return new Promise((resolve) => {
@@ -334,7 +316,6 @@ export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error,
     messageDiv.textContent = error.message || String(error);
     detailsDiv.textContent = error.toString();
 
-    modal.style.zIndex = '10000';
     modal.classList.add('show');
 
     const handleAction = (action) => {

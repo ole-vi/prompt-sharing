@@ -9,7 +9,7 @@ import { getCache, setCache, clearCache, CACHE_KEYS } from '../utils/session-cac
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { attachPromptViewerHandlers } from './prompt-viewer.js';
-import { TIMEOUTS } from '../utils/constants.js';
+import { TIMEOUTS, JULES_UI_TEXT, CSS_CLASSES } from '../utils/constants.js';
 import { renderStatus, STATUS_TYPES } from './status-renderer.js';
 
 let allSessionsCache = [];
@@ -88,7 +88,7 @@ export function showUserProfileModal() {
             renderStatus(julesKeyStatus, STATUS_TYPES.NOT_SAVED, 'Not saved');
           }
           // Restore original button state
-          resetBtn.innerHTML = '';
+          resetBtn.replaceChildren();
           const icon = document.createElement('span');
           icon.className = 'icon icon-inline';
           icon.setAttribute('aria-hidden', 'true');
@@ -119,8 +119,6 @@ export function showUserProfileModal() {
       clearCache(CACHE_KEYS.JULES_ACCOUNT, user.uid);
       
       await loadAndDisplayJulesProfile(user.uid);
-      attachViewAllSessionsHandler();
-      attachViewQueueHandler();
     };
   }
 
@@ -158,7 +156,11 @@ export function showUserProfileModal() {
   }
 }
 
+let profileHandlersAttached = false;
+
 function attachViewAllSessionsHandler() {
+  if (profileHandlersAttached) return;
+  
   const viewAllSessionsLink = document.getElementById('viewAllSessionsLink');
   if (viewAllSessionsLink) {
     viewAllSessionsLink.onclick = (e) => {
@@ -176,6 +178,8 @@ function attachViewQueueHandler() {
       showJulesQueueModal();
     };
   }
+  
+  profileHandlersAttached = true;
 }
 
 async function loadAndDisplayJulesProfile(uid) {
@@ -190,15 +194,28 @@ async function loadAndDisplayJulesProfile(uid) {
     let profileData = getCache(CACHE_KEYS.JULES_ACCOUNT, uid);
     
     if (!profileData) {
-      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sources...</div>';
-      sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px;">Loading sessions...</div>';
+      const sourcesLoading = document.createElement('div');
+      sourcesLoading.className = 'jules-loading-text';
+      sourcesLoading.textContent = 'Loading sources...';
+      sourcesListDiv.replaceChildren();
+      sourcesListDiv.appendChild(sourcesLoading);
+      
+      const sessionsLoading = document.createElement('div');
+      sessionsLoading.className = 'jules-loading-text';
+      sessionsLoading.textContent = 'Loading sessions...';
+      sessionsListDiv.replaceChildren();
+      sessionsListDiv.appendChild(sessionsLoading);
       
       profileData = await loadJulesProfileInfo(uid);
       setCache(CACHE_KEYS.JULES_ACCOUNT, profileData, uid);
     }
 
     if (profileData.sources && profileData.sources.length > 0) {
-      const sourcesHtml = profileData.sources.map((source, index) => {
+      // Create source cards structure first
+      const sourcesContainer = document.createElement('div');
+      sourcesContainer.className = 'vlist';
+      
+      profileData.sources.forEach((source, index) => {
         const repoName = source.githubRepo?.name || source.name || source.id;
         const githubPath = repoName.includes('github/')
           ? repoName.split('github/')[1]
@@ -207,66 +224,131 @@ async function loadAndDisplayJulesProfile(uid) {
         const sourceId = `source-${index}`;
 
         const branchSummaryText = branches.length > 0
-          ? `(${branches.length} ${branches.length === 1 ? 'branch' : 'branches'})`
-          : '(no branches)';
+          ? JULES_UI_TEXT.BRANCH_COUNT(branches.length)
+          : JULES_UI_TEXT.NO_BRANCHES_PARENS;
 
-        const branchesHtml = branches.length > 0
-          ? `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted);">
-               <div style="margin-bottom:4px; color:var(--text);"><span class="icon icon-inline" aria-hidden="true">account_tree</span> Branches (${branches.length}):</div>
-               ${branches.map(b => `<div style="padding:3px 0 3px 8px; cursor:pointer;"
-                  onclick="window.open('https://github.com/${githubPath}/tree/${encodeURIComponent(b.displayName || b.name)}', '_blank')">
-                  • ${b.displayName || b.name}
-                </div>`).join('')}
-             </div>`
-          : `<div id="${sourceId}-branches" style="display:none; margin-top:6px; padding-left:10px; font-size:11px; color:var(--muted); font-style:italic;">No branches found</div>`;
+        // Create card container
+        const card = document.createElement('div');
+        card.className = 'queue-card';
 
-        const cardHtml = `
-          <div class="queue-card">
-            <div class="queue-row">
-              <div class="queue-content">
-                <div class="queue-title" style="cursor:pointer; user-select:none;"
-                    onclick="(function(){
-                      const el = document.getElementById('${sourceId}-branches');
-                      const arrow = document.getElementById('${sourceId}-arrow');
-                      if (el.style.display === 'none') { el.style.display = 'block'; arrow.textContent = '▼'; }
-                      else { el.style.display = 'none'; arrow.textContent = '▶'; }
-                    })()">
-                  <span id="${sourceId}-arrow" style="display:inline-block; width:12px; font-size:10px; margin-right:6px;">▶</span>
-                  <span class="icon icon-inline" aria-hidden="true">folder</span> ${githubPath}
-                  <span class="queue-status">${branchSummaryText}</span>
-                </div>
-              </div>
-            </div>
-            ${branchesHtml}
-          </div>
-        `;
-        return cardHtml;
-      }).join('');
-      sourcesListDiv.innerHTML = `<div class="vlist">${sourcesHtml}</div>`;
+        // Create row and content
+        const row = document.createElement('div');
+        row.className = 'queue-row';
+        const content = document.createElement('div');
+        content.className = 'queue-content';
+
+        // Create header with expand/collapse
+        const header = document.createElement('div');
+        header.className = 'source-card__header queue-title';
+        header.dataset.sourceId = sourceId;
+
+        const arrow = document.createElement('span');
+        arrow.id = `${sourceId}-arrow`;
+        arrow.className = 'source-card__arrow';
+        arrow.textContent = '▶';
+
+        const folderIcon = document.createElement('span');
+        folderIcon.className = 'icon icon-inline';
+        folderIcon.setAttribute('aria-hidden', 'true');
+        folderIcon.textContent = 'folder';
+
+        const pathText = document.createTextNode(` ${githubPath} `);
+
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'queue-status';
+        statusSpan.textContent = branchSummaryText;
+
+        header.append(arrow, folderIcon, pathText, statusSpan);
+
+        // Create branches container
+        const branchesContainer = document.createElement('div');
+        branchesContainer.id = `${sourceId}-branches`;
+        branchesContainer.className = `source-card__branches ${CSS_CLASSES.SOURCE_CARD_BRANCHES_HIDDEN}`;
+
+        if (branches.length > 0) {
+          const branchesHeader = document.createElement('div');
+          branchesHeader.className = 'source-card__branches-header';
+          const treeIcon = document.createElement('span');
+          treeIcon.className = 'icon icon-inline';
+          treeIcon.setAttribute('aria-hidden', 'true');
+          treeIcon.textContent = 'account_tree';
+          branchesHeader.appendChild(treeIcon);
+          branchesHeader.appendChild(document.createTextNode(` ${JULES_UI_TEXT.BRANCHES_HEADER(branches.length)}`));
+          branchesContainer.appendChild(branchesHeader);
+
+          branches.forEach(b => {
+            const branchItem = document.createElement('div');
+            branchItem.className = 'source-card__branch-item';
+            branchItem.dataset.githubPath = githubPath;
+            branchItem.dataset.branchName = b.displayName || b.name;
+            branchItem.textContent = b.displayName || b.name;
+            branchesContainer.appendChild(branchItem);
+          });
+        } else {
+          branchesContainer.className += ' source-card__empty';
+          branchesContainer.textContent = JULES_UI_TEXT.NO_BRANCHES;
+        }
+
+        content.appendChild(header);
+        row.appendChild(content);
+        card.appendChild(row);
+        card.appendChild(branchesContainer);
+        sourcesContainer.appendChild(card);
+      });
+
+      // Clear and append
+      sourcesListDiv.replaceChildren();
+      sourcesListDiv.appendChild(sourcesContainer);
+
+      // Attach event listeners for expand/collapse
+      sourcesListDiv.querySelectorAll('.source-card__header').forEach(header => {
+        header.addEventListener('click', () => {
+          const sourceId = header.dataset.sourceId;
+          const branchesContainer = document.getElementById(`${sourceId}-branches`);
+          const arrow = document.getElementById(`${sourceId}-arrow`);
+          
+          if (branchesContainer.classList.contains(CSS_CLASSES.SOURCE_CARD_BRANCHES_HIDDEN)) {
+            branchesContainer.classList.remove(CSS_CLASSES.SOURCE_CARD_BRANCHES_HIDDEN);
+            arrow.classList.add(CSS_CLASSES.SOURCE_CARD_ARROW_EXPANDED);
+            arrow.textContent = '▼';
+          } else {
+            branchesContainer.classList.add(CSS_CLASSES.SOURCE_CARD_BRANCHES_HIDDEN);
+            arrow.classList.remove(CSS_CLASSES.SOURCE_CARD_ARROW_EXPANDED);
+            arrow.textContent = '▶';
+          }
+        });
+      });
+
+      // Attach event listeners for branch links
+      sourcesListDiv.querySelectorAll('.source-card__branch-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const githubPath = item.dataset.githubPath;
+          const branchName = item.dataset.branchName;
+          window.open(`https://github.com/${githubPath}/tree/${encodeURIComponent(branchName)}`, '_blank');
+        });
+      });
     } else {
-      sourcesListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No connected repositories found.<br><small>Connect repos in the Jules UI.</small></div>';
+      const emptyState = document.createElement('div');
+      emptyState.className = 'jules-empty-state';
+      emptyState.textContent = JULES_UI_TEXT.NO_SOURCES;
+      const hint = document.createElement('small');
+      hint.className = 'jules-empty-state__hint';
+      hint.textContent = JULES_UI_TEXT.NO_SOURCES_HINT;
+      emptyState.appendChild(document.createElement('br'));
+      emptyState.appendChild(hint);
+      sourcesListDiv.replaceChildren();
+      sourcesListDiv.appendChild(emptyState);
     }
 
     if (profileData.sessions && profileData.sessions.length > 0) {
-      const sessionsHtml = profileData.sessions.map(session => {
+      // Create session cards using DOM APIs
+      const sessionsContainer = document.createElement('div');
+      sessionsContainer.className = 'vlist';
+      
+      profileData.sessions.forEach(session => {
         const state = session.state || 'UNKNOWN';
-        const stateIcon = {
-          'COMPLETED': 'check_circle',
-          'FAILED': 'cancel',
-          'IN_PROGRESS': 'schedule',
-          'PLANNING': 'schedule',
-          'QUEUED': 'pause_circle',
-          'AWAITING_USER_FEEDBACK': 'chat_bubble'
-        }[state] || 'help';
-
-        const stateLabel = {
-          'COMPLETED': 'COMPLETED',
-          'FAILED': 'FAILED',
-          'IN_PROGRESS': 'IN PROGRESS',
-          'PLANNING': 'IN PROGRESS',
-          'QUEUED': 'QUEUED',
-          'AWAITING_USER_FEEDBACK': 'AWAITING USER FEEDBACK'
-        }[state] || state.replace(/_/g, ' ');
+        const stateIcon = JULES_UI_TEXT.STATE_ICONS[state] || JULES_UI_TEXT.STATE_ICONS.UNKNOWN;
+        const stateLabel = JULES_UI_TEXT.STATE_LABELS[state] || state.replace(/_/g, ' ');
 
         const promptPreview = (session.prompt || 'No prompt text').substring(0, 150);
         const displayPrompt = promptPreview.length < (session.prompt || '').length ? promptPreview + '...' : promptPreview;
@@ -276,44 +358,140 @@ async function loadAndDisplayJulesProfile(uid) {
         const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
         const cleanId = sessionId.replace(/[^a-zA-Z0-9]/g, '_');
 
-        const cardHtml = `
-          <div class="session-card" onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
-            <div class="session-meta">${createdAt}</div>
-            <div class="session-prompt">${displayPrompt}</div>
-            <div class="session-row">
-              <span class="session-pill"><span class="icon icon-inline" aria-hidden="true">${stateIcon}</span> ${stateLabel}</span>
-              ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" onclick="event.stopPropagation()"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a>` : ''}
-              <span class="session-hint"><span class="icon icon-inline" aria-hidden="true">info</span> Click to view session</span>
-              <button class="btn-icon session-view-btn" onclick="event.stopPropagation(); window.viewPrompt_${cleanId}()" title="View full prompt"><span class="icon" aria-hidden="true">visibility</span></button>
-            </div>
-          </div>
-        `;
-        return cardHtml;
-      }).join('');
-      
+        // Create card
+        const card = document.createElement('div');
+        card.className = CSS_CLASSES.SESSION_CARD;
+        card.dataset.sessionUrl = sessionUrl;
+
+        // Meta
+        const meta = document.createElement('div');
+        meta.className = 'session-meta';
+        meta.textContent = createdAt;
+
+        // Prompt
+        const prompt = document.createElement('div');
+        prompt.className = 'session-prompt';
+        prompt.textContent = displayPrompt;
+
+        // Row with pill, PR link, hint, view button
+        const row = document.createElement('div');
+        row.className = 'session-row';
+
+        // State pill
+        const pill = document.createElement('span');
+        pill.className = 'session-pill';
+        const pillIcon = document.createElement('span');
+        pillIcon.className = 'icon icon-inline';
+        pillIcon.setAttribute('aria-hidden', 'true');
+        pillIcon.textContent = stateIcon;
+        pill.appendChild(pillIcon);
+        pill.appendChild(document.createTextNode(` ${stateLabel}`));
+        row.appendChild(pill);
+
+        // PR link if exists
+        if (prUrl) {
+          const prLink = document.createElement('a');
+          prLink.href = prUrl;
+          prLink.target = '_blank';
+          prLink.rel = 'noopener';
+          prLink.className = 'small-text';
+          const prIcon = document.createElement('span');
+          prIcon.className = 'icon icon-inline';
+          prIcon.setAttribute('aria-hidden', 'true');
+          prIcon.textContent = 'link';
+          prLink.appendChild(prIcon);
+          prLink.appendChild(document.createTextNode(' View PR'));
+          row.appendChild(prLink);
+        }
+
+        // Hint
+        const hint = document.createElement('span');
+        hint.className = 'session-hint';
+        const hintIcon = document.createElement('span');
+        hintIcon.className = 'icon icon-inline';
+        hintIcon.setAttribute('aria-hidden', 'true');
+        hintIcon.textContent = 'info';
+        hint.appendChild(hintIcon);
+        hint.appendChild(document.createTextNode(` ${JULES_UI_TEXT.CLICK_VIEW_SESSION}`));
+        row.appendChild(hint);
+
+        // View button
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'btn-icon session-view-btn';
+        viewBtn.title = JULES_UI_TEXT.VIEW_FULL_PROMPT;
+        viewBtn.dataset.cleanId = cleanId;
+        const viewIcon = document.createElement('span');
+        viewIcon.className = 'icon';
+        viewIcon.setAttribute('aria-hidden', 'true');
+        viewIcon.textContent = 'visibility';
+        viewBtn.appendChild(viewIcon);
+        row.appendChild(viewBtn);
+
+        card.append(meta, prompt, row);
+        sessionsContainer.appendChild(card);
+      });
+
+      // Clear and append
+      sessionsListDiv.replaceChildren();
+      sessionsListDiv.appendChild(sessionsContainer);
+
+      // Attach event listeners for session cards (main click)
+      sessionsListDiv.querySelectorAll('.session-card').forEach(card => {
+        card.addEventListener('click', () => {
+          window.open(card.dataset.sessionUrl, '_blank', 'noopener');
+        });
+      });
+
+      // Attach event listeners for view buttons
+      sessionsListDiv.querySelectorAll('.session-view-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const cleanId = btn.dataset.cleanId;
+          if (window[`viewPrompt_${cleanId}`]) {
+            window[`viewPrompt_${cleanId}`]();
+          }
+        });
+      });
+
       // Attach prompt viewer handlers using shared module
       attachPromptViewerHandlers(profileData.sessions);
-      
-      sessionsListDiv.innerHTML = `<div class="vlist">${sessionsHtml}</div>`;
     } else {
-      sessionsListDiv.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px;">No recent sessions found.</div>';
+      const emptyState = document.createElement('div');
+      emptyState.className = 'jules-empty-state';
+      emptyState.textContent = JULES_UI_TEXT.NO_SESSIONS;
+      sessionsListDiv.replaceChildren();
+      sessionsListDiv.appendChild(emptyState);
     }
 
     loadBtn.disabled = false;
-    loadBtn.innerHTML = '<span class="icon" aria-hidden="true">sync</span>';
-    
-    attachViewAllSessionsHandler();
+    loadBtn.replaceChildren();
+    const syncIcon = document.createElement('span');
+    syncIcon.className = 'icon';
+    syncIcon.setAttribute('aria-hidden', 'true');
+    syncIcon.textContent = 'sync';
+    loadBtn.appendChild(syncIcon);
+
 
   } catch (error) {
-    sourcesListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
-      Failed to load sources: ${error.message}
-    </div>`;
-    sessionsListDiv.innerHTML = `<div style="color:#e74c3c; font-size:13px; text-align:center; padding:16px;">
-      Failed to load sessions: ${error.message}
-    </div>`;
+    const sourcesErr = document.createElement('div');
+    sourcesErr.className = 'jules-error-state';
+    sourcesErr.textContent = `Failed to load sources: ${error.message}`;
+    sourcesListDiv.replaceChildren();
+    sourcesListDiv.appendChild(sourcesErr);
+    
+    const sessionsErr = document.createElement('div');
+    sessionsErr.className = 'jules-error-state';
+    sessionsErr.textContent = `Failed to load sessions: ${error.message}`;
+    sessionsListDiv.replaceChildren();
+    sessionsListDiv.appendChild(sessionsErr);
 
     loadBtn.disabled = false;
-    loadBtn.innerHTML = '<span class="icon" aria-hidden="true">sync</span>';
+    loadBtn.replaceChildren();
+    const errSyncIcon = document.createElement('span');
+    errSyncIcon.className = 'icon';
+    errSyncIcon.setAttribute('aria-hidden', 'true');
+    errSyncIcon.textContent = 'sync';
+    loadBtn.appendChild(errSyncIcon);
   }
 }
 
@@ -373,11 +551,19 @@ async function loadSessionsPage() {
         loadMoreSection.classList.add('hidden');
       }
     } else if (allSessionsCache.length === 0) {
-      allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions found</div>';
+      const emptyMsg = document.createElement('div');
+      emptyMsg.className = 'jules-empty-state jules-error-state--large';
+      emptyMsg.textContent = 'No sessions found';
+      allSessionsList.replaceChildren();
+      allSessionsList.appendChild(emptyMsg);
     }
   } catch (error) {
     if (allSessionsCache.length === 0) {
-      allSessionsList.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:24px;">Failed to load sessions: ${error.message}</div>`;
+      const errMsg = document.createElement('div');
+      errMsg.className = 'jules-error-state jules-error-state--large';
+      errMsg.textContent = `Failed to load sessions: ${error.message}`;
+      allSessionsList.replaceChildren();
+      allSessionsList.appendChild(errMsg);
     }
     loadMoreBtn.disabled = false;
     loadMoreBtn.textContent = 'Load More';
@@ -398,37 +584,26 @@ function renderAllSessions(sessions) {
     : sessions;
   
   if (filteredSessions.length === 0) {
-    allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions match your search</div>';
+    const emptyMsg = document.createElement('div');
+    emptyMsg.className = 'jules-empty-state';
+    emptyMsg.textContent = JULES_UI_TEXT.NO_SEARCH_RESULTS;
+    allSessionsList.replaceChildren();
+    allSessionsList.appendChild(emptyMsg);
     return;
   }
   
-  const stateIcons = {
-    'PLANNING': 'edit_note',
-    'IN_PROGRESS': 'settings',
-    'AWAITING_USER_FEEDBACK': 'chat_bubble',
-    'COMPLETED': 'check_circle',
-    'FAILED': 'cancel',
-    'CANCELLED': 'block'
-  };
+  // Clear list
+  allSessionsList.replaceChildren();
   
-  const stateLabel = {
-    'PLANNING': 'IN PROGRESS',
-    'IN_PROGRESS': 'IN PROGRESS',
-    'AWAITING_USER_FEEDBACK': 'AWAITING USER FEEDBACK',
-    'COMPLETED': 'COMPLETED',
-    'FAILED': 'FAILED',
-    'CANCELLED': 'CANCELLED'
-  };
-  
-  allSessionsList.innerHTML = filteredSessions.map(session => {
+  filteredSessions.forEach(session => {
     if (session.parentTask) {
-      return '';
+      return;
     }
     
     const sessionId = session.name?.split('/').pop() || '';
     const state = session.state || 'UNKNOWN';
-    const icon = stateIcons[state] || 'help';
-    const label = stateLabel[state] || state.replace(/_/g, ' ');
+    const icon = JULES_UI_TEXT.STATE_ICONS[state] || JULES_UI_TEXT.STATE_ICONS.UNKNOWN;
+    const label = JULES_UI_TEXT.STATE_LABELS[state] || state.replace(/_/g, ' ');
     
     const promptText = session.prompt || session.displayName || sessionId;
     const displayTitle = promptText.length > 100 ? promptText.substring(0, 100) + '...' : promptText;
@@ -437,31 +612,86 @@ function renderAllSessions(sessions) {
     const updateTime = session.updateTime ? new Date(session.updateTime).toLocaleString() : 'Unknown';
     
     const prUrl = session.githubPrUrl || null;
-    const prLink = prUrl 
-      ? `<div style="margin-top:4px;" onclick="event.stopPropagation();"><a href="${prUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none;"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a></div>`
-      : '';
-    
     const subtaskCount = session.childTasks?.length || 0;
-    const subtaskInfo = subtaskCount > 0 
-      ? `<div style="font-size:11px; color:var(--muted); margin-top:4px;"><span class="icon icon-inline" aria-hidden="true">list_alt</span> ${subtaskCount} subtask${subtaskCount > 1 ? 's' : ''}</div>`
-      : '';
+    const sessionUrl = `https://jules.google.com/session/${sessionId}`;
     
-    return `<div style="padding:12px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.03); cursor:pointer; transition:all 0.2s;"
-                 onmouseover="this.style.borderColor='var(--accent)'; this.style.background='rgba(255,255,255,0.06)'"
-                 onmouseout="this.style.borderColor='var(--border)'; this.style.background='rgba(255,255,255,0.03)'"
-                 onclick="window.open('https://jules.google.com/session/${sessionId}', '_blank')">
-      <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:6px;">
-        <div style="font-weight:600; font-size:13px; flex:1; margin-right:8px;">${displayTitle}</div>
-        <div style="font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(255,255,255,0.1); white-space:nowrap; margin-left:8px; display:flex; align-items:center;">
-          <span class="icon icon-inline" aria-hidden="true">${icon}</span> ${label}
-        </div>
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-bottom:2px;">Created: ${createTime}</div>
-      <div style="font-size:11px; color:var(--muted);">Updated: ${updateTime}</div>
-      ${subtaskInfo}
-      ${prLink}
-    </div>`;
-  }).filter(html => html).join('');
+    // Create card
+    const card = document.createElement('div');
+    card.className = 'session-card';
+    card.dataset.sessionUrl = sessionUrl;
+    
+    // Top row with title and status
+    const topRow = document.createElement('div');
+    topRow.className = 'all-sessions__card-row';
+    
+    const title = document.createElement('div');
+    title.className = 'all-sessions__title';
+    title.textContent = displayTitle;
+    
+    const statusBadge = document.createElement('div');
+    statusBadge.className = 'all-sessions__status-badge';
+    const statusIcon = document.createElement('span');
+    statusIcon.className = 'icon icon-inline';
+    statusIcon.setAttribute('aria-hidden', 'true');
+    statusIcon.textContent = icon;
+    statusBadge.appendChild(statusIcon);
+    statusBadge.appendChild(document.createTextNode(` ${label}`));
+    
+    topRow.append(title, statusBadge);
+    card.appendChild(topRow);
+    
+    // Created time
+    const createdDiv = document.createElement('div');
+    createdDiv.className = 'all-sessions__meta';
+    createdDiv.textContent = `Created: ${createTime}`;
+    card.appendChild(createdDiv);
+    
+    // Updated time
+    const updatedDiv = document.createElement('div');
+    updatedDiv.className = 'all-sessions__meta all-sessions__meta--no-margin';
+    updatedDiv.textContent = `Updated: ${updateTime}`;
+    card.appendChild(updatedDiv);
+    
+    // Subtask info
+    if (subtaskCount > 0) {
+      const subtaskDiv = document.createElement('div');
+      subtaskDiv.className = 'all-sessions__subtask-info';
+      const subtaskIcon = document.createElement('span');
+      subtaskIcon.className = 'icon icon-inline';
+      subtaskIcon.setAttribute('aria-hidden', 'true');
+      subtaskIcon.textContent = 'list_alt';
+      subtaskDiv.appendChild(subtaskIcon);
+      subtaskDiv.appendChild(document.createTextNode(` ${subtaskCount} subtask${subtaskCount > 1 ? 's' : ''}`));
+      card.appendChild(subtaskDiv);
+    }
+    
+    // PR link
+    if (prUrl) {
+      const prDiv = document.createElement('div');
+      prDiv.className = 'all-sessions__pr-container';
+      const prLink = document.createElement('a');
+      prLink.href = prUrl;
+      prLink.target = '_blank';
+      prLink.className = 'all-sessions__pr-link';
+      const prIcon = document.createElement('span');
+      prIcon.className = 'icon icon-inline';
+      prIcon.setAttribute('aria-hidden', 'true');
+      prIcon.textContent = 'link';
+      prLink.appendChild(prIcon);
+      prLink.appendChild(document.createTextNode(' View PR'));
+      prDiv.appendChild(prLink);
+      card.appendChild(prDiv);
+    }
+    
+    allSessionsList.appendChild(card);
+  });
+  
+  // Attach event listeners to all session cards
+  allSessionsList.querySelectorAll('.session-card').forEach(card => {
+    card.addEventListener('click', () => {
+      window.open(card.dataset.sessionUrl, '_blank');
+    });
+  });
 }
 
 export async function loadProfileDirectly(user) {
@@ -509,7 +739,7 @@ export async function loadProfileDirectly(user) {
   }
 
   if (resetBtn) {
-    const originalResetLabel = resetBtn.innerHTML;
+    const originalResetLabel = resetBtn.textContent;
     resetBtn.onclick = async () => {
       const confirmed = await showConfirm(`This will delete your stored Jules API key. You'll need to enter a new one next time.`, {
         title: 'Delete API Key',
@@ -526,7 +756,7 @@ export async function loadProfileDirectly(user) {
           if (julesKeyStatus) {
             renderStatus(julesKeyStatus, STATUS_TYPES.NOT_SAVED, 'Not saved');
           }
-          resetBtn.innerHTML = originalResetLabel;
+          resetBtn.textContent = originalResetLabel;
           resetBtn.disabled = false;
           
           if (addBtn) addBtn.classList.remove('hidden');
@@ -539,7 +769,7 @@ export async function loadProfileDirectly(user) {
         }
       } catch (error) {
         showToast('Failed to reset API key: ' + error.message, 'error');
-        resetBtn.innerHTML = originalResetLabel;
+        resetBtn.textContent = originalResetLabel;
         resetBtn.disabled = false;
       }
     };
@@ -551,13 +781,8 @@ export async function loadProfileDirectly(user) {
       clearCache(CACHE_KEYS.JULES_ACCOUNT, user.uid);
       
       await loadAndDisplayJulesProfile(user.uid);
-      attachViewAllSessionsHandler();
-      attachViewQueueHandler();
     };
   }
-
-  attachViewAllSessionsHandler();
-  attachViewQueueHandler();
 }
 
 export async function loadJulesAccountInfo(user) {
@@ -586,11 +811,6 @@ export async function loadJulesAccountInfo(user) {
       clearCache(CACHE_KEYS.JULES_ACCOUNT, user.uid);
       
       await loadAndDisplayJulesProfile(user.uid);
-      attachViewAllSessionsHandler();
-      attachViewQueueHandler();
     };
   }
-
-  attachViewAllSessionsHandler();
-  attachViewQueueHandler();
 }

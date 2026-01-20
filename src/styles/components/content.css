@@ -78,6 +78,11 @@ a:hover { text-decoration: underline; }
 .scrollable-list.list-lg { max-height: calc(100vh - 350px); }
 
 /* Custom scrollbar styling for scrollable lists */
+.scrollable-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.03);
+}
+
 .scrollable-list::-webkit-scrollbar {
   width: 8px;
 }
@@ -94,6 +99,10 @@ a:hover { text-decoration: underline; }
 
 .scrollable-list::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
+}
+
+.scrollable-list::-webkit-scrollbar-thumb:active {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 /* Vertical list container */
