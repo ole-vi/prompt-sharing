@@ -10,6 +10,10 @@ import statusBar from './status-bar.js';
 
 let cacheRaw = new Map();
 let currentPromptText = null;
+let currentFile = null;
+let currentOwner = null;
+let currentRepo = null;
+let currentBranch = null;
 let handleTryInJulesCallback = null;
 let currentBlobUrl = null;
 
@@ -31,6 +35,7 @@ let editBtn = null;
 let shareBtn = null;
 let julesBtn = null;
 let freeInputBtn = null;
+let queueBtn = null;
 let moreBtn = null;
 
 export function initPromptRenderer() {
@@ -48,6 +53,7 @@ export function initPromptRenderer() {
   shareBtn = document.getElementById('shareBtn');
   julesBtn = document.getElementById('julesBtn');
   freeInputBtn = document.getElementById('freeInputBtn');
+  queueBtn = document.getElementById('queueBtn');
   moreBtn = document.getElementById('moreBtn');
 
   document.addEventListener('click', handleDocumentClick);
@@ -109,6 +115,37 @@ function handleDocumentClick(event) {
     (async () => {
       const { showFreeInputModal } = await import('./jules-free-input.js');
       showFreeInputModal();
+    })();
+    return;
+  }
+
+  if (target === queueBtn) {
+    if (!currentFile || !currentPromptText || !currentOwner || !currentRepo || !currentBranch) {
+      showToast('No prompt selected to add to queue', 'warn');
+      return;
+    }
+    
+    (async () => {
+      try {
+        const { handleQueueAction } = await import('./jules-queue.js');
+        const { extractTitleFromPrompt } = await import('../utils/title.js');
+        
+        const title = extractTitleFromPrompt(currentPromptText) || currentFile.name.replace(/\.md$/i, '');
+        const sourceId = `${currentOwner}/${currentRepo}`;
+        
+        await handleQueueAction({
+          type: 'single',
+          prompt: currentPromptText,
+          sourceId: sourceId,
+          branch: currentBranch,
+          note: `Queued from prompt: ${currentFile.path}`,
+          title: title,
+          filePath: currentFile.path
+        });
+      } catch (err) {
+        console.error('Failed to add prompt to queue:', err);
+        showToast('Failed to add prompt to queue', 'error');
+      }
     })();
     return;
   }
@@ -197,8 +234,18 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
       editBtn.classList.add('hidden');
       editBtn.removeAttribute('href');
     }
+    currentFile = null;
+    currentOwner = null;
+    currentRepo = null;
+    currentBranch = null;
     return;
   }
+
+  // Store current context
+  currentFile = f;
+  currentOwner = owner;
+  currentRepo = repo;
+  currentBranch = branch;
 
   const freeInputSection = document.getElementById('freeInputSection');
   if (freeInputSection) {
