@@ -1,5 +1,7 @@
 // ===== Common DOM Helpers =====
 
+import { TIMEOUTS, LIMITS } from './constants.js';
+
 export function createElement(tag, className = '', textContent = '') {
   const el = document.createElement(tag);
   if (className) el.className = className;
@@ -43,4 +45,27 @@ export function onElement(el, event, handler) {
 
 export function stopPropagation(e) {
   e.stopPropagation();
+}
+
+export function waitForDOMReady(callback) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', callback);
+  } else {
+    callback();
+  }
+}
+
+export function waitForHeader(callback) {
+  let attempts = 0;
+  const check = () => {
+    if (document.querySelector('header')) {
+      callback();
+    } else if (attempts < LIMITS.componentMaxAttempts) {
+      attempts++;
+      setTimeout(check, TIMEOUTS.componentCheck);
+    } else {
+      console.error('Header not found after waiting');
+    }
+  };
+  check();
 }
