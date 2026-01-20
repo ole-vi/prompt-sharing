@@ -1,7 +1,7 @@
 // Session storage cache utilities
 import { CACHE_DURATIONS } from './constants.js';
 
-const CACHE_KEYS = {
+export const CACHE_KEYS = {
   JULES_ACCOUNT: 'jules_account_info',
   JULES_SESSIONS: 'jules_sessions',
   JULES_REPOS: 'jules_repos',
@@ -15,10 +15,10 @@ const CACHE_KEYS = {
 
 // Map keys to specific cache durations
 const KEY_DURATIONS = {
-  JULES_ACCOUNT: CACHE_DURATIONS.session,
-  QUEUE_ITEMS: CACHE_DURATIONS.session,
-  BRANCHES: CACHE_DURATIONS.session,
-  USER_AVATAR: CACHE_DURATIONS.session,
+  [CACHE_KEYS.JULES_ACCOUNT]: CACHE_DURATIONS.session,
+  [CACHE_KEYS.QUEUE_ITEMS]: CACHE_DURATIONS.session,
+  [CACHE_KEYS.BRANCHES]: CACHE_DURATIONS.session,
+  [CACHE_KEYS.USER_AVATAR]: CACHE_DURATIONS.session,
   DEFAULT: CACHE_DURATIONS.short
 };
 
@@ -47,7 +47,9 @@ export function getCache(key, userId = null) {
 
     const { data, timestamp } = JSON.parse(cached);
     
-    const duration = KEY_DURATIONS[key] || KEY_DURATIONS.DEFAULT;
+    const duration = KEY_DURATIONS.hasOwnProperty(key) 
+      ? KEY_DURATIONS[key] 
+      : KEY_DURATIONS.DEFAULT;
     
     // A duration of 0 means session-only cache
     if (duration === CACHE_DURATIONS.session) {
