@@ -7,6 +7,7 @@ import {
   updateAuthUI,
   initAuthStateListener
 } from '../../modules/auth.js';
+import { getAuth } from '../../modules/firebase-service.js';
 
 // Mock dependencies
 vi.mock('../../modules/toast.js', () => ({
@@ -22,6 +23,10 @@ vi.mock('../../modules/jules-api.js', () => ({
   clearJulesKeyCache: vi.fn()
 }));
 
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn()
+}));
+
 // Setup global mocks
 const mockFirebaseAuth = {
   currentUser: null,
@@ -33,6 +38,8 @@ const mockFirebaseAuth = {
 const mockGithubAuthProvider = vi.fn();
 
 global.window = {
+  // window.auth is no longer used by the module, but we might keep it if other things use it
+  // But for this test, we care about getAuth()
   auth: mockFirebaseAuth,
   firebase: {
     auth: {
@@ -94,12 +101,15 @@ global.document = {
 function mockReset() {
   vi.clearAllMocks();
   
-  // Reset window.auth
+  // Reset auth mock
   mockFirebaseAuth.currentUser = null;
   mockFirebaseAuth.signInWithPopup.mockReset();
   mockFirebaseAuth.signOut.mockReset();
   mockFirebaseAuth.onAuthStateChanged.mockReset();
   
+  // Configure getAuth to return the mock auth object by default
+  getAuth.mockReturnValue(mockFirebaseAuth);
+
   // Reset global functions
   global.window.populateFreeInputRepoSelection = vi.fn().mockResolvedValue();
   global.window.populateFreeInputBranchSelection = vi.fn().mockResolvedValue();
@@ -131,9 +141,10 @@ describe('auth', () => {
       expect(getCurrentUser()).toBe(null);
     });
 
-    it('should return the current user from window.auth if available', () => {
+    it('should return the current user from auth service if available', () => {
       const mockUser = { uid: '123', email: 'test@example.com' };
-      window.auth.currentUser = mockUser;
+      mockFirebaseAuth.currentUser = mockUser;
+      // getAuth returns mockFirebaseAuth which has currentUser
       
       const user = getCurrentUser();
       
@@ -142,23 +153,27 @@ describe('auth', () => {
 
     it('should cache the user once retrieved', () => {
       const mockUser = { uid: '123', email: 'test@example.com' };
-      window.auth.currentUser = mockUser;
+      mockFirebaseAuth.currentUser = mockUser;
       
       getCurrentUser();
-      window.auth.currentUser = null;
-      const cachedUser = getCurrentUser();
+      mockFirebaseAuth.currentUser = null; // Simulate auth state change?
+      // But getCurrentUser implementation checks:
+      // if (auth?.currentUser && auth.currentUser !== currentUser) { currentUser = auth.currentUser; }
+      // So if auth.currentUser becomes null, currentUser variable inside auth.js REMAINS mockUser?
+      // Wait:
+      // if (auth?.currentUser ... )
+      // If auth.currentUser is null, the block is skipped, and it returns `currentUser`.
+      // So yes, it caches it (or rather, it holds a reference).
       
+      const cachedUser = getCurrentUser();
       expect(cachedUser).toBe(mockUser);
     });
 
-    it('should handle missing window.auth', () => {
-      const originalAuth = window.auth;
+    it('should handle missing auth service', () => {
       setCurrentUser(null); // Reset cached user first
-      window.auth = null;
+      getAuth.mockReturnValue(null);
       
       expect(getCurrentUser()).toBe(null);
-      
-      window.auth = originalAuth;
     });
   });
 
@@ -191,7 +206,7 @@ describe('auth', () => {
 
   describe('signInWithGitHub', () => {
     it('should show error if auth not ready', async () => {
-      window.auth = null;
+      getAuth.mockReturnValue(null);
       const { showToast } = await import('../../modules/toast.js');
       
       await signInWithGitHub();
@@ -200,8 +215,6 @@ describe('auth', () => {
         'Authentication not ready. Please refresh the page.',
         'error'
       );
-      
-      window.auth = mockFirebaseAuth;
     });
 
     it('should create GitHub provider with public_repo scope', async () => {
@@ -312,7 +325,7 @@ describe('auth', () => {
 
     it('should clear Jules key cache if user is signed in', async () => {
       const mockUser = { uid: 'user-123' };
-      window.auth.currentUser = mockUser;
+      mockFirebaseAuth.currentUser = mockUser;
       mockFirebaseAuth.signOut.mockResolvedValue();
       const { clearJulesKeyCache } = await import('../../modules/jules-api.js');
 
@@ -321,13 +334,10 @@ describe('auth', () => {
       expect(clearJulesKeyCache).toHaveBeenCalledWith('user-123');
     });
 
-    it('should handle sign out when window.auth is missing', async () => {
-      const originalAuth = window.auth;
-      window.auth = null;
+    it('should handle sign out when auth service is missing', async () => {
+      getAuth.mockReturnValue(null);
 
       await expect(signOutUser()).resolves.toBeUndefined();
-      
-      window.auth = originalAuth;
     });
 
     it('should show error toast on sign-out failure', async () => {
@@ -540,15 +550,12 @@ describe('auth', () => {
       expect(authCallback).toBeDefined();
     });
 
-    it('should handle missing window.auth', () => {
-      const originalAuth = window.auth;
-      window.auth = null;
+    it('should handle missing auth service', () => {
+      getAuth.mockReturnValue(null);
 
       initAuthStateListener();
       
       expect(global.console.error).toHaveBeenCalledWith('Auth not initialized yet');
-      
-      window.auth = originalAuth;
     });
 
     it('should handle listener initialization errors', () => {
@@ -584,7 +591,7 @@ describe('auth', () => {
 
     it('should handle complete sign-out workflow', async () => {
       const mockUser = { uid: 'user-123' };
-      window.auth.currentUser = mockUser;
+      mockFirebaseAuth.currentUser = mockUser;
       mockFirebaseAuth.signOut.mockResolvedValue();
       const { clearJulesKeyCache } = await import('../../modules/jules-api.js');
 
