@@ -166,7 +166,7 @@ export class RepoSelector {
     this.dropdownMenu.innerHTML = '';
     
     const loadingIndicator = document.createElement('div');
-    loadingIndicator.style.cssText = 'padding:12px; text-align:center; color:var(--muted); font-size:13px;';
+    loadingIndicator.className = 'dropdown-loading';
     loadingIndicator.textContent = 'Loading...';
     this.dropdownMenu.appendChild(loadingIndicator);
     this.dropdownMenu.style.display = 'block';
@@ -233,19 +233,19 @@ export class RepoSelector {
     showMoreBtn.onclick = async () => {
       if (!this.allReposLoaded) {
         showMoreBtn.textContent = 'Loading...';
-        showMoreBtn.style.pointerEvents = 'none';
+        showMoreBtn.classList.add('loading');
         
         try {
           await this.loadAllRepos();
           this.allReposLoaded = true;
         } catch (error) {
           showMoreBtn.textContent = 'Failed to load - click to retry';
-          showMoreBtn.style.pointerEvents = 'auto';
+          showMoreBtn.classList.remove('loading');
           return;
         }
       }
       
-      showMoreBtn.style.display = 'none';
+      showMoreBtn.classList.add('hidden');
       this.renderAllRepos();
     };
     
@@ -316,10 +316,9 @@ export class RepoSelector {
     if (id === this.selectedSourceId) item.classList.add('selected');
     
     const star = document.createElement('span');
-    star.innerHTML = isFavorite 
-      ? '<span class="icon icon-inline" aria-hidden="true">star</span>'
-      : '<span class="icon icon-inline" aria-hidden="true">star_border</span>';
-    star.className = 'star-icon';
+    star.className = 'icon icon-inline star-icon';
+    star.setAttribute('aria-hidden', 'true');
+    star.textContent = 'star';
     star.dataset.favorited = isFavorite.toString();
     
     star.onclick = async (e) => {
@@ -501,15 +500,13 @@ export class BranchSelector {
     if (!sourceId) {
       this.dropdownText.textContent = 'Select repository first';
       this.dropdownBtn.disabled = true;
-      this.dropdownBtn.style.opacity = '0.5';
-      this.dropdownBtn.style.cursor = 'not-allowed';
+      this.dropdownBtn.classList.add('disabled');
       return;
     }
     
     this.dropdownText.textContent = defaultBranch || 'Select a branch...';
     this.dropdownBtn.disabled = false;
-    this.dropdownBtn.style.opacity = '1';
-    this.dropdownBtn.style.cursor = 'pointer';
+    this.dropdownBtn.classList.remove('disabled');
     
     // Save to storage
     this.saveToStorage();
