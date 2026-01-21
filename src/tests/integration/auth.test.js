@@ -2,10 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getCurrentUser, signInWithGitHub, signOutUser, updateAuthUI } from '../../modules/auth.js';
 import { showToast } from '../../modules/toast.js';
 import { clearJulesKeyCache } from '../../modules/jules-api.js';
+import { getAuth } from '../../modules/firebase-service.js';
 
 // Mock dependencies
 vi.mock('../../modules/toast.js');
 vi.mock('../../modules/jules-api.js');
+vi.mock('../../modules/firebase-service.js');
 
 // Setup DOM elements
 function setupDOM() {
@@ -22,9 +24,20 @@ function setupDOM() {
 }
 
 describe('Auth Module', () => {
+  let mockAuth;
+
   beforeEach(() => {
     setupDOM();
     vi.clearAllMocks();
+    
+    // Setup mock auth instance
+    mockAuth = {
+      currentUser: null,
+      signInWithPopup: vi.fn(),
+      signOut: vi.fn()
+    };
+    
+    vi.mocked(getAuth).mockReturnValue(mockAuth);
   });
 
   describe('getCurrentUser', () => {
@@ -32,28 +45,27 @@ describe('Auth Module', () => {
       expect(getCurrentUser()).toBeNull();
     });
 
-    it('should update current user from window.auth', () => {
+    it('should update current user from auth instance', () => {
       const user = { uid: '123' };
-      window.auth.currentUser = user;
+      mockAuth.currentUser = user;
       expect(getCurrentUser()).toBe(user);
     });
   });
 
   describe('signInWithGitHub', () => {
     it('should call signInWithPopup and store token', async () => {
-      window.auth.signInWithPopup.mockResolvedValue({
+      mockAuth.signInWithPopup.mockResolvedValue({
         credential: { accessToken: 'token123' }
       });
 
       await signInWithGitHub();
 
-      expect(window.auth.signInWithPopup).toHaveBeenCalled();
+      expect(mockAuth.signInWithPopup).toHaveBeenCalled();
       expect(vi.mocked(localStorage.setItem)).toHaveBeenCalledWith('github_access_token', expect.any(String));
     });
 
     it('should show error toast when auth not ready', async () => {
-      const originalAuth = window.auth;
-      window.auth = null;
+      vi.mocked(getAuth).mockReturnValue(null);
       
       await signInWithGitHub();
       
@@ -61,12 +73,10 @@ describe('Auth Module', () => {
         'Authentication not ready. Please refresh the page.',
         'error'
       );
-      
-      window.auth = originalAuth; // Restore for next tests
     });
 
     it('should show error toast on sign-in failure', async () => {
-      window.auth.signInWithPopup.mockRejectedValue(new Error('Network error'));
+      mockAuth.signInWithPopup.mockRejectedValue(new Error('Network error'));
       
       await signInWithGitHub();
       
@@ -79,11 +89,11 @@ describe('Auth Module', () => {
 
   describe('signOutUser', () => {
     it('should sign out user and clear token', async () => {
-      window.auth.currentUser = { uid: '123' };
+      mockAuth.currentUser = { uid: '123' };
       
       await signOutUser();
 
-      expect(window.auth.signOut).toHaveBeenCalled();
+      expect(mockAuth.signOut).toHaveBeenCalled();
       expect(vi.mocked(localStorage.removeItem)).toHaveBeenCalledWith('github_access_token');
       expect(clearJulesKeyCache).toHaveBeenCalled();
     });
