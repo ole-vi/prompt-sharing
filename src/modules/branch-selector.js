@@ -90,6 +90,10 @@ export function getCurrentBranch() {
   return currentBranch;
 }
 
+export function getCurrentRepo() {
+  return { owner: currentOwner, repo: currentRepo };
+}
+
 /**
  * Loads favorite branches from Firestore for the current user
  */

@@ -7,6 +7,7 @@ import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';
 
 let _lastSelectedSourceId = null;
 let _lastSelectedBranch = null;
+let _branchChangeListenerAdded = false;
 
 export function getLastSelectedSource() {
   return { sourceId: _lastSelectedSourceId, branch: _lastSelectedBranch };
@@ -80,12 +81,20 @@ export function showFreeInputForm() {
   const copenBtn = document.getElementById('freeInputCopenBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
   
-  // Save original button content as nodes, not HTML string
   const originalCopenContent = Array.from(copenBtn.childNodes).map(node => node.cloneNode(true));
 
   textarea.value = '';
   
   populateFreeInputRepoSelection();
+  
+  if (!_branchChangeListenerAdded) {
+    window.addEventListener('branchChanged', (event) => {
+      if (event.detail && event.detail.branch) {
+        _lastSelectedBranch = event.detail.branch;
+      }
+    });
+    _branchChangeListenerAdded = true;
+  }
   
   textarea.focus();
 
@@ -271,22 +280,46 @@ export function showFreeInputForm() {
     hideFreeInputForm();
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const promptText = validatePromptText('Please enter content to save.');
     if (!promptText) return;
 
-    // Use selected repo/branch if available, otherwise default to promptroot
-    const sourceId = _lastSelectedSourceId || 'sources/github/promptroot/promptroot';
-    const branch = _lastSelectedBranch || 'main';
+    let sourceId = _lastSelectedSourceId;
+    if (!sourceId) {
+      try {
+        const { getCurrentRepo } = await import('./branch-selector.js');
+        const currentRepoContext = getCurrentRepo();
+        if (currentRepoContext.owner && currentRepoContext.repo) {
+          sourceId = `sources/github/${currentRepoContext.owner}/${currentRepoContext.repo}`;
+        }
+      } catch (error) {
+        console.warn('Could not get current repo context:', error);
+      }
+      if (!sourceId) {
+        sourceId = 'sources/github/promptroot/promptroot';
+      }
+    }
     
-    // Extract owner and repo from sourceId (format: "sources/github/owner/repo")
+    let branch = null;
+    try {
+      const { getCurrentBranch } = await import('./branch-selector.js');
+      branch = getCurrentBranch();
+    } catch (error) {
+      console.warn('Could not get current branch from header selector:', error);
+    }
+    
+    if (!branch) {
+      branch = _lastSelectedBranch || 'main';
+    }
+    
     const parts = sourceId.split('/');
     const owner = parts[parts.length - 2];
     const repo = parts[parts.length - 1];
     
-    // Use the prompt text as the file content
     const encoded = encodeURIComponent(promptText);
-    const newFilePath = 'prompts/new-prompt.md';
+    const now = new Date();
+    const timestamp = `${now.getFullYear().toString().slice(-2)}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}-${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
+    const newFilePath = `prompts/prompt-${timestamp}.md`;
     const ghUrl = `https://github.com/${owner}/${repo}/new/${branch}?filename=${encodeURIComponent(newFilePath)}&value=${encoded}&ref=${encodeURIComponent(branch)}`;
     
     window.open(ghUrl, '_blank', 'noopener,noreferrer');
