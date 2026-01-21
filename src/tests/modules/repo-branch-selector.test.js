@@ -53,6 +53,13 @@ global.document = {
     className: '',
     textContent: '',
     dataset: {},
+    classList: {
+      add: vi.fn(),
+      remove: vi.fn(),
+      contains: vi.fn()
+    },
+    setAttribute: vi.fn(),
+    getAttribute: vi.fn(),
     style: {
       cssText: '',
       display: '',
@@ -106,6 +113,13 @@ const createMockElement = (id = '') => ({
   disabled: false,
   onclick: null,
   dataset: {},
+  classList: {
+    add: vi.fn(),
+    remove: vi.fn(),
+    contains: vi.fn()
+  },
+  setAttribute: vi.fn(),
+  getAttribute: vi.fn(),
   style: {
     display: '',
     opacity: '',
