@@ -10,6 +10,7 @@ import {
   renderQueueListDirectly,
   attachQueueHandlers
 } from '../../modules/jules-queue.js';
+import { getCache } from '../../utils/session-cache.js';
 
 // Mock dependencies
 vi.mock('../../utils/title.js', () => ({
@@ -68,35 +69,6 @@ vi.mock('../../modules/jules-modal.js', () => ({
   showSubtaskErrorModal: vi.fn()
 }));
 
-// Setup global mocks
-global.window = {
-  auth: {
-    currentUser: null
-  },
-  db: null,
-  firebase: null
-};
-
-global.firebase = {
-  firestore: {
-    FieldValue: {
-      serverTimestamp: vi.fn(() => 'TIMESTAMP')
-    }
-  }
-};
-
-global.document = {
-  getElementById: vi.fn(),
-  createElement: vi.fn(),
-  querySelectorAll: vi.fn(() => [])
-};
-
-global.console = {
-  error: vi.fn(),
-  warn: vi.fn(),
-  log: vi.fn()
-};
-
 const createMockElement = (id = '') => ({
   id,
   setAttribute: vi.fn(),
@@ -110,20 +82,60 @@ const createMockElement = (id = '') => ({
     remove: vi.fn(),
     contains: vi.fn()
   },
-  dataset: {}
+  dataset: {},
+  replaceChildren: vi.fn(),
+  appendChild: vi.fn(),
+  querySelectorAll: vi.fn(() => [])
 });
+
+// Setup global mocks
+global.window = {
+  auth: {
+    currentUser: null
+  },
+  db: null,
+  firebase: null
+};
+
+global.firebase = {
+  firestore: {
+    FieldValue: {
+      serverTimestamp: vi.fn(() => 'TIMESTAMP'),
+      delete: vi.fn(() => 'DELETE_FIELD')
+    }
+  }
+};
+
+global.document = {
+  getElementById: vi.fn(),
+  createElement: vi.fn(() => createMockElement()),
+  querySelectorAll: vi.fn(() => [])
+};
+
+global.console = {
+  error: vi.fn(),
+  warn: vi.fn(),
+  log: vi.fn()
+};
 
 function mockReset() {
   vi.clearAllMocks();
+  getCache.mockReset();
   
   // Reset window
   global.window.auth = {
     currentUser: null
   };
   global.window.db = null;
+  global.window.firebase = null;
+
+  // Restore implementations
+  global.firebase.firestore.FieldValue.serverTimestamp.mockImplementation(() => 'TIMESTAMP');
+  global.firebase.firestore.FieldValue.delete.mockImplementation(() => 'DELETE_FIELD');
   
-  // Reset document.getElementById
   global.document.getElementById.mockReturnValue(null);
+  global.document.createElement.mockImplementation((tag) => createMockElement(tag));
+  global.document.querySelectorAll.mockReturnValue([]);
 }
 
 describe('jules-queue', () => {
@@ -154,6 +166,8 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      // Need window.firebase for serverTimestamp
+      global.window.firebase = global.firebase;
       
       const result = await handleQueueAction({ prompt: 'test prompt' });
       
@@ -173,6 +187,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      global.window.firebase = global.firebase;
       
       const result = await handleQueueAction({ prompt: 'test' });
       
@@ -212,6 +227,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      global.window.firebase = global.firebase;
       
       const docId = await addToJulesQueue('user123', { prompt: 'test', sourceId: 'repo1' });
       
@@ -237,6 +253,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      global.window.firebase = global.firebase;
       
       await addToJulesQueue('user123', { prompt: 'test', autoOpen: false });
       
@@ -258,6 +275,9 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      global.window.firebase = global.firebase;
+      // Completely replace the mock function to ensure it works
+      global.firebase.firestore.FieldValue.serverTimestamp = vi.fn(() => 'TIMESTAMP');
       
       await addToJulesQueue('user123', { prompt: 'test' });
       
@@ -270,6 +290,8 @@ describe('jules-queue', () => {
 
     it('should clear cache after adding', async () => {
       const { clearCache, CACHE_KEYS } = await import('../../utils/session-cache.js');
+      // addDoc unconditionally clears cache if key provided
+
       global.window.db = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
@@ -279,6 +301,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      global.window.firebase = global.firebase;
       
       await addToJulesQueue('user456', { prompt: 'test' });
       
@@ -295,6 +318,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      global.window.firebase = global.firebase;
       
       await expect(addToJulesQueue('user123', { prompt: 'test' })).rejects.toThrow();
       expect(global.console.error).toHaveBeenCalled();
@@ -310,6 +334,9 @@ describe('jules-queue', () => {
 
     it('should update queue item', async () => {
       const mockUpdate = vi.fn().mockResolvedValue();
+      const { getCache } = await import('../../utils/session-cache.js');
+      getCache.mockReturnValue([{id: 'doc456'}]); // Ensure getCache returns something
+
       global.window.db = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
@@ -330,6 +357,10 @@ describe('jules-queue', () => {
 
     it('should clear cache after updating', async () => {
       const { clearCache, CACHE_KEYS } = await import('../../utils/session-cache.js');
+      const { getCache: getCacheSpy } = await import('../../utils/session-cache.js');
+      // updateDoc only clears/updates if item is in cache.
+      getCacheSpy.mockImplementation(() => ['item']);
+
       global.window.db = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
@@ -359,6 +390,8 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      const { getCache } = await import('../../utils/session-cache.js');
+      getCache.mockReturnValue(['item']);
       
       await expect(updateJulesQueueItem('user123', 'doc1', {})).rejects.toThrow();
       expect(global.console.error).toHaveBeenCalled();
@@ -374,6 +407,9 @@ describe('jules-queue', () => {
 
     it('should delete queue item', async () => {
       const mockDelete = vi.fn().mockResolvedValue();
+      const { getCache } = await import('../../utils/session-cache.js');
+      getCache.mockReturnValue(['item']);
+
       global.window.db = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
@@ -394,6 +430,7 @@ describe('jules-queue', () => {
 
     it('should clear cache after deleting', async () => {
       const { clearCache, CACHE_KEYS } = await import('../../utils/session-cache.js');
+
       global.window.db = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
@@ -442,6 +479,10 @@ describe('jules-queue', () => {
         { id: 'doc2', data: () => ({ prompt: 'Second', createdAt: { seconds: 2000 } }) }
       ];
       
+      // Mock getCache to return null so it fetches from DB
+      const { getCache } = await import('../../utils/session-cache.js');
+      getCache.mockReturnValue(null);
+
       global.window.db = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
@@ -462,6 +503,9 @@ describe('jules-queue', () => {
     });
 
     it('should return empty array if no items', async () => {
+      const { getCache } = await import('../../utils/session-cache.js');
+      getCache.mockReturnValue(null);
+
       global.window.db = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
@@ -480,6 +524,9 @@ describe('jules-queue', () => {
     });
 
     it('should handle list errors', async () => {
+      const { getCache } = await import('../../utils/session-cache.js');
+      getCache.mockReturnValue(null);
+
       global.window.db = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({

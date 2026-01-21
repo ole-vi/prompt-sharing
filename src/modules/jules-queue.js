@@ -7,6 +7,7 @@ import { showConfirm } from './confirm-modal.js';
 import { JULES_MESSAGES, JULES_UI_TEXT, TIMEOUTS } from '../utils/constants.js';
 import { callRunJulesFunction } from './jules-api.js';
 import { openUrlInBackground, showSubtaskErrorModal } from './jules-modal.js';
+import { addDoc, updateDoc, deleteDoc, queryCollection, setDoc, getDoc, getServerTimestamp, getFieldDelete } from '../utils/firestore-helpers.js';
 import { showPromptViewer } from './prompt-viewer.js';
 
 let queueCache = [];
@@ -32,15 +33,15 @@ export async function addToJulesQueue(uid, queueItem) {
   if (!window.db) throw new Error('Firestore not initialized');
   try {
     const collectionRef = window.db.collection('julesQueues').doc(uid).collection('items');
-    const docRef = await collectionRef.add({
+    // Pass object with userId to cacheKey
+    const docId = await addDoc(collectionRef, {
       ...queueItem,
       autoOpen: queueItem.autoOpen !== false,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      createdAt: getServerTimestamp(),
       status: 'pending'
-    });
-    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
-    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
-    return docRef.id;
+    }, { key: CACHE_KEYS.QUEUE_ITEMS, userId: uid });
+
+    return docId;
   } catch (err) {
     console.error('Failed to add to queue', err);
     throw err;
@@ -50,10 +51,8 @@ export async function addToJulesQueue(uid, queueItem) {
 export async function updateJulesQueueItem(uid, docId, updates) {
   if (!window.db) throw new Error('Firestore not initialized');
   try {
-    const docRef = window.db.collection('julesQueues').doc(uid).collection('items').doc(docId);
-    await docRef.update(updates);
-    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
-    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
+    const collectionRef = window.db.collection('julesQueues').doc(uid).collection('items');
+    await updateDoc(collectionRef, docId, updates, { key: CACHE_KEYS.QUEUE_ITEMS, userId: uid });
     return true;
   } catch (err) {
     console.error('Failed to update queue item', err);
@@ -64,9 +63,8 @@ export async function updateJulesQueueItem(uid, docId, updates) {
 export async function deleteFromJulesQueue(uid, docId) {
   if (!window.db) throw new Error('Firestore not initialized');
   try {
-    await window.db.collection('julesQueues').doc(uid).collection('items').doc(docId).delete();
-    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
-    clearCache(CACHE_KEYS.QUEUE_ITEMS, uid);
+    const collectionRef = window.db.collection('julesQueues').doc(uid).collection('items');
+    await deleteDoc(collectionRef, docId, { key: CACHE_KEYS.QUEUE_ITEMS, userId: uid });
     return true;
   } catch (err) {
     console.error('Failed to delete queue item', err);
@@ -77,8 +75,11 @@ export async function deleteFromJulesQueue(uid, docId) {
 export async function listJulesQueue(uid) {
   if (!window.db) throw new Error('Firestore not initialized');
   try {
-    const snapshot = await window.db.collection('julesQueues').doc(uid).collection('items').orderBy('createdAt', 'desc').get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const collectionRef = window.db.collection('julesQueues').doc(uid).collection('items');
+    const results = await queryCollection(collectionRef, {
+      orderBy: { field: 'createdAt', direction: 'desc' }
+    }, { key: CACHE_KEYS.QUEUE_ITEMS, userId: uid });
+    return results;
   } catch (err) {
     console.error('Failed to list queue', err);
     throw err;
@@ -696,14 +697,14 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
     const updates = {
       sourceId: sourceId || item.sourceId,
       branch: branch || item.branch || 'master',
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      updatedAt: getServerTimestamp()
     };
     
     if (editModalState.isUnscheduled) {
       updates.status = 'pending';
-      updates.scheduledAt = firebase.firestore.FieldValue.delete();
-      updates.scheduledTimeZone = firebase.firestore.FieldValue.delete();
-      updates.activatedAt = firebase.firestore.FieldValue.delete();
+      updates.scheduledAt = getFieldDelete();
+      updates.scheduledTimeZone = getFieldDelete();
+      updates.activatedAt = getFieldDelete();
     }
 
     const currentType = editModalState.currentType || item.type;
@@ -713,8 +714,8 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
       updates.type = 'single';
       updates.prompt = promptTextarea.value;
       if (item.type === 'subtasks') {
-        updates.remaining = firebase.firestore.FieldValue.delete();
-        updates.totalCount = firebase.firestore.FieldValue.delete();
+        updates.remaining = getFieldDelete();
+        updates.totalCount = getFieldDelete();
       }
     } else if (currentType === 'subtasks') {
       const subtaskTextareas = document.querySelectorAll('.edit-subtask-content');
@@ -725,7 +726,7 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
       updates.remaining = updatedSubtasks;
       updates.totalCount = updatedSubtasks.length;
       if (item.type === 'single') {
-        updates.prompt = firebase.firestore.FieldValue.delete();
+        updates.prompt = getFieldDelete();
       }
     }
 
@@ -783,9 +784,10 @@ async function getUserTimeZone() {
   if (!user) return 'America/New_York';
   
   try {
-    const profileDoc = await window.db.collection('userProfiles').doc(user.uid).get();
-    if (profileDoc.exists && profileDoc.data().preferredTimeZone) {
-      return profileDoc.data().preferredTimeZone;
+    // Pass object with userId to cacheKey
+    const profileData = await getDoc('userProfiles', user.uid, { key: CACHE_KEYS.USER_PROFILE, userId: user.uid });
+    if (profileData && profileData.preferredTimeZone) {
+      return profileData.preferredTimeZone;
     }
   } catch (err) {
     console.warn('Failed to fetch user timezone preference', err);
@@ -832,10 +834,11 @@ async function saveUserTimeZone(timeZone) {
   if (!user) return;
   
   try {
-    await window.db.collection('userProfiles').doc(user.uid).set({
+    // Pass object with userId to cacheKey
+    await setDoc('userProfiles', user.uid, {
       preferredTimeZone: timeZone,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
+      updatedAt: getServerTimestamp()
+    }, { merge: true }, { key: CACHE_KEYS.USER_PROFILE, userId: user.uid });
     
     const cached = getCache(CACHE_KEYS.USER_PROFILE, user.uid) || {};
     setCache(CACHE_KEYS.USER_PROFILE, { ...cached, preferredTimeZone: timeZone }, user.uid);
@@ -1095,7 +1098,7 @@ async function confirmScheduleItems() {
         scheduledTimeZone: selectedTimeZone,
         retryOnFailure: retryOnFailure,
         retryCount: 0,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        updatedAt: getServerTimestamp()
       });
     }
     
@@ -1359,7 +1362,7 @@ async function deleteSelectedSubtasks(docId, indices) {
   } else {
     await updateJulesQueueItem(user.uid, docId, {
       remaining: newRemaining,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      updatedAt: getServerTimestamp()
     });
   }
 }
@@ -1579,10 +1582,10 @@ async function unscheduleSelectedQueueItems() {
       const docRef = firebase.firestore().collection('julesQueues').doc(user.uid).collection('items').doc(docId);
       batch.update(docRef, {
         status: 'pending',
-        scheduledAt: firebase.firestore.FieldValue.delete(),
-        scheduledTimeZone: firebase.firestore.FieldValue.delete(),
-        activatedAt: firebase.firestore.FieldValue.delete(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        scheduledAt: getFieldDelete(),
+        scheduledTimeZone: getFieldDelete(),
+        activatedAt: getFieldDelete(),
+        updatedAt: getServerTimestamp()
       });
     }
     
@@ -1799,7 +1802,7 @@ async function runSelectedQueueItems() {
               await updateJulesQueueItem(user.uid, id, {
                 remaining,
                 status: 'paused',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                updatedAt: getServerTimestamp()
               });
             } catch (e) {
               console.warn('Failed to persist paused state for queue item', id, e.message || e);
@@ -1834,7 +1837,7 @@ async function runSelectedQueueItems() {
                 await updateJulesQueueItem(user.uid, id, {
                   remaining,
                   status: remaining.length === 0 ? 'done' : 'in-progress',
-                  updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  updatedAt: getServerTimestamp()
                 });
               } catch (e) {
                 console.warn('Failed to persist progress for queue item', id, e.message || e);
@@ -1864,7 +1867,7 @@ async function runSelectedQueueItems() {
                   await updateJulesQueueItem(user.uid, id, {
                     remaining: [...skippedSubtasks, ...remaining],
                     status: 'pending',
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    updatedAt: getServerTimestamp()
                   });
                 } catch (e) {
                   console.warn('Failed to persist remaining after skip', e);
@@ -1876,7 +1879,7 @@ async function runSelectedQueueItems() {
                   await updateJulesQueueItem(user.uid, id, {
                     remaining,
                     status: 'pending',
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    updatedAt: getServerTimestamp()
                   });
                 } catch (e) {
                   console.warn('Failed to persist queue state', e);
@@ -1891,7 +1894,7 @@ async function runSelectedQueueItems() {
                   await updateJulesQueueItem(user.uid, id, {
                     remaining,
                     status: 'error',
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    updatedAt: getServerTimestamp()
                   });
                 } catch (e) {
                   console.warn('Failed to persist error state', e);
@@ -1910,7 +1913,7 @@ async function runSelectedQueueItems() {
             await updateJulesQueueItem(user.uid, id, {
               remaining: skippedSubtasks,
               status: 'pending',
-              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+              updatedAt: getServerTimestamp()
             });
           } catch (e) {
             console.warn('Failed to save skipped subtasks', e);
