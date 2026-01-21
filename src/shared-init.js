@@ -100,11 +100,11 @@ async function fetchVersion() {
 
     if (currentDate < latestDate) {
       appVersion.textContent = `v${currentDateStr} (${currentSha})`;
-      appVersion.classList.add('version-badge', 'version-badge--new');
+      appVersion.classList.add('version-badge', 'status-outdated');
     } else {
       appVersion.textContent = `v${latestDateStr} (${latestSha})`;
       appVersion.classList.add('version-badge');
-      appVersion.classList.remove('version-badge--new');
+      appVersion.classList.remove('status-outdated');
     }
     
     const dismissed = localStorage.getItem(`dismissed-version-${latestSha}`);

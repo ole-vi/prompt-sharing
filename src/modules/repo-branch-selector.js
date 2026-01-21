@@ -20,6 +20,7 @@ function setupClickOutsideClose(targetBtn, targetMenu) {
   const closeDropdown = (e) => {
     if (!targetBtn.contains(e.target) && !targetMenu.contains(e.target)) {
       targetMenu.style.display = 'none';
+      targetBtn.setAttribute('aria-expanded', 'false');
     }
   };
   
@@ -87,6 +88,11 @@ export class RepoSelector {
       console.error('Failed to load favorites:', error);
     }
 
+    // Set ARIA attributes
+    this.dropdownBtn.setAttribute('aria-haspopup', 'true');
+    this.dropdownBtn.setAttribute('aria-expanded', 'false');
+    this.dropdownMenu.setAttribute('role', 'menu');
+
     // Try to restore previous selection
     const savedRepoId = this.loadFromStorage();
     if (savedRepoId) {
@@ -144,9 +150,12 @@ export class RepoSelector {
       e.stopPropagation();
       if (this.dropdownMenu.style.display === 'block') {
         this.dropdownMenu.style.display = 'none';
+        this.dropdownBtn.setAttribute('aria-expanded', 'false');
         return;
       }
       
+      this.dropdownBtn.setAttribute('aria-expanded', 'true');
+
       // Position dropdown menu if it's fixed (e.g., in modals)
       const computedStyle = window.getComputedStyle(this.dropdownMenu);
       if (computedStyle.position === 'fixed') {
@@ -195,6 +204,7 @@ export class RepoSelector {
         
         // Save repo selection
         this.saveToStorage();
+        this.dropdownBtn.setAttribute('aria-expanded', 'false');
         
         let currentBranch = fav.branch;
         
@@ -300,6 +310,7 @@ export class RepoSelector {
         
         // Save repo selection
         this.saveToStorage();
+        this.dropdownBtn.setAttribute('aria-expanded', 'false');
         
         if (this.onSelect) {
           this.onSelect(source.name || source.id, defaultBranch, repoName);
@@ -326,6 +337,7 @@ export class RepoSelector {
       if (isFavorite) {
         await this.removeFavorite(id);
         this.dropdownMenu.style.display = 'none';
+        this.dropdownBtn.setAttribute('aria-expanded', 'false');
         setTimeout(() => this.populateDropdown(), 0);
       } else {
         const defaultBranch = extractDefaultBranch(this.allSources.find(s => (s.name || s.id) === id));
@@ -496,6 +508,11 @@ export class BranchSelector {
     this.sourceId = sourceId;
     this.selectedBranch = defaultBranch;
     this.allBranchesLoaded = false;
+
+    // Set ARIA attributes
+    this.dropdownBtn.setAttribute('aria-haspopup', 'true');
+    this.dropdownBtn.setAttribute('aria-expanded', 'false');
+    this.dropdownMenu.setAttribute('role', 'menu');
     
     if (!sourceId) {
       this.dropdownText.textContent = 'Select repository first';
@@ -519,9 +536,12 @@ export class BranchSelector {
       e.stopPropagation();
       if (this.dropdownMenu.style.display === 'block') {
         this.dropdownMenu.style.display = 'none';
+        this.dropdownBtn.setAttribute('aria-expanded', 'false');
         return;
       }
       
+      this.dropdownBtn.setAttribute('aria-expanded', 'true');
+
       // Position dropdown menu if it's fixed (e.g., in modals)
       const computedStyle = window.getComputedStyle(this.dropdownMenu);
       if (computedStyle.position === 'fixed') {
@@ -549,6 +569,7 @@ export class BranchSelector {
     currentItem.className = 'dropdown-item-with-star selected';
     currentItem.onclick = () => {
       this.dropdownMenu.style.display = 'none';
+      this.dropdownBtn.setAttribute('aria-expanded', 'false');
     };
     
     // Hide star for current item
@@ -573,6 +594,7 @@ export class BranchSelector {
       
       showMoreBtn.textContent = 'Loading...';
       showMoreBtn.style.pointerEvents = 'none';
+      showMoreBtn.classList.remove('status-info');
       
       try {
         const pathParts = this.sourceId.split('/');
@@ -584,7 +606,7 @@ export class BranchSelector {
 
         if (!allBranches || allBranches.length === 0) {
           showMoreBtn.textContent = allBranches === null ? 'GitHub API rate limited - try later' : 'No branches found';
-          showMoreBtn.style.color = 'var(--muted)';
+          showMoreBtn.classList.add('status-info');
           showMoreBtn.style.pointerEvents = 'auto';
           return;
         }
@@ -610,6 +632,7 @@ export class BranchSelector {
           item.onclick = () => {
             this.setSelectedBranch(branch.name);
             this.dropdownMenu.style.display = 'none';
+            this.dropdownBtn.setAttribute('aria-expanded', 'false');
           };
           
           item.appendChild(star);
@@ -619,7 +642,7 @@ export class BranchSelector {
       } catch (error) {
         console.error('Failed to load branches:', error);
         showMoreBtn.textContent = 'Failed to load - click to retry';
-        showMoreBtn.style.color = 'var(--muted)';
+        showMoreBtn.classList.add('status-info');
         showMoreBtn.style.pointerEvents = 'auto';
       }
     };

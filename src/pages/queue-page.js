@@ -6,6 +6,7 @@
 import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
 import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly } from '../modules/jules-queue.js';
 import { createElement, clearElement, waitForDOMReady, waitForHeader } from '../utils/dom-helpers.js';
+import { handleError } from '../utils/error-handler.js';
 
 // Initialize checkbox mutual exclusivity
 initMutualExclusivity();
@@ -79,10 +80,12 @@ async function loadQueue() {
     loadingDiv.classList.add('hidden');
     controlsDiv.classList.remove('hidden');
   } catch (err) {
-    console.error('Queue loading error:', err);
+    const errorInfo = handleError(err, { source: 'loadQueue' }, { showDisplay: false });
+    const msg = errorInfo.suggestion ? `${errorInfo.message} ${errorInfo.suggestion}` : errorInfo.message;
+
     loadingDiv.classList.add('hidden');
     clearElement(listDiv);
-    listDiv.appendChild(createEmptyStatePanel(`Failed to load queue: ${err.message}`, true));
+    listDiv.appendChild(createEmptyStatePanel(`Failed to load queue: ${msg}`, true));
     controlsDiv.classList.remove('hidden');
   }
 }

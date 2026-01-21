@@ -17,6 +17,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <!-- Removed: firebase-functions-compat.js - not used in app -->
   <script type="module" src="../../src/firebase-init.js"></script>
+  <script type="module" src="../../src/sw-register.js"></script>
 </head>
 <body data-page="jules">
 
@@ -105,9 +106,9 @@
   </footer>
 
   <!-- Jules API Key Modal -->
-  <div id="julesKeyModal" class="modal">
+  <div id="julesKeyModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="julesKeyModalTitle">
     <div class="modal-content">
-      <h2>Save Jules API Key</h2>
+      <h2 id="julesKeyModalTitle">Save Jules API Key</h2>
       <p>Enter your Jules API key. This will be encrypted and stored securely.</p>
       <input id="julesKeyInput" type="password" placeholder="Paste your Jules API key..." />
       <div class="modal-buttons">

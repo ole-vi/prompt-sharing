@@ -23,6 +23,7 @@ function createConfirmModal() {
 
   const closeBtn = createElement('button', 'btn-icon close-modal', '✕');
   closeBtn.id = 'confirmModalClose';
+  closeBtn.setAttribute('aria-label', 'Close');
   closeBtn.title = 'Close';
 
   modalHeader.appendChild(title);

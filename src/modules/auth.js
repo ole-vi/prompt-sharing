@@ -2,13 +2,15 @@
 
 import { showToast } from './toast.js';
 import { setCache, getCache } from '../utils/session-cache.js';
+import { getAuth } from './firebase-service.js';
 // Lazy loaded: jules-api.js (for clearJulesKeyCache)
 
 let currentUser = null;
 
 export function getCurrentUser() {
-  if (window.auth?.currentUser && window.auth.currentUser !== currentUser) {
-    currentUser = window.auth.currentUser;
+  const auth = getAuth();
+  if (auth?.currentUser && auth.currentUser !== currentUser) {
+    currentUser = auth.currentUser;
   }
   return currentUser;
 }
@@ -19,7 +21,8 @@ export function setCurrentUser(user) {
 
 export async function signInWithGitHub(forceAccountSelection = false) {
   try {
-    if (!window.auth) {
+    const auth = getAuth();
+    if (!auth) {
       showToast('Authentication not ready. Please refresh the page.', 'error');
       return;
     }
@@ -33,7 +36,7 @@ export async function signInWithGitHub(forceAccountSelection = false) {
       });
     }
     
-    const result = await window.auth.signInWithPopup(provider);
+    const result = await auth.signInWithPopup(provider);
     
     if (result.credential && result.credential.accessToken) {
       const tokenData = {
@@ -57,7 +60,8 @@ export async function switchGitHubAccount() {
     showToast('Switching accounts...', 'info');
     
     // Sign out the current user first
-    if (window.auth?.currentUser) {
+    const auth = getAuth();
+    if (auth?.currentUser) {
       await signOutUser();
     }
     
@@ -71,13 +75,14 @@ export async function switchGitHubAccount() {
 
 export async function signOutUser() {
   try {
-    if (window.auth) {
+    const auth = getAuth();
+    if (auth) {
       // Clear Jules API key cache on logout
-      if (window.auth.currentUser) {
+      if (auth.currentUser) {
         const { clearJulesKeyCache } = await import('./jules-api.js');
-        clearJulesKeyCache(window.auth.currentUser.uid);
+        clearJulesKeyCache(auth.currentUser.uid);
       }
-      await window.auth.signOut();
+      await auth.signOut();
       localStorage.removeItem('github_access_token');
     }
   } catch (error) {
@@ -190,27 +195,16 @@ export async function updateAuthUI(user) {
 }
 
 export function initAuthStateListener() {
-  return new Promise((resolve) => {
-    try {
-      if (!window.auth) {
-        console.error('Auth not initialized yet');
-        resolve(null);
-        return;
-      }
-      
-      // Firebase's onAuthStateChanged fires immediately with current state
-      // then fires again on any changes. We resolve on the first call.
-      const unsubscribe = window.auth.onAuthStateChanged((user) => {
-        updateAuthUI(user);
-        unsubscribe(); // Stop listening after first call
-        resolve(user);
-      });
-      
-      // Continue listening for future changes
-      window.auth.onAuthStateChanged(updateAuthUI);
-    } catch (error) {
-      console.error('Failed to initialize auth listener:', error);
-      resolve(null);
+  try {
+    const auth = getAuth();
+    if (!auth) {
+      console.error('Auth not initialized yet');
+      return;
     }
-  });
+    auth.onAuthStateChanged((user) => {
+      updateAuthUI(user);
+    });
+  } catch (error) {
+    console.error('Failed to initialize auth listener:', error);
+  }
 }

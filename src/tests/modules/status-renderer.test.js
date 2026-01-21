@@ -109,10 +109,9 @@ describe('status-renderer', () => {
       renderStatus(container, STATUS_TYPES.SUCCESS);
       
       expect(container.classList.remove).toHaveBeenCalledWith(
-        'color-accent',
-        'color-muted',
-        'color-error',
-        'color-success'
+        'color-accent', 'color-muted', 'color-error', 'color-success',
+        'status-saved', 'status-not-saved', 'status-outdated',
+        'status-error', 'status-success', 'status-info', 'status-loading'
       );
     });
 
@@ -125,10 +124,10 @@ describe('status-renderer', () => {
         expect(createIcon).toHaveBeenCalledWith('check_circle', ['icon-inline']);
       });
 
-      it('should add color-accent class', () => {
+      it('should add status-saved class', () => {
         renderStatus(container, STATUS_TYPES.SAVED);
         
-        expect(container.classList.add).toHaveBeenCalledWith('color-accent');
+        expect(container.classList.add).toHaveBeenCalledWith('status-saved');
       });
 
       it('should append icon to container', () => {
@@ -161,10 +160,10 @@ describe('status-renderer', () => {
         expect(createIcon).toHaveBeenCalledWith('cancel', ['icon-inline']);
       });
 
-      it('should add color-muted class', () => {
+      it('should add status-not-saved class', () => {
         renderStatus(container, STATUS_TYPES.NOT_SAVED);
         
-        expect(container.classList.add).toHaveBeenCalledWith('color-muted');
+        expect(container.classList.add).toHaveBeenCalledWith('status-not-saved');
       });
     });
 
@@ -200,10 +199,10 @@ describe('status-renderer', () => {
         expect(createIcon).toHaveBeenCalledWith('error', ['icon-inline']);
       });
 
-      it('should add color-error class', () => {
+      it('should add status-error class', () => {
         renderStatus(container, STATUS_TYPES.ERROR);
         
-        expect(container.classList.add).toHaveBeenCalledWith('color-error');
+        expect(container.classList.add).toHaveBeenCalledWith('status-error');
       });
 
       it('should display error message if provided', () => {
@@ -222,10 +221,10 @@ describe('status-renderer', () => {
         expect(createIcon).toHaveBeenCalledWith('check_circle', ['icon-inline']);
       });
 
-      it('should add color-success class', () => {
+      it('should add status-success class', () => {
         renderStatus(container, STATUS_TYPES.SUCCESS);
         
-        expect(container.classList.add).toHaveBeenCalledWith('color-success');
+        expect(container.classList.add).toHaveBeenCalledWith('status-success');
       });
     });
 
@@ -337,11 +336,11 @@ describe('status-renderer', () => {
 
       it('should update color classes correctly', () => {
         renderStatus(container, STATUS_TYPES.SAVED);
-        expect(container.classList.add).toHaveBeenCalledWith('color-accent');
+        expect(container.classList.add).toHaveBeenCalledWith('status-saved');
         
         vi.clearAllMocks();
         renderStatus(container, STATUS_TYPES.ERROR);
-        expect(container.classList.add).toHaveBeenCalledWith('color-error');
+        expect(container.classList.add).toHaveBeenCalledWith('status-error');
       });
 
       it('should change labels correctly', () => {
@@ -366,7 +365,7 @@ describe('status-renderer', () => {
         vi.clearAllMocks();
         renderStatus(container, STATUS_TYPES.SUCCESS, 'Data loaded');
         expect(createIcon).toHaveBeenCalledWith('check_circle', ['icon-inline']);
-        expect(container.classList.add).toHaveBeenCalledWith('color-success');
+        expect(container.classList.add).toHaveBeenCalledWith('status-success');
       });
 
       it('should handle complete loading to error flow', async () => {
@@ -380,16 +379,16 @@ describe('status-renderer', () => {
         vi.clearAllMocks();
         renderStatus(container, STATUS_TYPES.ERROR, 'Processing failed');
         expect(createIcon).toHaveBeenCalledWith('error', ['icon-inline']);
-        expect(container.classList.add).toHaveBeenCalledWith('color-error');
+        expect(container.classList.add).toHaveBeenCalledWith('status-error');
       });
 
       it('should handle saved to not saved transition', async () => {
         renderStatus(container, STATUS_TYPES.SAVED);
-        expect(container.classList.add).toHaveBeenCalledWith('color-accent');
+        expect(container.classList.add).toHaveBeenCalledWith('status-saved');
         
         vi.clearAllMocks();
         renderStatus(container, STATUS_TYPES.NOT_SAVED);
-        expect(container.classList.add).toHaveBeenCalledWith('color-muted');
+        expect(container.classList.add).toHaveBeenCalledWith('status-not-saved');
       });
     });
   });

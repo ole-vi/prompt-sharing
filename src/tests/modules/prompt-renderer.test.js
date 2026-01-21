@@ -484,6 +484,8 @@ describe('prompt-renderer', () => {
       });
     });
 
+    // Skipped: Test isolation issues - previous tests cache content that interferes
+    // Would need to mock sessionStorage and clear between tests properly
     it.skip('should handle complete workflow: init -> select file -> destroy', async () => {
       setCurrentPromptText('# Test Direct Set');
       expect(getCurrentPromptText()).toBe('# Test Direct Set');

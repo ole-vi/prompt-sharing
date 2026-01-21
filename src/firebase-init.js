@@ -2,6 +2,7 @@
 // This file initializes Firebase using the modular SDK
 
 import { TIMEOUTS, LIMITS } from './utils/constants.js';
+import { initServices } from './modules/firebase-service.js';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -22,8 +23,29 @@ function initFirebaseWhenReady() {
       const app = firebase.initializeApp(firebaseConfig);
       
       // Get services - compat API doesn't require app parameter
-      window.auth = firebase.auth();
-      window.db = firebase.firestore();
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      // Initialize services module
+      initServices(auth, db, null);
+
+      // Backward compatibility with deprecation warnings
+      Object.defineProperty(window, 'auth', {
+        get: () => {
+          console.warn('DEPRECATED: window.auth is deprecated. Use getAuth() from modules/firebase-service.js');
+          return auth;
+        },
+        configurable: true
+      });
+
+      Object.defineProperty(window, 'db', {
+        get: () => {
+          console.warn('DEPRECATED: window.db is deprecated. Use getDb() from modules/firebase-service.js');
+          return db;
+        },
+        configurable: true
+      });
+
       // Functions removed - not used in this app (uses direct REST API calls)
       
       // Port 5000 = dev server with emulators, port 3000 = production
@@ -33,7 +55,7 @@ function initFirebaseWhenReady() {
         try {
           // Use the same hostname as the page to avoid CORS issues
           const emulatorHost = window.location.hostname;
-          window.db.useEmulator(emulatorHost, 8090);
+          db.useEmulator(emulatorHost, 8090);
           console.log('🔧 Connected to Firebase Emulators (Firestore)');
           console.log('⚠️ Dev server - using test data only');
         } catch (emulatorError) {
