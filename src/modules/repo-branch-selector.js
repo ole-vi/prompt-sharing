@@ -573,6 +573,7 @@ export class BranchSelector {
       
       showMoreBtn.textContent = 'Loading...';
       showMoreBtn.style.pointerEvents = 'none';
+      showMoreBtn.classList.remove('status-info');
       
       try {
         const pathParts = this.sourceId.split('/');
@@ -584,7 +585,7 @@ export class BranchSelector {
 
         if (!allBranches || allBranches.length === 0) {
           showMoreBtn.textContent = allBranches === null ? 'GitHub API rate limited - try later' : 'No branches found';
-          showMoreBtn.style.color = 'var(--muted)';
+          showMoreBtn.classList.add('status-info');
           showMoreBtn.style.pointerEvents = 'auto';
           return;
         }
@@ -619,7 +620,7 @@ export class BranchSelector {
       } catch (error) {
         console.error('Failed to load branches:', error);
         showMoreBtn.textContent = 'Failed to load - click to retry';
-        showMoreBtn.style.color = 'var(--muted)';
+        showMoreBtn.classList.add('status-info');
         showMoreBtn.style.pointerEvents = 'auto';
       }
     };
