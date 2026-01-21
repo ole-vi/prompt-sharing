@@ -5,8 +5,7 @@
 
 import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
 import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly } from '../modules/jules-queue.js';
-import { TIMEOUTS } from '../utils/constants.js';
-import { createElement, clearElement } from '../utils/dom-helpers.js';
+import { createElement, clearElement, waitForDOMReady, waitForHeader } from '../utils/dom-helpers.js';
 
 // Initialize checkbox mutual exclusivity
 initMutualExclusivity();
@@ -18,14 +17,6 @@ function createEmptyStatePanel(message, isError = false) {
     ? 'panel text-center pad-xl'
     : 'panel text-center pad-xl muted-text';
   return createElement('div', className, message);
-}
-
-function waitForComponents() {
-  if (document.querySelector('header')) {
-    initApp();
-  } else {
-    setTimeout(waitForComponents, TIMEOUTS.componentCheck);
-  }
 }
 
 function initApp() {
@@ -96,8 +87,6 @@ async function loadQueue() {
   }
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', waitForComponents);
-} else {
-  waitForComponents();
-}
+waitForDOMReady(() => {
+  waitForHeader(initApp);
+});

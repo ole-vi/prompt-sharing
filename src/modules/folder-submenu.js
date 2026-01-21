@@ -13,6 +13,13 @@ export function setContext(owner, repo, branch) {
 export function init() {
   createSubmenu();
   document.addEventListener('click', handleDocumentClick);
+  
+  // Listen for branch changes from the header branch selector
+  window.addEventListener('branchChanged', (event) => {
+    if (event.detail && event.detail.branch) {
+      currentBranch = event.detail.branch;
+    }
+  });
 }
 
 export function destroy() {
@@ -120,7 +127,9 @@ function handleDocumentClick(event) {
     closeAll();
 
     if (action === 'create-prompt') {
-      const newFilePath = path ? `${path}/new-prompt.md` : 'new-prompt.md';
+      const now = new Date();
+      const timestamp = `${now.getFullYear().toString().slice(-2)}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}-${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
+      const newFilePath = path ? `${path}/prompt-${timestamp}.md` : `prompt-${timestamp}.md`;
       const ghUrl = `https://github.com/${currentOwner}/${currentRepo}/new/${currentBranch}?filename=${encodeURIComponent(newFilePath)}&ref=${encodeURIComponent(currentBranch)}`;
       window.open(ghUrl, '_blank', 'noopener,noreferrer');
     } else if (action === 'create-conversation') {
