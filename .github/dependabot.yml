@@ -20,7 +20,7 @@ updates:
     labels:
       - "dependencies"
       - "npm"
-      - "firebase-functions"
+      - "firebase"
     commit-message:
       prefix: "all:"
       include: "scope"
@@ -32,7 +32,7 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-      - "github-actions"
+      - "actions"
     commit-message:
       prefix: "actions:"
       include: "scope"
