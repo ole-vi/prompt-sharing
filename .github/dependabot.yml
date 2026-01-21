@@ -1,0 +1,38 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "npm"
+    commit-message:
+      prefix: "all:"
+      include: "scope"
+
+  - package-ecosystem: "npm"
+    directory: "/functions"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "npm"
+      - "firebase"
+    commit-message:
+      prefix: "all:"
+      include: "scope"
+
+  - package-ecosystem: "github-actions"
+    directory: ".github/workflows/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "actions"
+    commit-message:
+      prefix: "actions:"
+      include: "scope"
