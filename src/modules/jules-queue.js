@@ -248,6 +248,10 @@ async function openEditQueueModal(docId) {
     modal.id = 'editQueueItemModal';
     modal.className = 'modal-overlay';
     
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'editQueueModalTitle');
+
     const dialog = document.createElement('div');
     dialog.className = 'modal-dialog modal-dialog-lg';
     
@@ -256,10 +260,12 @@ async function openEditQueueModal(docId) {
     header.className = 'modal-header';
     const title = document.createElement('h2');
     title.className = 'modal-title';
+    title.id = 'editQueueModalTitle';
     title.textContent = 'Edit Queue Item';
     const closeBtn = document.createElement('button');
     closeBtn.className = 'btn-icon close-modal';
     closeBtn.id = 'closeEditQueueModal';
+    closeBtn.setAttribute('aria-label', 'Close');
     closeBtn.title = 'Close';
     const closeIcon = document.createElement('span');
     closeIcon.className = 'icon';
@@ -1191,6 +1197,7 @@ function createQueueCard(item) {
   const editBtn = document.createElement('button');
   editBtn.className = 'btn-icon edit-queue-item';
   editBtn.dataset.docid = item.id;
+  editBtn.setAttribute('aria-label', 'Edit queue item');
   editBtn.title = 'Edit queue item';
   const editIcon = document.createElement('span');
   editIcon.className = 'icon icon-inline';
@@ -1326,6 +1333,7 @@ function createQueueCard(item) {
       const viewBtn = document.createElement('button');
       viewBtn.className = 'btn-icon queue-view-btn';
       viewBtn.dataset.docid = item.id;
+      viewBtn.setAttribute('aria-label', 'View full prompt');
       viewBtn.title = 'View full prompt';
       const viewIcon = document.createElement('span');
       viewIcon.className = 'icon';

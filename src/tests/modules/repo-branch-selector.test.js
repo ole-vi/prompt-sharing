@@ -73,6 +73,14 @@ global.document = {
     onclick: null,
     appendChild: vi.fn(),
     contains: vi.fn(() => false),
+    setAttribute: vi.fn(),
+    removeAttribute: vi.fn(),
+    classList: {
+      add: vi.fn(),
+      remove: vi.fn(),
+      toggle: vi.fn(),
+      contains: vi.fn()
+    },
     getBoundingClientRect: vi.fn(() => ({
       top: 100,
       bottom: 150,
@@ -99,6 +107,14 @@ const createMockElement = (id = '') => ({
     left: '',
     width: ''
   },
+  classList: {
+    add: vi.fn(),
+    remove: vi.fn(),
+    toggle: vi.fn(),
+    contains: vi.fn()
+  },
+  setAttribute: vi.fn(),
+  removeAttribute: vi.fn(),
   contains: vi.fn(() => false),
   getBoundingClientRect: vi.fn(() => ({
     top: 100,
