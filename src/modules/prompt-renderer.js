@@ -8,6 +8,38 @@ import { showToast } from './toast.js';
 import { copyAndOpen } from './copen.js';
 import statusBar from './status-bar.js';
 
+function sanitizeHtml(html) {
+  if (typeof window.DOMPurify === 'undefined') {
+    console.error('DOMPurify not loaded - stripping all HTML tags as safety fallback');
+    const div = document.createElement('div');
+    div.textContent = html;
+    return div.innerHTML;
+  }
+
+  const config = {
+    ALLOWED_TAGS: [
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'p', 'br', 'hr', 'strong', 'em', 'u', 's', 'del', 'ins', 'sub', 'sup',
+      'code', 'pre',
+      'blockquote',
+      'ul', 'ol', 'li',
+      'a', 'img',
+      'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
+      'div', 'span'
+    ],
+    ALLOWED_ATTR: [
+      'href', 'title', 'alt', 'src', 'class', 'id', 'target', 'rel',
+      'colspan', 'rowspan', 'align'
+    ],
+    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    ADD_ATTR: ['target'],
+    FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'base', 'link', 'meta'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur']
+  };
+
+  return window.DOMPurify.sanitize(html, config);
+}
+
 let cacheRaw = new Map();
 let currentPromptText = null;
 let currentFile = null;
@@ -429,12 +461,12 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     const looksLikeMarkdown = /^#|^\*|^-|^\d+\.|```/.test(raw.trim());
     if (!looksLikeMarkdown) {
       const wrappedContent = '```\n' + raw + '\n```';
-      contentEl.innerHTML = marked.parse(wrappedContent, { breaks: true });
+      contentEl.innerHTML = sanitizeHtml(marked.parse(wrappedContent, { breaks: true }));
     } else {
-      contentEl.innerHTML = marked.parse(raw, { breaks: true });
+      contentEl.innerHTML = sanitizeHtml(marked.parse(raw, { breaks: true }));
     }
   } else {
-    contentEl.innerHTML = marked.parse(raw, { breaks: true });
+    contentEl.innerHTML = sanitizeHtml(marked.parse(raw, { breaks: true }));
   }
 
   setCurrentPromptText(raw);
