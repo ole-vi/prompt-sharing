@@ -151,7 +151,11 @@ describe('jules-queue', () => {
       const result = await handleQueueAction({ prompt: 'test' });
       
       expect(result).toBe(false);
-      expect(showToast).toHaveBeenCalledWith('Please sign in to use Jules features', 'warn');
+      expect(showToast).toHaveBeenCalledWith(
+        expect.stringContaining('Please sign in to use Jules features'),
+        'warn',
+        undefined
+      );
     });
 
     it('should add item to queue if user signed in', async () => {
@@ -192,9 +196,12 @@ describe('jules-queue', () => {
       const result = await handleQueueAction({ prompt: 'test' });
       
       expect(result).toBe(false);
+      // The original error "Network error" is passed through.
+      // handleError adds suggestion "Please check your connection and try again."
       expect(showToast).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to add to queue'),
-        'error'
+        expect.stringContaining('Network error'),
+        'error',
+        undefined
       );
     });
 
@@ -205,7 +212,11 @@ describe('jules-queue', () => {
       const result = await handleQueueAction({ prompt: 'test' });
       
       expect(result).toBe(false);
-      expect(showToast).toHaveBeenCalledWith('Please sign in to use Jules features', 'warn');
+      expect(showToast).toHaveBeenCalledWith(
+        expect.stringContaining('Please sign in to use Jules features'),
+        'warn',
+        undefined
+      );
     });
   });
 
