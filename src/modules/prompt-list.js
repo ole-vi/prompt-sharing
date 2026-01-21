@@ -1,7 +1,7 @@
 import { slugify } from '../utils/slug.js';
 import { STORAGE_KEYS, TAG_DEFINITIONS } from '../utils/constants.js';
 import { debounce } from '../utils/debounce.js';
-import { clearElement, stopPropagation, setElementDisplay, toggleClass, createElement } from '../utils/dom-helpers.js';
+import { clearElement, createElement } from '../utils/dom-helpers.js';
 import * as folderSubmenu from './folder-submenu.js';
 import { loadFuse } from '../utils/lazy-loaders.js';
 import { loadPrompts, getPromptFolder } from './prompt-service.js';

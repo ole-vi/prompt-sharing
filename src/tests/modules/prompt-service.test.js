@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { loadPrompts, getPromptFolder } from '../../modules/prompt-service.js';
 
 // Mock dependencies
