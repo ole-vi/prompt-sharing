@@ -70,7 +70,14 @@ global.document = {
       left: '',
       width: ''
     },
+    classList: {
+      add: vi.fn(),
+      remove: vi.fn(),
+      contains: vi.fn(() => false),
+      toggle: vi.fn()
+    },
     onclick: null,
+    setAttribute: vi.fn(),
     appendChild: vi.fn(),
     contains: vi.fn(() => false),
     setAttribute: vi.fn(),
@@ -620,8 +627,7 @@ describe('repo-branch-selector', () => {
         branchSelector.initialize('github.com/test/repo', 'main');
         
         expect(mockBtn.disabled).toBe(false);
-        expect(mockBtn.style.opacity).toBe('1');
-        expect(mockBtn.style.cursor).toBe('pointer');
+        expect(mockBtn.classList.remove).toHaveBeenCalledWith('disabled');
       });
 
       it('should disable button if no sourceId', () => {
@@ -629,8 +635,7 @@ describe('repo-branch-selector', () => {
         
         expect(mockBtn.disabled).toBe(true);
         expect(mockText.textContent).toBe('Select repository first');
-        expect(mockBtn.style.opacity).toBe('0.5');
-        expect(mockBtn.style.cursor).toBe('not-allowed');
+        expect(mockBtn.classList.add).toHaveBeenCalledWith('disabled');
       });
 
       it('should restore from storage if no sourceId provided', () => {

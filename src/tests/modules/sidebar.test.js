@@ -26,6 +26,7 @@ describe('sidebar', () => {
   let mockToggleBtn;
   let getItemSpy;
   let setItemSpy;
+  let consoleErrorSpy;
 
   beforeEach(() => {
     // Clear DOM
@@ -50,6 +51,9 @@ describe('sidebar', () => {
     // Create spies on the mock
     getItemSpy = vi.spyOn(localStorage, 'getItem');
     setItemSpy = vi.spyOn(localStorage, 'setItem');
+    
+    // Create console.error spy
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     
     // Clear localStorage
     localStorage.clear();
@@ -183,17 +187,13 @@ describe('sidebar', () => {
         throw new Error('Storage access denied');
       });
       
-      // Should not throw error - sidebar.js doesn't wrap in try/catch
-      // This test verifies current behavior, not desired behavior
+      // Should not throw error - sidebar.js wraps in try/catch
       expect(() => {
         initSidebar();
-      }).toThrow('Storage access denied');
+      }).not.toThrow();
     });
 
-    // TODO: Fix unhandled error in event handler - sidebar.js doesn't wrap localStorage.setItem in try/catch
-    // This causes "Storage quota exceeded" error to propagate in CI environment
-    // Related: https://github.com/promptroot/promptroot/issues/479
-    it.skip('should handle localStorage.setItem errors gracefully', () => {
+    it('should handle localStorage.setItem errors gracefully', () => {
       getItemSpy.mockReturnValue(null);
       
       initSidebar();
@@ -203,14 +203,13 @@ describe('sidebar', () => {
         throw new Error('Storage quota exceeded');
       });
       
-      // The click will cause an error to be thrown from event handler
+      // The click should not throw error
       expect(() => {
         mockToggleBtn.click();
-      }).toThrow('Storage quota exceeded');
+      }).not.toThrow();
       
-      // Sidebar should still toggle visually before the error is thrown
+      // Sidebar should still toggle visually
       expect(mockSidebar.classList.contains('collapsed')).toBe(true);
-      expect(setItemSpy).toHaveBeenCalledWith('sidebar-collapsed', true);
     });
 
     it('should work with pre-existing collapsed class', () => {
