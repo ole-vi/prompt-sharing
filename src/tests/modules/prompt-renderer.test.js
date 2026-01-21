@@ -33,7 +33,8 @@ vi.mock('../../utils/constants.js', () => ({
 }));
 
 vi.mock('../../utils/dom-helpers.js', () => ({
-  setElementDisplay: vi.fn()
+  setElementDisplay: vi.fn(),
+  toggleVisibility: vi.fn()
 }));
 
 vi.mock('../../utils/lazy-loaders.js', () => ({
@@ -126,12 +127,15 @@ describe('prompt-renderer', () => {
       removeAttribute: vi.fn(),
       setAttribute: vi.fn(),
       getAttribute: vi.fn(),
-      dataset: {}
+      dataset: {},
+      childNodes: [],
+      cloneNode: vi.fn().mockReturnValue({}),
+      focus: vi.fn(),
     };
 
     global.document.getElementById.mockImplementation((id) => {
       if (['content', 'title', 'meta', 'empty', 'actions', 'copyBtn', 'copenBtn', 
-           'rawBtn', 'ghBtn', 'editBtn', 'shareBtn', 'julesBtn', 'freeInputBtn', 'moreBtn'].includes(id)) {
+           'rawBtn', 'ghBtn', 'editBtn', 'shareBtn', 'julesBtn', 'freeInputBtn', 'moreBtn'].includes(id) || id.startsWith('freeInput')) {
         return { ...mockElement, id };
       }
       return null;

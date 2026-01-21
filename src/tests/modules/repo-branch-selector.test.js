@@ -47,6 +47,13 @@ global.window = {
   getComputedStyle: vi.fn()
 };
 
+const createMockClassList = () => ({
+  add: vi.fn(),
+  remove: vi.fn(),
+  toggle: vi.fn(),
+  contains: vi.fn().mockReturnValue(false)
+});
+
 global.document = {
   createElement: vi.fn((tag) => ({
     tagName: tag.toUpperCase(),
@@ -70,7 +77,10 @@ global.document = {
       left: '',
       width: ''
     },
+    classList: createMockClassList(),
     onclick: null,
+    setAttribute: vi.fn(),
+    getAttribute: vi.fn(),
     appendChild: vi.fn(),
     contains: vi.fn(() => false),
     getBoundingClientRect: vi.fn(() => ({
@@ -99,6 +109,9 @@ const createMockElement = (id = '') => ({
     left: '',
     width: ''
   },
+  classList: createMockClassList(),
+  setAttribute: vi.fn(),
+  getAttribute: vi.fn(),
   contains: vi.fn(() => false),
   getBoundingClientRect: vi.fn(() => ({
     top: 100,
@@ -340,24 +353,24 @@ describe('repo-branch-selector', () => {
       });
 
       it('should toggle menu visibility on button click', async () => {
-        mockMenu.style.display = 'none';
+        mockMenu.classList.contains.mockReturnValue(false);
         
         await mockBtn.onclick({ stopPropagation: vi.fn() });
         
-        expect(mockMenu.style.display).toBe('block');
+        expect(mockMenu.classList.add).toHaveBeenCalledWith('open');
       });
 
       it('should close menu if already open', async () => {
-        mockMenu.style.display = 'block';
+        mockMenu.classList.contains.mockReturnValue(true);
         
         await mockBtn.onclick({ stopPropagation: vi.fn() });
         
-        expect(mockMenu.style.display).toBe('none');
+        expect(mockMenu.classList.remove).toHaveBeenCalledWith('open');
       });
 
       it('should position fixed dropdowns', async () => {
         global.window.getComputedStyle.mockReturnValue({ position: 'fixed' });
-        mockMenu.style.display = 'none';
+        mockMenu.classList.contains.mockReturnValue(false);
         
         await mockBtn.onclick({ stopPropagation: vi.fn() });
         
@@ -385,7 +398,7 @@ describe('repo-branch-selector', () => {
         const populatePromise = repoSelector.populateDropdown();
         
         expect(mockMenu.appendChild).toHaveBeenCalled();
-        expect(mockMenu.style.display).toBe('block');
+        expect(mockMenu.classList.add).toHaveBeenCalledWith('open');
         
         await populatePromise;
       });
@@ -604,8 +617,7 @@ describe('repo-branch-selector', () => {
         branchSelector.initialize('github.com/test/repo', 'main');
         
         expect(mockBtn.disabled).toBe(false);
-        expect(mockBtn.style.opacity).toBe('1');
-        expect(mockBtn.style.cursor).toBe('pointer');
+        expect(mockBtn.classList.remove).toHaveBeenCalledWith('disabled');
       });
 
       it('should disable button if no sourceId', () => {
@@ -613,8 +625,7 @@ describe('repo-branch-selector', () => {
         
         expect(mockBtn.disabled).toBe(true);
         expect(mockText.textContent).toBe('Select repository first');
-        expect(mockBtn.style.opacity).toBe('0.5');
-        expect(mockBtn.style.cursor).toBe('not-allowed');
+        expect(mockBtn.classList.add).toHaveBeenCalledWith('disabled');
       });
 
       it('should restore from storage if no sourceId provided', () => {
@@ -656,24 +667,24 @@ describe('repo-branch-selector', () => {
       });
 
       it('should toggle menu visibility', () => {
-        mockMenu.style.display = 'none';
+        mockMenu.classList.contains.mockReturnValue(false);
         
         mockBtn.onclick({ stopPropagation: vi.fn() });
         
-        expect(mockMenu.style.display).toBe('block');
+        expect(mockMenu.classList.add).toHaveBeenCalledWith('open');
       });
 
       it('should close menu if already open', () => {
-        mockMenu.style.display = 'block';
+        mockMenu.classList.contains.mockReturnValue(true);
         
         mockBtn.onclick({ stopPropagation: vi.fn() });
         
-        expect(mockMenu.style.display).toBe('none');
+        expect(mockMenu.classList.remove).toHaveBeenCalledWith('open');
       });
 
       it('should position fixed dropdowns', () => {
         global.window.getComputedStyle.mockReturnValue({ position: 'fixed' });
-        mockMenu.style.display = 'none';
+        mockMenu.classList.contains.mockReturnValue(false);
         
         mockBtn.onclick({ stopPropagation: vi.fn() });
         
@@ -715,7 +726,7 @@ describe('repo-branch-selector', () => {
       it('should display menu', () => {
         branchSelector.populateDropdown();
         
-        expect(mockMenu.style.display).toBe('block');
+        expect(mockMenu.classList.add).toHaveBeenCalledWith('open');
       });
     });
 
