@@ -123,7 +123,8 @@ let editModalState = {
   currentType: null,
   repoSelector: null,
   branchSelector: null,
-  isUnscheduled: false
+  isUnscheduled: false,
+  isInitializing: false
 };
 
 async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu) {
@@ -132,7 +133,9 @@ async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, re
     dropdownText: branchDropdownText,
     dropdownMenu: branchDropdownMenu,
     onSelect: (selectedBranch) => {
-      editModalState.hasUnsavedChanges = true;
+      if (!editModalState.isInitializing) {
+        editModalState.hasUnsavedChanges = true;
+      }
     }
   });
 
@@ -142,7 +145,9 @@ async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, re
     dropdownMenu: repoDropdownMenu,
     branchSelector: branchSelector,
     onSelect: (selectedSourceId) => {
-      editModalState.hasUnsavedChanges = true;
+      if (!editModalState.isInitializing) {
+        editModalState.hasUnsavedChanges = true;
+      }
     }
   });
 
@@ -234,6 +239,7 @@ async function openEditQueueModal(docId) {
 
   editModalState.currentDocId = docId;
   editModalState.hasUnsavedChanges = false;
+  editModalState.isInitializing = true;
 
   let modal = document.getElementById('editQueueItemModal');
   if (!modal) {
@@ -472,6 +478,9 @@ async function openEditQueueModal(docId) {
 
   await initializeEditRepoAndBranch(item.sourceId, item.branch || 'master', repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu);
 
+  // Modal setup is complete, enable change tracking
+  editModalState.isInitializing = false;
+
   modal.classList.add('show');
 
   const trackChanges = () => {
@@ -660,6 +669,7 @@ async function closeEditModal(force = false) {
   editModalState.hasUnsavedChanges = false;
   editModalState.originalData = null;
   editModalState.currentDocId = null;
+  editModalState.isInitializing = false;
   editModalState.currentType = null;
   editModalState.repoSelector = null;
   editModalState.branchSelector = null;

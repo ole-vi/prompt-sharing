@@ -90,6 +90,11 @@
 .close-modal { background: transparent; border: none; font-size: 20px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; padding: 4px 8px; color: var(--text); }
 .close-modal:hover { opacity: 1; }
 
+/* Confirm modal specific styles */
+#confirmModal { z-index: 10000; }
+#confirmModal .modal-content { max-width: 480px; }
+#confirmModalMessage { line-height: 1.6; white-space: pre-wrap; }
+
 /* Subtask editing */
 .subtask-item { margin-bottom: 16px; position: relative; }
 .subtask-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
