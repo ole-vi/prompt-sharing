@@ -1,5 +1,6 @@
 import { getCurrentUser } from './auth.js';
 import { showToast } from './toast.js';
+import { toggleVisibility } from '../utils/dom-helpers.js';
 
 function extractDefaultBranch(source) {
   const defaultBranchObj = source?.githubRepo?.defaultBranch ||
@@ -19,7 +20,7 @@ function setupClickOutsideClose(targetBtn, targetMenu) {
   
   const closeDropdown = (e) => {
     if (!targetBtn.contains(e.target) && !targetMenu.contains(e.target)) {
-      targetMenu.style.display = 'none';
+      targetMenu.classList.remove('open');
     }
   };
   
@@ -142,8 +143,8 @@ export class RepoSelector {
   setupDropdownToggle() {
     this.dropdownBtn.onclick = async (e) => {
       e.stopPropagation();
-      if (this.dropdownMenu.style.display === 'block') {
-        this.dropdownMenu.style.display = 'none';
+      if (this.dropdownMenu.classList.contains('open')) {
+        this.dropdownMenu.classList.remove('open');
         return;
       }
       
@@ -169,7 +170,7 @@ export class RepoSelector {
     loadingIndicator.style.cssText = 'padding:12px; text-align:center; color:var(--muted); font-size:13px;';
     loadingIndicator.textContent = 'Loading...';
     this.dropdownMenu.appendChild(loadingIndicator);
-    this.dropdownMenu.style.display = 'block';
+    this.dropdownMenu.classList.add('open');
     
     await new Promise(resolve => setTimeout(resolve, 0));
     
@@ -183,7 +184,7 @@ export class RepoSelector {
       this.renderAllRepos();
     }
     
-    this.dropdownMenu.style.display = 'block';
+    this.dropdownMenu.classList.add('open');
   }
 
   async renderFavorites() {
@@ -191,7 +192,7 @@ export class RepoSelector {
       const item = this.createRepoItem(fav.name, fav.id, true, async () => {
         this.selectedSourceId = fav.id;
         this.dropdownText.textContent = fav.name;
-        this.dropdownMenu.style.display = 'none';
+        this.dropdownMenu.classList.remove('open');
         
         // Save repo selection
         this.saveToStorage();
@@ -245,7 +246,7 @@ export class RepoSelector {
         }
       }
       
-      showMoreBtn.style.display = 'none';
+      toggleVisibility(showMoreBtn, false);
       this.renderAllRepos();
     };
     
@@ -296,7 +297,7 @@ export class RepoSelector {
       const item = this.createRepoItem(repoName, source.name || source.id, false, () => {
         this.selectedSourceId = source.name || source.id;
         this.dropdownText.textContent = repoName;
-        this.dropdownMenu.style.display = 'none';
+        this.dropdownMenu.classList.remove('open');
         
         // Save repo selection
         this.saveToStorage();
@@ -326,7 +327,7 @@ export class RepoSelector {
       e.stopPropagation();
       if (isFavorite) {
         await this.removeFavorite(id);
-        this.dropdownMenu.style.display = 'none';
+        this.dropdownMenu.classList.remove('open');
         setTimeout(() => this.populateDropdown(), 0);
       } else {
         const defaultBranch = extractDefaultBranch(this.allSources.find(s => (s.name || s.id) === id));
@@ -520,8 +521,8 @@ export class BranchSelector {
   setupDropdownToggle() {
     this.dropdownBtn.onclick = (e) => {
       e.stopPropagation();
-      if (this.dropdownMenu.style.display === 'block') {
-        this.dropdownMenu.style.display = 'none';
+      if (this.dropdownMenu.classList.contains('open')) {
+        this.dropdownMenu.classList.remove('open');
         return;
       }
       
@@ -551,7 +552,7 @@ export class BranchSelector {
     const currentItem = document.createElement('div');
     currentItem.className = 'dropdown-item-with-star selected';
     currentItem.onclick = () => {
-      this.dropdownMenu.style.display = 'none';
+      this.dropdownMenu.classList.remove('open');
     };
     
     // Hide star for current item
@@ -593,7 +594,7 @@ export class BranchSelector {
         }
 
         this.allBranchesLoaded = true;
-        showMoreBtn.style.display = 'none';
+        toggleVisibility(showMoreBtn, false);
         
         allBranches.forEach(branch => {
           if (branch.name === this.selectedBranch) return;
@@ -612,7 +613,7 @@ export class BranchSelector {
           
           item.onclick = () => {
             this.setSelectedBranch(branch.name);
-            this.dropdownMenu.style.display = 'none';
+            this.dropdownMenu.classList.remove('open');
           };
           
           item.appendChild(star);
@@ -629,7 +630,7 @@ export class BranchSelector {
     
     this.dropdownMenu.appendChild(showMoreBtn);
     
-    this.dropdownMenu.style.display = 'block';
+    this.dropdownMenu.classList.add('open');
   }
 
   setSelectedBranch(branch) {

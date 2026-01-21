@@ -19,8 +19,18 @@ export function createIcon(iconName, classes = [], ariaHidden = true) {
   if (ariaHidden) span.setAttribute('aria-hidden', 'true');
   return span;
 }
+
+export function toggleVisibility(el, shouldShow) {
+  if (!el) return;
+  if (shouldShow === undefined) {
+    el.classList.toggle('hidden');
+  } else {
+    el.classList.toggle('hidden', !shouldShow);
+  }
+}
+
 export function setElementDisplay(el, show = true) {
-  el.classList.toggle('hidden', !show);
+  toggleVisibility(el, show);
 }
 
 export function toggleClass(el, className, force) {

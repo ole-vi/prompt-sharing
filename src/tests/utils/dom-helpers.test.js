@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { 
   createElement, 
   createIcon, 
+  toggleVisibility,
   setElementDisplay, 
   toggleClass, 
   clearElement, 
@@ -119,6 +120,45 @@ describe('DOM Helpers', () => {
       const icon = createIcon('default');
       
       expect(icon.getAttribute('aria-hidden')).toBe('true');
+    });
+  });
+
+  describe('toggleVisibility', () => {
+    it('should toggle .hidden class if shouldShow is undefined', () => {
+      const el = document.createElement('div');
+
+      toggleVisibility(el);
+      expect(el.classList.contains('hidden')).toBe(true);
+
+      toggleVisibility(el);
+      expect(el.classList.contains('hidden')).toBe(false);
+    });
+
+    it('should remove .hidden class if shouldShow is true', () => {
+      const el = document.createElement('div');
+      el.classList.add('hidden');
+
+      toggleVisibility(el, true);
+      expect(el.classList.contains('hidden')).toBe(false);
+
+      // Should stay visible
+      toggleVisibility(el, true);
+      expect(el.classList.contains('hidden')).toBe(false);
+    });
+
+    it('should add .hidden class if shouldShow is false', () => {
+      const el = document.createElement('div');
+
+      toggleVisibility(el, false);
+      expect(el.classList.contains('hidden')).toBe(true);
+
+      // Should stay hidden
+      toggleVisibility(el, false);
+      expect(el.classList.contains('hidden')).toBe(true);
+    });
+
+    it('should handle null element', () => {
+      expect(() => toggleVisibility(null)).not.toThrow();
     });
   });
 

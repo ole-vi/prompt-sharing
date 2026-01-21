@@ -52,6 +52,7 @@ a:hover { text-decoration: underline; }
 .actions-right { display: flex; gap: 8px; justify-content: flex-end; }
 .menu-anchor { position: relative; display: inline-block; }
 .menu-panel { display: none; position: absolute; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; }
+.menu-panel.open { display: block; }
 .menu-panel-sm { min-width: 150px; }
 .menu-panel-md { min-width: 180px; }
 .menu-panel--above { bottom: 100%; left: 0; margin-bottom: 4px; }

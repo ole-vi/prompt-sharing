@@ -1,7 +1,7 @@
 import { slugify } from '../utils/slug.js';
 import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './github-api.js';
 import { CODEX_URL_REGEX, TIMEOUTS } from '../utils/constants.js';
-import { setElementDisplay } from '../utils/dom-helpers.js';
+import { setElementDisplay, toggleVisibility } from '../utils/dom-helpers.js';
 import { loadMarked } from '../utils/lazy-loaders.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
@@ -85,7 +85,7 @@ function handleDocumentClick(event) {
   if (target === copenBtn) {
     event.stopPropagation();
     if (copenMenu) {
-      copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
+      copenMenu.classList.toggle('open');
     }
     return;
   }
@@ -95,7 +95,7 @@ function handleDocumentClick(event) {
     event.stopPropagation();
     const targetApp = copenMenuItem.dataset.target;
     handleCopenPrompt(targetApp);
-    copenMenu.style.display = 'none';
+    copenMenu.classList.remove('open');
     return;
   }
 
@@ -153,7 +153,7 @@ function handleDocumentClick(event) {
   if (target === moreBtn) {
     event.stopPropagation();
     if (moreMenu) {
-      moreMenu.style.display = moreMenu.style.display === 'none' ? 'block' : 'none';
+      moreMenu.classList.toggle('open');
     }
     return;
   }
@@ -167,7 +167,7 @@ function handleDocumentClick(event) {
     if (editBtn && editBtn.href) {
       window.open(editBtn.href, '_blank', 'noopener,noreferrer');
     }
-    if (moreMenu) moreMenu.style.display = 'none';
+    if (moreMenu) moreMenu.classList.remove('open');
     return;
   }
 
@@ -176,7 +176,7 @@ function handleDocumentClick(event) {
     if (ghBtn && ghBtn.href) {
       window.open(ghBtn.href, '_blank', 'noopener,noreferrer');
     }
-    if (moreMenu) moreMenu.style.display = 'none';
+    if (moreMenu) moreMenu.classList.remove('open');
     return;
   }
 
@@ -185,12 +185,12 @@ function handleDocumentClick(event) {
     if (rawBtn && rawBtn.href) {
       window.open(rawBtn.href, '_blank', 'noopener,noreferrer');
     }
-    if (moreMenu) moreMenu.style.display = 'none';
+    if (moreMenu) moreMenu.classList.remove('open');
     return;
   }
 
-  if (copenMenu) copenMenu.style.display = 'none';
-  if (moreMenu) moreMenu.style.display = 'none';
+  if (copenMenu) copenMenu.classList.remove('open');
+  if (moreMenu) moreMenu.classList.remove('open');
 }
 
 async function handleBranchChanged() {
@@ -257,14 +257,8 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   setElementDisplay(metaEl, true);
   setElementDisplay(actionsEl, true);
   
-  // Clear inline styles that might have been set by showFreeInputForm
-  if (titleEl) titleEl.style.display = '';
-  if (metaEl) metaEl.style.display = '';
-  if (actionsEl) actionsEl.style.display = '';
-  
   if (contentEl) {
-    contentEl.style.display = '';
-    contentEl.classList.remove('hidden');
+    toggleVisibility(contentEl, true);
   }
 
   titleEl.textContent = f.name.replace(/\.md$/i, '');
@@ -346,6 +340,10 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   const moreGhBtn = document.getElementById('moreGhBtn');
   const moreRawBtn = document.getElementById('moreRawBtn');
   
+  if (editBtn) toggleVisibility(editBtn, true);
+  if (ghBtn) toggleVisibility(ghBtn, true);
+  if (rawBtn) toggleVisibility(rawBtn, true);
+
   if (isGistContent && gistUrl) {
     editBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">edit</span> Edit Link';
     editBtn.title = 'Edit the gist link';
