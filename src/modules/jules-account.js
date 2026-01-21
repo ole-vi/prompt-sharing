@@ -7,6 +7,7 @@ import { showJulesQueueModal } from './jules-queue.js';
 import { loadJulesProfileInfo, listJulesSessions, getDecryptedJulesKey } from './jules-api.js';
 import { getCache, setCache, clearCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { showToast } from './toast.js';
+import { handleError, ErrorCategory } from '../utils/error-handler.js';
 import { showConfirm } from './confirm-modal.js';
 import { attachPromptViewerHandlers } from './prompt-viewer.js';
 import { TIMEOUTS, JULES_UI_TEXT, CSS_CLASSES } from '../utils/constants.js';
@@ -20,7 +21,7 @@ export function showUserProfileModal() {
   const user = window.auth?.currentUser;
 
   if (!user) {
-    showToast('Not logged in.', 'error');
+    handleError('Not logged in.', { source: 'showUserProfileModal' }, { category: ErrorCategory.AUTH });
     return;
   }
 
@@ -107,7 +108,7 @@ export function showUserProfileModal() {
           throw new Error('Failed to delete key');
         }
       } catch (error) {
-        showToast('Failed to reset API key: ' + error.message, 'error');
+        handleError(error, { source: 'resetJulesKeyBtn' }, { category: ErrorCategory.USER_ACTION });
         renderStatus(resetBtn, STATUS_TYPES.RESET, 'Reset Jules API Key');
         resetBtn.disabled = false;
       }
@@ -473,15 +474,20 @@ async function loadAndDisplayJulesProfile(uid) {
 
 
   } catch (error) {
+    const errorInfo = handleError(error, { source: 'loadAndDisplayJulesProfile' }, { showDisplay: false });
+    const errorMsg = errorInfo.suggestion
+      ? `Failed: ${errorInfo.message}. ${errorInfo.suggestion}`
+      : `Failed: ${errorInfo.message}`;
+
     const sourcesErr = document.createElement('div');
     sourcesErr.className = 'jules-error-state';
-    sourcesErr.textContent = `Failed to load sources: ${error.message}`;
+    sourcesErr.textContent = errorMsg;
     sourcesListDiv.replaceChildren();
     sourcesListDiv.appendChild(sourcesErr);
     
     const sessionsErr = document.createElement('div');
     sessionsErr.className = 'jules-error-state';
-    sessionsErr.textContent = `Failed to load sessions: ${error.message}`;
+    sessionsErr.textContent = errorMsg;
     sessionsListDiv.replaceChildren();
     sessionsListDiv.appendChild(sessionsErr);
 
@@ -558,12 +564,16 @@ async function loadSessionsPage() {
       allSessionsList.appendChild(emptyMsg);
     }
   } catch (error) {
+    const errorInfo = handleError(error, { source: 'loadSessionsPage' }, { showDisplay: false });
+
     if (allSessionsCache.length === 0) {
       const errMsg = document.createElement('div');
       errMsg.className = 'jules-error-state jules-error-state--large';
-      errMsg.textContent = `Failed to load sessions: ${error.message}`;
+      errMsg.textContent = `Failed to load sessions: ${errorInfo.message}`;
       allSessionsList.replaceChildren();
       allSessionsList.appendChild(errMsg);
+    } else {
+      handleError(error, { source: 'loadSessionsPage' }, { category: ErrorCategory.NETWORK });
     }
     loadMoreBtn.disabled = false;
     loadMoreBtn.textContent = 'Load More';
@@ -768,7 +778,7 @@ export async function loadProfileDirectly(user) {
           throw new Error('Failed to delete key');
         }
       } catch (error) {
-        showToast('Failed to reset API key: ' + error.message, 'error');
+        handleError(error, { source: 'loadProfileDirectly.resetBtn' }, { category: ErrorCategory.USER_ACTION });
         resetBtn.textContent = originalResetLabel;
         resetBtn.disabled = false;
       }

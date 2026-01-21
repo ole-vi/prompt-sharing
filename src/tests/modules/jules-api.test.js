@@ -359,7 +359,11 @@ describe('jules-api', () => {
       const result = await callRunJulesFunction('test prompt', 'source1', 'main', 'Test Title');
       
       expect(result).toBeNull();
-      expect(showToast).toHaveBeenCalledWith('Please log in to continue', 'error');
+      expect(showToast).toHaveBeenCalledWith(
+        expect.stringContaining('Please log in to continue'),
+        'error',
+        undefined
+      );
     });
 
     it('should throw error when no source ID provided', async () => {
@@ -421,6 +425,7 @@ describe('jules-api', () => {
     });
 
     it('should prompt for login when not authenticated', async () => {
+      const { showToast } = await import('../../modules/toast.js');
       mockAuth.currentUser = null;
       
       // Mock auth import
@@ -430,6 +435,13 @@ describe('jules-api', () => {
       
       // Function doesn't return a value, just check it doesn't throw
       await expect(handleTryInJules()).resolves.toBeUndefined();
+
+      // The error is now handled with warn toast and suggestion
+      expect(showToast).toHaveBeenCalledWith(
+        expect.stringContaining('Login required'),
+        'warn',
+        undefined
+      );
     });
 
     it('should show key modal when no key available', async () => {

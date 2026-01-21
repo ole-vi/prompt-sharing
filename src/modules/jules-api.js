@@ -3,6 +3,7 @@
 
 import { JULES_API_BASE, ERRORS, PAGE_SIZES, JULES_MESSAGES, TIMEOUTS } from '../utils/constants.js';
 import { showToast } from './toast.js';
+import { handleError, ErrorCategory } from '../utils/error-handler.js';
 
 // API key cache for memoization
 const keyCache = new Map();
@@ -217,7 +218,7 @@ export async function loadJulesProfileInfo(uid) {
 export async function callRunJulesFunction(promptText, sourceId, branch = 'master', title = '') {
   const user = window.auth ? window.auth.currentUser : null;
   if (!user) {
-    showToast(JULES_MESSAGES.NOT_LOGGED_IN, 'error');
+    handleError(JULES_MESSAGES.NOT_LOGGED_IN, { source: 'callRunJulesFunction' }, { category: ErrorCategory.AUTH });
     return null;
   }
 
@@ -288,20 +289,20 @@ export async function handleTryInJules(promptText) {
         await signInWithGitHub();
         setTimeout(() => handleTryInJulesAfterAuth(promptText), TIMEOUTS.uiDelay);
       } catch (error) {
-        showToast(JULES_MESSAGES.LOGIN_REQUIRED, 'warn');
+        handleError(JULES_MESSAGES.LOGIN_REQUIRED, { source: 'handleTryInJules.auth' }, { category: ErrorCategory.AUTH, toastType: 'warn' });
       }
       return;
     }
     await handleTryInJulesAfterAuth(promptText);
   } catch (error) {
-    showToast(JULES_MESSAGES.ERROR_WITH_MESSAGE(error.message), 'error');
+    handleError(error, { source: 'handleTryInJules' }, { category: ErrorCategory.UNEXPECTED });
   }
 }
 
 export async function handleTryInJulesAfterAuth(promptText) {
   const user = window.auth ? window.auth.currentUser : null;
   if (!user) {
-    showToast(JULES_MESSAGES.NOT_LOGGED_IN, 'error');
+    handleError(JULES_MESSAGES.NOT_LOGGED_IN, { source: 'handleTryInJulesAfterAuth' }, { category: ErrorCategory.AUTH });
     return;
   }
 
@@ -319,6 +320,6 @@ export async function handleTryInJulesAfterAuth(promptText) {
       showJulesEnvModal(promptText);
     }
   } catch (error) {
-    showToast(JULES_MESSAGES.GENERAL_ERROR, 'error');
+    handleError(error, { source: 'handleTryInJulesAfterAuth' });
   }
 }
