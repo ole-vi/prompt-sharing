@@ -12,7 +12,7 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report",
-    "test:e2e:smoke": "playwright test tests/e2e/smoke/",
+    "test:e2e:smoke": "playwright test e2e-tests/e2e/smoke/",
     "test:all": "npm run test:run && npm run test:e2e"
   },
   "keywords": [],
