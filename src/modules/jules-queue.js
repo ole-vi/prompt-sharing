@@ -7,8 +7,10 @@ import { showConfirm } from './confirm-modal.js';
 import { JULES_MESSAGES, JULES_UI_TEXT, TIMEOUTS } from '../utils/constants.js';
 import { callRunJulesFunction } from './jules-api.js';
 import { openUrlInBackground, showSubtaskErrorModal } from './jules-modal.js';
+import { showPromptViewer } from './prompt-viewer.js';
 
 let queueCache = [];
+let queuePromptViewerHandlers = new Map();
 
 export async function handleQueueAction(queueItemData) {
   const user = window.auth?.currentUser;
@@ -787,6 +789,34 @@ async function getUserTimeZone() {
   return 'America/New_York';
 }
 
+function attachQueuePromptViewerHandlers(queueItems) {
+  queuePromptViewerHandlers.forEach((handler, key) => {
+    delete window[key];
+  });
+  queuePromptViewerHandlers.clear();
+  
+  queueItems.forEach(item => {
+    if (item.prompt || (item.type === 'subtasks' && item.remaining && item.remaining.length > 0)) {
+      const cleanId = item.id.replace(/[^a-zA-Z0-9]/g, '_');
+      const handlerKey = `viewQueuePrompt_${cleanId}`;
+      
+      let promptContent = '';
+      
+      if (item.type === 'subtasks' && item.remaining && item.remaining.length > 0) {
+        promptContent = item.remaining.map((subtask, index) => {
+          return `=== Subtask ${index + 1} of ${item.remaining.length} ===\n${subtask.fullContent || subtask.prompt || 'No prompt text'}`;
+        }).join('\n\n');
+      } else {
+        promptContent = item.prompt || 'No prompt text available';
+      }
+      
+      const handler = () => showPromptViewer(promptContent, item.id);
+      window[handlerKey] = handler;
+      queuePromptViewerHandlers.set(handlerKey, handler);
+    }
+  });
+}
+
 async function saveUserTimeZone(timeZone) {
   const user = window.auth?.currentUser;
   if (!user) return;
@@ -1099,6 +1129,8 @@ function renderQueueList(items) {
     const card = createQueueCard(item);
     listDiv.appendChild(card);
   });
+  
+  attachQueuePromptViewerHandlers(items);
 }
 
 function createQueueCard(item) {
@@ -1273,7 +1305,23 @@ function createQueueCard(item) {
     const promptPreview = (item.prompt || '').substring(0, 200);
     const promptDiv = document.createElement('div');
     promptDiv.className = 'queue-prompt';
-    promptDiv.textContent = promptPreview + (promptPreview.length >= 200 ? '...' : '');
+    
+    const textNode = document.createTextNode(promptPreview + (promptPreview.length >= 200 ? '...' : ''));
+    promptDiv.appendChild(textNode);
+    
+    if (item.prompt) {
+      const viewBtn = document.createElement('button');
+      viewBtn.className = 'btn-icon queue-view-btn';
+      viewBtn.dataset.docid = item.id;
+      viewBtn.title = 'View full prompt';
+      const viewIcon = document.createElement('span');
+      viewIcon.className = 'icon';
+      viewIcon.setAttribute('aria-hidden', 'true');
+      viewIcon.textContent = 'visibility';
+      viewBtn.appendChild(viewIcon);
+      promptDiv.appendChild(viewBtn);
+    }
+    
     content.appendChild(promptDiv);
   }
   
@@ -1410,6 +1458,18 @@ function attachQueueModalHandlers() {
       e.stopPropagation();
       const docId = editBtn.dataset.docid;
       openEditQueueModal(docId);
+    };
+  });
+
+  document.querySelectorAll('.queue-view-btn').forEach(viewBtn => {
+    viewBtn.onclick = (e) => {
+      e.stopPropagation();
+      const docId = viewBtn.dataset.docid;
+      const cleanId = docId.replace(/[^a-zA-Z0-9]/g, '_');
+      const handlerKey = `viewQueuePrompt_${cleanId}`;
+      if (window[handlerKey]) {
+        window[handlerKey]();
+      }
     };
   });
 
