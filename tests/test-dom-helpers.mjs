@@ -70,11 +70,10 @@ attempts = 0;
 consoleErrors = [];
 headerCalled = false;
 global.setTimeout = (callback, delay) => {
-    // Prevent infinite recursion in mock if code is buggy
     attempts++;
     if (attempts > 200) return;
     callback();
-}
+};
 
 waitForHeader(() => { headerCalled = true; });
 
