@@ -21,7 +21,6 @@ export async function copyText(text) {
       return true;
     }
 
-    // Fallback logic could go here if needed, but for now we rely on the Clipboard API
     console.error('Clipboard API not available');
     return false;
 

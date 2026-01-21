@@ -150,7 +150,6 @@ describe('prompt-renderer', () => {
       
       setHandleTryInJulesCallback(mockCallback);
       
-      // No direct way to verify, but should not throw
       expect(() => setHandleTryInJulesCallback(mockCallback)).not.toThrow();
     });
 
@@ -218,12 +217,10 @@ describe('prompt-renderer', () => {
     });
 
     it('should revoke blob URLs', () => {
-      // Set up currentBlobUrl by calling setCurrentPromptText
       setCurrentPromptText('test content');
       
       destroyPromptRenderer();
 
-      // Should not throw even if there's no blob URL to revoke
       expect(() => destroyPromptRenderer()).not.toThrow();
     });
 
@@ -473,11 +470,9 @@ describe('prompt-renderer', () => {
 
   describe('integration scenarios', () => {
     beforeEach(async () => {
-      // Ensure clean state by destroying first, then reinitializing to clear cache
       destroyPromptRenderer();
       initPromptRenderer();
       
-      // Reset mocks for integration tests
       await import('../../modules/github-api.js');
       const { loadMarked } = await import('../../utils/lazy-loaders.js');
       
@@ -489,17 +484,13 @@ describe('prompt-renderer', () => {
       });
     });
 
-    // TODO: Fix gist cache interference - test expects mock data but gets cached gist
     it.skip('should handle complete workflow: init -> select file -> destroy', async () => {
-      // First, test that currentPromptText can be set and retrieved correctly
       setCurrentPromptText('# Test Direct Set');
       expect(getCurrentPromptText()).toBe('# Test Direct Set');
       
-      // Clear and set a fresh state
       setCurrentPromptText(null);
       expect(getCurrentPromptText()).toBe(null);
       
-      // Use completely unique values to avoid any cache collision
       const uniqueId = Date.now();
       const mockFile = {
         path: `integration-test-${uniqueId}.md`,
@@ -511,21 +502,12 @@ describe('prompt-renderer', () => {
       const { fetchRawFile } = await import('../../modules/github-api.js');
       const uniqueContent = `# Integration Test ${uniqueId}`;
       
-      // Make sure this specific mock is set for this test
       fetchRawFile.mockReset();
       fetchRawFile.mockResolvedValue(uniqueContent);
 
-      // Complete workflow
       await selectFile(mockFile, true, 'owner', 'repo', 'main');
       
-      // Debug: Let's see what we actually got
       const actualContent = getCurrentPromptText();
-      console.log('Expected:', uniqueContent);
-      console.log('Actual:', actualContent);
-      console.log('FetchRawFile called:', fetchRawFile.mock.calls.length, 'times');
-      console.log('FetchRawFile calls:', fetchRawFile.mock.calls);
-      console.log('FetchRawFile results:', await Promise.all(fetchRawFile.mock.results.map(r => r.value).filter(v => v)));
-      
       expect(actualContent).toBe(uniqueContent);
       
       destroyPromptRenderer();

@@ -12,6 +12,7 @@ import {
 vi.mock('../../utils/constants.js', () => ({
   USER_BRANCHES: ['jessewashburn', 'alice', 'bob'],
   FEATURE_PATTERNS: ['feature/', 'fix/', 'bugfix/'],
+  HARDCODED_FAVORITE_BRANCHES: ['main', 'web-captures'],
   STORAGE_KEYS: {
     promptsCache: (owner, repo, branch) => `prompts-${owner}-${repo}-${branch}`
   }
@@ -146,27 +147,21 @@ global.document = {
 function mockReset() {
   vi.clearAllMocks();
   
-  // Reset localStorage
   global.localStorage.getItem.mockReturnValue(null);
   global.localStorage.setItem.mockImplementation(() => {});
   global.localStorage.removeItem.mockImplementation(() => {});
   
-  // Reset sessionStorage
   global.sessionStorage.getItem.mockReturnValue(null);
   global.sessionStorage.setItem.mockImplementation(() => {});
   global.sessionStorage.removeItem.mockImplementation(() => {});
   
-  // Reset history
   global.history.replaceState.mockImplementation(() => {});
   
-  // Reset window
   global.window.dispatchEvent.mockImplementation(() => {});
   
-  // Reset location
   global.location.search = '?owner=test&repo=myrepo';
   global.location.hash = '';
   
-  // Reset document.getElementById
   global.document.getElementById.mockImplementation((id) => {
     return createMockElement(id, id.includes('Select') ? 'select' : 'div');
   });
