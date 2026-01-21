@@ -333,7 +333,9 @@ export function showFreeInputForm() {
   
   copenBtn.onclick = (e) => {
     e.stopPropagation();
-    copenMenu.classList.toggle('show');
+    if (copenMenu) {
+      copenMenu.classList.toggle('hidden');
+    }
   };
   
   if (copenMenu) {
@@ -342,14 +344,14 @@ export function showFreeInputForm() {
         e.stopPropagation();
         const target = item.dataset.target;
         await handleCopen(target);
-        copenMenu.classList.remove('show');
+        copenMenu.classList.add('hidden');
       };
     });
   }
   
   const closeCopenMenu = (e) => {
-    if (!copenBtn.contains(e.target) && !copenMenu.contains(e.target)) {
-      copenMenu.classList.remove('show');
+    if (copenMenu && !copenBtn.contains(e.target) && !copenMenu.contains(e.target)) {
+      copenMenu.classList.add('hidden');
     }
   };
   document.addEventListener('click', closeCopenMenu);
