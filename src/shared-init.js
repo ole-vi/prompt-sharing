@@ -8,6 +8,7 @@ import { OWNER, REPO, BRANCH, ERRORS } from './utils/constants.js';
 import { parseParams } from './utils/url-params.js';
 import statusBar from './modules/status-bar.js';
 import { getFirebaseReady } from './firebase-init.js';
+import { waitForDOMReady } from './utils/dom-helpers.js';
 
 let isInitialized = false;
 
@@ -173,14 +174,9 @@ async function initializeSharedComponents(activePage) {
   }
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    const activePage = document.body.getAttribute('data-page') || 'home';
-    initializeSharedComponents(activePage);
-  });
-} else {
+waitForDOMReady(() => {
   const activePage = document.body.getAttribute('data-page') || 'home';
   initializeSharedComponents(activePage);
-}
+});
 
 export { initializeSharedComponents, waitForFirebase };
