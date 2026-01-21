@@ -190,15 +190,27 @@ export async function updateAuthUI(user) {
 }
 
 export function initAuthStateListener() {
-  try {
-    if (!window.auth) {
-      console.error('Auth not initialized yet');
-      return;
+  return new Promise((resolve) => {
+    try {
+      if (!window.auth) {
+        console.error('Auth not initialized yet');
+        resolve(null);
+        return;
+      }
+      
+      // Firebase's onAuthStateChanged fires immediately with current state
+      // then fires again on any changes. We resolve on the first call.
+      const unsubscribe = window.auth.onAuthStateChanged((user) => {
+        updateAuthUI(user);
+        unsubscribe(); // Stop listening after first call
+        resolve(user);
+      });
+      
+      // Continue listening for future changes
+      window.auth.onAuthStateChanged(updateAuthUI);
+    } catch (error) {
+      console.error('Failed to initialize auth listener:', error);
+      resolve(null);
     }
-    window.auth.onAuthStateChanged((user) => {
-      updateAuthUI(user);
-    });
-  } catch (error) {
-    console.error('Failed to initialize auth listener:', error);
-  }
+  });
 }
