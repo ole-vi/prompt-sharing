@@ -16,15 +16,23 @@ export function initSidebar() {
   if (!sidebar || !toggleBtn) return;
 
   // Restore previous state
-  const isCollapsed = localStorage.getItem(STORAGE_KEY) === 'true';
-  if (isCollapsed) {
-    sidebar.classList.add('collapsed');
+  try {
+    const isCollapsed = localStorage.getItem(STORAGE_KEY) === 'true';
+    if (isCollapsed) {
+      sidebar.classList.add('collapsed');
+    }
+  } catch (error) {
+    // Silent failure - sidebar will work but won't persist state
   }
 
   // Handle toggle click
   toggleBtn.addEventListener('click', () => {
     sidebar.classList.toggle('collapsed');
     const collapsed = sidebar.classList.contains('collapsed');
-    localStorage.setItem(STORAGE_KEY, collapsed);
+    try {
+      localStorage.setItem(STORAGE_KEY, collapsed);
+    } catch (error) {
+      // Silent failure - sidebar will work but won't persist state
+    }
   });
 }
