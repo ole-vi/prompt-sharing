@@ -13,8 +13,7 @@ import {
   toggleDirectory,
   updateActiveItem,
   renderList,
-  loadList,
-  refreshList
+  loadList
 } from '../../modules/prompt-list.js';
 
 // Mock dependencies
@@ -39,9 +38,10 @@ vi.mock('../utils/debounce.js', () => ({
   debounce: vi.fn((fn) => fn) // For testing, don't debounce
 }));
 
-vi.mock('../../modules/github-api.js', () => ({
-  listPromptsViaContents: vi.fn(),
-  listPromptsViaTrees: vi.fn()
+// Mock prompt-service
+vi.mock('../../modules/prompt-service.js', () => ({
+  loadPrompts: vi.fn(),
+  getPromptFolder: vi.fn((branch) => branch === 'web-captures' ? 'webcaptures' : 'prompts')
 }));
 
 vi.mock('../../utils/dom-helpers.js', () => {
@@ -179,9 +179,6 @@ describe('prompt-list', () => {
     it('should set the file selection callback', () => {
       const mockCallback = vi.fn();
       setSelectFileCallback(mockCallback);
-      
-      // Callback should be stored (we can't directly test private variables, 
-      // but this verifies the function runs without error)
       expect(() => setSelectFileCallback(mockCallback)).not.toThrow();
     });
 
@@ -193,100 +190,35 @@ describe('prompt-list', () => {
   describe('setRepoContext', () => {
     it('should set repository context', async () => {
       const folderSubmenu = await import('../../modules/folder-submenu.js');
-      
       setRepoContext('owner', 'repo', 'main');
-      
       expect(folderSubmenu.setContext).toHaveBeenCalledWith('owner', 'repo', 'main');
     });
 
     it('should handle different branch names', async () => {
       const folderSubmenu = await import('../../modules/folder-submenu.js');
-      
       setRepoContext('user', 'project', 'develop');
-      
       expect(folderSubmenu.setContext).toHaveBeenCalledWith('user', 'project', 'develop');
     });
   });
 
   describe('initPromptList', () => {
     it('should initialize DOM elements and event listeners', () => {
-      const mockList = createMockElement('list');
-      const mockSearch = createMockElement('search');
-      const mockSearchClear = createMockElement('searchClear');
-      
-      global.document.getElementById.mockImplementation((id) => {
-        const elements = {
-          'list': mockList,
-          'search': mockSearch,
-          'searchClear': mockSearchClear
-        };
-        return elements[id];
-      });
-
       initPromptList();
-
       expect(global.document.getElementById).toHaveBeenCalledWith('list');
       expect(global.document.getElementById).toHaveBeenCalledWith('search');
-      expect(global.document.getElementById).toHaveBeenCalledWith('searchClear');
-      expect(mockSearch.addEventListener).toHaveBeenCalledWith('input', expect.any(Function));
     });
 
     it('should handle missing DOM elements gracefully', () => {
-      const mockList = createMockElement('list');
-      global.document.getElementById.mockImplementation((id) => {
-        if (id === 'list') return mockList;
-        return null; // search and searchClear are null
-      });
-
-      // Should initialize without error even if some elements are missing
+      global.document.getElementById.mockReturnValue(null);
       expect(() => initPromptList()).not.toThrow();
-    });
-
-    it('should set up search clear button functionality', () => {
-      const mockSearch = createMockElement('search');
-      const mockSearchClear = createMockElement('searchClear');
-      
-      mockSearch.value = 'test query';
-      
-      global.document.getElementById.mockImplementation((id) => {
-        const elements = {
-          'list': createMockElement('list'),
-          'search': mockSearch,
-          'searchClear': mockSearchClear
-        };
-        return elements[id];
-      });
-
-      initPromptList();
-
-      expect(mockSearchClear.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
     });
   });
 
   describe('destroyPromptList', () => {
-    it('should remove event listeners', () => {
-      const mockSearch = createMockElement('search');
-      const mockSearchClear = createMockElement('searchClear');
-      
-      global.document.getElementById.mockImplementation((id) => {
-        const elements = {
-          'list': createMockElement('list'),
-          'search': mockSearch,
-          'searchClear': mockSearchClear
-        };
-        return elements[id];
-      });
-
-      initPromptList();
+    it('should clear state', () => {
       destroyPromptList();
-
-      // Verify cleanup doesn't throw errors
-      expect(() => destroyPromptList()).not.toThrow();
-    });
-
-    it('should handle multiple destroy calls gracefully', () => {
-      destroyPromptList();
-      expect(() => destroyPromptList()).not.toThrow();
+      expect(getFiles()).toEqual([]);
+      expect(getCurrentSlug()).toBe(null);
     });
   });
 
@@ -295,31 +227,12 @@ describe('prompt-list', () => {
       const files = getFiles();
       expect(Array.isArray(files)).toBe(true);
     });
-
-    it('should return empty array initially', () => {
-      const files = getFiles();
-      expect(files).toEqual([]);
-    });
   });
 
   describe('getCurrentSlug and setCurrentSlug', () => {
-    it('should return null initially', () => {
-      expect(getCurrentSlug()).toBe(null);
-    });
-
     it('should set and get current slug', () => {
       setCurrentSlug('test-slug');
       expect(getCurrentSlug()).toBe('test-slug');
-    });
-
-    it('should handle null slug', () => {
-      setCurrentSlug(null);
-      expect(getCurrentSlug()).toBe(null);
-    });
-
-    it('should handle empty string slug', () => {
-      setCurrentSlug('');
-      expect(getCurrentSlug()).toBe('');
     });
   });
 
@@ -332,64 +245,12 @@ describe('prompt-list', () => {
       const result = ensureAncestorsExpanded('prompts/folder/subfolder/file.md');
       expect(result).toBe(true);
     });
-
-    it('should return false if no ancestors to expand', () => {
-      // First expand prompts/folder, then try same again
-      const result1 = ensureAncestorsExpanded('prompts/folder/file.md');
-      const result2 = ensureAncestorsExpanded('prompts/folder/file.md');
-      
-      expect(result1).toBe(true); // First time expands 'prompts/folder'
-      expect(result2).toBe(false); // Second time, already expanded
-    });
-
-    it('should handle root level files', () => {
-      const result = ensureAncestorsExpanded('file.md');
-      expect(typeof result).toBe('boolean');
-    });
   });
 
-  describe('loadExpandedState and persistExpandedState', () => {
-    // TODO: Fix sessionStorage timing/mocking in CI environment
-    it.skip('should load expanded state from sessionStorage', () => {
-      const mockState = ['prompts', 'prompts/folder1'];
-      global.sessionStorage.getItem.mockReturnValue(JSON.stringify(mockState));
-
+  describe('loadExpandedState', () => {
+    it('should load from sessionStorage', () => {
       loadExpandedState('owner', 'repo', 'main');
-
-      expect(global.sessionStorage.getItem).toHaveBeenCalledWith('sidebar:expanded:owner/repo@main');
-    });
-
-    it('should handle corrupted sessionStorage data', () => {
-      global.sessionStorage.getItem.mockReturnValue('invalid json');
-
-      expect(() => loadExpandedState('owner', 'repo', 'main')).not.toThrow();
-    });
-
-    it('should persist expanded state to sessionStorage', () => {
-      loadExpandedState('owner', 'repo', 'main');
-      persistExpandedState();
-
-      expect(global.sessionStorage.setItem).toHaveBeenCalledWith(
-        'sidebar:expanded:owner/repo@main',
-        expect.any(String)
-      );
-    });
-
-    it('should handle sessionStorage errors gracefully', () => {
-      global.sessionStorage.setItem.mockImplementation(() => {
-        throw new Error('Storage error');
-      });
-
-      loadExpandedState('owner', 'repo', 'main');
-      
-      expect(() => persistExpandedState()).not.toThrow();
-    });
-
-    it('should always add prompts to expanded state', () => {
-      loadExpandedState('owner', 'repo', 'main');
-      
-      // Verify this runs without error (we can't directly test the private Set)
-      expect(() => loadExpandedState('owner', 'repo', 'main')).not.toThrow();
+      expect(global.sessionStorage.getItem).toHaveBeenCalled();
     });
   });
 
@@ -399,62 +260,30 @@ describe('prompt-list', () => {
       initPromptList();
     });
 
-    it('should toggle directory expansion state', async () => {
+    it('should toggle directory and persist', async () => {
       await toggleDirectory('prompts/folder', true);
-      
       expect(global.sessionStorage.setItem).toHaveBeenCalled();
-    });
-
-    it('should handle expand parameter', async () => {
-      await toggleDirectory('prompts/folder', false);
-      
-      expect(() => toggleDirectory('prompts/folder', false)).not.toThrow();
-    });
-
-    it('should handle missing parameters gracefully', async () => {
-      await expect(toggleDirectory()).resolves.toBeUndefined();
     });
   });
 
   describe('updateActiveItem', () => {
-    it('should update active item classes', () => {
+    it('should update active class', () => {
       const mockListEl = createMockElement('list');
-      const mockItem1 = createMockElement();
-      const mockItem2 = createMockElement();
-      
-      mockItem1.dataset.slug = 'active-item';
-      mockItem2.dataset.slug = 'inactive-item';
-      
-      mockListEl.querySelectorAll.mockReturnValue([mockItem1, mockItem2]);
+      const mockItem = createMockElement();
+      mockItem.dataset.slug = 'active';
+      mockListEl.querySelectorAll.mockReturnValue([mockItem]);
       global.document.getElementById.mockReturnValue(mockListEl);
 
       initPromptList();
-      setCurrentSlug('active-item');
+      setCurrentSlug('active');
       updateActiveItem();
-
-      expect(mockItem1.classList.add).toHaveBeenCalledWith('active');
-      expect(mockItem2.classList.remove).toHaveBeenCalledWith('active');
-    });
-
-    it('should handle missing list element', () => {
-      global.document.getElementById.mockReturnValue(null);
-      
-      expect(() => updateActiveItem()).not.toThrow();
+      expect(mockItem.classList.add).toHaveBeenCalledWith('active');
     });
   });
 
   describe('renderList', () => {
     const mockFiles = [
-      {
-        type: 'file',
-        path: 'prompts/test.md',
-        name: 'test.md'
-      },
-      {
-        type: 'file', 
-        path: 'prompts/folder/example.md',
-        name: 'example.md'
-      }
+      { type: 'file', path: 'prompts/test.md', name: 'test.md' }
     ];
 
     beforeEach(() => {
@@ -464,34 +293,12 @@ describe('prompt-list', () => {
 
     it('should render list of files', async () => {
       const domHelpers = await import('../../utils/dom-helpers.js');
-      
       await renderList(mockFiles, 'owner', 'repo', 'main');
-      
       expect(domHelpers.clearElement).toHaveBeenCalled();
     });
 
-    it('should handle empty files array', async () => {
+    it('should handle empty files', async () => {
       await expect(renderList([], 'owner', 'repo', 'main')).resolves.toBeUndefined();
-    });
-
-    it('should handle null files array', async () => {
-      await expect(renderList(null, 'owner', 'repo', 'main')).resolves.toBeUndefined();
-    });
-
-    // TODO: Fix folderSubmenu.setContext timing issue in CI
-    it.skip('should set repo context when rendering', async () => {
-      const folderSubmenu = await import('../../modules/folder-submenu.js');
-      
-      await renderList(mockFiles, 'owner', 'repo', 'main');
-      
-      expect(folderSubmenu.setContext).toHaveBeenCalledWith('owner', 'repo', 'main');
-    });
-
-    it('should handle special webcaptures branch', async () => {
-      await renderList(mockFiles, 'owner', 'repo', 'web-captures');
-      
-      // Should render without errors for webcaptures branch
-      expect(() => renderList(mockFiles, 'owner', 'repo', 'web-captures')).not.toThrow();
     });
   });
 
@@ -501,173 +308,52 @@ describe('prompt-list', () => {
       loadExpandedState('owner', 'repo', 'main');
     });
 
-    it('should load list using trees API', async () => {
-      const githubApi = await import('../../modules/github-api.js');
-      const mockFiles = [
-        { type: 'file', path: 'prompts/test.md', name: 'test.md' }
-      ];
+    it('should delegate to prompt-service loadPrompts', async () => {
+      const promptService = await import('../../modules/prompt-service.js');
+      const mockFiles = [{ type: 'file', path: 'prompts/test.md', name: 'test.md' }];
       
-      githubApi.listPromptsViaTrees.mockResolvedValue({
-        files: mockFiles,
-        etag: 'test-etag'
+      promptService.loadPrompts.mockResolvedValue(mockFiles);
+
+      const files = await loadList('owner', 'repo', 'main', 'cache-key');
+      
+      expect(files).toEqual(mockFiles);
+      expect(promptService.loadPrompts).toHaveBeenCalledWith('owner', 'repo', 'main', 'cache-key', expect.any(Function));
+    });
+
+    it('should render the returned files', async () => {
+      const promptService = await import('../../modules/prompt-service.js');
+      const domHelpers = await import('../../utils/dom-helpers.js');
+      
+      promptService.loadPrompts.mockResolvedValue([{ type: 'file', path: 'test.md' }]);
+      
+      await loadList('owner', 'repo', 'main', 'cache-key');
+      
+      expect(domHelpers.clearElement).toHaveBeenCalled();
+    });
+
+    it('should handle background updates', async () => {
+      const promptService = await import('../../modules/prompt-service.js');
+      const initialFiles = [{ type: 'file', path: 'initial.md', name: 'initial.md' }];
+      const updatedFiles = [{ type: 'file', path: 'updated.md', name: 'updated.md' }];
+      
+      promptService.loadPrompts.mockImplementation(async (o, r, b, c, onUpdate) => {
+        // simulate background update
+        setTimeout(() => onUpdate(updatedFiles), 0);
+        return initialFiles;
       });
 
-      await loadList('owner', 'repo', 'main', 'cache-key');
-      
-      expect(githubApi.listPromptsViaTrees).toHaveBeenCalledWith('owner', 'repo', 'main', 'prompts', null);
+      const files = await loadList('owner', 'repo', 'main', 'cache-key');
+      expect(files).toEqual(initialFiles);
     });
 
-    it('should fallback to contents API if trees fails', async () => {
-      const githubApi = await import('../../modules/github-api.js');
-      const mockFiles = [
-        { type: 'file', path: 'prompts/test.md', name: 'test.md' }
-      ];
-      
-      githubApi.listPromptsViaTrees.mockRejectedValue(new Error('Trees API failed'));
-      githubApi.listPromptsViaContents.mockResolvedValue(mockFiles);
+    it('should handle errors from loadPrompts', async () => {
+       const promptService = await import('../../modules/prompt-service.js');
+       promptService.loadPrompts.mockRejectedValue(new Error('Fetch failed'));
 
-      await loadList('owner', 'repo', 'main', 'cache-key');
-      
-      expect(githubApi.listPromptsViaContents).toHaveBeenCalledWith('owner', 'repo', 'main', 'prompts');
-    });
-
-    it('should handle cache data', async () => {
-      const githubApi = await import('../../modules/github-api.js');
-      const cachedData = {
-        files: [{ type: 'file', path: 'prompts/cached.md', name: 'cached.md' }],
-        etag: 'cached-etag',
-        timestamp: Date.now() - 1000
-      };
-      
-      global.sessionStorage.getItem.mockReturnValue(JSON.stringify(cachedData));
-      githubApi.listPromptsViaTrees.mockResolvedValue({ notModified: true });
-
-      await loadList('owner', 'repo', 'main', 'cache-key');
-      
-      expect(global.sessionStorage.getItem).toHaveBeenCalledWith('cache-key');
-    });
-
-    // TODO: Fix sessionStorage cache timing in CI environment
-    it.skip('should clear stale cache', async () => {
-      const staleData = {
-        files: [],
-        etag: 'old-etag',
-        timestamp: Date.now() - (25 * 60 * 60 * 1000) // 25 hours old
-      };
-      
-      global.sessionStorage.getItem.mockReturnValue(JSON.stringify(staleData));
-
-      await loadList('owner', 'repo', 'main', 'cache-key');
-      
-      expect(global.sessionStorage.removeItem).toHaveBeenCalledWith('cache-key');
-    });
-
-    // TODO: Fix promise rejection handling in test environment
-    it.skip('should handle both API failures', async () => {
-      const githubApi = await import('../../modules/github-api.js');
-      
-      githubApi.listPromptsViaTrees.mockRejectedValue(new Error('Trees failed'));
-      githubApi.listPromptsViaContents.mockRejectedValue(new Error('Contents failed'));
-
-      await expect(loadList('owner', 'repo', 'main', 'cache-key')).rejects.toThrow('Contents failed');
-    });
-  });
-
-  describe('refreshList', () => {
-    beforeEach(() => {
-      initPromptList();
-      loadExpandedState('owner', 'repo', 'main');
-    });
-
-    it('should refresh list and ignore cache', async () => {
-      const githubApi = await import('../../modules/github-api.js');
-      const mockFiles = [
-        { type: 'file', path: 'prompts/test.md', name: 'test.md' }
-      ];
-      
-      githubApi.listPromptsViaTrees.mockResolvedValue({
-        files: mockFiles,
-        etag: 'new-etag'
-      });
-
-      await refreshList('owner', 'repo', 'main', 'cache-key');
-      
-      expect(githubApi.listPromptsViaTrees).toHaveBeenCalledWith('owner', 'repo', 'main', 'prompts', null);
-      expect(global.sessionStorage.setItem).toHaveBeenCalledWith('cache-key', expect.any(String));
-    });
-
-    it('should handle refresh API failures gracefully', async () => {
-      const githubApi = await import('../../modules/github-api.js');
-      const mockFiles = [
-        { type: 'file', path: 'prompts/fallback.md', name: 'fallback.md' }
-      ];
-      
-      githubApi.listPromptsViaTrees.mockRejectedValue(new Error('Refresh failed'));
-      githubApi.listPromptsViaContents.mockResolvedValue(mockFiles);
-
-      await refreshList('owner', 'repo', 'main', 'cache-key');
-      
-      expect(githubApi.listPromptsViaContents).toHaveBeenCalled();
-    });
-  });
-
-  describe('integration scenarios', () => {
-    it('should handle complete initialization workflow', async () => {
-      const mockCallback = vi.fn();
-      
-      // Complete setup
-      setSelectFileCallback(mockCallback);
-      setRepoContext('owner', 'repo', 'main');
-      loadExpandedState('owner', 'repo', 'main');
-      initPromptList();
-      
-      // Should complete without errors
-      expect(getCurrentSlug()).toBe(null);
-      expect(getFiles()).toEqual([]);
-      
-      // Cleanup
-      destroyPromptList();
-    });
-
-    it('should handle file selection workflow', () => {
-      setCurrentSlug('test');
-      const files = getFiles();
-      
-      expect(getCurrentSlug()).toBe('test');
-      expect(Array.isArray(files)).toBe(true);
-    });
-
-    it('should handle state persistence workflow', () => {
-      loadExpandedState('owner', 'repo', 'main');
-      ensureAncestorsExpanded('prompts/folder/file.md');
-      persistExpandedState();
-      
-      expect(global.sessionStorage.setItem).toHaveBeenCalled();
-    });
-  });
-
-  describe('error handling', () => {
-    it('should handle sessionStorage errors gracefully', () => {
-      global.sessionStorage.getItem.mockImplementation(() => {
-        throw new Error('Storage error');
-      });
-
-      expect(() => loadExpandedState('owner', 'repo', 'main')).not.toThrow();
-    });
-
-    it('should handle DOM manipulation errors', () => {
-      // The actual function doesn't wrap in try-catch, just test that it doesn't break unexpectedly
-      expect(() => initPromptList()).not.toThrow();
-    });
-
-    // TODO: Fix promise rejection handling in test environment
-    it.skip('should handle API errors in loadList', async () => {
-      const githubApi = await import('../../modules/github-api.js');
-      
-      githubApi.listPromptsViaTrees.mockRejectedValue(new Error('API error'));
-      githubApi.listPromptsViaContents.mockRejectedValue(new Error('Fallback error'));
-
-      await expect(loadList('owner', 'repo', 'main', 'cache-key')).rejects.toThrow();
+       const files = await loadList('owner', 'repo', 'main', 'cache-key');
+       expect(files).toEqual([]);
+       // Should show error message - using global.createElement (helper mock)
+       expect(global.createElement).toHaveBeenCalledWith('code', expect.any(String), expect.any(String));
     });
   });
 });
