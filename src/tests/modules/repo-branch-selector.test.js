@@ -52,6 +52,7 @@ global.document = {
     tagName: tag.toUpperCase(),
     className: '',
     textContent: '',
+    dataset: {},
     style: {
       cssText: '',
       display: '',
@@ -89,6 +90,7 @@ const createMockElement = (id = '') => ({
   textContent: '',
   disabled: false,
   onclick: null,
+  dataset: {},
   style: {
     display: '',
     opacity: '',

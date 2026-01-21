@@ -289,7 +289,7 @@ describe('jules-queue', () => {
     });
 
     it('should clear cache after adding', async () => {
-      const { clearCache, CACHE_KEYS, getCache } = await import('../../utils/session-cache.js');
+      const { clearCache, CACHE_KEYS } = await import('../../utils/session-cache.js');
       // addDoc unconditionally clears cache if key provided
 
       global.window.db = {

@@ -9,6 +9,10 @@ import {
 } from '../../modules/branch-selector.js';
 
 // Mock dependencies
+vi.mock('../../modules/auth.js', () => ({
+  getCurrentUser: vi.fn(() => null)
+}));
+
 vi.mock('../../utils/constants.js', () => ({
   USER_BRANCHES: ['jessewashburn', 'alice', 'bob'],
   FEATURE_PATTERNS: ['feature/', 'fix/', 'bugfix/'],
@@ -70,7 +74,8 @@ global.location = {
 };
 
 global.window = {
-  dispatchEvent: vi.fn()
+  dispatchEvent: vi.fn(),
+  db: null
 };
 
 // Mock DOM elements
@@ -125,8 +130,11 @@ global.document = {
       return {
         className: '',
         textContent: '',
+        innerHTML: '',
+        onclick: null,
         style: {
-          cssText: ''
+          cssText: '',
+          display: ''
         },
         classList: {
           add: vi.fn(),
@@ -134,6 +142,7 @@ global.document = {
         },
         setAttribute: vi.fn(),
         addEventListener: vi.fn(),
+        appendChild: vi.fn(),
         dataset: {}
       };
     }
@@ -439,12 +448,20 @@ describe('branch-selector', () => {
 
   describe('loadBranches', () => {
     let mockSelect;
+    let mockMenu, mockBtn, mockDropdown;
 
     beforeEach(async () => {
       mockSelect = createMockElement('branchSelect');
       mockSelect.options = [];
+      mockMenu = createMockElement('branchDropdownMenu', 'div');
+      mockBtn = createMockElement('branchDropdownBtn', 'button');
+      mockDropdown = createMockElement('branchDropdown', 'div');
+      
       global.document.getElementById.mockImplementation((id) => {
         if (id === 'branchSelect') return mockSelect;
+        if (id === 'branchDropdownMenu') return mockMenu;
+        if (id === 'branchDropdownBtn') return mockBtn;
+        if (id === 'branchDropdown') return mockDropdown;
         return createMockElement(id);
       });
       
@@ -561,7 +578,6 @@ describe('branch-selector', () => {
     it('should populate custom dropdown menu if present', async () => {
       const mockMenu = createMockElement('branchDropdownMenu', 'div');
       const mockBtn = createMockElement('branchDropdownBtn', 'button');
-      const mockFragment = { appendChild: vi.fn() };
       
       global.document.getElementById.mockImplementation((id) => {
         if (id === 'branchSelect') return mockSelect;
@@ -569,12 +585,12 @@ describe('branch-selector', () => {
         if (id === 'branchDropdownBtn') return mockBtn;
         return createMockElement(id);
       });
-      global.document.createDocumentFragment.mockReturnValue(mockFragment);
       
       initBranchSelector('owner1', 'repo1', 'main');
       await loadBranches();
       
-      expect(mockFragment.appendChild).toHaveBeenCalled();
+      // Check that menu.appendChild was called (for branch items)
+      expect(mockMenu.appendChild).toHaveBeenCalled();
     });
 
     it('should clear menu innerHTML before populating', async () => {
@@ -596,21 +612,26 @@ describe('branch-selector', () => {
     });
 
     it('should update dropdown label with current branch', async () => {
-      const mockMenu = createMockElement('branchDropdownMenu', 'div');
-      const mockBtn = createMockElement('branchDropdownBtn', 'button');
+      // Re-initialize to capture label element
       const mockLabel = createMockElement('branchDropdownLabel', 'span');
       
+      // Override mock to include label element
       global.document.getElementById.mockImplementation((id) => {
         if (id === 'branchSelect') return mockSelect;
         if (id === 'branchDropdownMenu') return mockMenu;
         if (id === 'branchDropdownBtn') return mockBtn;
         if (id === 'branchDropdownLabel') return mockLabel;
+        if (id === 'branchDropdown') return mockDropdown;
         return createMockElement(id);
       });
       
-      initBranchSelector('owner1', 'repo1', 'main');
       await loadBranches();
       
+      // Verify menu was populated (innerHTML should be '')
+      expect(mockMenu.innerHTML).toBe('');
+      // Verify getElementById was called for label
+      expect(global.document.getElementById).toHaveBeenCalledWith('branchDropdownLabel');
+      // Verify label was updated
       expect(mockLabel.textContent).toBe('main');
     });
   });

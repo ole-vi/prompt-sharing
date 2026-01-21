@@ -59,7 +59,8 @@ global.document = {
 };
 
 global.window = {
-  auth: null
+  auth: null,
+  open: vi.fn()
 };
 
 global.console = {
@@ -152,72 +153,16 @@ describe('jules-modal', () => {
   });
 
   describe('openUrlInBackground', () => {
-    it('should create anchor element', () => {
-      const mockAnchor = {
-        href: '',
-        target: '',
-        rel: '',
-        style: {},
-        dispatchEvent: vi.fn()
-      };
-      global.document.createElement.mockReturnValue(mockAnchor);
-      
+    it('should call window.open with correct parameters', () => {
       openUrlInBackground('https://example.com');
       
-      expect(global.document.createElement).toHaveBeenCalledWith('a');
-      expect(mockAnchor.href).toBe('https://example.com');
-      expect(mockAnchor.target).toBe('_blank');
-      expect(mockAnchor.rel).toBe('noopener noreferrer');
-      expect(mockAnchor.style.display).toBe('none');
+      expect(global.window.open).toHaveBeenCalledWith('https://example.com', '_blank', 'noopener,noreferrer');
     });
 
-    it('should append anchor to body', () => {
-      const mockAnchor = {
-        href: '',
-        target: '',
-        rel: '',
-        style: {},
-        dispatchEvent: vi.fn()
-      };
-      global.document.createElement.mockReturnValue(mockAnchor);
+    it('should handle different URLs', () => {
+      openUrlInBackground('https://test.com/path');
       
-      openUrlInBackground('https://test.com');
-      
-      expect(global.document.body.appendChild).toHaveBeenCalledWith(mockAnchor);
-    });
-
-    it('should dispatch click event with ctrl and meta keys', () => {
-      const mockAnchor = {
-        href: '',
-        target: '',
-        rel: '',
-        style: {},
-        dispatchEvent: vi.fn()
-      };
-      global.document.createElement.mockReturnValue(mockAnchor);
-      
-      openUrlInBackground('https://test.com');
-      
-      expect(global.MouseEvent).toHaveBeenCalledWith('click', expect.objectContaining({
-        ctrlKey: true,
-        metaKey: true
-      }));
-      expect(mockAnchor.dispatchEvent).toHaveBeenCalled();
-    });
-
-    it('should remove anchor after timeout', () => {
-      const mockAnchor = {
-        href: '',
-        target: '',
-        rel: '',
-        style: {},
-        dispatchEvent: vi.fn()
-      };
-      global.document.createElement.mockReturnValue(mockAnchor);
-      
-      openUrlInBackground('https://test.com');
-      
-      expect(global.document.body.removeChild).toHaveBeenCalledWith(mockAnchor);
+      expect(global.window.open).toHaveBeenCalledWith('https://test.com/path', '_blank', 'noopener,noreferrer');
     });
   });
 

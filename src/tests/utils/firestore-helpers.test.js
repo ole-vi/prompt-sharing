@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getDoc, queryCollection, setDoc, updateDoc, deleteDoc, addDoc, retryOperation } from '../../utils/firestore-helpers.js';
 import * as sessionCache from '../../utils/session-cache.js';
 
