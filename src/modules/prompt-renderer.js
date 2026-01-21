@@ -6,6 +6,7 @@ import { loadMarked } from '../utils/lazy-loaders.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
 import { copyAndOpen } from './copen.js';
+import { copyText } from '../utils/clipboard.js';
 import statusBar from './status-bar.js';
 
 function sanitizeHtml(html) {
@@ -496,8 +497,8 @@ function enhanceCodeBlocks() {
         const pre = btn.previousElementSibling;
         if (pre && pre.tagName === 'PRE') {
           const code = pre.innerText;
-          try {
-            await navigator.clipboard.writeText(code);
+          const success = await copyText(code);
+          if (success) {
             const originalHTML = btn.innerHTML;
             btn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span>';
             btn.classList.add('copied');
@@ -505,11 +506,7 @@ function enhanceCodeBlocks() {
               btn.innerHTML = originalHTML;
               btn.classList.remove('copied');
             }, TIMEOUTS.copyFeedback);
-          } catch (error) {
-            console.error('Error copying code to clipboard:', {
-              error,
-              context: 'enhanceCodeBlocks.copy',
-            });
+          } else {
             statusBar.showMessage('Failed to copy to clipboard', { type: 'error' });
           }
         }
@@ -520,23 +517,23 @@ function enhanceCodeBlocks() {
 }
 
 async function handleCopyPrompt() {
-  try {
-    let contentToCopy;
-    let buttonText;
+  let contentToCopy;
+  let buttonText;
 
-    const isCodex = getCurrentPromptText() && CODEX_URL_REGEX.test(getCurrentPromptText().trim());
-    if (isCodex) {
-      contentToCopy = getCurrentPromptText();
-      buttonText = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy link';
-    } else {
-      contentToCopy = getCurrentPromptText();
-      buttonText = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy prompt';
-    }
+  const isCodex = getCurrentPromptText() && CODEX_URL_REGEX.test(getCurrentPromptText().trim());
+  if (isCodex) {
+    contentToCopy = getCurrentPromptText();
+    buttonText = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy link';
+  } else {
+    contentToCopy = getCurrentPromptText();
+    buttonText = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy prompt';
+  }
 
-    await navigator.clipboard.writeText(contentToCopy);
+  const success = await copyText(contentToCopy);
+  if (success) {
     copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied';
     setTimeout(() => (copyBtn.innerHTML = buttonText), TIMEOUTS.copyFeedback);
-  } catch {
+  } else {
     showToast('Clipboard blocked. Select and copy manually.', 'warn');
   }
 }
@@ -552,13 +549,12 @@ async function handleCopenPrompt(target) {
 }
 
 async function handleShareLink() {
-  try {
-    await navigator.clipboard.writeText(location.href);
+  const success = await copyText(location.href);
+  if (success) {
     shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Link copied';
-  } catch {
+  } else {
     showToast('Could not copy link.', 'warn');
-  } finally {
-    const originalText = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
-    setTimeout(() => (shareBtn.innerHTML = originalText), TIMEOUTS.copyFeedback);
   }
+  const originalText = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
+  setTimeout(() => (shareBtn.innerHTML = originalText), TIMEOUTS.copyFeedback);
 }
