@@ -1,0 +1,29 @@
+/* Semantic Status Indicators */
+
+.status-saved {
+  color: var(--accent);
+}
+
+.status-not-saved {
+  color: var(--muted);
+}
+
+.status-outdated {
+  color: var(--warn);
+}
+
+.status-error {
+  color: var(--error);
+}
+
+.status-success {
+  color: var(--success);
+}
+
+.status-info {
+  color: var(--muted);
+}
+
+.status-loading {
+  color: var(--muted);
+}
