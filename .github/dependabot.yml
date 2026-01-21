@@ -26,7 +26,7 @@ updates:
       include: "scope"
 
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directory: ".github/workflows/"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 5
