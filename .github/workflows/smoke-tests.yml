@@ -39,10 +39,36 @@ jobs:
         python-version: '3.11'
     
     - name: Run smoke tests only
-      run: npm run test:e2e:smoke -- --project=chromium
+      run: npm run test:e2e:smoke -- --project=chromium --reporter=github-actions,html
       env:
         BASE_URL: http://localhost:3000
         CI: true
+
+    - name: Show test failure summary
+      if: failure()
+      run: |
+        echo "=== Test Results Summary ==="
+        if [ -f "test-results/e2e-results.json" ]; then
+          echo "JSON results found, parsing failures..."
+          node -e "
+            const results = JSON.parse(require('fs').readFileSync('test-results/e2e-results.json'));
+            const failures = results.suites.flatMap(s => s.specs.filter(spec => spec.tests.some(t => t.results.some(r => r.status === 'failed' || r.status === 'timedOut'))));
+            console.log('FAILED TESTS:');
+            failures.forEach(spec => {
+              console.log('- ' + spec.title);
+              spec.tests.forEach(test => {
+                test.results.forEach(result => {
+                  if (result.status === 'failed' || result.status === 'timedOut') {
+                    console.log('  Error: ' + (result.error?.message || 'No error message'));
+                  }
+                });
+              });
+            });
+          " 2>/dev/null || echo "Could not parse JSON results"
+        fi
+        echo ""
+        echo "=== Test Files ==="
+        find test-results/ -name "*.txt" -o -name "*.log" | head -10
     
     - name: Upload smoke test results
       if: always()
