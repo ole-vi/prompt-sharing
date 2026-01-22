@@ -27,7 +27,6 @@ const STATIC_ASSETS = [
   '/src/modules/sidebar.js',
   '/src/modules/header.js',
   '/src/modules/navbar.js',
-  '/src/modules/page-init.js',
   '/src/modules/toast.js',
   '/src/modules/dropdown.js',
   

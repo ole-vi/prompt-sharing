@@ -317,12 +317,6 @@
 
 ### 5.1 Page Scripts
 
-#### `src/modules/page-init.js` (0% coverage)
-- **Type**: Page initialization coordinator
-- **Strategy**: Test initialization order, error handling
-- **Estimated Tests**: 8-10 tests
-- **Complexity**: ⭐⭐ Medium
-
 #### `src/pages/*.js` (0% coverage)
 - **Files**: `index-page.js`, `jules-page.js`, `profile-page.js`, `queue-page.js`, `sessions-page.js`, `webcapture-page.js`, `oauth-callback-page.js`, `privacy-page.js`
 - **Type**: Page-specific initialization
