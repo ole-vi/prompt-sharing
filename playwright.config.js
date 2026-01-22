@@ -4,9 +4,9 @@ export default defineConfig({
   testDir: './e2e-tests/e2e',
   fullyParallel: false,  // E2E tests run sequentially
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 1,
+  retries: process.env.CI ? 3 : 1,  // More retries in CI for browser crashes
   workers: process.env.CI ? 1 : 1,
-  timeout: process.env.CI ? 60000 : 30000,  // 60s in CI, 30s locally
+  timeout: process.env.CI ? 90000 : 30000,  // 90s in CI for slow environments
   reporter: [
     ['html'],
     ['json', { outputFile: 'test-results/e2e-results.json' }],

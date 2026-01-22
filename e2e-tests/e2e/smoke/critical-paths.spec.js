@@ -66,22 +66,23 @@ test.describe('Smoke Tests - Critical Paths', () => {
     await page.goto('/', { waitUntil: 'networkidle' });
     await page.waitForLoadState('domcontentloaded');
     
-    // Wait for list container and items to render
-    await page.waitForSelector('#list', { timeout: 15000 });
-    await page.waitForSelector('#list .item', { timeout: 20000, state: 'visible' });
-    await page.waitForTimeout(2000); // Allow full render in CI
+    // Wait for list container
+    await page.waitForSelector('#list', { timeout: 20000 });
     
-    // Get count of items before trying to click
+    // Wait for items to be attached to DOM (not necessarily visible)
+    await page.waitForSelector('#list .item', { timeout: 30000, state: 'attached' });
+    await page.waitForTimeout(2000); // Let CSS and rendering settle
+    
+    // Verify items exist
     const itemCount = await page.locator('#list .item').count();
+    expect(itemCount).toBeGreaterThan(0);
     
-    if (itemCount > 0) {
-      // Click first file and wait for navigation
-      await page.locator('#list .item').first().click();
-      
-      // Wait for content to load with generous timeout
-      await page.waitForSelector('#content', { timeout: 10000 });
-      await expect(page.locator('#content')).toBeVisible();
-    }
+    // Click first file and wait for navigation
+    await page.locator('#list .item').first().click();
+    
+    // Wait for content to load with generous timeout
+    await page.waitForSelector('#content', { timeout: 15000, state: 'visible' });
+    await expect(page.locator('#content')).toBeVisible();
   });
 
   test('copy button works', async ({ page, context, browserName }) => {
@@ -114,16 +115,19 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
   test('repository switching works', async ({ page }) => {
     await mockGitHubAPI(page);
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'networkidle' });
     
     // Load default repo
-    await page.waitForSelector('#list', { timeout: 10000 });
+    await page.waitForSelector('#list', { timeout: 15000, state: 'visible' });
+    await page.waitForTimeout(1000);
     
     // Navigate to different repo via URL
-    await page.goto('/?owner=testuser&repo=other-repo&branch=main');
+    await page.goto('/?owner=testuser&repo=other-repo&branch=main', { waitUntil: 'networkidle' });
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1500);
     
     // File tree should reload
-    await expect(page.locator('#list')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#list')).toBeVisible({ timeout: 15000 });
     
     // URL should reflect new repo
     expect(page.url()).toContain('owner=testuser');
@@ -147,20 +151,23 @@ test.describe('Smoke Tests - Critical Paths', () => {
   });
 
   test('app handles 404 gracefully', async ({ page }) => {
-    const response = await page.goto('/nonexistent-page.html', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(1000); // Allow page to stabilize
+    const response = await page.goto('/nonexistent-page.html', { 
+      waitUntil: 'domcontentloaded',
+      timeout: 15000 
+    });
+    await page.waitForTimeout(2000); // Allow page to stabilize
     
     // Either 404 or redirected to home
     const status = response?.status();
     
     if (status === 404) {
       // Page should still render something
-      await page.waitForSelector('body', { timeout: 5000 });
+      await page.waitForSelector('body', { timeout: 10000, state: 'visible' });
       const bodyText = await page.textContent('body');
       expect(bodyText.length).toBeGreaterThan(0);
     } else {
       // Likely redirected to home
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
       expect(page.url()).toMatch(/\/$|index\.html/);
     }
   });
