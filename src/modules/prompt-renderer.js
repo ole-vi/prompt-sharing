@@ -8,6 +8,7 @@ import { showToast } from './toast.js';
 import { copyAndOpen } from './copen.js';
 import { copyText } from '../utils/clipboard.js';
 import statusBar from './status-bar.js';
+import { initDropdown } from './dropdown.js';
 
 function sanitizeHtml(html) {
   if (typeof window.DOMPurify === 'undefined') {
@@ -70,6 +71,7 @@ let julesBtn = null;
 let freeInputBtn = null;
 let queueBtn = null;
 let moreBtn = null;
+let copenDropdown = null;
 
 export function initPromptRenderer() {
   contentEl = document.getElementById('content');
@@ -88,6 +90,12 @@ export function initPromptRenderer() {
   freeInputBtn = document.getElementById('freeInputBtn');
   queueBtn = document.getElementById('queueBtn');
   moreBtn = document.getElementById('moreBtn');
+
+  // Initialize copen dropdown
+  const copenMenu = document.getElementById('copenMenu');
+  if (copenBtn && copenMenu) {
+    copenDropdown = initDropdown(copenBtn, copenMenu);
+  }
 
   document.addEventListener('click', handleDocumentClick);
   window.addEventListener('branchChanged', handleBranchChanged);
@@ -115,20 +123,14 @@ function handleDocumentClick(event) {
     return;
   }
 
-  if (target === copenBtn) {
-    event.stopPropagation();
-    if (copenMenu) {
-      copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
-    }
-    return;
-  }
+  // Note: copenBtn click is now handled by initDropdown, so we don't need to handle it here
 
   const copenMenuItem = target.closest('.custom-dropdown-item[data-target]');
   if (copenMenuItem && copenMenu && copenMenuItem.parentElement === copenMenu) {
     event.stopPropagation();
     const targetApp = copenMenuItem.dataset.target;
     handleCopenPrompt(targetApp);
-    copenMenu.style.display = 'none';
+    if (copenDropdown) copenDropdown.close();
     return;
   }
 
@@ -222,7 +224,7 @@ function handleDocumentClick(event) {
     return;
   }
 
-  if (copenMenu) copenMenu.style.display = 'none';
+  // Note: Dropdown menus are now managed by dropdown.js
   if (moreMenu) moreMenu.style.display = 'none';
 }
 
