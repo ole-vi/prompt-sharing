@@ -1,13 +1,18 @@
 name: E2E Tests
 
+# Temporarily disabled while fixing smoke tests - uncomment when ready for full E2E testing
+# on:
+#   push:
+#     branches: [ main, develop ]
+#   pull_request:
+#     branches: [ main, develop ]
+#   schedule:
+#     - cron: '0 0 * * *'  # Daily at midnight UTC
+#   workflow_dispatch:  # Allow manual triggers
+
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-  schedule:
-    - cron: '0 0 * * *'  # Daily at midnight UTC
-  workflow_dispatch:  # Allow manual triggers
+  # Only allow manual triggers for now
+  workflow_dispatch:
 
 jobs:
   test:

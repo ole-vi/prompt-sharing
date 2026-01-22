@@ -39,7 +39,7 @@ jobs:
         python-version: '3.11'
     
     - name: Run smoke tests only
-      run: npm run test:e2e:smoke -- --project=chromium --reporter=github-actions,html
+      run: npm run test:e2e:smoke -- --project=chromium --reporter=github,html
       env:
         BASE_URL: http://localhost:3000
         CI: true
