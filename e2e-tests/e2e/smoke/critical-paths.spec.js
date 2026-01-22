@@ -69,19 +69,20 @@ test.describe('Smoke Tests - Critical Paths', () => {
     // Wait for list container
     await page.waitForSelector('#list', { timeout: 20000 });
     
-    // Wait for items to be attached to DOM (not necessarily visible)
-    await page.waitForSelector('#list .item', { timeout: 30000, state: 'attached' });
-    await page.waitForTimeout(2000); // Let CSS and rendering settle
+    // Wait for items to be attached to DOM and visible
+    await page.waitForSelector('#list .item', { timeout: 30000 });
+    await page.waitForTimeout(1000); // Brief stability wait
     
-    // Verify items exist
+    // Verify items exist and are visible
     const itemCount = await page.locator('#list .item').count();
     expect(itemCount).toBeGreaterThan(0);
+    await expect(page.locator('#list .item').first()).toBeVisible();
     
     // Click first file and wait for navigation
     await page.locator('#list .item').first().click();
     
     // Wait for content to load with generous timeout
-    await page.waitForSelector('#content', { timeout: 15000, state: 'visible' });
+    await page.waitForSelector('#content', { timeout: 15000 });
     await expect(page.locator('#content')).toBeVisible();
   });
 
