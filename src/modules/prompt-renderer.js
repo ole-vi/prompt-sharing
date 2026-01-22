@@ -118,7 +118,7 @@ function handleDocumentClick(event) {
   if (target === copenBtn) {
     event.stopPropagation();
     if (copenMenu) {
-      copenMenu.style.display = copenMenu.style.display === 'none' ? 'block' : 'none';
+      copenMenu.classList.toggle('hidden');
     }
     return;
   }
@@ -128,7 +128,7 @@ function handleDocumentClick(event) {
     event.stopPropagation();
     const targetApp = copenMenuItem.dataset.target;
     handleCopenPrompt(targetApp);
-    copenMenu.style.display = 'none';
+    copenMenu.classList.add('hidden');
     return;
   }
 
@@ -186,7 +186,7 @@ function handleDocumentClick(event) {
   if (target === moreBtn) {
     event.stopPropagation();
     if (moreMenu) {
-      moreMenu.style.display = moreMenu.style.display === 'none' ? 'block' : 'none';
+      moreMenu.classList.toggle('hidden');
     }
     return;
   }
@@ -200,7 +200,7 @@ function handleDocumentClick(event) {
     if (editBtn && editBtn.href) {
       window.open(editBtn.href, '_blank', 'noopener,noreferrer');
     }
-    if (moreMenu) moreMenu.style.display = 'none';
+    if (moreMenu) moreMenu.classList.add('hidden');
     return;
   }
 
@@ -209,7 +209,7 @@ function handleDocumentClick(event) {
     if (ghBtn && ghBtn.href) {
       window.open(ghBtn.href, '_blank', 'noopener,noreferrer');
     }
-    if (moreMenu) moreMenu.style.display = 'none';
+    if (moreMenu) moreMenu.classList.add('hidden');
     return;
   }
 
@@ -218,12 +218,12 @@ function handleDocumentClick(event) {
     if (rawBtn && rawBtn.href) {
       window.open(rawBtn.href, '_blank', 'noopener,noreferrer');
     }
-    if (moreMenu) moreMenu.style.display = 'none';
+    if (moreMenu) moreMenu.classList.add('hidden');
     return;
   }
 
-  if (copenMenu) copenMenu.style.display = 'none';
-  if (moreMenu) moreMenu.style.display = 'none';
+  if (copenMenu) copenMenu.classList.add('hidden');
+  if (moreMenu) moreMenu.classList.add('hidden');
 }
 
 async function handleBranchChanged() {

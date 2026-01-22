@@ -4,9 +4,7 @@ import {
   createIcon, 
   setElementDisplay, 
   toggleClass, 
-  clearElement, 
-  onElement, 
-  stopPropagation 
+  clearElement
 } from '../../utils/dom-helpers.js';
 
 describe('DOM Helpers', () => {
@@ -248,73 +246,4 @@ describe('DOM Helpers', () => {
     });
   });
 
-  describe('onElement', () => {
-    it('should add event listener to element', () => {
-      const el = document.createElement('button');
-      const handler = vi.fn();
-      
-      onElement(el, 'click', handler);
-      el.click();
-      
-      expect(handler).toHaveBeenCalledTimes(1);
-    });
-
-    it('should handle multiple event types', () => {
-      const el = document.createElement('input');
-      const handler = vi.fn();
-      
-      onElement(el, 'input', handler);
-      el.dispatchEvent(new Event('input'));
-      
-      expect(handler).toHaveBeenCalled();
-    });
-
-    it('should do nothing if element is null', () => {
-      const handler = vi.fn();
-      
-      expect(() => {
-        onElement(null, 'click', handler);
-      }).not.toThrow();
-      
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('should do nothing if element is undefined', () => {
-      const handler = vi.fn();
-      
-      expect(() => {
-        onElement(undefined, 'click', handler);
-      }).not.toThrow();
-      
-      expect(handler).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('stopPropagation', () => {
-    it('should call stopPropagation on event', () => {
-      const event = new Event('click', { bubbles: true });
-      const spy = vi.spyOn(event, 'stopPropagation');
-      
-      stopPropagation(event);
-      
-      expect(spy).toHaveBeenCalled();
-    });
-
-    it('should prevent event bubbling', () => {
-      const parent = document.createElement('div');
-      const child = document.createElement('button');
-      parent.appendChild(child);
-      
-      const parentHandler = vi.fn();
-      const childHandler = vi.fn((e) => stopPropagation(e));
-      
-      parent.addEventListener('click', parentHandler);
-      child.addEventListener('click', childHandler);
-      
-      child.click();
-      
-      expect(childHandler).toHaveBeenCalled();
-      expect(parentHandler).not.toHaveBeenCalled();
-    });
-  });
 });

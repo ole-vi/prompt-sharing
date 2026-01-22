@@ -3,12 +3,11 @@
 
 import { TIMEOUTS } from '../utils/constants.js';
 import { createElement } from '../utils/dom-helpers.js';
+import { createModal } from '../utils/modal-manager.js';
 
-let confirmModal = null;
-let confirmResolve = null;
-let confirmController = null;
+let activeConfirmModal = null;
 
-function createConfirmModal() {
+function buildConfirmModalDOM() {
   const modal = createElement('div', 'modal');
   modal.id = 'confirmModal';
   modal.setAttribute('role', 'dialog');
@@ -51,28 +50,7 @@ function createConfirmModal() {
 
   modal.appendChild(modalContent);
   
-  document.body.appendChild(modal);
   return modal;
-}
-
-function showConfirmModal() {
-  if (!confirmModal) {
-    confirmModal = createConfirmModal();
-  }
-  
-  confirmModal.classList.add('show');
-  
-  // Focus the confirm button
-  setTimeout(() => {
-    const confirmBtn = document.getElementById('confirmModalConfirm');
-    if (confirmBtn) confirmBtn.focus();
-  }, TIMEOUTS.modalFocus);
-}
-
-function hideConfirmModal() {
-  if (confirmModal) {
-    confirmModal.classList.remove('show');
-  }
 }
 
 /**
@@ -86,24 +64,30 @@ function hideConfirmModal() {
  * @returns {Promise<boolean>} - Resolves to true if confirmed, false if cancelled
  */
 export function showConfirm(message, options = {}) {
+  // Cleanup any existing modal first
+  if (activeConfirmModal) {
+    activeConfirmModal.destroy();
+    activeConfirmModal = null;
+  }
+
   return new Promise((resolve) => {
-    if (!confirmModal) {
-      confirmModal = createConfirmModal();
-    }
+    // Build new DOM element
+    const modalElement = buildConfirmModalDOM();
     
     // Store active element for focus restoration
     const previouslyFocusedElement = document.activeElement;
     
+    // Configure content
     const title = options.title || 'Confirm Action';
     const confirmText = options.confirmText || 'Confirm';
     const confirmStyle = options.confirmStyle || 'error';
     const cancelText = options.cancelText || 'Cancel';
     
-    const titleEl = document.getElementById('confirmModalTitle');
-    const messageEl = document.getElementById('confirmModalMessage');
-    const confirmBtn = document.getElementById('confirmModalConfirm');
-    const cancelBtn = document.getElementById('confirmModalCancel');
-    const closeBtn = document.getElementById('confirmModalClose');
+    const titleEl = modalElement.querySelector('#confirmModalTitle');
+    const messageEl = modalElement.querySelector('#confirmModalMessage');
+    const confirmBtn = modalElement.querySelector('#confirmModalConfirm');
+    const cancelBtn = modalElement.querySelector('#confirmModalCancel');
+    const closeBtn = modalElement.querySelector('#confirmModalClose');
     
     titleEl.textContent = title;
     messageEl.textContent = message;
@@ -121,68 +105,55 @@ export function showConfirm(message, options = {}) {
     } else if (confirmStyle === 'success') {
       confirmBtn.classList.add('success');
     }
-    
-    confirmResolve = resolve;
 
-    // Use AbortController for cleanup
-    if (confirmController) {
-      confirmController.abort();
-    }
-    confirmController = new AbortController();
-    const { signal } = confirmController;
+    // Create managed modal instance
+    const modal = createModal({
+      element: modalElement,
+      onDestroy: () => {
+        activeConfirmModal = null;
+        // Restore focus
+        if (previouslyFocusedElement &&
+            typeof previouslyFocusedElement.focus === 'function' &&
+            document.body.contains(previouslyFocusedElement)) {
+          setTimeout(() => {
+            try {
+              previouslyFocusedElement.focus();
+            } catch (err) {
+              console.warn('Failed to restore focus:', err);
+            }
+          }, TIMEOUTS.modalFocus);
+        }
+      }
+    });
 
-    const cleanup = () => {
-      hideConfirmModal();
-      if (confirmController) {
-        confirmController.abort();
-        confirmController = null;
-      }
-      confirmResolve = null;
-      
-      // Restore focus to previously focused element
-      if (previouslyFocusedElement && 
-          typeof previouslyFocusedElement.focus === 'function' &&
-          document.body.contains(previouslyFocusedElement)) {
-        setTimeout(() => {
-          try {
-            previouslyFocusedElement.focus();
-          } catch (err) {
-            // Fallback if focus fails (element might be removed from DOM)
-            console.warn('Failed to restore focus:', err);
-          }
-        }, TIMEOUTS.modalFocus);
-      }
-    };
+    activeConfirmModal = modal;
 
     const handleConfirm = () => {
-      if (confirmResolve) {
-        confirmResolve(true);
-      }
-      cleanup();
+      resolve(true);
+      modal.destroy();
     };
 
     const handleCancel = () => {
-      if (confirmResolve) {
-        confirmResolve(false);
-      }
-      cleanup();
+      resolve(false);
+      modal.destroy();
     };
     
-    confirmBtn.addEventListener('click', handleConfirm, { signal });
-    cancelBtn.addEventListener('click', handleCancel, { signal });
-    closeBtn.addEventListener('click', handleCancel, { signal });
+    // Add tracked listeners
+    modal.addListener(confirmBtn, 'click', handleConfirm);
+    modal.addListener(cancelBtn, 'click', handleCancel);
+    modal.addListener(closeBtn, 'click', handleCancel);
 
     // Close on background click
-    confirmModal.addEventListener('click', (e) => {
-      if (e.target === confirmModal) {
+    modal.addListener(modalElement, 'click', (e) => {
+      if (e.target === modalElement) {
         handleCancel();
       }
-    }, { signal });
+    });
     
     // Handle keyboard events (Escape and focus trap)
-    document.addEventListener('keydown', (e) => {
+    modal.addListener(document, 'keydown', (e) => {
       // Safety check - only handle events if modal is visible
-      if (!confirmModal || !confirmModal.classList.contains('show')) {
+      if (!modalElement.classList.contains('show')) {
         return;
       }
       
@@ -193,7 +164,7 @@ export function showConfirm(message, options = {}) {
       
       // Focus trap implementation
       if (e.key === 'Tab') {
-        const focusableElements = confirmModal.querySelectorAll(
+        const focusableElements = modalElement.querySelectorAll(
           'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
         );
         
@@ -204,20 +175,25 @@ export function showConfirm(message, options = {}) {
         
         if (e.shiftKey) {
           // Shift + Tab - move backward
-          if (document.activeElement === firstElement || !confirmModal.contains(document.activeElement)) {
+          if (document.activeElement === firstElement || !modalElement.contains(document.activeElement)) {
             e.preventDefault();
             lastElement.focus();
           }
         } else {
           // Tab - move forward
-          if (document.activeElement === lastElement || !confirmModal.contains(document.activeElement)) {
+          if (document.activeElement === lastElement || !modalElement.contains(document.activeElement)) {
             e.preventDefault();
             firstElement.focus();
           }
         }
       }
-    }, { signal });
+    });
+
+    modal.show();
     
-    showConfirmModal();
+    // Focus the confirm button
+    setTimeout(() => {
+      if (confirmBtn) confirmBtn.focus();
+    }, TIMEOUTS.modalFocus);
   });
 }

@@ -173,7 +173,6 @@ src/
 │   ├── jules-queue.js
 │   ├── jules-subtask-modal.js
 │   ├── navbar.js
-│   ├── page-init.js
 │   ├── prompt-list.js
 │   ├── prompt-renderer.js
 │   ├── prompt-viewer.js
