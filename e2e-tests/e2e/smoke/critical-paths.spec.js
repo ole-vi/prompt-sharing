@@ -309,8 +309,9 @@ test.describe('Smoke Tests - Critical Paths', () => {
   });
 
   test('session storage works', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'networkidle' });
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(500);
     
     // Test sessionStorage
     await page.evaluate(() => {

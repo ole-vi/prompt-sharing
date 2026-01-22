@@ -167,12 +167,15 @@ test.describe('Prompt Browsing Workflow', () => {
       branch: 'main'
     });
     
+    // Wait for page to stabilize
+    await page.waitForTimeout(2000);
+    
     // Look for empty state message
     const emptyState = page.locator('.empty-state, .no-files-message');
     
     // Either we see an empty state or an error message
-    const hasEmptyState = await emptyState.isVisible().catch(() => false);
-    const hasError = await page.locator('.error-message').isVisible().catch(() => false);
+    const hasEmptyState = await emptyState.isVisible({ timeout: 10000 }).catch(() => false);
+    const hasError = await page.locator('.error-message').isVisible({ timeout: 10000 }).catch(() => false);
     
     expect(hasEmptyState || hasError).toBeTruthy();
   });

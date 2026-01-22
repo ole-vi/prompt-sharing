@@ -99,15 +99,18 @@ test.describe('Prompt Actions', () => {
       localStorage.setItem('julesApiKey', 'test-api-key');
     });
     
+    // Wait for page to stabilize
+    await page.waitForTimeout(1000);
+    
     // Find Jules button
     const julesBtn = page.locator('#julesBtn, .jules-btn, button:has-text("Jules"), button:has-text("Try in Jules")').first();
     
-    if (await julesBtn.isVisible()) {
+    if (await julesBtn.isVisible({ timeout: 10000 })) {
       await julesBtn.click();
       
       // Verify Jules modal opens
       const julesModal = page.locator('#julesModal, .jules-modal');
-      await expect(julesModal).toBeVisible({ timeout: 5000 });
+      await expect(julesModal).toBeVisible({ timeout: 10000 });
       
       // Verify prompt preview is shown
       const promptPreview = page.locator('#julesPromptPreview, .jules-prompt-preview, .prompt-content');

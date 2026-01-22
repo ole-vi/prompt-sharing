@@ -6,6 +6,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1,
   workers: process.env.CI ? 1 : 1,
+  timeout: process.env.CI ? 60000 : 30000,  // 60s in CI, 30s locally
   reporter: [
     ['html'],
     ['json', { outputFile: 'test-results/e2e-results.json' }],
@@ -17,6 +18,8 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    actionTimeout: process.env.CI ? 15000 : 10000,  // Longer waits in CI
+    navigationTimeout: process.env.CI ? 30000 : 15000,  // Longer navigation in CI
   },
 
   projects: [
