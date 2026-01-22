@@ -4,7 +4,7 @@ test.describe('Performance Tests', () => {
   test('homepage loads within acceptable time', async ({ page }) => {
     const startTime = Date.now();
     await page.goto('/');
-    await page.waitForSelector('#file-tree, main', { timeout: 10000 });
+    await page.waitForSelector('#list, main', { timeout: 10000 });
     const loadTime = Date.now() - startTime;
     
     console.log(`Homepage load time: ${loadTime}ms`);
@@ -13,12 +13,12 @@ test.describe('Performance Tests', () => {
 
   test('prompt rendering is fast', async ({ page }) => {
     await page.goto('/');
-    await page.waitForSelector('#file-tree', { timeout: 10000 });
+    await page.waitForSelector('#list', { timeout: 10000 });
     
     const startTime = Date.now();
     
     // Click first file
-    const firstFile = page.locator('.file-item').first();
+    const firstFile = page.locator('.item').first();
     await firstFile.click();
     await page.waitForSelector('#content, .content-area', { timeout: 5000 });
     
@@ -32,10 +32,10 @@ test.describe('Performance Tests', () => {
     const startTime = Date.now();
     
     await page.goto('/');
-    await page.waitForSelector('#file-tree', { timeout: 15000 });
+    await page.waitForSelector('#list', { timeout: 15000 });
     
     // Wait for file tree to be populated
-    await page.waitForSelector('.file-item', { timeout: 10000 });
+    await page.waitForSelector('.item', { timeout: 10000 });
     
     const loadTime = Date.now() - startTime;
     
@@ -45,15 +45,15 @@ test.describe('Performance Tests', () => {
 
   test('navigation between prompts is smooth', async ({ page }) => {
     await page.goto('/');
-    await page.waitForSelector('#file-tree', { timeout: 10000 });
+    await page.waitForSelector('#list', { timeout: 10000 });
     
     // Click first prompt
-    await page.locator('.file-item').first().click();
+    await page.locator('.item').first().click();
     await page.waitForSelector('#content', { timeout: 5000 });
     
     // Measure time to switch to another prompt
     const startTime = Date.now();
-    await page.locator('.file-item').nth(1).click();
+    await page.locator('.item').nth(1).click();
     await page.waitForSelector('#content', { timeout: 5000 });
     const switchTime = Date.now() - startTime;
     
@@ -63,7 +63,7 @@ test.describe('Performance Tests', () => {
 
   test('page does not have memory leaks after multiple navigations', async ({ page }) => {
     await page.goto('/');
-    await page.waitForSelector('#file-tree', { timeout: 10000 });
+    await page.waitForSelector('#list', { timeout: 10000 });
     
     // Get initial metrics
     const initialMetrics = await page.evaluate(() => {
@@ -74,7 +74,7 @@ test.describe('Performance Tests', () => {
     });
     
     // Navigate between multiple prompts
-    const files = await page.locator('.file-item').all();
+    const files = await page.locator('.item').all();
     const filesToTest = files.slice(0, Math.min(5, files.length));
     
     for (const file of filesToTest) {

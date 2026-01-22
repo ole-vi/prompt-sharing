@@ -15,7 +15,7 @@ test.describe('Prompt Browsing Workflow', () => {
     await expectFileTreeLoaded(page);
     
     // Click on the first file item
-    const firstFile = page.locator('.file-item').first();
+    const firstFile = page.locator('.item').first();
     await firstFile.click();
     
     // Verify prompt loads
@@ -119,7 +119,7 @@ test.describe('Prompt Browsing Workflow', () => {
     await expectFileTreeLoaded(page);
     
     // Find and click a .md file
-    const mdFile = page.locator('.file-item[data-file-path*=".md"]').first();
+    const mdFile = page.locator('.item[data-path*=".md"]').first();
     
     if (await mdFile.count() > 0) {
       await mdFile.click();
@@ -134,7 +134,7 @@ test.describe('Prompt Browsing Workflow', () => {
     
     // Verify folders are distinguishable from files
     const folders = page.locator('.folder');
-    const files = page.locator('.file-item');
+    const files = page.locator('.item');
     
     // Should have at least one folder
     expect(await folders.count()).toBeGreaterThan(0);
@@ -154,7 +154,7 @@ test.describe('Prompt Browsing Workflow', () => {
       await page.waitForTimeout(500); // Debounce
       
       // Verify filtered results
-      const visibleFiles = page.locator('.file-item:visible');
+      const visibleFiles = page.locator('.item:visible');
       expect(await visibleFiles.count()).toBeGreaterThan(0);
     }
   });

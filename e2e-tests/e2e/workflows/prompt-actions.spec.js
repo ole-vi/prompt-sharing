@@ -118,7 +118,7 @@ test.describe('Prompt Actions', () => {
   test('actions are disabled when no prompt is loaded', async ({ page }) => {
     // Navigate to home without selecting a file
     await page.goto('/');
-    await page.waitForSelector('#file-tree', { timeout: 10000 });
+    await page.waitForSelector('#list', { timeout: 10000 });
     
     // Check action buttons state
     const copyBtn = page.locator('#copyBtn, .copy-btn');

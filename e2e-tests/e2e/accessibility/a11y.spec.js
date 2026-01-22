@@ -4,7 +4,7 @@ import AxeBuilder from '@axe-core/playwright';
 test.describe('Accessibility', () => {
   test('homepage has no critical accessibility violations', async ({ page }) => {
     await page.goto('/');
-    await page.waitForSelector('#file-tree, main', { timeout: 10000 });
+    await page.waitForSelector('#list, main', { timeout: 10000 });
     
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa'])
@@ -29,7 +29,7 @@ test.describe('Accessibility', () => {
 
   test('keyboard navigation works throughout the app', async ({ page }) => {
     await page.goto('/');
-    await page.waitForSelector('#file-tree', { timeout: 10000 });
+    await page.waitForSelector('#list', { timeout: 10000 });
     
     // Tab through focusable elements
     await page.keyboard.press('Tab');
@@ -51,10 +51,10 @@ test.describe('Accessibility', () => {
 
   test('file tree is keyboard navigable', async ({ page }) => {
     await page.goto('/');
-    await page.waitForSelector('#file-tree', { timeout: 10000 });
+    await page.waitForSelector('#list', { timeout: 10000 });
     
     // Focus on file tree
-    await page.locator('#file-tree, .file-tree').first().focus();
+    await page.locator('#list, ').first().focus();
     
     // Navigate with arrow keys
     await page.keyboard.press('ArrowDown');
