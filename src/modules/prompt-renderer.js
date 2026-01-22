@@ -123,7 +123,7 @@ function handleDocumentClick(event) {
     return;
   }
 
-  // Note: copenBtn click is now handled by initDropdown, so we don't need to handle it here
+  // Note: copenBtn click events are now handled by the dropdown.js module via initDropdown()
 
   const copenMenuItem = target.closest('.custom-dropdown-item[data-target]');
   if (copenMenuItem && copenMenu && copenMenuItem.parentElement === copenMenu) {

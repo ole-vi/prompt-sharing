@@ -212,8 +212,8 @@ describe('prompt-renderer', () => {
       expect(() => initPromptRenderer()).not.toThrow();
     });
 
-    it('should initialize copen dropdown when both button and menu exist', async () => {
-      const { initDropdown } = await import('../../modules/dropdown.js');
+    it('should initialize copen dropdown when both button and menu exist', () => {
+      const { initDropdown } = require('../../modules/dropdown.js');
       const mockCopenBtn = { innerHTML: 'copen ▼' };
       const mockCopenMenu = { id: 'copenMenu' };
       
@@ -228,8 +228,8 @@ describe('prompt-renderer', () => {
       expect(initDropdown).toHaveBeenCalledWith(mockCopenBtn, mockCopenMenu);
     });
 
-    it('should not initialize copen dropdown when button is missing', async () => {
-      const { initDropdown } = await import('../../modules/dropdown.js');
+    it('should not initialize copen dropdown when button is missing', () => {
+      const { initDropdown } = require('../../modules/dropdown.js');
       const mockCopenMenu = { id: 'copenMenu' };
       
       global.document.getElementById.mockImplementation((id) => {
@@ -242,8 +242,8 @@ describe('prompt-renderer', () => {
       expect(initDropdown).not.toHaveBeenCalled();
     });
 
-    it('should not initialize copen dropdown when menu is missing', async () => {
-      const { initDropdown } = await import('../../modules/dropdown.js');
+    it('should not initialize copen dropdown when menu is missing', () => {
+      const { initDropdown } = require('../../modules/dropdown.js');
       const mockCopenBtn = { innerHTML: 'copen ▼' };
       
       global.document.getElementById.mockImplementation((id) => {
