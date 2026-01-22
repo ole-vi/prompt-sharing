@@ -6,7 +6,6 @@
 
 /* Components */
 @import url('./styles/components/header.css');
-@import url('./styles/components/navbar.css');
 @import url('./styles/components/buttons.css');
 @import url('./styles/components/pills.css');
 @import url('./styles/components/dropdown.css');

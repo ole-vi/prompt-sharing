@@ -1,5 +1,5 @@
-// ===== Shared Header and Navbar Initialization =====
-// This script automatically loads header and navbar on all pages
+// ===== Shared Header Initialization =====
+// This script automatically loads header on all pages
 
 import { loadHeader } from './modules/header.js';
 import { initAuthStateListener } from './modules/auth.js';
