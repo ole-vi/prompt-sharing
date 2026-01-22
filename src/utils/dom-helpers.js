@@ -39,14 +39,6 @@ export function clearElement(el) {
   }
 }
 
-export function onElement(el, event, handler) {
-  if (el) el.addEventListener(event, handler);
-}
-
-export function stopPropagation(e) {
-  e.stopPropagation();
-}
-
 export function waitForDOMReady(callback) {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', callback);
