@@ -20,7 +20,6 @@ function toggleDropdown(dropdown) {
 function openDropdown(dropdown) {
   closeAllDropdowns();
   dropdown.menu.classList.add('open');
-  dropdown.menu.style.display = ''; // Clear inline style if present
   dropdown.btn.setAttribute('aria-expanded', 'true');
   openDropdowns.add(dropdown);
 }

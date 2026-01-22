@@ -1,5 +1,6 @@
 import { getCurrentUser } from './auth.js';
 import { showToast } from './toast.js';
+import { toggleVisibility } from '../utils/dom-helpers.js';
 
 function extractDefaultBranch(source) {
   const defaultBranchObj = source?.githubRepo?.defaultBranch ||
@@ -19,7 +20,7 @@ function setupClickOutsideClose(targetBtn, targetMenu) {
   
   const closeDropdown = (e) => {
     if (!targetBtn.contains(e.target) && !targetMenu.contains(e.target)) {
-      targetMenu.style.display = 'none';
+      toggleVisibility(targetMenu, false);
       targetBtn.setAttribute('aria-expanded', 'false');
     }
   };
@@ -148,8 +149,8 @@ export class RepoSelector {
   setupDropdownToggle() {
     this.dropdownBtn.onclick = async (e) => {
       e.stopPropagation();
-      if (this.dropdownMenu.style.display === 'block') {
-        this.dropdownMenu.style.display = 'none';
+      if (!this.dropdownMenu.classList.contains('hidden')) {
+        toggleVisibility(this.dropdownMenu, false);
         this.dropdownBtn.setAttribute('aria-expanded', 'false');
         return;
       }
@@ -178,7 +179,7 @@ export class RepoSelector {
     loadingIndicator.className = 'dropdown-loading';
     loadingIndicator.textContent = 'Loading...';
     this.dropdownMenu.appendChild(loadingIndicator);
-    this.dropdownMenu.style.display = 'block';
+    toggleVisibility(this.dropdownMenu, true);
     
     await new Promise(resolve => setTimeout(resolve, 0));
     
@@ -192,7 +193,7 @@ export class RepoSelector {
       this.renderAllRepos();
     }
     
-    this.dropdownMenu.style.display = 'block';
+    toggleVisibility(this.dropdownMenu, true);
   }
 
   async renderFavorites() {
@@ -200,7 +201,7 @@ export class RepoSelector {
       const item = this.createRepoItem(fav.name, fav.id, true, async () => {
         this.selectedSourceId = fav.id;
         this.dropdownText.textContent = fav.name;
-        this.dropdownMenu.style.display = 'none';
+        toggleVisibility(this.dropdownMenu, false);
         
         // Save repo selection
         this.saveToStorage();
@@ -255,7 +256,8 @@ export class RepoSelector {
         }
       }
       
-      showMoreBtn.classList.add('hidden');
+      // Keep using class hidden here, as it was already using it, but explicit toggleVisibility is safer
+      toggleVisibility(showMoreBtn, false);
       this.renderAllRepos();
     };
     
@@ -306,7 +308,7 @@ export class RepoSelector {
       const item = this.createRepoItem(repoName, source.name || source.id, false, () => {
         this.selectedSourceId = source.name || source.id;
         this.dropdownText.textContent = repoName;
-        this.dropdownMenu.style.display = 'none';
+        toggleVisibility(this.dropdownMenu, false);
         
         // Save repo selection
         this.saveToStorage();
@@ -336,7 +338,7 @@ export class RepoSelector {
       e.stopPropagation();
       if (isFavorite) {
         await this.removeFavorite(id);
-        this.dropdownMenu.style.display = 'none';
+        toggleVisibility(this.dropdownMenu, false);
         this.dropdownBtn.setAttribute('aria-expanded', 'false');
         setTimeout(() => this.populateDropdown(), 0);
       } else {
@@ -534,8 +536,8 @@ export class BranchSelector {
   setupDropdownToggle() {
     this.dropdownBtn.onclick = (e) => {
       e.stopPropagation();
-      if (this.dropdownMenu.style.display === 'block') {
-        this.dropdownMenu.style.display = 'none';
+      if (!this.dropdownMenu.classList.contains('hidden')) {
+        toggleVisibility(this.dropdownMenu, false);
         this.dropdownBtn.setAttribute('aria-expanded', 'false');
         return;
       }
@@ -568,7 +570,7 @@ export class BranchSelector {
     const currentItem = document.createElement('div');
     currentItem.className = 'dropdown-item-with-star selected';
     currentItem.onclick = () => {
-      this.dropdownMenu.style.display = 'none';
+      toggleVisibility(this.dropdownMenu, false);
       this.dropdownBtn.setAttribute('aria-expanded', 'false');
     };
     
@@ -612,7 +614,7 @@ export class BranchSelector {
         }
 
         this.allBranchesLoaded = true;
-        showMoreBtn.style.display = 'none';
+        toggleVisibility(showMoreBtn, false);
         
         allBranches.forEach(branch => {
           if (branch.name === this.selectedBranch) return;
@@ -631,7 +633,7 @@ export class BranchSelector {
           
           item.onclick = () => {
             this.setSelectedBranch(branch.name);
-            this.dropdownMenu.style.display = 'none';
+            toggleVisibility(this.dropdownMenu, false);
             this.dropdownBtn.setAttribute('aria-expanded', 'false');
           };
           
@@ -649,7 +651,7 @@ export class BranchSelector {
     
     this.dropdownMenu.appendChild(showMoreBtn);
     
-    this.dropdownMenu.style.display = 'block';
+    toggleVisibility(this.dropdownMenu, true);
   }
 
   setSelectedBranch(branch) {

@@ -25,6 +25,14 @@ export function setElementDisplay(el, show = true) {
   el.classList.toggle('hidden', !show);
 }
 
+export function toggleVisibility(el, shouldShow) {
+  if (shouldShow === undefined) {
+    el.classList.toggle('hidden');
+  } else {
+    el.classList.toggle('hidden', !shouldShow);
+  }
+}
+
 export function toggleClass(el, className, force) {
   if (force === undefined) {
     el.classList.toggle(className);

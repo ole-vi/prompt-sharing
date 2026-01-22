@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RepoSelector, BranchSelector } from '../../modules/repo-branch-selector.js';
+import { toggleVisibility } from '../../utils/dom-helpers.js';
 
 // Mock dependencies
+vi.mock('../../utils/dom-helpers.js', () => ({
+  toggleVisibility: vi.fn()
+}));
+
 vi.mock('../../modules/auth.js', () => ({
   getCurrentUser: vi.fn()
 }));
@@ -377,24 +382,24 @@ describe('repo-branch-selector', () => {
       });
 
       it('should toggle menu visibility on button click', async () => {
-        mockMenu.style.display = 'none';
+        mockMenu.classList.contains.mockReturnValue(true); // Hidden initially
         
         await mockBtn.onclick({ stopPropagation: vi.fn() });
         
-        expect(mockMenu.style.display).toBe('block');
+        expect(toggleVisibility).toHaveBeenCalledWith(mockMenu, true);
       });
 
       it('should close menu if already open', async () => {
-        mockMenu.style.display = 'block';
+        mockMenu.classList.contains.mockReturnValue(false); // Visible initially
         
         await mockBtn.onclick({ stopPropagation: vi.fn() });
         
-        expect(mockMenu.style.display).toBe('none');
+        expect(toggleVisibility).toHaveBeenCalledWith(mockMenu, false);
       });
 
       it('should position fixed dropdowns', async () => {
         global.window.getComputedStyle.mockReturnValue({ position: 'fixed' });
-        mockMenu.style.display = 'none';
+        mockMenu.classList.contains.mockReturnValue(true);
         
         await mockBtn.onclick({ stopPropagation: vi.fn() });
         
@@ -422,7 +427,7 @@ describe('repo-branch-selector', () => {
         const populatePromise = repoSelector.populateDropdown();
         
         expect(mockMenu.appendChild).toHaveBeenCalled();
-        expect(mockMenu.style.display).toBe('block');
+        expect(toggleVisibility).toHaveBeenCalledWith(mockMenu, true);
         
         await populatePromise;
       });
@@ -691,24 +696,24 @@ describe('repo-branch-selector', () => {
       });
 
       it('should toggle menu visibility', () => {
-        mockMenu.style.display = 'none';
+        mockMenu.classList.contains.mockReturnValue(true);
         
         mockBtn.onclick({ stopPropagation: vi.fn() });
         
-        expect(mockMenu.style.display).toBe('block');
+        expect(toggleVisibility).toHaveBeenCalledWith(mockMenu, true);
       });
 
       it('should close menu if already open', () => {
-        mockMenu.style.display = 'block';
+        mockMenu.classList.contains.mockReturnValue(false);
         
         mockBtn.onclick({ stopPropagation: vi.fn() });
         
-        expect(mockMenu.style.display).toBe('none');
+        expect(toggleVisibility).toHaveBeenCalledWith(mockMenu, false);
       });
 
       it('should position fixed dropdowns', () => {
         global.window.getComputedStyle.mockReturnValue({ position: 'fixed' });
-        mockMenu.style.display = 'none';
+        mockMenu.classList.contains.mockReturnValue(true);
         
         mockBtn.onclick({ stopPropagation: vi.fn() });
         
@@ -750,7 +755,7 @@ describe('repo-branch-selector', () => {
       it('should display menu', () => {
         branchSelector.populateDropdown();
         
-        expect(mockMenu.style.display).toBe('block');
+        expect(toggleVisibility).toHaveBeenCalledWith(mockMenu, true);
       });
     });
 

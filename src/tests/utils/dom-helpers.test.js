@@ -3,6 +3,7 @@ import {
   createElement, 
   createIcon, 
   setElementDisplay, 
+  toggleVisibility,
   toggleClass, 
   clearElement, 
   onElement, 
@@ -159,6 +160,41 @@ describe('DOM Helpers', () => {
       expect(el.classList.contains('hidden')).toBe(false);
       
       setElementDisplay(el, false);
+      expect(el.classList.contains('hidden')).toBe(true);
+    });
+  });
+
+  describe('toggleVisibility', () => {
+    it('should toggle class without shouldShow', () => {
+      const el = document.createElement('div');
+
+      toggleVisibility(el);
+      expect(el.classList.contains('hidden')).toBe(true);
+
+      toggleVisibility(el);
+      expect(el.classList.contains('hidden')).toBe(false);
+    });
+
+    it('should show element when shouldShow=true (remove hidden)', () => {
+      const el = document.createElement('div');
+      el.classList.add('hidden');
+
+      toggleVisibility(el, true);
+      expect(el.classList.contains('hidden')).toBe(false);
+
+      // Should remain visible
+      toggleVisibility(el, true);
+      expect(el.classList.contains('hidden')).toBe(false);
+    });
+
+    it('should hide element when shouldShow=false (add hidden)', () => {
+      const el = document.createElement('div');
+
+      toggleVisibility(el, false);
+      expect(el.classList.contains('hidden')).toBe(true);
+
+      // Should remain hidden
+      toggleVisibility(el, false);
       expect(el.classList.contains('hidden')).toBe(true);
     });
   });

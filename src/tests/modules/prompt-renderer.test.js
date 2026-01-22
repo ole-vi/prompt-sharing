@@ -33,7 +33,8 @@ vi.mock('../../utils/constants.js', () => ({
 }));
 
 vi.mock('../../utils/dom-helpers.js', () => ({
-  setElementDisplay: vi.fn()
+  setElementDisplay: vi.fn(),
+  toggleVisibility: vi.fn()
 }));
 
 vi.mock('../../utils/lazy-loaders.js', () => ({
