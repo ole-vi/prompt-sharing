@@ -59,6 +59,14 @@ vi.mock('../../modules/copen.js', () => ({
   copyAndOpen: vi.fn()
 }));
 
+vi.mock('../../modules/dropdown.js', () => ({
+  initDropdown: vi.fn(() => ({
+    open: vi.fn(),
+    close: vi.fn(),
+    toggle: vi.fn()
+  }))
+}));
+
 vi.mock('../../modules/status-bar.js', () => ({
   default: {
     setActivity: vi.fn(),
@@ -176,6 +184,7 @@ describe('prompt-renderer', () => {
       expect(global.document.getElementById).toHaveBeenCalledWith('julesBtn');
       expect(global.document.getElementById).toHaveBeenCalledWith('freeInputBtn');
       expect(global.document.getElementById).toHaveBeenCalledWith('moreBtn');
+      expect(global.document.getElementById).toHaveBeenCalledWith('copenMenu');
     });
 
     it('should add event listeners', () => {
@@ -201,6 +210,50 @@ describe('prompt-renderer', () => {
       });
 
       expect(() => initPromptRenderer()).not.toThrow();
+    });
+
+    it('should initialize copen dropdown when both button and menu exist', async () => {
+      const { initDropdown } = await import('../../modules/dropdown.js');
+      const mockCopenBtn = { innerHTML: 'copen ▼' };
+      const mockCopenMenu = { id: 'copenMenu' };
+      
+      global.document.getElementById.mockImplementation((id) => {
+        if (id === 'copenBtn') return mockCopenBtn;
+        if (id === 'copenMenu') return mockCopenMenu;
+        return null;
+      });
+
+      initPromptRenderer();
+
+      expect(initDropdown).toHaveBeenCalledWith(mockCopenBtn, mockCopenMenu);
+    });
+
+    it('should not initialize copen dropdown when button is missing', async () => {
+      const { initDropdown } = await import('../../modules/dropdown.js');
+      const mockCopenMenu = { id: 'copenMenu' };
+      
+      global.document.getElementById.mockImplementation((id) => {
+        if (id === 'copenMenu') return mockCopenMenu;
+        return null;
+      });
+
+      initPromptRenderer();
+
+      expect(initDropdown).not.toHaveBeenCalled();
+    });
+
+    it('should not initialize copen dropdown when menu is missing', async () => {
+      const { initDropdown } = await import('../../modules/dropdown.js');
+      const mockCopenBtn = { innerHTML: 'copen ▼' };
+      
+      global.document.getElementById.mockImplementation((id) => {
+        if (id === 'copenBtn') return mockCopenBtn;
+        return null;
+      });
+
+      initPromptRenderer();
+
+      expect(initDropdown).not.toHaveBeenCalled();
     });
   });
 
