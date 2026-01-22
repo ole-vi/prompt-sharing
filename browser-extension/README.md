@@ -146,10 +146,19 @@ When you make changes to the extension code:
 
 - Make sure the Firebase Functions are deployed
 - Check browser console for detailed error messages
-- Verify your GitHub OAuth app is configured correctly with the correct Authorization callback URL
-  - For PromptRoot production: `https://promptroot.ai/oauth-callback.html`
-  - For forks: `https://YOUR_DOMAIN/oauth-callback.html` (see FORKING_GUIDE.md)
-- Ensure the `redirectUri` in `config.js` matches the callback URL registered in your GitHub OAuth app
+- Verify your GitHub OAuth app is configured correctly
+
+### "redirect_uri is not associated with this application" warning
+
+This warning appears when the GitHub OAuth app doesn't have the redirect URI configured. To fix:
+
+1. Go to https://github.com/settings/developers and find your OAuth app
+2. Check the "Authorization callback URL" field
+3. Ensure it includes the redirect URI from `config.js` (currently `https://promptroot-b02a2.firebaseapp.com/oauth-callback.html`)
+4. If using a custom domain, add `https://YOUR_DOMAIN/oauth-callback.html` as well
+5. Update application and test again
+
+**Note:** GitHub OAuth apps can have multiple callback URLs separated by newlines
 
 ## File Structure
 
@@ -190,11 +199,9 @@ The extension is pre-configured to sync with the `promptroot` repository. If you
 
 1. Edit [config.js](config.js)
 2. Update `github.targetRepo.owner` and `github.targetRepo.repo`
-3. Register your own GitHub OAuth app with Authorization callback URL: `https://YOUR_DOMAIN/oauth-callback.html`
-4. Update `github.clientId` and `github.redirectUri` in config.js to match your OAuth app
+3. Register your own GitHub OAuth app
+4. Update `github.clientId` in config.js
 5. Configure Firebase Functions with your OAuth credentials
-
-**Important:** The `redirectUri` in config.js must exactly match the Authorization callback URL registered in your GitHub OAuth application.
 
 ## Security
 
