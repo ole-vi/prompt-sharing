@@ -9,6 +9,7 @@ import { parseParams } from './utils/url-params.js';
 import statusBar from './modules/status-bar.js';
 import { getFirebaseReady } from './firebase-init.js';
 import { waitForDOMReady } from './utils/dom-helpers.js';
+import { fetchJSON } from './modules/github-api.js';
 
 let isInitialized = false;
 
@@ -70,12 +71,15 @@ async function fetchVersion() {
   }
   
   try {
-    // Fetch the latest commit on the branch
-    const latestResponse = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits/${BRANCH}`);
-    if (!latestResponse.ok) {
-      throw new Error(`GitHub API returned ${latestResponse.status}`);
+    const latestData = await fetchJSON(`https://api.github.com/repos/${OWNER}/${REPO}/commits/${BRANCH}`);
+    if (!latestData) {
+      console.warn('Version check: GitHub API request failed (possibly rate limited)');
+      if (appVersion) {
+        appVersion.textContent = 'version check rate limited';
+        appVersion.classList.add('version-badge');
+      }
+      return;
     }
-    const latestData = await latestResponse.json();
     const latestSha = latestData.sha.substring(0, 7);
     const latestDate = new Date(latestData.commit.committer.date);
     const latestDateStr = latestDate.toLocaleDateString('en-CA'); // YYYY-MM-DD
@@ -144,7 +148,7 @@ async function initializeSharedComponents(activePage) {
       return;
     }
 
-    initAuthStateListener();
+    await initAuthStateListener();
 
     const params = parseParams();
     const currentOwner = params.owner || OWNER;
