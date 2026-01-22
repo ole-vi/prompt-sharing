@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { authenticateUser, navigateToPrompt, navigateToPage, openJulesModal } from '../helpers/navigation.js';
-import { expectJulesModalOpen, expectQueueItems, expectToastVisible } from '../helpers/assertions.js';
+import { navigateToPage } from '../helpers/navigation.js';
+import { expectJulesModalOpen } from '../helpers/assertions.js';
 import { setGitHubToken } from '../helpers/github-helper.js';
 import { testUser, testJulesConfig } from '../fixtures/test-data.js';
 

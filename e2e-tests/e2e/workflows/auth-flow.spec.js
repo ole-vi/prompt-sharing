@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { authenticateUser, navigateToPage } from '../helpers/navigation.js';
-import { expectAuthenticationSuccess, expectUnauthenticated } from '../helpers/assertions.js';
+import { navigateToPage } from '../helpers/navigation.js';
+import { expectAuthenticationSuccess } from '../helpers/assertions.js';
 import { mockGitHubOAuth, setGitHubToken, clearGitHubAuth } from '../helpers/github-helper.js';
 import { testUser } from '../fixtures/test-data.js';
 
@@ -79,6 +79,10 @@ test.describe('Authentication Flow', () => {
       if (await userName.isVisible()) {
         const nameText = await userName.textContent();
         expect(nameText).toBeTruthy();
+      }
+      if (await userEmail.isVisible()) {
+        const emailText = await userEmail.textContent();
+        expect(emailText).toBeTruthy();
       }
     }
   });

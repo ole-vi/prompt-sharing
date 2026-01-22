@@ -70,9 +70,8 @@ test.describe('Accessibility', () => {
     // Should have loaded content
     const contentVisible = await page.locator('#content, .content-area').isVisible();
     
-    // Note: This test depends on implementation - file tree might not have arrow key nav
-    // Just verify no errors occurred
-    expect(true).toBeTruthy();
+    // Verify that content is visible after navigation
+    expect(contentVisible).toBeTruthy();
   });
 
   test('screen reader landmarks are present', async ({ page }) => {
@@ -200,7 +199,7 @@ test.describe('Accessibility', () => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
     
-    const contrastResults = await new AxeBuilder({ page })
+    await new AxeBuilder({ page })
       .withTags(['wcag2aa'])
       .disableRules(['color-contrast']) // We'll test this separately
       .analyze();

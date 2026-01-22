@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { navigateToPrompt, selectRepo, expandFolder, collapseFolder, navigateWithParams } from '../helpers/navigation.js';
+import { navigateWithParams } from '../helpers/navigation.js';
 import { expectPromptLoaded, expectFileTreeLoaded, expectFileInTree, expectFolderExpanded, expectFolderCollapsed, expectUrlParams } from '../helpers/assertions.js';
 import { mockGitHubAPI } from '../helpers/github-helper.js';
 

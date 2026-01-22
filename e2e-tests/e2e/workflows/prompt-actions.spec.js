@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { navigateToPrompt, navigateWithParams } from '../helpers/navigation.js';
-import { expectToastVisible, expectClipboardContains } from '../helpers/assertions.js';
+import { navigateWithParams } from '../helpers/navigation.js';
 import { mockGitHubAPI } from '../helpers/github-helper.js';
 
 test.describe('Prompt Actions', () => {
