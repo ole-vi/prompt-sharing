@@ -2,6 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RepoSelector, BranchSelector } from '../../modules/repo-branch-selector.js';
 
 // Mock dependencies
+vi.mock('../../utils/dom-helpers.js', () => ({
+  toggleVisibility: vi.fn()
+}));
+
 vi.mock('../../modules/auth.js', () => ({
   getCurrentUser: vi.fn()
 }));
@@ -381,15 +385,15 @@ describe('repo-branch-selector', () => {
         
         await mockBtn.onclick({ stopPropagation: vi.fn() });
         
-        expect(mockMenu.style.display).toBe('block');
+        expect(mockMenu.classList.add).toHaveBeenCalledWith('open');
       });
 
       it('should close menu if already open', async () => {
-        mockMenu.style.display = 'block';
+        mockMenu.classList.contains.mockReturnValue(true);
         
         await mockBtn.onclick({ stopPropagation: vi.fn() });
         
-        expect(mockMenu.style.display).toBe('none');
+        expect(mockMenu.classList.remove).toHaveBeenCalledWith('open');
       });
 
       it('should position fixed dropdowns', async () => {
@@ -422,7 +426,7 @@ describe('repo-branch-selector', () => {
         const populatePromise = repoSelector.populateDropdown();
         
         expect(mockMenu.appendChild).toHaveBeenCalled();
-        expect(mockMenu.style.display).toBe('block');
+        expect(mockMenu.classList.add).toHaveBeenCalledWith('open');
         
         await populatePromise;
       });
@@ -695,15 +699,15 @@ describe('repo-branch-selector', () => {
         
         mockBtn.onclick({ stopPropagation: vi.fn() });
         
-        expect(mockMenu.style.display).toBe('block');
+        expect(mockMenu.classList.add).toHaveBeenCalledWith('open');
       });
 
       it('should close menu if already open', () => {
-        mockMenu.style.display = 'block';
+        mockMenu.classList.contains.mockReturnValue(true);
         
         mockBtn.onclick({ stopPropagation: vi.fn() });
         
-        expect(mockMenu.style.display).toBe('none');
+        expect(mockMenu.classList.remove).toHaveBeenCalledWith('open');
       });
 
       it('should position fixed dropdowns', () => {
@@ -750,7 +754,7 @@ describe('repo-branch-selector', () => {
       it('should display menu', () => {
         branchSelector.populateDropdown();
         
-        expect(mockMenu.style.display).toBe('block');
+        expect(mockMenu.classList.add).toHaveBeenCalledWith('open');
       });
     });
 
