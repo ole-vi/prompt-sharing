@@ -4,6 +4,7 @@
 import { encryptAndStoreKey } from './jules-keys.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { addToJulesQueue } from './jules-queue.js';
+import { toggleVisibility } from '../utils/dom-helpers.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import { RETRY_CONFIG, TIMEOUTS, JULES_MESSAGES } from '../utils/constants.js';
 import { showToast } from './toast.js';
@@ -306,9 +307,9 @@ export async function showSubtaskErrorModal(subtaskNumber, totalSubtasks, error,
   }
 
   if (hideQueueButton && queueBtn) {
-    queueBtn.classList.add('hidden');
+    toggleVisibility(queueBtn, false);
   } else if (queueBtn) {
-    queueBtn.classList.remove('hidden');
+    toggleVisibility(queueBtn, true);
   }
 
   return new Promise((resolve) => {
