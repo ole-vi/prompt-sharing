@@ -63,20 +63,45 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
   test('user can load and view a prompt', async ({ page }) => {
     await mockGitHubAPI(page);
-    await page.goto('/', { waitUntil: 'networkidle' });
-    await page.waitForLoadState('domcontentloaded');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {
+      // Continue if networkidle times out - page might be functional anyway
+      console.log('Network idle timeout, continuing with test');
+    });
     
     // Wait for list container
     await page.waitForSelector('#list', { timeout: 20000 });
     
-    // Wait for items to be attached to DOM and visible
-    await page.waitForSelector('#list .item', { timeout: 30000 });
-    await page.waitForTimeout(1000); // Brief stability wait
+    // Wait for items to be attached to DOM first, then check visibility
+    await page.waitForSelector('#list .item', { state: 'attached', timeout: 30000 });
+    await page.waitForTimeout(2000); // Allow time for CSS to render items visible
     
     // Verify items exist and are visible
     const itemCount = await page.locator('#list .item').count();
     expect(itemCount).toBeGreaterThan(0);
-    await expect(page.locator('#list .item').first()).toBeVisible();
+    
+    // Check if items are visible, if not debug what's wrong
+    const firstItem = page.locator('#list .item').first();
+    const isVisible = await firstItem.isVisible();
+    if (!isVisible) {
+      // Debug: log element styles and positioning  
+      const styles = await firstItem.evaluate(el => {
+        const computed = window.getComputedStyle(el);
+        return {
+          display: computed.display,
+          visibility: computed.visibility,
+          opacity: computed.opacity,
+          position: computed.position,
+          top: computed.top,
+          left: computed.left,
+          width: computed.width,
+          height: computed.height,
+          zIndex: computed.zIndex
+        };
+      });
+      console.log('Element styles:', styles);
+    }
+    await expect(firstItem).toBeVisible();
     
     // Click first file and wait for navigation
     await page.locator('#list .item').first().click();
