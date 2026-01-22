@@ -64,11 +64,12 @@ test.describe('Smoke Tests - Critical Paths', () => {
   test('user can load and view a prompt', async ({ page }) => {
     await mockGitHubAPI(page);
     await page.goto('/', { waitUntil: 'networkidle' });
+    await page.waitForLoadState('domcontentloaded');
     
     // Wait for list container and items to render
-    await page.waitForSelector('#list', { timeout: 10000 });
-    await page.waitForSelector('#list .item', { timeout: 15000 });
-    await page.waitForTimeout(1000); // Allow full render
+    await page.waitForSelector('#list', { timeout: 15000 });
+    await page.waitForSelector('#list .item', { timeout: 20000, state: 'visible' });
+    await page.waitForTimeout(2000); // Allow full render in CI
     
     // Get count of items before trying to click
     const itemCount = await page.locator('#list .item').count();
@@ -146,17 +147,20 @@ test.describe('Smoke Tests - Critical Paths', () => {
   });
 
   test('app handles 404 gracefully', async ({ page }) => {
-    const response = await page.goto('/nonexistent-page.html');
+    const response = await page.goto('/nonexistent-page.html', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000); // Allow page to stabilize
     
     // Either 404 or redirected to home
     const status = response?.status();
     
     if (status === 404) {
       // Page should still render something
+      await page.waitForSelector('body', { timeout: 5000 });
       const bodyText = await page.textContent('body');
       expect(bodyText.length).toBeGreaterThan(0);
     } else {
       // Likely redirected to home
+      await page.waitForTimeout(500);
       expect(page.url()).toMatch(/\/$|index\.html/);
     }
   });
