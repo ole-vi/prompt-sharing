@@ -38,6 +38,15 @@ jobs:
       with:
         python-version: '3.11'
     
+    - name: Start dev server
+      run: python -m http.server 3000 &
+      env:
+        CI: true
+    
+    - name: Wait for server to be ready
+      run: |
+        timeout 30 bash -c 'until curl -f http://localhost:3000; do sleep 1; done' || (echo "Server failed to start" && exit 1)
+    
     - name: Run smoke tests only
       run: npm run test:e2e:smoke -- --project=chromium
       env:
