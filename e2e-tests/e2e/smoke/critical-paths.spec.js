@@ -63,11 +63,12 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
   test('user can load and view a prompt', async ({ page }) => {
     await mockGitHubAPI(page);
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'networkidle' });
     
     // Wait for list container and items to render
     await page.waitForSelector('#list', { timeout: 10000 });
     await page.waitForSelector('#list .item', { timeout: 15000 });
+    await page.waitForTimeout(1000); // Allow full render
     
     // Get count of items before trying to click
     const itemCount = await page.locator('#list .item').count();
@@ -288,6 +289,7 @@ test.describe('Smoke Tests - Critical Paths', () => {
   test('local storage works', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(500); // Ensure page is stable
     
     // Test localStorage
     await page.evaluate(() => {
