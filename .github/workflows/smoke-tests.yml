@@ -12,6 +12,10 @@ jobs:
     name: Smoke Tests (Chromium only)
     timeout-minutes: 10
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     
     steps:
     - name: Checkout code
