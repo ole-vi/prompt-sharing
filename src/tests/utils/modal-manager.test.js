@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createModal } from '../../utils/modal-manager.js';
 
 describe('Modal Manager', () => {
-  let modalContainer;
 
   beforeEach(() => {
     // Clean up document body
