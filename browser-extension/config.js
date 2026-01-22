@@ -1,7 +1,7 @@
 const CONFIG = {
   github: {
     clientId: 'Ov23liz8g6qMlD1izTFe',
-    redirectUri: 'https://promptroot.ai/oauth-callback.html',
+    redirectUri: 'https://prompt-sharing-f8eeb.firebaseapp.com/oauth-callback.html',
     scopes: ['repo'],
     targetRepo: {
       owner: 'promptroot',
