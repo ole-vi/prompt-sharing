@@ -150,6 +150,7 @@ test.describe('Prompt Actions', () => {
       // Check for loading state (even if brief)
       // This might be a spinner, disabled state, or text change
       const hasLoadingClass = await copyBtn.getAttribute('class');
+      expect(typeof hasLoadingClass === 'string').toBeTruthy();
       
       // At minimum, verify button interaction completed
       await page.waitForTimeout(500);

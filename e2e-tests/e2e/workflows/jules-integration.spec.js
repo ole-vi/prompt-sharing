@@ -265,9 +265,6 @@ test.describe('Jules Integration', () => {
     await page.goto('/?file=test-prompt');
     await page.waitForSelector('#content', { timeout: 10000 });
     
-    // Get prompt title
-    const promptTitle = await page.locator('#title, .prompt-title, h1').first().textContent();
-    
     // Open Jules modal
     const julesBtn = page.locator('#julesBtn').first();
     

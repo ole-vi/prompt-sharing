@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { navigateWithParams } from '../helpers/navigation.js';
-import { expectPromptLoaded, expectFileTreeLoaded, expectFileInTree, expectFolderExpanded, expectFolderCollapsed, expectUrlParams } from '../helpers/assertions.js';
+import { expectFileTreeLoaded, expectUrlParams } from '../helpers/assertions.js';
 import { mockGitHubAPI } from '../helpers/github-helper.js';
 
 test.describe('Prompt Browsing Workflow', () => {
@@ -28,7 +28,6 @@ test.describe('Prompt Browsing Workflow', () => {
     
     // Find a folder
     const folder = page.locator('.folder').first();
-    const folderPath = await folder.getAttribute('data-path');
     
     // Click to expand
     await folder.click();
@@ -95,9 +94,6 @@ test.describe('Prompt Browsing Workflow', () => {
     if (await folder.count() > 0) {
       await folder.click();
       await page.waitForTimeout(500);
-      
-      // Get folder path
-      const folderPath = await folder.getAttribute('data-path');
       
       // Refresh page
       await page.reload();
