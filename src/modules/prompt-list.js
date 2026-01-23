@@ -369,7 +369,7 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       a.dataset.path = file.path;
 
       const left = document.createElement('div');
-      left.classList.add('d-flex', 'flex-col', 'gap-2');
+      left.classList.add('d-flex', 'flex-col', 'flex-gap-xs');
       const t = document.createElement('div');
       t.className = 'item-title';
       t.textContent = getCleanTitle(file.name);

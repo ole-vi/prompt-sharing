@@ -11,6 +11,7 @@
 .flex-col { display: flex; flex-direction: column; }
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
 .flex-1 { flex: 1; }
+.flex-gap-xs { gap: 2px; }
 .flex-gap-sm { gap: 8px; }
 .flex-gap-md { gap: 12px; }
 .d-flex-gap-8 { display: flex; gap: 8px; }
