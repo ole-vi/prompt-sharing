@@ -162,6 +162,19 @@ html, body {
   display: flex !important;
 }
 
+.pad-8 {
+  padding: 8px;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.gap-2 {
+  gap: 2px;
+}
+
 /* Modal utilities */
 .modal-show {
   display: flex !important;
