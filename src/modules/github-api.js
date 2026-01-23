@@ -15,6 +15,17 @@ let rateLimitInfo = {
 
 const inFlightRequests = new Map();
 
+// Directory cache for Contents API with 5-minute TTL
+const directoryCache = new Map();
+const DIRECTORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Retry configuration
+const RETRY_CONFIG = {
+  maxAttempts: 3,
+  initialDelay: 1000,
+  maxDelay: 4000
+};
+
 export function getRateLimitInfo() {
   return { ...rateLimitInfo };
 }
@@ -36,6 +47,70 @@ function updateRateLimitInfo(headers) {
     rateLimitInfo.reset = parseInt(reset, 10) * 1000;
   }
   rateLimitInfo.lastUpdated = Date.now();
+  rateLimitInfo.lastUpdated = Date.now();
+}
+
+function checkRateLimitError(res) {
+  if (res.status === 403) {
+    const remaining = res.headers.get('X-RateLimit-Remaining');
+    if (remaining === '0') {
+      const reset = res.headers.get('X-RateLimit-Reset');
+      const resetTime = reset ? parseInt(reset, 10) * 1000 : Date.now() + 3600000;
+      const error = new Error('GitHub API rate limit exceeded');
+      error.isRateLimit = true;
+      error.resetTime = resetTime;
+      error.status = 403;
+      throw error;
+    }
+  }
+}
+
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchWithRetry(url, headers) {
+  let lastError;
+  
+  for (let attempt = 1; attempt <= RETRY_CONFIG.maxAttempts; attempt++) {
+    try {
+      const res = await fetch(viaProxy(url), {
+        cache: 'no-store',
+        headers
+      });
+      
+      // Update rate limit tracking
+      updateRateLimitInfo(res.headers);
+      
+      // Check for rate limit error
+      checkRateLimitError(res);
+      
+      return res;
+    } catch (error) {
+      lastError = error;
+      
+      // Don't retry rate limit errors or 4xx errors (except 429)
+      if (error.isRateLimit || (error.status >= 400 && error.status < 500 && error.status !== 429)) {
+        throw error;
+      }
+      
+      // Don't retry on last attempt
+      if (attempt === RETRY_CONFIG.maxAttempts) {
+        throw error;
+      }
+      
+      // Exponential backoff
+      const delay = Math.min(
+        RETRY_CONFIG.initialDelay * Math.pow(2, attempt - 1),
+        RETRY_CONFIG.maxDelay
+      );
+      
+      console.warn(`GitHub API request failed (attempt ${attempt}/${RETRY_CONFIG.maxAttempts}), retrying in ${delay}ms...`, error);
+      await sleep(delay);
+    }
+  }
+  
+  throw lastError;
 }
 
 const TOKEN_MAX_AGE = 60 * 24 * 60 * 60 * 1000; // 60 days
@@ -85,17 +160,15 @@ export async function fetchJSON(url) {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const res = await fetch(viaProxy(url), {
-      cache: 'no-store',
-      headers
-    });
-    
-    // Update rate limit tracking
-    updateRateLimitInfo(res.headers);
+    const res = await fetchWithRetry(url, headers);
     
     if (!res.ok) return null;
     return res.json();
   } catch (e) {
+    // Re-throw rate limit errors for better handling upstream
+    if (e.isRateLimit) {
+      throw e;
+    }
     console.error('GitHub API fetch failed:', e);
     return null;
   }
@@ -114,13 +187,7 @@ export async function fetchJSONWithETag(url, etag = null) {
       headers['If-None-Match'] = etag;
     }
     
-    const res = await fetch(viaProxy(url), {
-      cache: 'no-store',
-      headers
-    });
-    
-    // Update rate limit tracking
-    updateRateLimitInfo(res.headers);
+    const res = await fetchWithRetry(url, headers);
     
     if (res.status === 304) {
       return { notModified: true, etag };
@@ -137,6 +204,10 @@ export async function fetchJSONWithETag(url, etag = null) {
     
     return { data, etag: newEtag, notModified: false };
   } catch (e) {
+    // Re-throw rate limit errors
+    if (e.isRateLimit) {
+      return { data: null, etag: null, error: e };
+    }
     console.error('GitHub API fetch with ETag failed:', e);
     return { data: null, etag: null, error: e };
   }
@@ -152,13 +223,24 @@ function encodePathPreservingSlashes(path) {
 export async function listPromptsViaContents(owner, repo, branch, path = 'prompts') {
   const encodedPath = encodePathPreservingSlashes(path);
   const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}&ts=${Date.now()}`;
+  
+  // Check cache first
+  const cacheKey = `${owner}/${repo}@${branch}:${path}`;
+  const cached = directoryCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < DIRECTORY_CACHE_TTL) {
+    return cached.data;
+  }
+  
   const entries = await fetchJSON(url);
   if (!Array.isArray(entries)) return [];
 
-  const results = [];
+  const files = [];
+  const directories = [];
+  
+  // Separate files and directories
   for (const entry of entries) {
     if (entry.type === 'file' && /\.md$/i.test(entry.name)) {
-      results.push({
+      files.push({
         type: 'file',
         name: entry.name,
         path: entry.path,
@@ -166,10 +248,30 @@ export async function listPromptsViaContents(owner, repo, branch, path = 'prompt
         download_url: entry.download_url
       });
     } else if (entry.type === 'dir') {
-      const children = await listPromptsViaContents(owner, repo, branch, entry.path);
-      results.push(...children);
+      directories.push(entry.path);
     }
   }
+  
+  // Process directories in batches of 3 for controlled concurrency
+  const BATCH_SIZE = 3;
+  const allChildren = [];
+  
+  for (let i = 0; i < directories.length; i += BATCH_SIZE) {
+    const batch = directories.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.all(
+      batch.map(dirPath => listPromptsViaContents(owner, repo, branch, dirPath))
+    );
+    allChildren.push(...batchResults.flat());
+  }
+  
+  const results = [...files, ...allChildren];
+  
+  // Cache the results
+  directoryCache.set(cacheKey, {
+    data: results,
+    timestamp: Date.now()
+  });
+  
   return results;
 }
 
