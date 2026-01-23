@@ -11,6 +11,7 @@
 .flex-col { display: flex; flex-direction: column; }
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
 .flex-1 { flex: 1; }
+.flex-gap-xs { gap: 2px; }
 .flex-gap-sm { gap: 8px; }
 .flex-gap-md { gap: 12px; }
 .d-flex-gap-8 { display: flex; gap: 8px; }
@@ -29,9 +30,11 @@
 /* Dimensions */
 .max-w-700 { max-width: 700px; }
 .max-h-400 { max-height: 400px; }
+.min-w-0 { min-width: 0; }
 
 /* Typography */
 .text-align-center { text-align: center; }
+.text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .font-sm { font-size: 12px; }
 .font-13 { font-size: 13px; }
 .font-mono { font-family: monospace; }

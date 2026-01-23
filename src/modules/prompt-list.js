@@ -301,9 +301,13 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       const isExpanded = isForced || expandedState.has(entry.path);
       toggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
       toggle.setAttribute('aria-label', isExpanded ? `Collapse ${entry.name}` : `Expand ${entry.name}`);
-      toggle.innerHTML = isExpanded 
-        ? '<span class="icon" aria-hidden="true">expand_more</span>'
-        : '<span class="icon" aria-hidden="true">chevron_right</span>';
+
+      const icon = document.createElement('span');
+      icon.className = 'icon';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = isExpanded ? 'expand_more' : 'chevron_right';
+      toggle.appendChild(icon);
+
       toggle.dataset.action = 'toggle-dir';
       toggle.dataset.path = entry.path;
 
@@ -343,7 +347,11 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       li.appendChild(header);
 
       const childList = document.createElement('ul');
-      childList.style.display = isExpanded ? 'block' : 'none';
+      if (isExpanded) {
+        childList.classList.remove('d-none');
+      } else {
+        childList.classList.add('d-none');
+      }
       li.appendChild(childList);
       renderTree(entry, childList, forcedExpanded, owner, repo, branch);
       if (!childList.children.length) {
@@ -361,11 +369,9 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       a.dataset.path = file.path;
 
       const left = document.createElement('div');
-      left.style.display = 'flex';
-      left.style.flexDirection = 'column';
-      left.style.gap = '2px';
+      left.classList.add('flex-1', 'min-w-0', 'd-flex', 'flex-col', 'flex-gap-xs');
       const t = document.createElement('div');
-      t.className = 'item-title';
+      t.className = 'item-title text-truncate';
       t.textContent = getCleanTitle(file.name);
       left.appendChild(t);
 
