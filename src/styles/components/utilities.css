@@ -30,9 +30,11 @@
 /* Dimensions */
 .max-w-700 { max-width: 700px; }
 .max-h-400 { max-height: 400px; }
+.min-w-0 { min-width: 0; }
 
 /* Typography */
 .text-align-center { text-align: center; }
+.text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .font-sm { font-size: 12px; }
 .font-13 { font-size: 13px; }
 .font-mono { font-family: monospace; }
