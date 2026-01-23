@@ -99,6 +99,24 @@ class StatusBar {
     this.clearAction();
     this.hide();
   }
+
+  showRateLimitWarning(remaining, resetTime) {
+    if (!this.element) return;
+    
+    const now = Date.now();
+    const minutesUntilReset = Math.ceil((resetTime - now) / 60000);
+    
+    let message;
+    if (remaining <= 0) {
+      message = `⚠️ GitHub API rate limit exceeded. Resets in ${minutesUntilReset} minutes.`;
+    } else if (remaining <= 10) {
+      message = `⚠️ ${remaining} GitHub API calls remaining (resets in ${minutesUntilReset} minutes)`;
+    } else {
+      return;
+    }
+    
+    this.showMessage(message, { timeout: 10000 });
+  }
 }
 
 const statusBar = new StatusBar();

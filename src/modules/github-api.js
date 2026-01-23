@@ -6,6 +6,38 @@ export function setViaProxy(proxyFn) {
   viaProxy = proxyFn;
 }
 
+let rateLimitInfo = {
+  remaining: null,
+  limit: null,
+  reset: null,
+  lastUpdated: null
+};
+
+const inFlightRequests = new Map();
+
+export function getRateLimitInfo() {
+  return { ...rateLimitInfo };
+}
+
+function updateRateLimitInfo(headers) {
+  if (!headers) return;
+  
+  const remaining = headers.get('X-RateLimit-Remaining');
+  const limit = headers.get('X-RateLimit-Limit');
+  const reset = headers.get('X-RateLimit-Reset');
+  
+  if (remaining !== null) {
+    rateLimitInfo.remaining = parseInt(remaining, 10);
+  }
+  if (limit !== null) {
+    rateLimitInfo.limit = parseInt(limit, 10);
+  }
+  if (reset !== null) {
+    rateLimitInfo.reset = parseInt(reset, 10) * 1000;
+  }
+  rateLimitInfo.lastUpdated = Date.now();
+}
+
 const TOKEN_MAX_AGE = 60 * 24 * 60 * 60 * 1000; // 60 days
 
 async function getGitHubAccessToken() {
@@ -58,6 +90,9 @@ export async function fetchJSON(url) {
       headers
     });
     
+    // Update rate limit tracking
+    updateRateLimitInfo(res.headers);
+    
     if (!res.ok) return null;
     return res.json();
   } catch (e) {
@@ -83,6 +118,9 @@ export async function fetchJSONWithETag(url, etag = null) {
       cache: 'no-store',
       headers
     });
+    
+    // Update rate limit tracking
+    updateRateLimitInfo(res.headers);
     
     if (res.status === 304) {
       return { notModified: true, etag };
@@ -137,30 +175,46 @@ export async function listPromptsViaContents(owner, repo, branch, path = 'prompt
 
 export async function listPromptsViaTrees(owner, repo, branch, path = 'prompts', etag = null) {
   const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(branch)}?recursive=1`;
-  const result = await fetchJSONWithETag(url, etag);
   
-  if (result.notModified) {
-    return { notModified: true, etag: result.etag };
+  const requestKey = `trees:${owner}/${repo}@${branch}`;
+  if (inFlightRequests.has(requestKey)) {
+    return inFlightRequests.get(requestKey);
   }
   
-  if (!result.data) {
-    if (result.error) {
-      throw result.error;
+  const requestPromise = (async () => {
+    try {
+      const result = await fetchJSONWithETag(url, etag);
+      
+      if (result.notModified) {
+        return { notModified: true, etag: result.etag };
+      }
+      
+      if (!result.data) {
+        if (result.error) {
+          throw result.error;
+        }
+        throw new Error('Failed to fetch tree data');
+      }
+      
+      const escapedPath = path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pathRegex = new RegExp(`^${escapedPath}/.+\\.md$`, 'i');
+      const items = (result.data.tree || []).filter(n => n.type === 'blob' && pathRegex.test(n.path));
+      const files = items.map(n => ({
+        type: 'file',
+        name: n.path.split('/').pop(),
+        path: n.path,
+        sha: n.sha
+      }));
+      
+      return { files, etag: result.etag };
+    } finally {
+      inFlightRequests.delete(requestKey);
     }
-    throw new Error('Failed to fetch tree data');
-  }
+  })();
   
-  const escapedPath = path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const pathRegex = new RegExp(`^${escapedPath}/.+\\.md$`, 'i');
-  const items = (result.data.tree || []).filter(n => n.type === 'blob' && pathRegex.test(n.path));
-  const files = items.map(n => ({
-    type: 'file',
-    name: n.path.split('/').pop(),
-    path: n.path,
-    sha: n.sha
-  }));
+  inFlightRequests.set(requestKey, requestPromise);
   
-  return { files, etag: result.etag };
+  return requestPromise;
 }
 
 export async function fetchRawFile(owner, repo, branch, path) {
@@ -232,24 +286,38 @@ export function isGistUrl(url) {
 }
 
 export async function getBranches(owner, repo) {
-  const perPage = 100;
-  const maxPages = 10;
-  const branches = [];
-
-  for (let page = 1; page <= maxPages; page++) {
-    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=${perPage}&page=${page}&ts=${Date.now()}`;
-    const batch = await fetchJSON(viaProxy(url));
-
-    if (!Array.isArray(batch) || batch.length === 0) {
-      break;
-    }
-
-    branches.push(...batch);
-
-    if (batch.length < perPage) {
-      break;
-    }
+  const requestKey = `branches:${owner}/${repo}`;
+  if (inFlightRequests.has(requestKey)) {
+    return inFlightRequests.get(requestKey);
   }
+  
+  const requestPromise = (async () => {
+    try {
+      const perPage = 100;
+      const maxPages = 10;
+      const branches = [];
 
-  return branches;
+      for (let page = 1; page <= maxPages; page++) {
+        const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=${perPage}&page=${page}&ts=${Date.now()}`;
+        const batch = await fetchJSON(viaProxy(url));
+
+        if (!Array.isArray(batch) || batch.length === 0) {
+          break;
+        }
+
+        branches.push(...batch);
+
+        if (batch.length < perPage) {
+          break;
+        }
+      }
+
+      return branches;
+    } finally {
+      inFlightRequests.delete(requestKey);
+    }
+  })();
+  
+  inFlightRequests.set(requestKey, requestPromise);
+  return requestPromise;
 }

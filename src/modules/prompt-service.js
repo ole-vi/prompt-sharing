@@ -1,7 +1,18 @@
-import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
+import { listPromptsViaContents, listPromptsViaTrees, getRateLimitInfo } from './github-api.js';
+import statusBar from './status-bar.js';
+import { recordCacheAccess, enforceCacheLimit } from '../utils/cache-manager.js';
 
 export function getPromptFolder(branch) {
   return branch === 'web-captures' ? 'webcaptures' : 'prompts';
+}
+
+function checkRateLimit() {
+  const rateLimitInfo = getRateLimitInfo();
+  if (rateLimitInfo.remaining !== null && rateLimitInfo.reset !== null) {
+    if (rateLimitInfo.remaining <= 10) {
+      statusBar.showRateLimitWarning(rateLimitInfo.remaining, rateLimitInfo.reset);
+    }
+  }
 }
 
 export async function loadPrompts(owner, repo, branch, cacheKey, onBackgroundUpdate) {
@@ -29,6 +40,9 @@ export async function loadPrompts(owner, repo, branch, cacheKey, onBackgroundUpd
       }
 
       if (cacheData) {
+        // Record cache access for LRU tracking
+        recordCacheAccess(cacheKey);
+        
         const cacheAge = now - (cacheData.timestamp || 0);
         files = cacheData.files || [];
 
@@ -100,6 +114,13 @@ async function fetchPrompts(owner, repo, branch, cacheKey) {
       timestamp: Date.now()
     };
     sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+    
+    // Enforce cache size limits with LRU eviction
+    enforceCacheLimit();
+    
+    // Check rate limits after successful API call
+    checkRateLimit();
+    
     return files;
 
   } catch (e) {
@@ -114,6 +135,13 @@ async function fetchPrompts(owner, repo, branch, cacheKey) {
         timestamp: Date.now()
       };
       sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      
+      // Enforce cache size limits with LRU eviction
+      enforceCacheLimit();
+      
+      // Check rate limits after successful API call
+      checkRateLimit();
+      
       return files;
     } catch (contentsError) {
       console.error('Both API strategies failed:', contentsError);
