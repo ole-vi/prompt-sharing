@@ -78,7 +78,7 @@ jobs:
       - name: Get ngrok URL and send to Discord
         run: |
           # Get ngrok URL from API
-          NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | grep -o 'https://[^"]*\.ngrok-free\.app')
+          NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url // empty')
 
           if [ -z "$NGROK_URL" ]; then
             echo "Failed to get ngrok URL"
@@ -93,7 +93,7 @@ jobs:
 
           # Send to Discord via treehouses CLI
           export discord_channel="${{ secrets.CHANNEL }}"
-          MESSAGE="🚀 PromptRoot Preview Deployment - Branch: $BRANCH_NAME - Duration: ${{ github.event.inputs.duration }} minutes - URL: <$NGROK_URL> - Triggered by: ${{ github.actor }} - This preview will expire in ${{ github.event.inputs.duration }} minutes."
+          MESSAGE="🚀 PromptRoot Preview Deployment - Branch: $BRANCH_NAME - Duration: ${{ github.event.inputs.duration }} minutes - URL: <$NGROK_URL> - Triggered by: ${{ github.actor }}"
           treehouses feedback "$MESSAGE"
 
       - name: Keep server running for specified duration
@@ -103,13 +103,17 @@ jobs:
           echo "Preview is available for testing!"
 
           # Show server logs in background while waiting
-          tail -f server.log &
-          TAIL_PID=$!
+          if [ -f server.log ]; then
+            tail -f server.log &
+            TAIL_PID=$!
+          fi
 
           sleep $DURATION_SECONDS
 
-          # Stop tail
-          kill $TAIL_PID 2>/dev/null || true
+          # Stop tail if it was started
+          if [ -n "$TAIL_PID" ]; then
+            kill $TAIL_PID 2>/dev/null || true
+          fi
 
       - name: Cleanup
         if: always()
