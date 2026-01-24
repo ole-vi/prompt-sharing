@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session Card Demo - Updated Layout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #0a0e1f;
+      color: #e0e0e0;
+      padding: 40px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #4dd9ff;
+      margin-bottom: 30px;
+    }
+    .section {
+      margin-bottom: 40px;
+    }
+    .section h2 {
+      color: #a0a0a0;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    .vlist { display:flex; flex-direction:column; gap:8px; }
+    .session-card { padding:12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; cursor:pointer; transition:background 0.2s, border-color 0.2s; }
+    .session-card:hover { background:rgba(77,217,255,0.05); border-color:#4dd9ff; }
+    .session-meta { font-size:13px; color:#a0a0a0; margin-bottom:4px; }
+    .session-meta--updated { margin-bottom:8px; }
+    .session-prompt { font-size:14px; color:#e0e0e0; margin-bottom:8px; white-space:pre-wrap; }
+    .session-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .session-pill { font-size:12px; padding:4px 8px; background:rgba(77,217,255,0.1); border-radius:4px; color:#4dd9ff; }
+    .session-subtask-badge { font-size:12px; padding:4px 8px; background:rgba(168,85,247,0.1); border-radius:4px; color:#c084fc; }
+    .small-text { font-size:13px; color:#4dd9ff; text-decoration: none; }
+    .small-text:hover { text-decoration: underline; }
+    .session-hint { font-size:11px; color:#a0a0a0; margin-left:auto; }
+    .session-view-btn { padding:4px; font-size:16px; opacity:0.6; background: none; border: none; color: inherit; cursor: pointer; }
+    .icon { font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal; font-size: 20px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; -webkit-font-smoothing: antialiased; }
+    .icon-inline { font-size: 16px; vertical-align: middle; }
+    .badge { display: inline-block; padding: 2px 8px; background: rgba(255,255,255,0.1); border-radius: 4px; font-size: 11px; margin-left: 8px; }
+    .new-badge { background: rgba(34,197,94,0.2); color: #4ade80; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Session Card Layout - Enhanced View</h1>
+    
+    <div class="section">
+      <h2>✨ Updated Session Card (with new fields) <span class="badge new-badge">NEW</span></h2>
+      <div class="vlist">
+        <div class="session-card">
+          <div class="session-meta">Created: 1/24/2026, 9:00:00 AM</div>
+          <div class="session-meta session-meta--updated">Updated: 1/24/2026, 9:30:00 AM</div>
+          <div class="session-prompt">Implement user authentication system with OAuth 2.0 support. Add login/logout functionality and protect sensitive routes...</div>
+          <div class="session-row">
+            <span class="session-pill"><span class="icon icon-inline">check_circle</span> COMPLETED</span>
+            <span class="session-subtask-badge"><span class="icon icon-inline">list_alt</span> 3 subtasks</span>
+            <a href="#" class="small-text" onclick="event.preventDefault(); event.stopPropagation();"><span class="icon icon-inline">link</span> View PR</a>
+            <span class="session-hint"><span class="icon icon-inline">info</span> Click to view session</span>
+            <button class="session-view-btn" onclick="event.stopPropagation()" title="View full prompt"><span class="icon">visibility</span></button>
+          </div>
+        </div>
+
+        <div class="session-card">
+          <div class="session-meta">Created: 1/23/2026, 3:15:00 PM</div>
+          <div class="session-meta session-meta--updated">Updated: 1/24/2026, 8:45:00 AM</div>
+          <div class="session-prompt">Refactor database queries to use connection pooling. Optimize slow queries and add proper indexing for frequently accessed tables...</div>
+          <div class="session-row">
+            <span class="session-pill"><span class="icon icon-inline">schedule</span> IN PROGRESS</span>
+            <span class="session-subtask-badge"><span class="icon icon-inline">list_alt</span> 5 subtasks</span>
+            <span class="session-hint"><span class="icon icon-inline">info</span> Click to view session</span>
+            <button class="session-view-btn" onclick="event.stopPropagation()" title="View full prompt"><span class="icon">visibility</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📋 Previous Session Card (for comparison)</h2>
+      <div class="vlist">
+        <div class="session-card">
+          <div class="session-meta">1/24/2026, 9:00:00 AM</div>
+          <div class="session-prompt">Implement user authentication system with OAuth 2.0 support. Add login/logout functionality and protect sensitive routes...</div>
+          <div class="session-row">
+            <span class="session-pill"><span class="icon icon-inline">check_circle</span> COMPLETED</span>
+            <a href="#" class="small-text" onclick="event.preventDefault(); event.stopPropagation();"><span class="icon icon-inline">link</span> View PR</a>
+            <span class="session-hint"><span class="icon icon-inline">info</span> Click to view session</span>
+            <button class="session-view-btn" onclick="event.stopPropagation()" title="View full prompt"><span class="icon">visibility</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🎯 What's New</h2>
+      <ul style="color: #a0a0a0; line-height: 2;">
+        <li><strong style="color: #4ade80;">Update Time:</strong> Shows when the session was last modified (in addition to creation time)</li>
+        <li><strong style="color: #c084fc;">Subtask Count:</strong> Displays the number of child tasks with a purple badge</li>
+        <li><strong style="color: #4dd9ff;">Better PR URLs:</strong> Uses both outputs[0].pullRequest.url and githubPrUrl fields</li>
+        <li><strong style="color: #e0e0e0;">Clearer Labels:</strong> "Created:" and "Updated:" prefixes for better clarity</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

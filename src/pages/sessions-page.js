@@ -122,17 +122,21 @@ async function renderAllSessions(sessions) {
     const promptPreview = (session.prompt || 'No prompt text').substring(0, 150);
     const displayPrompt = promptPreview.length < (session.prompt || '').length ? promptPreview + '...' : promptPreview;
     const createdAt = session.createTime ? new Date(session.createTime).toLocaleString() : 'Unknown';
-    const prUrl = session.outputs?.[0]?.pullRequest?.url;
+    const updatedAt = session.updateTime ? new Date(session.updateTime).toLocaleString() : null;
+    const prUrl = session.outputs?.[0]?.pullRequest?.url || session.githubPrUrl;
+    const subtaskCount = session.childTasks?.length || 0;
     
     const sessionId = session.name?.split('sessions/')[1] || session.id?.split('sessions/')[1] || session.id;
     const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
     
     return `
       <div class="session-card" onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
-        <div class="session-meta">${createdAt}</div>
+        <div class="session-meta">Created: ${createdAt}</div>
+        ${updatedAt ? `<div class="session-meta session-meta--updated">Updated: ${updatedAt}</div>` : ''}
         <div class="session-prompt">${displayPrompt}</div>
         <div class="session-row">
           <span class="session-pill"><span class="icon icon-inline" aria-hidden="true">${stateIcon}</span> ${stateLabel}</span>
+          ${subtaskCount > 0 ? `<span class="session-subtask-badge"><span class="icon icon-inline" aria-hidden="true">list_alt</span> ${subtaskCount} subtask${subtaskCount > 1 ? 's' : ''}</span>` : ''}
           ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" onclick="event.stopPropagation()"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a>` : ''}
           <span class="session-hint"><span class="icon icon-inline" aria-hidden="true">info</span> Click to view session</span>
           <button class="btn-icon session-view-btn" onclick="event.stopPropagation(); window.viewPrompt_${sessionId.replace(/[^a-zA-Z0-9]/g, '_')}()" title="View full prompt"><span class="icon" aria-hidden="true">visibility</span></button>
