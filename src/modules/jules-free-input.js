@@ -170,7 +170,7 @@ export function showFreeInputForm() {
               showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
               return;
             } else if (result.action === 'queue') {
-              const { handleQueueAction } = await import('./jules-queue.js');
+              const { handleQueueAction } = await import('./jules-queue-actions.js');
               await handleQueueAction({
                 type: 'single',
                 prompt: promptText,
@@ -348,7 +348,7 @@ export function showFreeInputForm() {
     }
 
     try {
-      const { addToJulesQueue } = await import('./jules-queue.js');
+      const { addToJulesQueue } = await import('./jules-queue-data.js');
       await addToJulesQueue(user.uid, {
         type: 'single',
         prompt: promptText,

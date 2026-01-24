@@ -160,7 +160,7 @@ function handleDocumentClick(event) {
     
     (async () => {
       try {
-        const { handleQueueAction } = await import('./jules-queue.js');
+        const { handleQueueAction } = await import('./jules-queue-actions.js');
         const { extractTitleFromPrompt } = await import('../utils/title.js');
         
         const title = extractTitleFromPrompt(currentPromptText) || currentFile.name.replace(/\.md$/i, '');

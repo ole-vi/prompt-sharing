@@ -4,7 +4,8 @@
  */
 
 import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
-import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly } from '../modules/jules-queue.js';
+import { listJulesQueue } from '../modules/jules-queue-data.js';
+import { attachQueueHandlers, renderQueueListDirectly } from '../modules/jules-queue-modal.js';
 import { createElement, clearElement, waitForDOMReady, waitForHeader } from '../utils/dom-helpers.js';
 import { handleError } from '../utils/error-handler.js';
 

@@ -3,7 +3,7 @@
 
 import { encryptAndStoreKey } from './jules-keys.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
-import { addToJulesQueue } from './jules-queue.js';
+import { addToJulesQueue } from './jules-queue-data.js';
 import { toggleVisibility } from '../utils/dom-helpers.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import { RETRY_CONFIG, TIMEOUTS, JULES_MESSAGES } from '../utils/constants.js';

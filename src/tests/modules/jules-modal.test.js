@@ -18,7 +18,7 @@ vi.mock('../../modules/repo-branch-selector.js', () => ({
   BranchSelector: vi.fn()
 }));
 
-vi.mock('../../modules/jules-queue.js', () => ({
+vi.mock('../../modules/jules-queue-data.js', () => ({
   addToJulesQueue: vi.fn()
 }));
 
