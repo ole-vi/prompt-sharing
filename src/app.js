@@ -7,6 +7,7 @@ import { initPromptList, loadList, loadExpandedState, renderList, setSelectFileC
 import { initPromptRenderer, selectBySlug, selectFile, setHandleTryInJulesCallback } from './modules/prompt-renderer.js';
 import { setCurrentBranch, setCurrentRepo, loadBranchFromStorage } from './modules/branch-selector.js';
 import { initSidebar } from './modules/sidebar.js';
+import { inspectCache } from './utils/debug-helpers.js';
 
 // App state
 let currentOwner = OWNER;
@@ -58,6 +59,9 @@ export function initApp() {
   
   // Initialize sidebar toggle
   initSidebar();
+
+  // Expose debug tools
+  window.inspectCache = inspectCache;
 }
 
 async function loadPrompts() {

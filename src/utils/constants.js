@@ -315,8 +315,36 @@ export const PAGE_SIZES = {
 };
 
 /**
+ * Cache keys for session storage.
+ */
+export const CACHE_KEYS = {
+  JULES_ACCOUNT: 'jules_account_info',
+  JULES_SESSIONS: 'jules_sessions',
+  JULES_REPOS: 'jules_repos',
+  QUEUE_ITEMS: 'queue_items',
+  BRANCHES: 'branches_v2',
+  CURRENT_BRANCH: 'current_branch',
+  CURRENT_REPO: 'current_repo',
+  USER_PROFILE: 'user_profile',
+  USER_AVATAR: 'user_avatar',
+  // Policy reference only (keys are dynamic)
+  PROMPTS_LIST: 'prompts_list'
+};
+
+/**
+ * Cache strategies.
+ */
+export const CACHE_STRATEGIES = {
+  CACHE_FIRST: 'cache-first',
+  STALE_WHILE_REVALIDATE: 'stale-while-revalidate',
+  NETWORK_ONLY: 'network-only'
+};
+
+/**
  * @typedef {object} CacheDurations
  * @property {number} short - The duration in milliseconds for short-lived cache items.
+ * @property {number} medium - The duration in milliseconds for medium-lived cache items.
+ * @property {number} long - The duration in milliseconds for long-lived cache items.
  * @property {number} session - A flag indicating that the cache item should last for the session.
  */
 
@@ -326,5 +354,63 @@ export const PAGE_SIZES = {
  */
 export const CACHE_DURATIONS = {
   short: 300000, // 5 minutes
+  medium: 900000, // 15 minutes
+  long: 3600000, // 1 hour
   session: 0
+};
+
+/**
+ * Cache policies configuration.
+ */
+export const CACHE_POLICIES = {
+  [CACHE_KEYS.JULES_ACCOUNT]: {
+    ttl: CACHE_DURATIONS.session,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST,
+    description: 'Jules account info, static per session'
+  },
+  [CACHE_KEYS.JULES_SESSIONS]: {
+    ttl: CACHE_DURATIONS.short,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST,
+    description: 'List of Jules sessions'
+  },
+  [CACHE_KEYS.JULES_REPOS]: {
+    ttl: CACHE_DURATIONS.short,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST,
+    description: 'List of connected repositories'
+  },
+  [CACHE_KEYS.QUEUE_ITEMS]: {
+    ttl: CACHE_DURATIONS.session, // Maintained as session but invalidated on mutation
+    strategy: CACHE_STRATEGIES.CACHE_FIRST,
+    description: 'Queue items, invalidated on mutation'
+  },
+  [CACHE_KEYS.BRANCHES]: {
+    ttl: CACHE_DURATIONS.session, // Branches don't change often in a session context
+    strategy: CACHE_STRATEGIES.CACHE_FIRST,
+    description: 'Repository branches list'
+  },
+  [CACHE_KEYS.CURRENT_BRANCH]: {
+    ttl: CACHE_DURATIONS.session,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST,
+    description: 'Currently selected branch state'
+  },
+  [CACHE_KEYS.CURRENT_REPO]: {
+    ttl: CACHE_DURATIONS.session,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST,
+    description: 'Currently selected repository state'
+  },
+  [CACHE_KEYS.USER_PROFILE]: {
+    ttl: CACHE_DURATIONS.session,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST,
+    description: 'User profile settings like timezone'
+  },
+  [CACHE_KEYS.USER_AVATAR]: {
+    ttl: CACHE_DURATIONS.session,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST,
+    description: 'User avatar URL'
+  },
+  [CACHE_KEYS.PROMPTS_LIST]: {
+    ttl: CACHE_DURATIONS.medium,
+    strategy: CACHE_STRATEGIES.STALE_WHILE_REVALIDATE,
+    description: 'List of prompts files from GitHub'
+  }
 };

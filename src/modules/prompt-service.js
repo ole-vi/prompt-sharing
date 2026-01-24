@@ -1,11 +1,12 @@
 import { listPromptsViaContents, listPromptsViaTrees } from './github-api.js';
+import { CACHE_POLICIES, CACHE_KEYS } from '../utils/constants.js';
 
 export function getPromptFolder(branch) {
   return branch === 'web-captures' ? 'webcaptures' : 'prompts';
 }
 
 export async function loadPrompts(owner, repo, branch, cacheKey, onBackgroundUpdate) {
-  const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+  const CACHE_DURATION = CACHE_POLICIES[CACHE_KEYS.PROMPTS_LIST]?.ttl || 900000; // Default to 15m
   const now = Date.now();
   let files = [];
 
