@@ -61,7 +61,7 @@ vi.mock('../../modules/copen.js', () => ({
 }));
 
 vi.mock('../../modules/status-bar.js', () => ({
-  default: {
+  statusBar: {
     setActivity: vi.fn(),
     clearActivity: vi.fn(),
     showMessage: vi.fn()

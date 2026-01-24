@@ -102,4 +102,4 @@ class StatusBar {
 }
 
 const statusBar = new StatusBar();
-export default statusBar;
+export { statusBar };

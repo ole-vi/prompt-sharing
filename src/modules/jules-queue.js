@@ -1,5 +1,5 @@
 import { extractTitleFromPrompt } from '../utils/title.js';
-import statusBar from './status-bar.js';
+import { statusBar } from './status-bar.js';
 import { createModal } from '../utils/modal-manager.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';

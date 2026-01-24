@@ -4,7 +4,7 @@
  */
 
 import { showToast } from '../modules/toast.js';
-import statusBar from '../modules/status-bar.js';
+import { statusBar } from '../modules/status-bar.js';
 import { TIMEOUTS } from './constants.js';
 
 export const ErrorCategory = {

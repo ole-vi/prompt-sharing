@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import statusBar from '../../modules/status-bar.js';
+import { statusBar } from '../../modules/status-bar.js';
 import { TIMEOUTS } from '../../utils/constants.js';
 
 describe('status-bar', () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { handleError, ErrorCategory } from '../../utils/error-handler.js';
 import * as toastModule from '../../modules/toast.js';
-import statusBar from '../../modules/status-bar.js';
+import { statusBar } from '../../modules/status-bar.js';
 
 // Mock dependencies
 vi.mock('../../modules/toast.js', () => ({
@@ -13,7 +13,7 @@ vi.mock('../../modules/toast.js', () => ({
 }));
 
 vi.mock('../../modules/status-bar.js', () => ({
-  default: {
+  statusBar: {
     showMessage: vi.fn(),
     hide: vi.fn()
   }

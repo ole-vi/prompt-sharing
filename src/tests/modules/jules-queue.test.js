@@ -18,7 +18,7 @@ vi.mock('../../utils/title.js', () => ({
 }));
 
 vi.mock('../../modules/status-bar.js', () => ({
-  default: {
+  statusBar: {
     show: vi.fn(),
     hide: vi.fn(),
     update: vi.fn()

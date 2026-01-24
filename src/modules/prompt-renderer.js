@@ -7,7 +7,7 @@ import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, rende
 import { showToast } from './toast.js';
 import { copyAndOpen } from './copen.js';
 import { copyText } from '../utils/clipboard.js';
-import statusBar from './status-bar.js';
+import { statusBar } from './status-bar.js';
 
 function sanitizeHtml(html) {
   if (typeof window.DOMPurify === 'undefined') {

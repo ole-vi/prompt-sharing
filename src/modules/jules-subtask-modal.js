@@ -11,7 +11,7 @@ import { callRunJulesFunction } from './jules-api.js';
 import { showToast } from './toast.js';
 import { showConfirm } from './confirm-modal.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
-import statusBar from './status-bar.js';
+import { statusBar } from './status-bar.js';
 import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';
 
 // Module state
