@@ -1173,30 +1173,9 @@ function renderQueueList(items) {
   attachQueuePromptViewerHandlers(items);
 }
 
-function createQueueCard(item) {
-  const created = item.createdAt ? new Date(item.createdAt.seconds ? item.createdAt.seconds * 1000 : item.createdAt).toLocaleString() : 'Unknown';
-  const status = item.status || 'pending';
+function createCardHeader(item, status) {
   const remainingCount = Array.isArray(item.remaining) ? item.remaining.length : 0;
   
-  const card = document.createElement('div');
-  card.className = `queue-card queue-item${status === 'scheduled' ? ' queue-status-scheduled' : ''}`;
-  card.dataset.docid = item.id;
-  
-  const row = document.createElement('div');
-  row.className = 'queue-row';
-  
-  const checkboxCol = document.createElement('div');
-  checkboxCol.className = 'queue-checkbox-col';
-  const queueCheckbox = document.createElement('input');
-  queueCheckbox.className = 'queue-checkbox';
-  queueCheckbox.type = 'checkbox';
-  queueCheckbox.dataset.docid = item.id;
-  checkboxCol.appendChild(queueCheckbox);
-  
-  const content = document.createElement('div');
-  content.className = 'queue-content';
-  
-  // Title row
   const titleDiv = document.createElement('div');
   titleDiv.className = 'queue-title';
   const titleText = document.createTextNode(item.type === 'subtasks' ? JULES_UI_TEXT.SUBTASKS_BATCH : JULES_UI_TEXT.SINGLE_PROMPT);
@@ -1227,10 +1206,11 @@ function createQueueCard(item) {
   editBtn.appendChild(editIcon);
   titleDiv.appendChild(document.createTextNode(' '));
   titleDiv.appendChild(editBtn);
-  
-  content.appendChild(titleDiv);
-  
-  // Meta row
+
+  return titleDiv;
+}
+
+function createCardMeta(item, created) {
   const metaDiv = document.createElement('div');
   metaDiv.className = 'queue-meta';
   metaDiv.textContent = `Created: ${created} • ID: `;
@@ -1238,7 +1218,75 @@ function createQueueCard(item) {
   idSpan.className = 'mono';
   idSpan.textContent = item.id;
   metaDiv.appendChild(idSpan);
-  content.appendChild(metaDiv);
+  return metaDiv;
+}
+
+function createSubtasksList(item) {
+  if (item.type !== 'subtasks' || !Array.isArray(item.remaining) || item.remaining.length === 0) {
+    return null;
+  }
+
+  const subtasksContainer = document.createElement('div');
+  subtasksContainer.className = 'queue-subtasks';
+
+  item.remaining.forEach((subtask, index) => {
+    const preview = (subtask.fullContent || '').substring(0, 150);
+
+    const subtaskDiv = document.createElement('div');
+    subtaskDiv.className = 'queue-subtask';
+
+    const indexDiv = document.createElement('div');
+    indexDiv.className = 'queue-subtask-index';
+    const checkbox = document.createElement('input');
+    checkbox.className = 'subtask-checkbox';
+    checkbox.type = 'checkbox';
+    checkbox.dataset.docid = item.id;
+    checkbox.dataset.index = index;
+    indexDiv.appendChild(checkbox);
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'queue-subtask-content';
+
+    const metaDiv = document.createElement('div');
+    metaDiv.className = 'queue-subtask-meta';
+    metaDiv.textContent = `Subtask ${index + 1} of ${item.remaining.length}`;
+
+    const textDiv = document.createElement('div');
+    textDiv.className = 'queue-subtask-text';
+    textDiv.textContent = preview + (preview.length >= 150 ? '...' : '');
+
+    contentDiv.append(metaDiv, textDiv);
+    subtaskDiv.append(indexDiv, contentDiv);
+    subtasksContainer.appendChild(subtaskDiv);
+  });
+
+  return subtasksContainer;
+}
+
+function createQueueCard(item) {
+  const created = item.createdAt ? new Date(item.createdAt.seconds ? item.createdAt.seconds * 1000 : item.createdAt).toLocaleString() : 'Unknown';
+  const status = item.status || 'pending';
+
+  const card = document.createElement('div');
+  card.className = `queue-card queue-item${status === 'scheduled' ? ' queue-status-scheduled' : ''}`;
+  card.dataset.docid = item.id;
+
+  const row = document.createElement('div');
+  row.className = 'queue-row';
+
+  const checkboxCol = document.createElement('div');
+  checkboxCol.className = 'queue-checkbox-col';
+  const queueCheckbox = document.createElement('input');
+  queueCheckbox.className = 'queue-checkbox';
+  queueCheckbox.type = 'checkbox';
+  queueCheckbox.dataset.docid = item.id;
+  checkboxCol.appendChild(queueCheckbox);
+
+  const content = document.createElement('div');
+  content.className = 'queue-content';
+
+  content.appendChild(createCardHeader(item, status));
+  content.appendChild(createCardMeta(item, created));
   
   // Repo info
   if (item.sourceId) {
@@ -1305,43 +1353,9 @@ function createQueueCard(item) {
   row.append(checkboxCol, content);
   card.appendChild(row);
   
-  // Subtasks or prompt
-  if (item.type === 'subtasks' && Array.isArray(item.remaining) && item.remaining.length > 0) {
-    const subtasksContainer = document.createElement('div');
-    subtasksContainer.className = 'queue-subtasks';
-    
-    item.remaining.forEach((subtask, index) => {
-      const preview = (subtask.fullContent || '').substring(0, 150);
-      
-      const subtaskDiv = document.createElement('div');
-      subtaskDiv.className = 'queue-subtask';
-      
-      const indexDiv = document.createElement('div');
-      indexDiv.className = 'queue-subtask-index';
-      const checkbox = document.createElement('input');
-      checkbox.className = 'subtask-checkbox';
-      checkbox.type = 'checkbox';
-      checkbox.dataset.docid = item.id;
-      checkbox.dataset.index = index;
-      indexDiv.appendChild(checkbox);
-      
-      const contentDiv = document.createElement('div');
-      contentDiv.className = 'queue-subtask-content';
-      
-      const metaDiv = document.createElement('div');
-      metaDiv.className = 'queue-subtask-meta';
-      metaDiv.textContent = `Subtask ${index + 1} of ${item.remaining.length}`;
-      
-      const textDiv = document.createElement('div');
-      textDiv.className = 'queue-subtask-text';
-      textDiv.textContent = preview + (preview.length >= 150 ? '...' : '');
-      
-      contentDiv.append(metaDiv, textDiv);
-      subtaskDiv.append(indexDiv, contentDiv);
-      subtasksContainer.appendChild(subtaskDiv);
-    });
-    
-    card.appendChild(subtasksContainer);
+  const subtasksList = createSubtasksList(item);
+  if (subtasksList) {
+    card.appendChild(subtasksList);
   } else if (item.type !== 'subtasks') {
     const promptPreview = (item.prompt || '').substring(0, 200);
     const promptDiv = document.createElement('div');
