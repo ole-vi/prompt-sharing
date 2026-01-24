@@ -1,6 +1,6 @@
 # E2E Testing
 
-End-to-end testing for the prompt-sharing application using Playwright.
+End-to-end testing for the prompt-sharing application using Playwright with 2-tier architecture optimized for CI/CD.
 
 ## Quick Start
 
@@ -8,29 +8,53 @@ End-to-end testing for the prompt-sharing application using Playwright.
 # Install browsers
 npx playwright install --with-deps
 
-# Run smoke tests (fast, 15 tests)
+# Run smoke tests (14 critical tests, Chromium only, ~2min)
 npm run test:e2e:smoke
 
-# Run all E2E tests
-npm run test:e2e
+# Run extended tests (56 comprehensive tests, all browsers, ~8min)  
+npm run test:e2e:extended
 
-# Run with UI (best for development)
+# Interactive test runner
 npm run test:e2e:ui
 
-# View test report
+# View test reports
 npm run test:e2e:report
 ```
 
-## Test Organization
+## 2-Tier Testing Strategy
+
+### 🚀 Smoke Tests (14 tests × 1 browser = 14 runs)
+- **Purpose**: Critical path validation for CI
+- **When**: Every PR/push (automatic)
+- **Browser**: Chromium only
+- **Speed**: ~2 minutes
+- **Location**: `e2e/smoke/critical-paths.spec.js`
+- **Coverage**: Page loads, navigation, error handling, offline mode, Firebase init, performance budgets
+
+### 🔍 Extended Tests (14 tests × 4 browsers = 56 runs)
+- **Purpose**: Comprehensive cross-browser testing
+- **When**: Manual execution, releases, debugging
+- **Browsers**: Chromium, Firefox, WebKit, Mobile Chrome
+- **Speed**: ~8 minutes
+- **Location**: `e2e/extended/`
+- **Coverage**: Authentication, Jules integration, prompt management, accessibility, detailed performance
+
+## Test Architecture
 
 ```
-tests/e2e/
-├── fixtures/           # Test data and auth state
-├── helpers/            # Reusable utilities
-├── workflows/          # Main user workflow tests
-├── smoke/              # Critical path tests for CI
-├── performance/        # Load time and performance tests
-└── accessibility/      # WCAG compliance tests
+e2e-tests/
+├── e2e/
+│   ├── smoke/
+│   │   └── critical-paths.spec.js    # CI smoke tests
+│   └── extended/
+│       ├── auth-flow.spec.js          # Authentication workflows
+│       ├── jules-integration.spec.js  # AI features
+│       ├── prompt-actions.spec.js     # CRUD operations
+│       ├── prompt-browsing.spec.js    # Navigation
+│       ├── load-time.spec.js          # Performance testing
+│       └── a11y.spec.js               # Accessibility audits
+├── fixtures/                          # Test data
+└── playwright.config.js               # Multi-browser config
 ```
 
 ## Test Categories
