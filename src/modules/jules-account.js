@@ -355,7 +355,7 @@ async function loadAndDisplayJulesProfile(uid) {
         const promptPreview = (session.prompt || 'No prompt text').substring(0, 150);
         const displayPrompt = promptPreview.length < (session.prompt || '').length ? promptPreview + '...' : promptPreview;
         const createdAt = session.createTime ? new Date(session.createTime).toLocaleString() : 'Unknown';
-        const prUrl = session.outputs?.[0]?.pullRequest?.url;
+        const prUrl = session.githubPrUrl || session.outputs?.[0]?.pullRequest?.url;
         const sessionId = session.name?.split('sessions/')[1] || session.id?.split('sessions/')[1] || session.id;
         const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
         const cleanId = sessionId.replace(/[^a-zA-Z0-9]/g, '_');
@@ -374,6 +374,21 @@ async function loadAndDisplayJulesProfile(uid) {
         const prompt = document.createElement('div');
         prompt.className = 'session-prompt';
         prompt.textContent = displayPrompt;
+
+        // Repo info
+        let repoInfo = null;
+        const repoData = getRepoInfoFromSession(session);
+        if (repoData) {
+          repoInfo = document.createElement('div');
+          repoInfo.className = 'session-repo small-text muted-text';
+          repoInfo.style.marginBottom = '8px';
+          const repoIcon = document.createElement('span');
+          repoIcon.className = 'icon icon-inline';
+          repoIcon.setAttribute('aria-hidden', 'true');
+          repoIcon.textContent = 'inventory_2';
+          repoInfo.appendChild(repoIcon);
+          repoInfo.appendChild(document.createTextNode(` ${repoData.repoName}${repoData.branch ? ` (${repoData.branch})` : ''}`));
+        }
 
         // Row with pill, PR link, hint, view button
         const row = document.createElement('div');
@@ -429,7 +444,9 @@ async function loadAndDisplayJulesProfile(uid) {
         viewBtn.appendChild(viewIcon);
         row.appendChild(viewBtn);
 
-        card.append(meta, prompt, row);
+        card.append(meta, prompt);
+        if (repoInfo) card.append(repoInfo);
+        card.append(row);
         sessionsContainer.appendChild(card);
       });
 
@@ -622,7 +639,7 @@ function renderAllSessions(sessions) {
     const createTime = session.createTime ? new Date(session.createTime).toLocaleString() : 'Unknown';
     const updateTime = session.updateTime ? new Date(session.updateTime).toLocaleString() : 'Unknown';
     
-    const prUrl = session.githubPrUrl || null;
+    const prUrl = session.githubPrUrl || session.outputs?.[0]?.pullRequest?.url || null;
     const subtaskCount = session.childTasks?.length || 0;
     const sessionUrl = `https://jules.google.com/session/${sessionId}`;
     
@@ -650,6 +667,20 @@ function renderAllSessions(sessions) {
     
     topRow.append(title, statusBadge);
     card.appendChild(topRow);
+
+    // Repo info
+    const repoData = getRepoInfoFromSession(session);
+    if (repoData) {
+      const repoDiv = document.createElement('div');
+      repoDiv.className = 'all-sessions__meta';
+      const repoIcon = document.createElement('span');
+      repoIcon.className = 'icon icon-inline';
+      repoIcon.setAttribute('aria-hidden', 'true');
+      repoIcon.textContent = 'inventory_2';
+      repoDiv.appendChild(repoIcon);
+      repoDiv.appendChild(document.createTextNode(` ${repoData.repoName}${repoData.branch ? ` (${repoData.branch})` : ''}`));
+      card.appendChild(repoDiv);
+    }
     
     // Created time
     const createdDiv = document.createElement('div');
@@ -794,6 +825,16 @@ export async function loadProfileDirectly(user) {
       await loadAndDisplayJulesProfile(user.uid);
     };
   }
+}
+
+function getRepoInfoFromSession(session) {
+  if (!session.sourceContext) return null;
+  const sourceId = session.sourceContext.source || '';
+  const branch = session.sourceContext.githubRepoContext?.startingBranch || '';
+  const repoName = sourceId.includes('sources/') ? sourceId.split('/').slice(-2).join('/') : sourceId;
+
+  if (!repoName) return null;
+  return { repoName, branch };
 }
 
 export async function loadJulesAccountInfo(user) {
