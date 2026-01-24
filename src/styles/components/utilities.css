@@ -26,6 +26,7 @@
 /* Spacing - Padding */
 .pad-8 { padding: 8px; }
 .pad-24 { padding: 24px; }
+.pad-lg { padding: 24px; }
 
 /* Dimensions */
 .max-w-700 { max-width: 700px; }
@@ -34,6 +35,7 @@
 
 /* Typography */
 .text-align-center { text-align: center; }
+.text-center { text-align: center; }
 .text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .font-sm { font-size: 12px; }
 .font-13 { font-size: 13px; }

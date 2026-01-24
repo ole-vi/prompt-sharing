@@ -141,7 +141,15 @@ html, body {
   color: var(--muted);
 }
 
+.muted {
+  color: var(--muted);
+}
+
 .color-error {
+  color: var(--error);
+}
+
+.error-text {
   color: var(--error);
 }
 
