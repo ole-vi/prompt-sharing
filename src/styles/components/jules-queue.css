@@ -5,6 +5,8 @@
 #julesQueueModal {
   /* Base modal styling handled by jules-modals.css and modals.css */
   display: none;
+  z-index: 1003;
+  flex-direction: column;
 }
 
 #julesQueueModal.show {

@@ -88,26 +88,47 @@ export async function listJulesQueue(uid) {
   }
 }
 
+let queueModalEscapeHandler = null;
+
 export function showJulesQueueModal() {
   const modal = document.getElementById('julesQueueModal');
   if (!modal) {
     console.error('julesQueueModal element not found!');
     return;
   }
-  modal.setAttribute('style', 'display: flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1003; flex-direction:column; align-items:center; justify-content:center; overflow-y:auto; padding:20px;');
+
+  modal.classList.add('modal-overlay');
+  modal.classList.add('show');
+  modal.removeAttribute('style');
   
   modal.onclick = (e) => {
     if (e.target === modal) {
       hideJulesQueueModal();
     }
   };
+
+  if (queueModalEscapeHandler) document.removeEventListener('keydown', queueModalEscapeHandler);
+  queueModalEscapeHandler = (e) => {
+    if (e.key === 'Escape') {
+      hideJulesQueueModal();
+    }
+  };
+  document.addEventListener('keydown', queueModalEscapeHandler);
   
   loadQueuePage();
 }
 
 export function hideJulesQueueModal() {
   const modal = document.getElementById('julesQueueModal');
-  if (modal) modal.setAttribute('style', 'display:none !important;');
+  if (modal) {
+    modal.classList.remove('show');
+    modal.removeAttribute('style');
+  }
+
+  if (queueModalEscapeHandler) {
+    document.removeEventListener('keydown', queueModalEscapeHandler);
+    queueModalEscapeHandler = null;
+  }
 }
 
 export function renderQueueListDirectly(items) {
