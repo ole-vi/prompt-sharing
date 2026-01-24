@@ -18,39 +18,39 @@ jobs:
   preview:
     name: Temporary Preview Deployment
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
+
       - name: Install treehouses CLI
         run: sudo npm install -g @treehouses/cli
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Install ngrok
         run: |
           curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
           echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
           sudo apt update && sudo apt install ngrok
-      
+
       - name: Setup ngrok with auth token
         run: ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
-      
+
       - name: Start npm server in background
         run: |
           nohup npm start > server.log 2>&1 &
           echo $! > server.pid
           echo "Server PID: $(cat server.pid)"
-      
+
       - name: Wait for server to be ready
         run: |
           echo "Waiting for server to start..."
@@ -67,80 +67,75 @@ jobs:
             exit 1
           fi
           echo "Server is ready!"
-      
+
       - name: Start ngrok tunnel
         run: |
           nohup ngrok http 3000 --log=stdout > ngrok.log 2>&1 &
           echo $! > ngrok.pid
           echo "ngrok PID: $(cat ngrok.pid)"
           sleep 5
-      
+
       - name: Get ngrok URL and send to Discord
         run: |
           # Get ngrok URL from API
           NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | grep -o 'https://[^"]*\.ngrok-free\.app')
-          
+
           if [ -z "$NGROK_URL" ]; then
             echo "Failed to get ngrok URL"
             cat ngrok.log
             exit 1
           fi
-          
+
           echo "Preview URL: $NGROK_URL"
-          
+
           # Get branch name
           BRANCH_NAME=${GITHUB_REF##*/}
-          
+
           # Send to Discord via treehouses CLI
           export discord_channel="${{ secrets.CHANNEL }}"
-          treehouses feedback "🚀 PromptRoot Preview Deployment
-Branch: $BRANCH_NAME
-Duration: ${{ github.event.inputs.duration }} minutes
-URL: <$NGROK_URL>
-Triggered by: ${{ github.actor }}
-This preview will expire in ${{ github.event.inputs.duration }} minutes."
-      
+          MESSAGE="🚀 PromptRoot Preview Deployment - Branch: $BRANCH_NAME - Duration: ${{ github.event.inputs.duration }} minutes - URL: <$NGROK_URL> - Triggered by: ${{ github.actor }} - This preview will expire in ${{ github.event.inputs.duration }} minutes."
+          treehouses feedback "$MESSAGE"
+
       - name: Keep server running for specified duration
         run: |
           DURATION_SECONDS=$((${{ github.event.inputs.duration }} * 60))
           echo "Keeping server alive for ${{ github.event.inputs.duration }} minutes ($DURATION_SECONDS seconds)..."
           echo "Preview is available for testing!"
-          
+
           # Show server logs in background while waiting
           tail -f server.log &
           TAIL_PID=$!
-          
+
           sleep $DURATION_SECONDS
-          
+
           # Stop tail
           kill $TAIL_PID 2>/dev/null || true
-      
+
       - name: Cleanup
         if: always()
         run: |
           echo "Cleaning up..."
-          
+
           # Stop ngrok
           if [ -f ngrok.pid ]; then
             NGROK_PID=$(cat ngrok.pid)
             kill $NGROK_PID 2>/dev/null || true
             echo "Stopped ngrok (PID: $NGROK_PID)"
           fi
-          
+
           # Stop server
           if [ -f server.pid ]; then
             SERVER_PID=$(cat server.pid)
             kill $SERVER_PID 2>/dev/null || true
             echo "Stopped server (PID: $SERVER_PID)"
           fi
-          
+
           echo "Cleanup complete"
-      
+
       - name: Send completion message to Discord
         if: always()
         run: |
           export discord_channel="${{ secrets.CHANNEL }}"
           BRANCH_NAME=${GITHUB_REF##*/}
-          treehouses feedback "✅ PromptRoot Preview Deployment Completed
-Branch: $BRANCH_NAME
-The preview has been shut down after ${{ github.event.inputs.duration }} minutes."
+          MESSAGE="✅ PromptRoot Preview Deployment Completed - Branch: $BRANCH_NAME - The preview has been shut down after ${{ github.event.inputs.duration }} minutes."
+          treehouses feedback "$MESSAGE"
