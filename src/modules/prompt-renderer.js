@@ -90,11 +90,15 @@ export function initPromptRenderer() {
   moreBtn = document.getElementById('moreBtn');
 
   document.addEventListener('click', handleDocumentClick);
+  document.addEventListener('keydown', handleDocumentKeydown);
+  document.addEventListener('focusin', handleDocumentFocusIn);
   window.addEventListener('branchChanged', handleBranchChanged);
 }
 
 export function destroyPromptRenderer() {
   document.removeEventListener('click', handleDocumentClick);
+  document.removeEventListener('keydown', handleDocumentKeydown);
+  document.removeEventListener('focusin', handleDocumentFocusIn);
   window.removeEventListener('branchChanged', handleBranchChanged);
   cacheRaw.clear();
   currentPromptText = null;
@@ -105,10 +109,28 @@ export function destroyPromptRenderer() {
   }
 }
 
+function getPromptMenus() {
+  return {
+    copenMenu: document.getElementById('copenMenu'),
+    moreMenu: document.getElementById('moreMenu')
+  };
+}
+
+function closePromptMenus() {
+  const { copenMenu, moreMenu } = getPromptMenus();
+  if (copenMenu) copenMenu.classList.add('hidden');
+  if (moreMenu) moreMenu.classList.add('hidden');
+}
+
+function toggleMenu(menu) {
+  if (menu) {
+    menu.classList.toggle('hidden');
+  }
+}
+
 function handleDocumentClick(event) {
   const target = event.target;
-  const copenMenu = document.getElementById('copenMenu');
-  const moreMenu = document.getElementById('moreMenu');
+  const { copenMenu, moreMenu } = getPromptMenus();
 
   if (target === copyBtn) {
     handleCopyPrompt();
@@ -117,9 +139,7 @@ function handleDocumentClick(event) {
 
   if (target === copenBtn) {
     event.stopPropagation();
-    if (copenMenu) {
-      copenMenu.classList.toggle('hidden');
-    }
+    toggleMenu(copenMenu);
     return;
   }
 
@@ -185,9 +205,7 @@ function handleDocumentClick(event) {
 
   if (target === moreBtn) {
     event.stopPropagation();
-    if (moreMenu) {
-      moreMenu.classList.toggle('hidden');
-    }
+    toggleMenu(moreMenu);
     return;
   }
 
@@ -222,8 +240,42 @@ function handleDocumentClick(event) {
     return;
   }
 
-  if (copenMenu) copenMenu.classList.add('hidden');
-  if (moreMenu) moreMenu.classList.add('hidden');
+  closePromptMenus();
+}
+
+function handleDocumentKeydown(event) {
+  const { key, target } = event;
+  if (key === 'Escape') {
+    closePromptMenus();
+    return;
+  }
+
+  if (key !== 'Enter' && key !== ' ' && key !== 'Spacebar') {
+    return;
+  }
+
+  const actionTarget = target.closest(
+    '#copenBtn, #moreBtn, #moreEditBtn, #moreGhBtn, #moreRawBtn, .custom-dropdown-item[data-target]'
+  );
+
+  if (!actionTarget) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  actionTarget.click();
+}
+
+function handleDocumentFocusIn(event) {
+  const target = event.target;
+  const { copenMenu, moreMenu } = getPromptMenus();
+  const inCopen = copenMenu && (copenMenu.contains(target) || (copenBtn && copenBtn.contains(target)));
+  const inMore = moreMenu && (moreMenu.contains(target) || (moreBtn && moreBtn.contains(target)));
+
+  if (!inCopen && !inMore) {
+    closePromptMenus();
+  }
 }
 
 async function handleBranchChanged() {
