@@ -357,10 +357,24 @@ These are purely cosmetic and based on keywords in the filename.
 
 - **Team Onboarding**: Repository explorer prompts help new contributors understand codebases
 - **Prompt Library**: Centralized collection of reusable AI prompts
-- **Knowledge Sharing**: Share effective prompts across your organization  
+- **Knowledge Sharing**: Share effective prompts across your organization
 - **Jules Workflow**: Streamline sending prompts to Jules with proper context
 - **Documentation**: Living documentation that AI assistants can consume
 - **Best Practices**: Capture and share successful prompt patterns
+
+## Preview Deployment
+
+The repository includes a GitHub Actions workflow for creating temporary, shareable preview deployments. This allows you to test changes on mobile devices or share with reviewers without deploying to production.
+
+**Features:**
+- Manually trigger deployment for any branch
+- Choose duration: 3, 5, 10, or 15 minutes
+- Automatic public URL via ngrok
+- Discord notifications with deployment URL
+- Automatic cleanup after expiration
+
+**Setup:**
+See [docs/PREVIEW_DEPLOYMENT.md](docs/PREVIEW_DEPLOYMENT.md) for detailed setup instructions and usage guide.
 
 ## Contributing
 
