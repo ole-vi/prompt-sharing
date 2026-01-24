@@ -62,6 +62,10 @@ export const STORAGE_KEYS = {
   showUserBranches: "showUserBranches"
 };
 
+export const CACHE_KEYS = {
+  VERSION_INFO: 'version_info'
+};
+
 // Error messages
 export const ERRORS = {
   FIREBASE_NOT_READY: "Firebase not initialized. Please refresh.",
@@ -326,5 +330,6 @@ export const PAGE_SIZES = {
  */
 export const CACHE_DURATIONS = {
   short: 300000, // 5 minutes
-  session: 0
+  session: 0,
+  versionCheck: 900000 // 15 minutes
 };
