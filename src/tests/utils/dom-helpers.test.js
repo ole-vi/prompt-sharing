@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { 
   createElement, 
   createIcon, 
-  setElementDisplay, 
+  setElementDisplay,
+  toggleVisibility,
   toggleClass, 
   clearElement
 } from '../../utils/dom-helpers.js';
@@ -158,6 +159,32 @@ describe('DOM Helpers', () => {
       
       setElementDisplay(el, false);
       expect(el.classList.contains('hidden')).toBe(true);
+    });
+  });
+
+  describe('toggleVisibility', () => {
+    it('should show element by default', () => {
+      const el = document.createElement('div');
+      el.classList.add('hidden');
+      toggleVisibility(el);
+      expect(el.classList.contains('hidden')).toBe(false);
+    });
+
+    it('should show element when shouldShow=true', () => {
+      const el = document.createElement('div');
+      el.classList.add('hidden');
+      toggleVisibility(el, true);
+      expect(el.classList.contains('hidden')).toBe(false);
+    });
+
+    it('should hide element when shouldShow=false', () => {
+      const el = document.createElement('div');
+      toggleVisibility(el, false);
+      expect(el.classList.contains('hidden')).toBe(true);
+    });
+
+    it('should handle null element', () => {
+      expect(() => toggleVisibility(null)).not.toThrow();
     });
   });
 
