@@ -199,7 +199,8 @@ test.describe('Smoke Tests - Critical Paths', () => {
     // In offline mode, check if basic HTML structure exists
     // (This test may need service worker to be properly configured)
     const bodyExists = await page.locator('body').count().catch(() => 0);
-    
+    expect(bodyExists).toBeGreaterThan(0);
+
     // Go back online
     await context.setOffline(false);
     
@@ -254,13 +255,16 @@ test.describe('Smoke Tests - Critical Paths', () => {
     
     // Page should render
     await expect(page.locator('body')).toBeVisible();
-    
-    // Check horizontal scroll (skip assertion - UI bug to fix separately)
-    const hasHorizontalScroll = await page.evaluate(() => {
+
+    // Check horizontal scroll (assertion intentionally disabled due to known UI bug)
+    await page.evaluate(() => {
       return document.documentElement.scrollWidth > document.documentElement.clientWidth;
     });
-    
-    // TODO: Fix UI horizontal scroll on mobile - currently failing
+
+    // TODO: Fix UI horizontal scroll on mobile, then enable assertion:
+    // const hasHorizontalScroll = await page.evaluate(() => {
+    //   return document.documentElement.scrollWidth > document.documentElement.clientWidth;
+    // });
     // expect(hasHorizontalScroll).toBeFalsy();
   });
 
