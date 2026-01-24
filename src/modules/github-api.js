@@ -19,12 +19,11 @@ const inFlightRequests = new Map();
 const directoryCache = new Map();
 const DIRECTORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-// Retry configuration
-const RETRY_CONFIG = {
-  maxAttempts: 3,
-  initialDelay: 1000,
-  maxDelay: 4000
-};
+// Export function to clear caches (mainly for testing)
+export function clearCaches() {
+  directoryCache.clear();
+  inFlightRequests.clear();
+}
 
 export function getRateLimitInfo() {
   return { ...rateLimitInfo };
@@ -65,52 +64,19 @@ function checkRateLimitError(res) {
   }
 }
 
-async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function fetchWithRetry(url, headers) {
-  let lastError;
+async function fetchWithHeaders(url, headers) {
+  const res = await fetch(viaProxy(url), {
+    cache: 'no-store',
+    headers
+  });
   
-  for (let attempt = 1; attempt <= RETRY_CONFIG.maxAttempts; attempt++) {
-    try {
-      const res = await fetch(viaProxy(url), {
-        cache: 'no-store',
-        headers
-      });
-      
-      // Update rate limit tracking
-      updateRateLimitInfo(res.headers);
-      
-      // Check for rate limit error
-      checkRateLimitError(res);
-      
-      return res;
-    } catch (error) {
-      lastError = error;
-      
-      // Don't retry rate limit errors or 4xx errors (except 429)
-      if (error.isRateLimit || (error.status >= 400 && error.status < 500 && error.status !== 429)) {
-        throw error;
-      }
-      
-      // Don't retry on last attempt
-      if (attempt === RETRY_CONFIG.maxAttempts) {
-        throw error;
-      }
-      
-      // Exponential backoff
-      const delay = Math.min(
-        RETRY_CONFIG.initialDelay * Math.pow(2, attempt - 1),
-        RETRY_CONFIG.maxDelay
-      );
-      
-      console.warn(`GitHub API request failed (attempt ${attempt}/${RETRY_CONFIG.maxAttempts}), retrying in ${delay}ms...`, error);
-      await sleep(delay);
-    }
-  }
+  // Update rate limit tracking
+  updateRateLimitInfo(res.headers);
   
-  throw lastError;
+  // Check for rate limit error
+  checkRateLimitError(res);
+  
+  return res;
 }
 
 const TOKEN_MAX_AGE = 60 * 24 * 60 * 60 * 1000; // 60 days
@@ -160,7 +126,7 @@ export async function fetchJSON(url) {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const res = await fetchWithRetry(url, headers);
+    const res = await fetchWithHeaders(url, headers);
     
     if (!res.ok) return null;
     return res.json();
@@ -187,7 +153,7 @@ export async function fetchJSONWithETag(url, etag = null) {
       headers['If-None-Match'] = etag;
     }
     
-    const res = await fetchWithRetry(url, headers);
+    const res = await fetchWithHeaders(url, headers);
     
     if (res.status === 304) {
       return { notModified: true, etag };
