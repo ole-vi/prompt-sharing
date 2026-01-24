@@ -38,9 +38,6 @@ const mockFirebaseAuth = {
 const mockGithubAuthProvider = vi.fn();
 
 global.window = {
-  // window.auth is no longer used by the module, but we might keep it if other things use it
-  // But for this test, we care about getAuth()
-  auth: mockFirebaseAuth,
   firebase: {
     auth: {
       GithubAuthProvider: mockGithubAuthProvider

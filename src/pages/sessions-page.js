@@ -4,6 +4,7 @@ import { attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
 import { debounce } from '../utils/debounce.js';
 import { TIMEOUTS } from '../utils/constants.js';
 import { loadFuse } from '../utils/lazy-loaders.js';
+import { getAuth } from '../modules/firebase-service.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
@@ -21,7 +22,7 @@ function waitForComponents() {
 }
 
 async function loadSessionsPage() {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   if (!user) return;
   
   const allSessionsList = document.getElementById('allSessionsList');
@@ -146,7 +147,7 @@ async function renderAllSessions(sessions) {
 
 async function loadSessions() {
   if (isSessionsLoading) return;
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   
   const loadingDiv = document.getElementById('sessionsLoading');
   const notSignedInDiv = document.getElementById('sessionsNotSignedIn');
@@ -223,8 +224,9 @@ async function initApp() {
       loadMoreBtn.addEventListener('click', loadSessionsPage);
     }
 
-    if (window.auth && typeof window.auth.onAuthStateChanged === 'function') {
-      window.auth.onAuthStateChanged(() => {
+    const auth = getAuth();
+    if (auth && typeof auth.onAuthStateChanged === 'function') {
+      auth.onAuthStateChanged(() => {
         loadSessions();
       });
     }

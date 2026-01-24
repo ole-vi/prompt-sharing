@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RepoSelector, BranchSelector } from '../../modules/repo-branch-selector.js';
+import * as firebaseService from '../../modules/firebase-service.js';
 
 // Mock dependencies
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(),
+  getDb: vi.fn()
+}));
+
 vi.mock('../../utils/dom-helpers.js', () => ({
   toggleVisibility: vi.fn()
 }));
@@ -47,7 +53,6 @@ global.console = {
 };
 
 global.window = {
-  db: null,
   getComputedStyle: vi.fn()
 };
 
@@ -162,7 +167,7 @@ function mockReset() {
   global.localStorage.removeItem.mockImplementation(() => {});
   
   // Reset window
-  global.window.db = null;
+  firebaseService.getDb.mockReturnValue(null);
   global.window.getComputedStyle.mockReturnValue({ position: 'absolute' });
   
   // Reset document
@@ -310,13 +315,14 @@ describe('repo-branch-selector', () => {
             ]
           })
         };
-        global.window.db = {
+        const mockDb = {
           collection: vi.fn(() => ({
             doc: vi.fn(() => ({
               get: vi.fn().mockResolvedValue(mockDoc)
             }))
           }))
         };
+        firebaseService.getDb.mockReturnValue(mockDb);
 
         await repoSelector.initialize();
         
@@ -360,13 +366,14 @@ describe('repo-branch-selector', () => {
       });
 
       it('should handle Firestore errors gracefully', async () => {
-        global.window.db = {
+        const mockDb = {
           collection: vi.fn(() => ({
             doc: vi.fn(() => ({
               get: vi.fn().mockRejectedValue(new Error('Firestore error'))
             }))
           }))
         };
+        firebaseService.getDb.mockReturnValue(mockDb);
 
         await repoSelector.initialize();
         

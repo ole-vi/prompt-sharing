@@ -56,6 +56,17 @@ vi.mock('../../modules/toast.js', () => ({
   showToast: vi.fn()
 }));
 
+vi.mock('../../modules/jules-api.js', () => ({
+  handleTryInJules: vi.fn(),
+  callRunJulesFunction: vi.fn()
+}));
+
+vi.mock('../../modules/jules-free-input.js', () => ({
+  showFreeInputModal: vi.fn(),
+  showFreeInputForm: vi.fn(),
+  hideFreeInputForm: vi.fn()
+}));
+
 vi.mock('../../modules/copen.js', () => ({
   copyAndOpen: vi.fn()
 }));

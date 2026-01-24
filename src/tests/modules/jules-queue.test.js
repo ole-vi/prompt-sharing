@@ -11,8 +11,14 @@ import {
   attachQueueHandlers
 } from '../../modules/jules-queue.js';
 import { getCache } from '../../utils/session-cache.js';
+import * as firebaseService from '../../modules/firebase-service.js';
 
 // Mock dependencies
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(),
+  getDb: vi.fn()
+}));
+
 vi.mock('../../utils/title.js', () => ({
   extractTitleFromPrompt: vi.fn()
 }));
@@ -90,10 +96,6 @@ const createMockElement = (id = '') => ({
 
 // Setup global mocks
 global.window = {
-  auth: {
-    currentUser: null
-  },
-  db: null,
   firebase: null
 };
 
@@ -123,11 +125,11 @@ function mockReset() {
   getCache.mockReset();
   
   // Reset window
-  global.window.auth = {
-    currentUser: null
-  };
-  global.window.db = null;
   global.window.firebase = null;
+
+  // Default mocks
+  firebaseService.getAuth.mockReturnValue({ currentUser: null });
+  firebaseService.getDb.mockReturnValue(null);
 
   // Restore implementations
   global.firebase.firestore.FieldValue.serverTimestamp.mockImplementation(() => 'TIMESTAMP');
@@ -146,7 +148,7 @@ describe('jules-queue', () => {
   describe('handleQueueAction', () => {
     it('should show warning if user not signed in', async () => {
       const { showToast } = await import('../../modules/toast.js');
-      global.window.auth.currentUser = null;
+      firebaseService.getAuth.mockReturnValue({ currentUser: null });
       
       const result = await handleQueueAction({ prompt: 'test' });
       
@@ -160,8 +162,8 @@ describe('jules-queue', () => {
 
     it('should add item to queue if user signed in', async () => {
       const { showToast } = await import('../../modules/toast.js');
-      global.window.auth.currentUser = { uid: 'user123' };
-      global.window.db = {
+      firebaseService.getAuth.mockReturnValue({ currentUser: { uid: 'user123' } });
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -170,6 +172,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       // Need window.firebase for serverTimestamp
       global.window.firebase = global.firebase;
       
@@ -181,8 +184,8 @@ describe('jules-queue', () => {
 
     it('should show error toast on failure', async () => {
       const { showToast } = await import('../../modules/toast.js');
-      global.window.auth.currentUser = { uid: 'user123' };
-      global.window.db = {
+      firebaseService.getAuth.mockReturnValue({ currentUser: { uid: 'user123' } });
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -191,6 +194,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       global.window.firebase = global.firebase;
       
       const result = await handleQueueAction({ prompt: 'test' });
@@ -207,7 +211,7 @@ describe('jules-queue', () => {
 
     it('should handle missing auth object', async () => {
       const { showToast } = await import('../../modules/toast.js');
-      global.window.auth = null;
+      firebaseService.getAuth.mockReturnValue(null);
       
       const result = await handleQueueAction({ prompt: 'test' });
       
@@ -222,14 +226,14 @@ describe('jules-queue', () => {
 
   describe('addToJulesQueue', () => {
     it('should throw error if Firestore not initialized', async () => {
-      global.window.db = null;
+      firebaseService.getDb.mockReturnValue(null);
       
       await expect(addToJulesQueue('user123', {})).rejects.toThrow('Firestore not initialized');
     });
 
     it('should add item to queue collection', async () => {
       const mockAdd = vi.fn().mockResolvedValue({ id: 'newDoc123' });
-      global.window.db = {
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -238,6 +242,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       global.window.firebase = global.firebase;
       
       const docId = await addToJulesQueue('user123', { prompt: 'test', sourceId: 'repo1' });
@@ -255,7 +260,7 @@ describe('jules-queue', () => {
 
     it('should set autoOpen to false if explicitly specified', async () => {
       const mockAdd = vi.fn().mockResolvedValue({ id: 'doc456' });
-      global.window.db = {
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -264,6 +269,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       global.window.firebase = global.firebase;
       
       await addToJulesQueue('user123', { prompt: 'test', autoOpen: false });
@@ -277,7 +283,7 @@ describe('jules-queue', () => {
 
     it('should add server timestamp', async () => {
       const mockAdd = vi.fn().mockResolvedValue({ id: 'doc789' });
-      global.window.db = {
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -286,6 +292,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       global.window.firebase = global.firebase;
       // Completely replace the mock function to ensure it works
       global.firebase.firestore.FieldValue.serverTimestamp = vi.fn(() => 'TIMESTAMP');
@@ -303,7 +310,7 @@ describe('jules-queue', () => {
       const { clearCache, CACHE_KEYS } = await import('../../utils/session-cache.js');
       // addDoc unconditionally clears cache if key provided
 
-      global.window.db = {
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -312,6 +319,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       global.window.firebase = global.firebase;
       
       await addToJulesQueue('user456', { prompt: 'test' });
@@ -320,7 +328,7 @@ describe('jules-queue', () => {
     });
 
     it('should handle Firestore errors', async () => {
-      global.window.db = {
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -329,6 +337,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       global.window.firebase = global.firebase;
       
       await expect(addToJulesQueue('user123', { prompt: 'test' })).rejects.toThrow();
@@ -338,7 +347,7 @@ describe('jules-queue', () => {
 
   describe('updateJulesQueueItem', () => {
     it('should throw error if Firestore not initialized', async () => {
-      global.window.db = null;
+      firebaseService.getDb.mockReturnValue(null);
       
       await expect(updateJulesQueueItem('user123', 'doc1', {})).rejects.toThrow('Firestore not initialized');
     });
@@ -348,7 +357,7 @@ describe('jules-queue', () => {
       const { getCache } = await import('../../utils/session-cache.js');
       getCache.mockReturnValue([{id: 'doc456'}]); // Ensure getCache returns something
 
-      global.window.db = {
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -359,6 +368,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       
       const result = await updateJulesQueueItem('user123', 'doc456', { status: 'completed' });
       
@@ -372,7 +382,7 @@ describe('jules-queue', () => {
       // updateDoc only clears/updates if item is in cache.
       getCacheSpy.mockImplementation(() => ['item']);
 
-      global.window.db = {
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -383,6 +393,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       
       await updateJulesQueueItem('user789', 'doc123', { status: 'running' });
       
@@ -390,7 +401,7 @@ describe('jules-queue', () => {
     });
 
     it('should handle update errors', async () => {
-      global.window.db = {
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -401,6 +412,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       const { getCache } = await import('../../utils/session-cache.js');
       getCache.mockReturnValue(['item']);
       
@@ -411,7 +423,7 @@ describe('jules-queue', () => {
 
   describe('deleteFromJulesQueue', () => {
     it('should throw error if Firestore not initialized', async () => {
-      global.window.db = null;
+      firebaseService.getDb.mockReturnValue(null);
       
       await expect(deleteFromJulesQueue('user123', 'doc1')).rejects.toThrow('Firestore not initialized');
     });
@@ -421,7 +433,7 @@ describe('jules-queue', () => {
       const { getCache } = await import('../../utils/session-cache.js');
       getCache.mockReturnValue(['item']);
 
-      global.window.db = {
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -432,6 +444,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       
       const result = await deleteFromJulesQueue('user123', 'doc789');
       
@@ -442,7 +455,7 @@ describe('jules-queue', () => {
     it('should clear cache after deleting', async () => {
       const { clearCache, CACHE_KEYS } = await import('../../utils/session-cache.js');
 
-      global.window.db = {
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -453,6 +466,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       
       await deleteFromJulesQueue('user999', 'doc555');
       
@@ -460,7 +474,7 @@ describe('jules-queue', () => {
     });
 
     it('should handle deletion errors', async () => {
-      global.window.db = {
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -471,6 +485,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       
       await expect(deleteFromJulesQueue('user123', 'doc1')).rejects.toThrow();
       expect(global.console.error).toHaveBeenCalled();
@@ -479,7 +494,7 @@ describe('jules-queue', () => {
 
   describe('listJulesQueue', () => {
     it('should throw error if Firestore not initialized', async () => {
-      global.window.db = null;
+      firebaseService.getDb.mockReturnValue(null);
       
       await expect(listJulesQueue('user123')).rejects.toThrow('Firestore not initialized');
     });
@@ -494,7 +509,7 @@ describe('jules-queue', () => {
       const { getCache } = await import('../../utils/session-cache.js');
       getCache.mockReturnValue(null);
 
-      global.window.db = {
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -505,6 +520,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       
       const items = await listJulesQueue('user123');
       
@@ -517,7 +533,7 @@ describe('jules-queue', () => {
       const { getCache } = await import('../../utils/session-cache.js');
       getCache.mockReturnValue(null);
 
-      global.window.db = {
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -528,6 +544,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       
       const items = await listJulesQueue('user123');
       
@@ -538,7 +555,7 @@ describe('jules-queue', () => {
       const { getCache } = await import('../../utils/session-cache.js');
       getCache.mockReturnValue(null);
 
-      global.window.db = {
+      const mockDb = {
         collection: vi.fn(() => ({
           doc: vi.fn(() => ({
             collection: vi.fn(() => ({
@@ -549,6 +566,7 @@ describe('jules-queue', () => {
           }))
         }))
       };
+      firebaseService.getDb.mockReturnValue(mockDb);
       
       await expect(listJulesQueue('user123')).rejects.toThrow();
       expect(global.console.error).toHaveBeenCalled();

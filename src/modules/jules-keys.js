@@ -1,4 +1,5 @@
 import { getDoc, deleteDoc, setDoc, getServerTimestamp } from '../utils/firestore-helpers.js';
+import { getDb } from './firebase-service.js';
 
 // ===== Jules Key Management Module =====
 // Handles encryption, storage, and retrieval of Jules API keys
@@ -7,7 +8,7 @@ const CACHE_KEY = 'jules_key_data';
 
 export async function checkJulesKey(uid) {
   try {
-    if (!window.db) {
+    if (!getDb()) {
       return false;
     }
     const doc = await getDoc('julesKeys', uid, CACHE_KEY);
@@ -19,7 +20,7 @@ export async function checkJulesKey(uid) {
 
 export async function deleteStoredJulesKey(uid) {
   try {
-    if (!window.db) return false;
+    if (!getDb()) return false;
     await deleteDoc('julesKeys', uid, CACHE_KEY);
     return true;
   } catch (error) {
@@ -39,7 +40,7 @@ export async function encryptAndStoreKey(plaintext, uid) {
     const ciphertext = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintextData);
     const encrypted = btoa(String.fromCharCode(...new Uint8Array(ciphertext)));
 
-    if (!window.db) throw new Error('Firestore not initialized');
+    if (!getDb()) throw new Error('Firestore not initialized');
     await setDoc('julesKeys', uid, {
       key: encrypted,
       storedAt: getServerTimestamp()

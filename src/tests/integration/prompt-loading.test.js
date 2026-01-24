@@ -1,10 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fetchJSON, listPromptsViaContents } from '../../modules/github-api.js';
+import * as firebaseService from '../../modules/firebase-service.js';
+
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(),
+  getDb: vi.fn()
+}));
 
 describe('GitHub API Module', () => {
     beforeEach(() => {
         global.fetch = vi.fn();
-        window.auth = { currentUser: null };
+        firebaseService.getAuth.mockReturnValue({ currentUser: null });
         localStorage.removeItem('github_access_token');
     });
 
@@ -28,7 +34,7 @@ describe('GitHub API Module', () => {
         });
 
         it('should include auth token if present', async () => {
-            window.auth.currentUser = { providerData: [{ providerId: 'github.com' }] };
+            firebaseService.getAuth.mockReturnValue({ currentUser: { providerData: [{ providerId: 'github.com' }] } });
             localStorage.setItem('github_access_token', JSON.stringify({
                 token: 'gh_token',
                 timestamp: Date.now()

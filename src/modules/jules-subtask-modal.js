@@ -13,6 +13,7 @@ import { showConfirm } from './confirm-modal.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';
+import { getAuth } from './firebase-service.js';
 
 // Module state
 let currentFullPrompt = '';
@@ -74,7 +75,7 @@ export function showSubtaskSplitModal(promptText) {
   };
 
   queueBtn.onclick = async () => {
-    const user = window.auth?.currentUser;
+    const user = getAuth()?.currentUser;
     if (!user) {
       showToast(JULES_MESSAGES.SIGN_IN_REQUIRED_SUBTASKS, 'warn');
       return;
@@ -359,7 +360,7 @@ async function submitSubtasks(subtasks) {
   let skippedCount = 0;
   let successCount = 0;
   let paused = false;
-  const user = window.auth ? window.auth.currentUser : null;
+  const user = getAuth() ? getAuth().currentUser : null;
 
   statusBar?.showMessage?.(`Processing ${totalCount} subtasks...`, { timeout: 0 });
   statusBar?.setAction?.('Pause', () => {
@@ -444,7 +445,7 @@ async function submitSubtasks(subtasks) {
             submitted = true;
             statusBar?.showMessage?.(`Skipped subtask. Continuing with remaining...`, { timeout: TIMEOUTS.actionFeedback });
           } else if (result.action === 'queue') {
-            const user = window.auth?.currentUser;
+            const user = getAuth()?.currentUser;
             if (!user) {
               statusBar?.clear?.();
               showToast(JULES_MESSAGES.SIGN_IN_REQUIRED_SUBTASKS, 'warn');
@@ -486,7 +487,7 @@ async function submitSubtasks(subtasks) {
             return;
           } else {
             if (result.action === 'queue') {
-              const user = window.auth?.currentUser;
+              const user = getAuth()?.currentUser;
               if (!user) {
                 statusBar?.clear?.();
                 showToast(JULES_MESSAGES.SIGN_IN_REQUIRED_SUBTASKS, 'warn');

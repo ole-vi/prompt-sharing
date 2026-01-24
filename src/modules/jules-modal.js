@@ -8,6 +8,7 @@ import { toggleVisibility } from '../utils/dom-helpers.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import { RETRY_CONFIG, TIMEOUTS, JULES_MESSAGES } from '../utils/constants.js';
 import { showToast } from './toast.js';
+import { getAuth } from './firebase-service.js';
 
 let lastSelectedSourceId = 'sources/github/promptroot/promptroot';
 let lastSelectedBranch = 'main';
@@ -51,7 +52,7 @@ export function showJulesKeyModal(onSave) {
       saveBtn.textContent = 'Saving...';
       saveBtn.disabled = true;
 
-      const user = window.auth ? window.auth.currentUser : null;
+      const user = getAuth() ? getAuth().currentUser : null;
       if (!user) {
         showToast('Not logged in.', 'error');
         saveBtn.textContent = 'Save & Continue';
@@ -142,7 +143,7 @@ export async function showJulesEnvModal(promptText) {
   queueBtn.onclick = async () => {
     if (!selectedSourceId || !selectedBranch) return;
     
-    const user = window.auth?.currentUser;
+    const user = getAuth()?.currentUser;
     if (!user) {
       showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
       return;
@@ -204,7 +205,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
           showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
           return;
         } else if (result.action === 'queue') {
-          const user = window.auth?.currentUser;
+          const user = getAuth()?.currentUser;
           if (!user) {
             showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
             return;
@@ -237,7 +238,7 @@ async function handleRepoSelect(sourceId, branch, promptText, suppressPopups = f
           showToast(JULES_MESSAGES.cancelled(0, 1), 'warn');
           return;
         } else if (result.action === 'queue') {
-          const user = window.auth?.currentUser;
+          const user = getAuth()?.currentUser;
           if (!user) {
             showToast(JULES_MESSAGES.SIGN_IN_REQUIRED, 'warn');
             return;

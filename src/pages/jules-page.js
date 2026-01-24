@@ -11,6 +11,7 @@ import { showToast } from '../modules/toast.js';
 import { showConfirm } from '../modules/confirm-modal.js';
 import { TIMEOUTS } from '../utils/constants.js';
 import { renderStatus, STATUS_TYPES } from '../modules/status-renderer.js';
+import { getAuth } from '../modules/firebase-service.js';
 
 function waitForComponents() {
   if (document.querySelector('header')) {
@@ -21,7 +22,7 @@ function waitForComponents() {
 }
 
 async function loadJulesInfo() {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   
   const loadingDiv = document.getElementById('julesLoading');
   const notSignedInDiv = document.getElementById('julesNotSignedIn');
@@ -87,7 +88,7 @@ async function initApp() {
   const addKeyHandler = () => {
     showJulesKeyModal(() => {
       // Reload Jules info after saving key
-      const user = window.auth?.currentUser;
+      const user = getAuth()?.currentUser;
       if (user) {
         loadJulesInfo();
       }
@@ -108,7 +109,7 @@ async function initApp() {
       if (!confirmed) return;
       
       try {
-        const user = window.auth?.currentUser;
+        const user = getAuth()?.currentUser;
         if (!user) return;
         
         resetJulesKeyBtn.disabled = true;
@@ -155,7 +156,7 @@ async function initApp() {
   const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
   if (loadJulesInfoBtn) {
     loadJulesInfoBtn.onclick = () => {
-      const user = window.auth?.currentUser;
+      const user = getAuth()?.currentUser;
       if (user) {
         loadJulesInfo();
       }
@@ -164,14 +165,17 @@ async function initApp() {
 
   try {
     await waitForFirebase();
-    window.auth.onAuthStateChanged((user) => {
-      if (user) {
-        loadJulesInfo();
-      } else {
-        document.getElementById('julesProfileInfoSection').classList.add('hidden');
-        document.getElementById('julesNotSignedIn').classList.remove('hidden');
-      }
-    });
+    const auth = getAuth();
+    if (auth) {
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          loadJulesInfo();
+        } else {
+          document.getElementById('julesProfileInfoSection').classList.add('hidden');
+          document.getElementById('julesNotSignedIn').classList.remove('hidden');
+        }
+      });
+    }
   } catch (error) {
     console.error('Failed to initialize Firebase:', error);
   }

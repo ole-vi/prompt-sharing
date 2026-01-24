@@ -12,22 +12,7 @@ global.window.firebase = {
   }
 };
 
-global.window.auth = {
-  currentUser: null,
-  signInWithPopup: vi.fn(),
-  signOut: vi.fn(),
-  onAuthStateChanged: vi.fn(),
-};
-
-global.window.db = {
-  collection: vi.fn(() => ({
-    doc: vi.fn(() => ({
-      get: vi.fn(),
-      set: vi.fn(),
-      delete: vi.fn(),
-    })),
-  })),
-};
+// Globals window.auth and window.db removed. Tests should mock src/modules/firebase-service.js
 
 // Mock localStorage more realistically
 const localStorageMock = (() => {

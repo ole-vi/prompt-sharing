@@ -7,6 +7,13 @@ import {
   callRunJulesFunction,
   handleTryInJules
 } from '../../modules/jules-api.js';
+import * as firebaseService from '../../modules/firebase-service.js';
+
+// Mock dependencies
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(),
+  getDb: vi.fn()
+}));
 
 // Mock global fetch
 const mockFetch = vi.fn();
@@ -35,9 +42,7 @@ const mockDb = {
 };
 
 global.window = {
-  crypto: mockCrypto,
-  auth: mockAuth,
-  db: mockDb
+  crypto: mockCrypto
 };
 
 // Mock TextEncoder/TextDecoder with functional implementations
@@ -92,7 +97,8 @@ vi.mock('../../utils/constants.js', () => ({
 describe('jules-api', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAuth.currentUser = null;
+    firebaseService.getAuth.mockReturnValue({ currentUser: null });
+    firebaseService.getDb.mockReturnValue(mockDb);
     clearJulesKeyCache(); // Clear cache between tests
     
     // Mock Date.now for consistent testing
@@ -177,7 +183,7 @@ describe('jules-api', () => {
     });
 
     it('should return null when no db available', async () => {
-      global.window.db = null;
+      firebaseService.getDb.mockReturnValue(null);
       
       const result = await getDecryptedJulesKey(uid);
       
@@ -311,7 +317,7 @@ describe('jules-api', () => {
       const uid = 'test-user';
       
       // Mock getDecryptedJulesKey to return null (no key available)
-      global.window.db = null;
+      firebaseService.getDb.mockReturnValue(null);
       
       await expect(loadJulesProfileInfo(uid)).rejects.toThrow('Jules API key is required');
     });
@@ -354,7 +360,7 @@ describe('jules-api', () => {
     it('should show error toast when not logged in', async () => {
       const { showToast } = await import('../../modules/toast.js');
       
-      mockAuth.currentUser = null;
+      firebaseService.getAuth.mockReturnValue({ currentUser: null });
       
       const result = await callRunJulesFunction('test prompt', 'source1', 'main', 'Test Title');
       
@@ -367,17 +373,19 @@ describe('jules-api', () => {
     });
 
     it('should throw error when no source ID provided', async () => {
-      mockAuth.currentUser = { uid: 'test-user' };
+      firebaseService.getAuth.mockReturnValue({ currentUser: { uid: 'test-user' } });
       
       await expect(callRunJulesFunction('test prompt', null)).rejects.toThrow('No repository selected');
     });
 
     // Skipped: Depends on getDecryptedJulesKey working, which requires Web Crypto mocking
     it.skip('should handle button state changes', async () => {
-      mockAuth.currentUser = { 
-        uid: 'test-user',
-        getIdToken: vi.fn().mockResolvedValue('firebase-token')
-      };
+      firebaseService.getAuth.mockReturnValue({
+        currentUser: {
+          uid: 'test-user',
+          getIdToken: vi.fn().mockResolvedValue('firebase-token')
+        }
+      });
       
       // Mock button element
       const mockButton = {
@@ -408,7 +416,7 @@ describe('jules-api', () => {
 
   describe('handleTryInJules', () => {
     it('should handle authenticated user', async () => {
-      mockAuth.currentUser = { uid: 'test-user' };
+      firebaseService.getAuth.mockReturnValue({ currentUser: { uid: 'test-user' } });
       
       // Mock the dynamic imports that handleTryInJules uses
       vi.doMock('../../modules/jules-keys.js', () => ({
@@ -426,7 +434,7 @@ describe('jules-api', () => {
 
     it('should prompt for login when not authenticated', async () => {
       const { showToast } = await import('../../modules/toast.js');
-      mockAuth.currentUser = null;
+      firebaseService.getAuth.mockReturnValue({ currentUser: null });
       
       // Mock auth import
       vi.doMock('../../modules/auth.js', () => ({
@@ -445,7 +453,7 @@ describe('jules-api', () => {
     });
 
     it('should show key modal when no key available', async () => {
-      mockAuth.currentUser = { uid: 'test-user' };
+      firebaseService.getAuth.mockReturnValue({ currentUser: { uid: 'test-user' } });
       
       // Mock imports
       vi.doMock('../../modules/jules-keys.js', () => ({

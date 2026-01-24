@@ -7,8 +7,14 @@ import {
   hideJulesEnvModal,
   hideSubtaskErrorModal
 } from '../../modules/jules-modal.js';
+import * as firebaseService from '../../modules/firebase-service.js';
 
 // Mock dependencies
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(),
+  getDb: vi.fn()
+}));
+
 vi.mock('../../modules/jules-keys.js', () => ({
   encryptAndStoreKey: vi.fn()
 }));
@@ -59,7 +65,6 @@ global.document = {
 };
 
 global.window = {
-  auth: null,
   open: vi.fn()
 };
 
@@ -112,7 +117,7 @@ function mockReset() {
     style: {},
     dispatchEvent: vi.fn()
   });
-  global.window.auth = null;
+  firebaseService.getAuth.mockReturnValue({ currentUser: null });
 }
 
 describe('jules-modal', () => {
@@ -232,7 +237,7 @@ describe('jules-modal', () => {
 
     it('should show error if user not logged in', async () => {
       const { showToast } = await import('../../modules/toast.js');
-      global.window.auth = { currentUser: null };
+      firebaseService.getAuth.mockReturnValue({ currentUser: null });
       
       const mockModal = createMockElement('julesKeyModal');
       const mockInput = createMockElement('julesKeyInput');
@@ -262,7 +267,7 @@ describe('jules-modal', () => {
       const { showToast } = await import('../../modules/toast.js');
       encryptAndStoreKey.mockResolvedValue();
       
-      global.window.auth = { currentUser: { uid: 'user123' } };
+      firebaseService.getAuth.mockReturnValue({ currentUser: { uid: 'user123' } });
       
       const mockModal = createMockElement('julesKeyModal');
       const mockInput = createMockElement('julesKeyInput');
@@ -293,7 +298,7 @@ describe('jules-modal', () => {
       const { encryptAndStoreKey } = await import('../../modules/jules-keys.js');
       encryptAndStoreKey.mockResolvedValue();
       
-      global.window.auth = { currentUser: { uid: 'user456' } };
+      firebaseService.getAuth.mockReturnValue({ currentUser: { uid: 'user456' } });
       
       const mockModal = createMockElement('julesKeyModal');
       const mockInput = createMockElement('julesKeyInput');
@@ -324,7 +329,7 @@ describe('jules-modal', () => {
       const { showToast } = await import('../../modules/toast.js');
       encryptAndStoreKey.mockRejectedValue(new Error('Storage failed'));
       
-      global.window.auth = { currentUser: { uid: 'user789' } };
+      firebaseService.getAuth.mockReturnValue({ currentUser: { uid: 'user789' } });
       
       const mockModal = createMockElement('julesKeyModal');
       const mockInput = createMockElement('julesKeyInput');

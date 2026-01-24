@@ -12,16 +12,20 @@ import {
   isGistUrl,
   getBranches
 } from '../../modules/github-api.js';
+import * as firebaseService from '../../modules/firebase-service.js';
 
 // Mock global fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-// Mock window.auth
-const mockAuth = {
-  currentUser: null
-};
-global.window = { auth: mockAuth };
+// Mock dependencies
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(),
+  getDb: vi.fn()
+}));
+
+// Mock window (no auth)
+global.window = {};
 
 // Mock localStorage
 const mockLocalStorage = (() => {
@@ -53,7 +57,7 @@ const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
 describe('github-api', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAuth.currentUser = null;
+    firebaseService.getAuth.mockReturnValue({ currentUser: null });
     mockLocalStorage.clear();
     mockConsoleError.mockClear();
     
@@ -126,9 +130,11 @@ describe('github-api', () => {
 
     it('should fetch JSON with GitHub authentication', async () => {
       // Setup authenticated user
-      mockAuth.currentUser = {
-        providerData: [{ providerId: 'github.com' }]
-      };
+      firebaseService.getAuth.mockReturnValue({
+        currentUser: {
+          providerData: [{ providerId: 'github.com' }]
+        }
+      });
       mockLocalStorage.setItem('github_access_token', JSON.stringify({
         token: 'github_pat_12345',
         timestamp: 1000000 - 1000 // 1 second ago
@@ -176,9 +182,11 @@ describe('github-api', () => {
     });
 
     it('should handle expired token', async () => {
-      mockAuth.currentUser = {
-        providerData: [{ providerId: 'github.com' }]
-      };
+      firebaseService.getAuth.mockReturnValue({
+        currentUser: {
+          providerData: [{ providerId: 'github.com' }]
+        }
+      });
       
       // Set expired token (older than TOKEN_MAX_AGE)
       const expiredTime = 1000000 - (60 * 24 * 60 * 60 * 1000 + 1000); // 60 days + 1 second ago
@@ -205,9 +213,11 @@ describe('github-api', () => {
     });
 
     it('should handle invalid token data', async () => {
-      mockAuth.currentUser = {
-        providerData: [{ providerId: 'github.com' }]
-      };
+      firebaseService.getAuth.mockReturnValue({
+        currentUser: {
+          providerData: [{ providerId: 'github.com' }]
+        }
+      });
       mockLocalStorage.setItem('github_access_token', 'invalid-json');
 
       mockFetch.mockResolvedValueOnce({
@@ -227,9 +237,11 @@ describe('github-api', () => {
     });
 
     it('should handle non-GitHub auth provider', async () => {
-      mockAuth.currentUser = {
-        providerData: [{ providerId: 'google.com' }]
-      };
+      firebaseService.getAuth.mockReturnValue({
+        currentUser: {
+          providerData: [{ providerId: 'google.com' }]
+        }
+      });
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -324,9 +336,11 @@ describe('github-api', () => {
     });
 
     it('should include authorization header when authenticated', async () => {
-      mockAuth.currentUser = {
-        providerData: [{ providerId: 'github.com' }]
-      };
+      firebaseService.getAuth.mockReturnValue({
+        currentUser: {
+          providerData: [{ providerId: 'github.com' }]
+        }
+      });
       mockLocalStorage.setItem('github_access_token', JSON.stringify({
         token: 'github_pat_12345',
         timestamp: 999000
@@ -928,9 +942,11 @@ describe('github-api', () => {
 
   describe('integration and error handling', () => {
     it('should handle token refresh across multiple API calls', async () => {
-      mockAuth.currentUser = {
-        providerData: [{ providerId: 'github.com' }]
-      };
+      firebaseService.getAuth.mockReturnValue({
+        currentUser: {
+          providerData: [{ providerId: 'github.com' }]
+        }
+      });
       
       // Set token that will be valid for first call but expire during second
       mockLocalStorage.setItem('github_access_token', JSON.stringify({

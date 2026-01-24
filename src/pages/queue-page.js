@@ -7,6 +7,7 @@ import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
 import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly } from '../modules/jules-queue.js';
 import { createElement, clearElement, waitForDOMReady, waitForHeader } from '../utils/dom-helpers.js';
 import { handleError } from '../utils/error-handler.js';
+import { getAuth } from '../modules/firebase-service.js';
 
 // Initialize checkbox mutual exclusivity
 initMutualExclusivity();
@@ -24,7 +25,7 @@ function initApp() {
   // Initialize queue functionality
   attachQueueHandlers();
   
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   if (user) {
     document.getElementById('queueLoading').classList.remove('hidden');
     document.getElementById('queueControls').classList.add('hidden');
@@ -37,22 +38,25 @@ function initApp() {
   }
   
   // Listen for auth state changes
-  window.auth.onAuthStateChanged((user) => {
-    if (user) {
-      document.getElementById('queueLoading').classList.remove('hidden');
-      document.getElementById('queueControls').classList.add('hidden');
-      document.getElementById('queueNotSignedIn').classList.add('hidden');
-      loadQueue();
-    } else {
-      document.getElementById('queueLoading').classList.add('hidden');
-      document.getElementById('queueControls').classList.add('hidden');
-      document.getElementById('queueNotSignedIn').classList.remove('hidden');
-    }
-  });
+  const auth = getAuth();
+  if (auth) {
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        document.getElementById('queueLoading').classList.remove('hidden');
+        document.getElementById('queueControls').classList.add('hidden');
+        document.getElementById('queueNotSignedIn').classList.add('hidden');
+        loadQueue();
+      } else {
+        document.getElementById('queueLoading').classList.add('hidden');
+        document.getElementById('queueControls').classList.add('hidden');
+        document.getElementById('queueNotSignedIn').classList.remove('hidden');
+      }
+    });
+  }
 }
 
 async function loadQueue() {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   const listDiv = document.getElementById('allQueueList');
   const loadingDiv = document.getElementById('queueLoading');
   const controlsDiv = document.getElementById('queueControls');

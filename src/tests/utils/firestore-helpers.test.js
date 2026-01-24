@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getDoc, queryCollection, setDoc, updateDoc, deleteDoc, addDoc, retryOperation } from '../../utils/firestore-helpers.js';
 import * as sessionCache from '../../utils/session-cache.js';
+import * as firebaseService from '../../modules/firebase-service.js';
 
 vi.mock('../../utils/session-cache.js', () => ({
   getCache: vi.fn(),
@@ -9,14 +10,19 @@ vi.mock('../../utils/session-cache.js', () => ({
   CACHE_KEYS: { QUEUE_ITEMS: 'queue_items' }
 }));
 
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(),
+  getDb: vi.fn()
+}));
+
 describe('firestore-helpers', () => {
   let mockDb;
   let mockCollection;
   let mockDoc;
 
   beforeEach(() => {
-    // Mock window.auth
-    window.auth = { currentUser: { uid: 'user123' } };
+    // Mock getAuth
+    firebaseService.getAuth.mockReturnValue({ currentUser: { uid: 'user123' } });
 
     // Mock Firestore
     mockDoc = {
@@ -39,7 +45,7 @@ describe('firestore-helpers', () => {
       collection: vi.fn(() => mockCollection)
     };
 
-    window.db = mockDb;
+    firebaseService.getDb.mockReturnValue(mockDb);
     window.firebase = {
         firestore: {
             FieldValue: {
@@ -60,7 +66,7 @@ describe('firestore-helpers', () => {
 
       expect(sessionCache.getCache).toHaveBeenCalledWith('cacheKey', 'user123');
       expect(result).toEqual({ id: 'doc1', data: 'cached' });
-      expect(window.db.collection).not.toHaveBeenCalled();
+      expect(mockDb.collection).not.toHaveBeenCalled();
     });
 
     it('should fetch from Firestore if not cached', async () => {
@@ -73,7 +79,7 @@ describe('firestore-helpers', () => {
 
       const result = await getDoc('col', 'doc1', 'cacheKey');
 
-      expect(window.db.collection).toHaveBeenCalledWith('col');
+      expect(mockDb.collection).toHaveBeenCalledWith('col');
       expect(mockCollection.doc).toHaveBeenCalledWith('doc1');
       expect(mockDoc.get).toHaveBeenCalled();
       expect(result).toEqual({ id: 'doc1', value: 'test' });
