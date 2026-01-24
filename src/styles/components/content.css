@@ -158,7 +158,7 @@ a:hover { text-decoration: underline; }
 .session-prompt { font-size:14px; color:var(--text); margin-bottom:8px; white-space:pre-wrap; }
 .session-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
 .session-pill { font-size:12px; padding:4px 8px; background:rgba(77,217,255,0.1); border-radius:4px; color:var(--accent); }
-.session-subtask-badge { font-size:12px; padding:4px 8px; background:rgba(168,85,247,0.1); border-radius:4px; color:#c084fc; }
+.session-subtask-badge { font-size:12px; padding:4px 8px; background:var(--purple-muted); border-radius:4px; color:var(--purple); }
 .session-hint { font-size:11px; color:var(--muted); margin-left:auto; }
 .session-view-btn { padding:4px; font-size:16px; opacity:0.6; }
 .session-view-btn .icon { font-size:16px; }
