@@ -1,4 +1,4 @@
-import { GIST_POINTER_REGEX, GIST_URL_REGEX } from '../utils/constants.js';
+import { GIST_POINTER_REGEX, GIST_URL_REGEX, CACHE_DURATIONS } from '../utils/constants.js';
 
 let viaProxy = (url) => url;
 
@@ -15,9 +15,8 @@ let rateLimitInfo = {
 
 const inFlightRequests = new Map();
 
-// Directory cache for Contents API with 5-minute TTL
+// Directory cache for Contents API with shared TTL
 const directoryCache = new Map();
-const DIRECTORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 // Export function to clear caches (mainly for testing)
 export function clearCaches() {
@@ -193,7 +192,7 @@ export async function listPromptsViaContents(owner, repo, branch, path = 'prompt
   // Check cache first
   const cacheKey = `${owner}/${repo}@${branch}:${path}`;
   const cached = directoryCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < DIRECTORY_CACHE_TTL) {
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATIONS.short) {
     return cached.data;
   }
   

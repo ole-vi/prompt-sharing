@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { waitFor } from '@testing-library/dom';
 import { loadPrompts, getPromptFolder } from '../../modules/prompt-service.js';
 
 // Mock dependencies
@@ -106,8 +107,8 @@ describe('prompt-service', () => {
       // Should return cached files immediately
       expect(files).toEqual(cachedFiles);
 
-      // Wait for background promise to complete
-      await vi.waitFor(() => {
+      // Wait for background promise to complete using Testing Library's waitFor
+      await waitFor(() => {
         expect(onUpdate).toHaveBeenCalledWith(newFiles);
       }, { timeout: 1000 });
 

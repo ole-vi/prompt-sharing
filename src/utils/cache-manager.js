@@ -1,6 +1,7 @@
 // Cache size management with LRU eviction
-const MAX_CACHE_ENTRIES = 20;
-const CACHE_ACCESS_KEY = 'cache_access_log';
+import { LIMITS, STORAGE_KEYS } from './constants.js';
+const MAX_CACHE_ENTRIES = LIMITS.promptCacheMaxEntries;
+const CACHE_ACCESS_KEY = STORAGE_KEYS.cacheAccessLog;
 
 /**
  * Get all cached prompt entries from sessionStorage

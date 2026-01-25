@@ -63,6 +63,12 @@ export function showFreeInputForm() {
   const actions = document.getElementById('actions');
   const content = document.getElementById('content');
   
+  // Gracefully handle missing Free Input elements in non-UI contexts (e.g., tests)
+  if (!freeInputSection) {
+    console.warn('Free Input section not found; skipping UI rendering');
+    return;
+  }
+  
   empty.classList.add('hidden');
   if (title) title.classList.add('hidden');
   if (meta) meta.classList.add('hidden');
@@ -80,6 +86,11 @@ export function showFreeInputForm() {
   const saveBtn = document.getElementById('freeInputSaveBtn');
   const copenBtn = document.getElementById('freeInputCopenBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
+  
+  if (!textarea || !submitBtn || !queueBtn || !splitBtn || !saveBtn || !copenBtn || !cancelBtn) {
+    console.warn('Free Input controls not found; skipping UI rendering');
+    return;
+  }
   
   const originalCopenContent = Array.from(copenBtn.childNodes).map(node => node.cloneNode(true));
 
