@@ -139,7 +139,7 @@ export function initSplitButton(config) {
     const value = item.dataset.value;
     const option = options.find(opt => opt.value === value);
     
-    if (option) {SELECTORS.MENU_ITEM
+    if (option) {
       currentSelection = option;
       updateActionButton(actionBtn, option);
       
