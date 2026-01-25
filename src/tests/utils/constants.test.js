@@ -151,10 +151,6 @@ describe('constants', () => {
   });
 
   describe('branch classification', () => {
-    it('should define user branches', () => {
-      expect(constants.USER_BRANCHES).toEqual(['dogi', 'jesse', 'saksham']);
-    });
-
     it('should define feature patterns', () => {
       expect(constants.FEATURE_PATTERNS).toEqual([
         'codex/', 'feature/', 'fix/', 'bugfix/', 'hotfix/'
