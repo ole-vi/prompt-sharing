@@ -15,6 +15,13 @@ import {
   clearCaches
 } from '../../modules/github-api.js';
 
+// Mock firebase service
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(() => global.window.auth),
+  getDb: vi.fn(() => global.window.db),
+  onFirebaseReady: vi.fn((cb) => cb()),
+}));
+
 // Mock global fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;

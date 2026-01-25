@@ -1,4 +1,6 @@
 import { getCurrentUser } from './auth.js';
+import { getDb } from './firebase-service.js';
+import { getArrayUnion, getArrayRemove } from '../utils/firestore-helpers.js';
 import { showToast } from './toast.js';
 import { toggleVisibility } from '../utils/dom-helpers.js';
 
@@ -79,8 +81,9 @@ export class RepoSelector {
     
     this.favorites = DEFAULT_FAVORITE_REPOS;
     try {
-      if (window.db) {
-        const doc = await window.db.collection('users').doc(user.uid).get();
+      const db = getDb();
+      if (db) {
+        const doc = await db.collection('users').doc(user.uid).get();
         if (doc.exists && doc.data().favoriteRepos) {
           this.favorites = doc.data().favoriteRepos;
         }
@@ -413,8 +416,9 @@ export class RepoSelector {
   async saveFavorites(newFavorites) {
     const user = getCurrentUser();
     try {
-      if (window.db) {
-        await window.db.collection('users').doc(user.uid).set({
+      const db = getDb();
+      if (db) {
+        await db.collection('users').doc(user.uid).set({
           favoriteRepos: newFavorites
         }, { merge: true });
         this.favorites = newFavorites;
@@ -429,9 +433,10 @@ export class RepoSelector {
     const newFavorite = { id: sourceId, name, branch };
     
     try {
-      if (window.db) {
-        await window.db.collection('users').doc(user.uid).set({
-          favoriteRepos: window.firebase.firestore.FieldValue.arrayUnion(newFavorite)
+      const db = getDb();
+      if (db) {
+        await db.collection('users').doc(user.uid).set({
+          favoriteRepos: getArrayUnion(newFavorite)
         }, { merge: true });
         this.favorites = [...this.favorites, newFavorite];
       }
@@ -447,9 +452,10 @@ export class RepoSelector {
     if (!favoriteToRemove) return;
     
     try {
-      if (window.db) {
-        await window.db.collection('users').doc(user.uid).set({
-          favoriteRepos: window.firebase.firestore.FieldValue.arrayRemove(favoriteToRemove)
+      const db = getDb();
+      if (db) {
+        await db.collection('users').doc(user.uid).set({
+          favoriteRepos: getArrayRemove(favoriteToRemove)
         }, { merge: true });
         this.favorites = this.favorites.filter(f => f.id !== sourceId);
       }

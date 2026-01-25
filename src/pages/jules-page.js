@@ -4,6 +4,7 @@
  */
 
 import { waitForFirebase } from '../shared-init.js';
+import { getAuth } from '../modules/firebase-service.js';
 import { loadJulesAccountInfo } from '../modules/jules-account.js';
 import { showJulesKeyModal } from '../modules/jules-modal.js';
 import { deleteStoredJulesKey, checkJulesKey } from '../modules/jules-keys.js';
@@ -21,7 +22,8 @@ function waitForComponents() {
 }
 
 async function loadJulesInfo() {
-  const user = window.auth?.currentUser;
+  const auth = getAuth();
+  const user = auth?.currentUser;
   
   const loadingDiv = document.getElementById('julesLoading');
   const notSignedInDiv = document.getElementById('julesNotSignedIn');
@@ -87,7 +89,8 @@ async function initApp() {
   const addKeyHandler = () => {
     showJulesKeyModal(() => {
       // Reload Jules info after saving key
-      const user = window.auth?.currentUser;
+      const auth = getAuth();
+      const user = auth?.currentUser;
       if (user) {
         loadJulesInfo();
       }
@@ -108,7 +111,8 @@ async function initApp() {
       if (!confirmed) return;
       
       try {
-        const user = window.auth?.currentUser;
+        const auth = getAuth();
+        const user = auth?.currentUser;
         if (!user) return;
         
         resetJulesKeyBtn.disabled = true;
@@ -155,7 +159,8 @@ async function initApp() {
   const loadJulesInfoBtn = document.getElementById('loadJulesInfoBtn');
   if (loadJulesInfoBtn) {
     loadJulesInfoBtn.onclick = () => {
-      const user = window.auth?.currentUser;
+      const auth = getAuth();
+      const user = auth?.currentUser;
       if (user) {
         loadJulesInfo();
       }
@@ -164,7 +169,7 @@ async function initApp() {
 
   try {
     await waitForFirebase();
-    window.auth.onAuthStateChanged((user) => {
+    getAuth().onAuthStateChanged((user) => {
       if (user) {
         loadJulesInfo();
       } else {

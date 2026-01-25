@@ -8,6 +8,13 @@ import {
   hideSubtaskErrorModal
 } from '../../modules/jules-modal.js';
 
+// Mock firebase service
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(() => global.window.auth),
+  getDb: vi.fn(() => global.window.db),
+  onFirebaseReady: vi.fn((cb) => cb()),
+}));
+
 // Mock dependencies
 vi.mock('../../modules/jules-keys.js', () => ({
   encryptAndStoreKey: vi.fn()

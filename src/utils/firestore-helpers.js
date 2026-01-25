@@ -1,4 +1,5 @@
 import { getCache, setCache, clearCache } from './session-cache.js';
+import { getAuth, getDb } from '../modules/firebase-service.js';
 
 /**
  * Retry an asynchronous operation with exponential backoff
@@ -32,8 +33,9 @@ export async function retryOperation(operation, maxRetries = 3, baseDelay = 1000
  */
 function getCollectionRef(collectionOrRef) {
   if (typeof collectionOrRef === 'string') {
-    if (!window.db) throw new Error('Firestore not initialized');
-    return window.db.collection(collectionOrRef);
+    const db = getDb();
+    if (!db) throw new Error('Firestore not initialized');
+    return db.collection(collectionOrRef);
   }
   return collectionOrRef;
 }
@@ -43,7 +45,8 @@ function getCollectionRef(collectionOrRef) {
  * @returns {string|null}
  */
 function getCurrentUserId() {
-  return window.auth?.currentUser?.uid || null;
+  const auth = getAuth();
+  return auth?.currentUser?.uid || null;
 }
 
 /**
@@ -278,4 +281,30 @@ export function getFieldDelete() {
       throw new Error('Firebase not initialized');
   }
   return fb.firestore.FieldValue.delete();
+}
+
+/**
+ * Get an array union field value
+ * @param {...any} elements - Elements to add to the array
+ * @returns {Object} - Firestore array union value
+ */
+export function getArrayUnion(...elements) {
+  const fb = window.firebase || (typeof firebase !== 'undefined' ? firebase : null);
+  if (!fb || !fb.firestore) {
+      throw new Error('Firebase not initialized');
+  }
+  return fb.firestore.FieldValue.arrayUnion(...elements);
+}
+
+/**
+ * Get an array remove field value
+ * @param {...any} elements - Elements to remove from the array
+ * @returns {Object} - Firestore array remove value
+ */
+export function getArrayRemove(...elements) {
+  const fb = window.firebase || (typeof firebase !== 'undefined' ? firebase : null);
+  if (!fb || !fb.firestore) {
+      throw new Error('Firebase not initialized');
+  }
+  return fb.firestore.FieldValue.arrayRemove(...elements);
 }

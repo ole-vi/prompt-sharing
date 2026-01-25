@@ -1,4 +1,5 @@
 import { getCurrentUser } from './auth.js';
+import { getAuth } from './firebase-service.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { copyAndOpen } from './copen.js';
@@ -15,7 +16,8 @@ export function getLastSelectedSource() {
 }
 
 export function showFreeInputModal() {
-  const user = window.auth ? window.auth.currentUser : null;
+  const auth = getAuth();
+  const user = auth ? auth.currentUser : null;
   if (!user) {
     (async () => {
       try {
@@ -33,7 +35,8 @@ export function showFreeInputModal() {
 }
 
 export async function handleFreeInputAfterAuth() {
-  const user = window.auth ? window.auth.currentUser : null;
+  const auth = getAuth();
+  const user = auth ? auth.currentUser : null;
   if (!user) {
     showToast('Not logged in.', 'error');
     return;
@@ -352,7 +355,8 @@ export function showFreeInputForm() {
       return;
     }
 
-    const user = window.auth?.currentUser;
+    const auth = getAuth();
+    const user = auth?.currentUser;
     if (!user) {
       showToast('Please sign in to queue prompts.', 'warn');
       return;

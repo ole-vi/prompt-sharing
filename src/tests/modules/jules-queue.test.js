@@ -13,6 +13,12 @@ import {
 import { getCache } from '../../utils/session-cache.js';
 
 // Mock dependencies
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(() => global.window.auth),
+  getDb: vi.fn(() => global.window.db),
+  onFirebaseReady: vi.fn((cb) => cb()),
+}));
+
 vi.mock('../../utils/title.js', () => ({
   extractTitleFromPrompt: vi.fn()
 }));

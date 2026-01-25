@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getDoc, queryCollection, setDoc, updateDoc, deleteDoc, addDoc, retryOperation } from '../../utils/firestore-helpers.js';
 import * as sessionCache from '../../utils/session-cache.js';
 
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(() => global.window.auth),
+  getDb: vi.fn(() => global.window.db),
+  onFirebaseReady: vi.fn((cb) => cb()),
+}));
+
 vi.mock('../../utils/session-cache.js', () => ({
   getCache: vi.fn(),
   setCache: vi.fn(),

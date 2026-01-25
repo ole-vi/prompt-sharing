@@ -13,13 +13,15 @@ import { attachPromptViewerHandlers } from './prompt-viewer.js';
 import { TIMEOUTS, JULES_UI_TEXT, CSS_CLASSES } from '../utils/constants.js';
 import { renderStatus, STATUS_TYPES } from './status-renderer.js';
 import { toggleVisibility } from '../utils/dom-helpers.js';
+import { getAuth } from './firebase-service.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
 
 export function showUserProfileModal() {
   const modal = document.getElementById('userProfileModal');
-  const user = window.auth?.currentUser;
+  const auth = getAuth();
+  const user = auth?.currentUser;
 
   if (!user) {
     handleError('Not logged in.', { source: 'showUserProfileModal' }, { category: ErrorCategory.AUTH });
@@ -151,7 +153,8 @@ export function showUserProfileModal() {
   
   if (sessionSearchInput) {
     sessionSearchInput.addEventListener('input', () => {
-      const user = window.auth?.currentUser;
+      const auth = getAuth();
+      const user = auth?.currentUser;
       if (!user) return;
       renderAllSessions(allSessionsCache);
     });
@@ -526,7 +529,8 @@ export function hideJulesSessionsHistoryModal() {
 }
 
 async function loadSessionsPage() {
-  const user = window.auth?.currentUser;
+  const auth = getAuth();
+  const user = auth?.currentUser;
   if (!user) return;
   
   const allSessionsList = document.getElementById('allSessionsList');

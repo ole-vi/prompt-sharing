@@ -2,6 +2,17 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RepoSelector, BranchSelector } from '../../modules/repo-branch-selector.js';
 
 // Mock dependencies
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(() => global.window.auth),
+  getDb: vi.fn(() => global.window.db),
+  onFirebaseReady: vi.fn((cb) => cb()),
+}));
+
+vi.mock('../../utils/firestore-helpers.js', () => ({
+  getArrayUnion: vi.fn((val) => ({ arrayUnion: val })),
+  getArrayRemove: vi.fn((val) => ({ arrayRemove: val })),
+}));
+
 vi.mock('../../utils/dom-helpers.js', () => ({
   toggleVisibility: vi.fn()
 }));

@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fetchJSON, listPromptsViaContents } from '../../modules/github-api.js';
 
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(() => global.window.auth),
+  getDb: vi.fn(() => global.window.db),
+  onFirebaseReady: vi.fn((cb) => cb()),
+}));
+
 describe('GitHub API Module', () => {
     beforeEach(() => {
         global.fetch = vi.fn();

@@ -1,4 +1,5 @@
 import { waitForFirebase } from '../shared-init.js';
+import { getAuth } from '../modules/firebase-service.js';
 import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js';
 import { attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
 import { debounce } from '../utils/debounce.js';
@@ -21,7 +22,8 @@ function waitForComponents() {
 }
 
 async function loadSessionsPage() {
-  const user = window.auth?.currentUser;
+  const auth = getAuth();
+  const user = auth?.currentUser;
   if (!user) return;
   
   const allSessionsList = document.getElementById('allSessionsList');
@@ -146,7 +148,8 @@ async function renderAllSessions(sessions) {
 
 async function loadSessions() {
   if (isSessionsLoading) return;
-  const user = window.auth?.currentUser;
+  const auth = getAuth();
+  const user = auth?.currentUser;
   
   const loadingDiv = document.getElementById('sessionsLoading');
   const notSignedInDiv = document.getElementById('sessionsNotSignedIn');
@@ -223,8 +226,9 @@ async function initApp() {
       loadMoreBtn.addEventListener('click', loadSessionsPage);
     }
 
-    if (window.auth && typeof window.auth.onAuthStateChanged === 'function') {
-      window.auth.onAuthStateChanged(() => {
+    const auth = getAuth();
+    if (auth && typeof auth.onAuthStateChanged === 'function') {
+      auth.onAuthStateChanged(() => {
         loadSessions();
       });
     }
