@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setCache, getCache, getCacheState, clearCache, CACHE_KEYS, invalidateCache } from '../../utils/session-cache.js';
-import { CACHE_POLICIES } from '../../utils/constants.js';
 
 describe('session-cache', () => {
   let originalDateNow;
