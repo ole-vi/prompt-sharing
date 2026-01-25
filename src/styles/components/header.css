@@ -100,7 +100,42 @@ header {
 button.mobile-nav-item { border: none; background: transparent; cursor: pointer; font: inherit; text-align: left; width: 100%; }
 
 /* Header center nav layout */
-#headerNav { display:flex; gap:0; align-items:center; justify-content:center; flex-shrink:0; }
+#headerNav { display: flex; gap: 4px; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* Navigation item styles */
+#headerNav .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+#headerNav .nav-item:hover {
+  background: rgba(77, 217, 255, 0.08);
+  color: var(--text);
+}
+
+#headerNav .nav-item.active {
+  background: rgba(77, 217, 255, 0.12);
+  color: var(--accent);
+}
+
+#headerNav .nav-icon {
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+}
+
+#headerNav .nav-label {
+  font-size: 13px;
+}
 
 /* Branding link utilities */
 .branding-link { 
@@ -171,7 +206,7 @@ button.mobile-nav-item { border: none; background: transparent; cursor: pointer;
 }
 
 /* Extracted from inline styles: layout helpers */
-#headerContainer { display:flex; justify-content:space-between; align-items:center; gap:4px; padding:2px 8px; width:100%; }
+#headerContainer { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 0; width: 100%; }
 .header-left { display:flex; align-items:center; gap:8px; flex-shrink:0; flex:1; min-width:0; }
 .header-right { display:flex; align-items:center; gap:8px; flex:1; min-width:0; justify-content:flex-end; }
 .sidebar-branding { display:flex; align-items:center; gap:10px; }
@@ -189,8 +224,8 @@ button.mobile-nav-item { border: none; background: transparent; cursor: pointer;
   /* Base class for version badge */
 }
 
-.site-title { font-size:16px; font-weight:900; letter-spacing:0.4px; line-height:1.2; }
-.site-tagline { color:var(--muted); font-size:10px; margin-top:2px; }
+.site-title { font-size: 20px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.2; color: var(--text); }
+.site-tagline { color: var(--muted); font-size: 11px; margin-top: 2px; line-height: 1.3; }
 #dropdownAvatar { width:32px; height:32px; border-radius:50%; }
 #dropdownUserName { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #userDisplay { display:flex; align-items:center; justify-content:center; width:100%; height:100%; font-size:16px; }

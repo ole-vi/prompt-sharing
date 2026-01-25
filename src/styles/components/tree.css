@@ -22,12 +22,19 @@
   padding: 6px 0;
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
   display: none;
+  visibility: hidden;
   z-index: 10;
   min-width: 200px;
 }
 
+.folder-submenu--positioning {
+  display: block;
+  visibility: hidden;
+}
+
 .folder-submenu--visible {
   display: block;
+  visibility: visible;
 }
 
 .folder-submenu-item {

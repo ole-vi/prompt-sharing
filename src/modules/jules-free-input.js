@@ -2,6 +2,7 @@ import { getCurrentUser } from './auth.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { copyAndOpen } from './copen.js';
+import { toggleVisibility } from '../utils/dom-helpers.js';
 import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';
 // Lazy loaded: jules-keys, jules-modal, jules-queue
 
@@ -74,10 +75,10 @@ export function showFreeInputForm() {
   if (meta) meta.classList.add('hidden');
   if (actions) actions.classList.add('hidden');
   if (content) {
-    content.classList.add('hidden');
+    toggleVisibility(content, false);
   }
   
-  freeInputSection.classList.remove('hidden');
+  toggleVisibility(freeInputSection, true);
   
   const textarea = document.getElementById('freeInputTextarea');
   const submitBtn = document.getElementById('freeInputSubmitBtn');
@@ -421,14 +422,14 @@ export function hideFreeInputForm() {
   const actions = document.getElementById('actions');
   const content = document.getElementById('content');
   
-  freeInputSection.classList.add('hidden');
+  toggleVisibility(freeInputSection, false);
   
   // Restore the main content area elements
-  empty.classList.remove('hidden');
-  if (title) title.classList.remove('hidden');
-  if (meta) meta.classList.remove('hidden');
-  if (actions) actions.classList.remove('hidden');
-  if (content) content.classList.remove('hidden');
+  toggleVisibility(empty, true);
+  if (title) toggleVisibility(title, true);
+  if (meta) toggleVisibility(meta, true);
+  if (actions) toggleVisibility(actions, true);
+  if (content) toggleVisibility(content, true);
 }
 
 async function populateFreeInputRepoSelection() {
