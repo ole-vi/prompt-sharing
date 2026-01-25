@@ -1,26 +1,7 @@
 // Session storage cache utilities
-import { CACHE_DURATIONS } from './constants.js';
+import { CACHE_DURATIONS, CACHE_KEYS, CACHE_POLICIES, CACHE_STRATEGIES } from './constants.js';
 
-export const CACHE_KEYS = {
-  JULES_ACCOUNT: 'jules_account_info',
-  JULES_SESSIONS: 'jules_sessions',
-  JULES_REPOS: 'jules_repos',
-  QUEUE_ITEMS: 'queue_items',
-  BRANCHES: 'branches_v2',
-  CURRENT_BRANCH: 'current_branch',
-  CURRENT_REPO: 'current_repo',
-  USER_PROFILE: 'user_profile',
-  USER_AVATAR: 'user_avatar'
-};
-
-// Map keys to specific cache durations
-const KEY_DURATIONS = {
-  [CACHE_KEYS.JULES_ACCOUNT]: CACHE_DURATIONS.session,
-  [CACHE_KEYS.QUEUE_ITEMS]: CACHE_DURATIONS.session,
-  [CACHE_KEYS.BRANCHES]: CACHE_DURATIONS.session,
-  [CACHE_KEYS.USER_AVATAR]: CACHE_DURATIONS.session,
-  DEFAULT: CACHE_DURATIONS.short
-};
+export { CACHE_KEYS };
 
 function getCacheKey(key, userId) {
   return userId ? `${key}_${userId}` : key;
@@ -39,31 +20,81 @@ export function setCache(key, data, userId = null) {
   }
 }
 
-export function getCache(key, userId = null) {
+/**
+ * Get detailed state of a cache item
+ * @param {string} key - Cache key
+ * @param {string} [userId] - Optional user ID
+ * @returns {object} Cache state metadata
+ */
+export function getCacheState(key, userId = null) {
   try {
     const cacheKey = getCacheKey(key, userId);
     const cached = sessionStorage.getItem(cacheKey);
-    if (!cached) return null;
+    const policy = CACHE_POLICIES[key] || CACHE_POLICIES.DEFAULT;
+
+    if (!cached) {
+      return {
+        exists: false,
+        data: null,
+        timestamp: null,
+        age: 0,
+        isStale: true,
+        policy
+      };
+    }
 
     const { data, timestamp } = JSON.parse(cached);
-    
-    const duration = KEY_DURATIONS.hasOwnProperty(key) 
-      ? KEY_DURATIONS[key] 
-      : KEY_DURATIONS.DEFAULT;
-    
-    // A duration of 0 means session-only cache
-    if (duration === CACHE_DURATIONS.session) {
-      return data;
-    }
-    
     const age = Date.now() - timestamp;
-    if (age < duration) {
-      return data;
+    
+    // Check staleness based on policy TTL
+    // If TTL is session (0), it's never stale within the session
+    // If age is NaN (missing timestamp), treat as stale
+    const isStale = isNaN(age) || (policy.ttl !== CACHE_DURATIONS.session && age >= policy.ttl);
+
+    return {
+      exists: true,
+      data,
+      timestamp,
+      age,
+      isStale,
+      policy
+    };
+  } catch (error) {
+    console.error('Error getting cache state:', error);
+    return {
+      exists: false,
+      data: null,
+      timestamp: null,
+      age: 0,
+      isStale: true,
+      policy: CACHE_POLICIES[key] || CACHE_POLICIES.DEFAULT,
+      error
+    };
+  }
+}
+
+export function getCache(key, userId = null) {
+  try {
+    const state = getCacheState(key, userId);
+    
+    if (!state.exists) return null;
+
+    // Handle staleness based on strategy
+    // For now, if CACHE_FIRST and stale, return null (behave like expired)
+    // SWR logic would go here if we were implementing fetching
+    
+    if (state.isStale) {
+      if (state.policy.strategy === CACHE_STRATEGIES.CACHE_FIRST) {
+        // Clear expired cache
+        clearCache(key, userId);
+        return null;
+      }
+      // For STALE_WHILE_REVALIDATE, we might return data?
+      // But getCache contract is "return valid data".
+      // Let's stick to returning null if stale for now unless specified otherwise.
     }
 
-    // Clear expired cache
-    sessionStorage.removeItem(cacheKey);
-    return null;
+    return state.data;
   } catch (error) {
     console.error('Error getting cache:', error);
     return null;

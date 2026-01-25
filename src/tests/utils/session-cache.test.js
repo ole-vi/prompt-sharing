@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { setCache, getCache, clearCache, clearAllCache, CACHE_KEYS } from '../../utils/session-cache.js';
+import { setCache, getCache, getCacheState, clearCache, clearAllCache, CACHE_KEYS } from '../../utils/session-cache.js';
+import { CACHE_STRATEGIES } from '../../utils/constants.js';
 
 describe('session-cache', () => {
   let originalDateNow;
@@ -86,6 +87,58 @@ describe('session-cache', () => {
 
       const stored = JSON.parse(sessionStorage.getItem('key'));
       expect(stored.data.value).toBe('new');
+    });
+  });
+
+  describe('getCacheState', () => {
+    it('should return metadata for existing cache', () => {
+      const testData = { name: 'test' };
+      const mockTime = 1000000;
+      Date.now = () => mockTime;
+
+      setCache('test_key', testData);
+
+      const state = getCacheState('test_key');
+      expect(state.exists).toBe(true);
+      expect(state.data).toEqual(testData);
+      expect(state.timestamp).toBe(mockTime);
+      expect(state.age).toBe(0);
+      expect(state.isStale).toBe(false);
+    });
+
+    it('should identify stale cache', () => {
+      const testData = { name: 'test' };
+      const mockTime = 1000000;
+      Date.now = () => mockTime;
+
+      setCache('test_key', testData); // Default TTL is short (5 mins)
+
+      Date.now = () => mockTime + 301000; // 5 mins + 1 sec
+
+      const state = getCacheState('test_key');
+      expect(state.exists).toBe(true);
+      expect(state.isStale).toBe(true);
+      expect(state.age).toBe(301000);
+    });
+
+    it('should return non-existent state for missing key', () => {
+      const state = getCacheState('missing');
+      expect(state.exists).toBe(false);
+      expect(state.data).toBeNull();
+    });
+
+    it('should respect CACHE_POLICIES for JULES_ACCOUNT (session duration)', () => {
+       const testData = { name: 'session' };
+       const mockTime = 1000000;
+       Date.now = () => mockTime;
+
+       setCache(CACHE_KEYS.JULES_ACCOUNT, testData);
+
+       Date.now = () => mockTime + 100000000; // Long time
+
+       const state = getCacheState(CACHE_KEYS.JULES_ACCOUNT);
+       expect(state.isStale).toBe(false);
+       expect(state.policy.strategy).toBe(CACHE_STRATEGIES.CACHE_FIRST);
     });
   });
 
@@ -208,7 +261,7 @@ describe('session-cache', () => {
       
       expect(retrieved).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Error getting cache:',
+        'Error getting cache state:',
         expect.any(Error)
       );
 
