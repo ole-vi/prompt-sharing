@@ -9,6 +9,15 @@ global.window.firebase = {
     GithubAuthProvider: class {
       addScope() {}
     }
+  },
+  firestore: {
+    FieldValue: {
+      serverTimestamp: vi.fn(() => 'SERVER_TIMESTAMP'),
+      delete: vi.fn(() => 'DELETE_FIELD'),
+      increment: vi.fn((value) => `INCREMENT_${value}`),
+      arrayUnion: vi.fn((...values) => `ARRAY_UNION_${values.join(',')}`),
+      arrayRemove: vi.fn((...values) => `ARRAY_REMOVE_${values.join(',')}`)
+    }
   }
 };
 
@@ -25,9 +34,13 @@ global.window.db = {
       get: vi.fn(),
       set: vi.fn(),
       delete: vi.fn(),
+      collection: vi.fn(),
     })),
   })),
 };
+
+// Mock console.warn for tests that check for it
+global.console.warn = vi.fn();
 
 // Mock localStorage more realistically
 const localStorageMock = (() => {

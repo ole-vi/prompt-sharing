@@ -1,6 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getDoc, queryCollection, setDoc, updateDoc, deleteDoc, addDoc, retryOperation } from '../../utils/firestore-helpers.js';
-import * as sessionCache from '../../utils/session-cache.js';
 
 vi.mock('../../utils/session-cache.js', () => ({
   getCache: vi.fn(),
@@ -9,14 +7,27 @@ vi.mock('../../utils/session-cache.js', () => ({
   CACHE_KEYS: { QUEUE_ITEMS: 'queue_items' }
 }));
 
+// Mock firebase-service
+let mockAuth = { currentUser: { uid: 'user123' } };
+let mockDb = null;
+
+// Use function declarations so they evaluate at call-time, not definition-time
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(function() { return global.window?.auth !== undefined ? global.window.auth : mockAuth; }),
+  getDb: vi.fn(function() { return global.window?.db !== undefined ? global.window.db : mockDb; })
+}));
+
+import { getDoc, queryCollection, setDoc, updateDoc, deleteDoc, addDoc, retryOperation } from '../../utils/firestore-helpers.js';
+import * as sessionCache from '../../utils/session-cache.js';
+
 describe('firestore-helpers', () => {
-  let mockDb;
   let mockCollection;
   let mockDoc;
 
   beforeEach(() => {
-    // Mock window.auth
-    window.auth = { currentUser: { uid: 'user123' } };
+    // Reset mock auth
+    mockAuth = { currentUser: { uid: 'user123' } };
+    window.auth = mockAuth;
 
     // Mock Firestore
     mockDoc = {
