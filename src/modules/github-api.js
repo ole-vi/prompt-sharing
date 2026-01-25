@@ -238,7 +238,7 @@ export async function getBranches(owner, repo) {
 
   for (let page = 1; page <= maxPages; page++) {
     const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=${perPage}&page=${page}&ts=${Date.now()}`;
-    const batch = await fetchJSON(viaProxy(url));
+    const batch = await fetchJSON(url);
 
     if (!Array.isArray(batch) || batch.length === 0) {
       break;

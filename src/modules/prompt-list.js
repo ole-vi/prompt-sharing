@@ -334,6 +334,8 @@ function renderTree(node, container, forcedExpanded, owner, repo, branch) {
       addIcon.setAttribute('role', 'button');
       addIcon.setAttribute('tabindex', '0');
       addIcon.setAttribute('aria-label', 'Create new file in this directory');
+      addIcon.setAttribute('aria-haspopup', 'true');
+      addIcon.setAttribute('aria-expanded', 'false');
       addIcon.title = 'Create new file in this directory';
       addIcon.dataset.action = 'show-submenu';
       addIcon.dataset.path = entry.path;
