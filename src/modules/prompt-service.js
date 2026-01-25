@@ -5,6 +5,15 @@ export function getPromptFolder(branch) {
   return branch === 'web-captures' ? 'webcaptures' : 'prompts';
 }
 
+function checkRateLimit() {
+  const rateLimitInfo = getRateLimitInfo();
+  if (rateLimitInfo.remaining !== null && rateLimitInfo.reset !== null) {
+    if (rateLimitInfo.remaining <= 10) {
+      statusBar.showRateLimitWarning(rateLimitInfo.remaining, rateLimitInfo.reset);
+    }
+  }
+}
+
 export async function loadPrompts(owner, repo, branch, cacheKey, onBackgroundUpdate) {
   const CACHE_DURATION = CACHE_POLICIES[CACHE_KEYS.PROMPTS_LIST]?.ttl || 900000; // Default to 15m
   const now = Date.now();
@@ -30,6 +39,9 @@ export async function loadPrompts(owner, repo, branch, cacheKey, onBackgroundUpd
       }
 
       if (cacheData) {
+        // Record cache access for LRU tracking
+        recordCacheAccess(cacheKey);
+        
         const cacheAge = now - (cacheData.timestamp || 0);
         files = cacheData.files || [];
 
@@ -101,10 +113,32 @@ async function fetchPrompts(owner, repo, branch, cacheKey) {
       timestamp: Date.now()
     };
     sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+    
+    // Enforce cache size limits with LRU eviction
+    enforceCacheLimit();
+    
+    // Check rate limits after successful API call
+    checkRateLimit();
+    
     return files;
 
   } catch (e) {
+    // Handle rate limit errors specifically
+    if (e.isRateLimit) {
+      const resetTime = e.resetTime || Date.now() + 3600000;
+      const minutesUntilReset = Math.ceil((resetTime - Date.now()) / 60000);
+      statusBar.showMessage(
+        `GitHub API rate limit exceeded. Try again in ${minutesUntilReset} minutes.`,
+        { timeout: 15000 }
+      );
+      throw e;
+    }
+    
     console.warn('Trees API failed, using Contents fallback');
+    
+    // Show progress message for slow fallback
+    statusBar.showMessage('Loading prompts (this may take a moment)...', { timeout: 0 });
+    
     try {
       const data = await listPromptsViaContents(owner, repo, branch, folder);
       const files = (data || []).filter(x => x && x.type === 'file' && typeof x.path === 'string');
@@ -115,8 +149,31 @@ async function fetchPrompts(owner, repo, branch, cacheKey) {
         timestamp: Date.now()
       };
       sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      
+      // Enforce cache size limits with LRU eviction
+      enforceCacheLimit();
+      
+      // Check rate limits after successful API call
+      checkRateLimit();
+      
+      // Clear progress message
+      statusBar.clear();
+      
       return files;
     } catch (contentsError) {
+      // Clear progress message on error
+      statusBar.clear();
+      
+      // Handle rate limit errors from Contents API
+      if (contentsError.isRateLimit) {
+        const resetTime = contentsError.resetTime || Date.now() + 3600000;
+        const minutesUntilReset = Math.ceil((resetTime - Date.now()) / 60000);
+        statusBar.showMessage(
+          `GitHub API rate limit exceeded. Try again in ${minutesUntilReset} minutes.`,
+          { timeout: 15000 }
+        );
+      }
+      
       console.error('Both API strategies failed:', contentsError);
       throw contentsError;
     }

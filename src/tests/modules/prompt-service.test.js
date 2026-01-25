@@ -1,10 +1,25 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { waitFor } from '@testing-library/dom';
 import { loadPrompts, getPromptFolder } from '../../modules/prompt-service.js';
 
 // Mock dependencies
 vi.mock('../../modules/github-api.js', () => ({
   listPromptsViaContents: vi.fn(),
-  listPromptsViaTrees: vi.fn()
+  listPromptsViaTrees: vi.fn(),
+  getRateLimitInfo: vi.fn(() => ({ remaining: 100, limit: 5000, reset: Date.now() + 3600000, lastUpdated: Date.now() }))
+}));
+
+vi.mock('../../utils/cache-manager.js', () => ({
+  recordCacheAccess: vi.fn(),
+  enforceCacheLimit: vi.fn()
+}));
+
+vi.mock('../../modules/status-bar.js', () => ({
+  default: {
+    showMessage: vi.fn(),
+    clear: vi.fn(),
+    showRateLimitWarning: vi.fn()
+  }
 }));
 
 global.sessionStorage = {
@@ -92,11 +107,12 @@ describe('prompt-service', () => {
       // Should return cached files immediately
       expect(files).toEqual(cachedFiles);
 
-      // Wait for background promise
-      await new Promise(resolve => setTimeout(resolve, 0));
+      // Wait for background promise to complete using Testing Library's waitFor
+      await waitFor(() => {
+        expect(onUpdate).toHaveBeenCalledWith(newFiles);
+      }, { timeout: 1000 });
 
       expect(githubApi.listPromptsViaTrees).toHaveBeenCalledWith('owner', 'repo', 'main', 'prompts', 'old-etag');
-      expect(onUpdate).toHaveBeenCalledWith(newFiles);
     });
 
     it('should fallback to contents API if trees fails', async () => {

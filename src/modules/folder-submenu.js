@@ -3,6 +3,8 @@ let activeSubmenuHeaders = new Set();
 let currentOwner = null;
 let currentRepo = null;
 let currentBranch = null;
+let currentTrigger = null;
+let keydownListener = null;
 
 export function setContext(owner, repo, branch) {
   currentOwner = owner;
@@ -14,6 +16,14 @@ export function init() {
   createSubmenu();
   document.addEventListener('click', handleDocumentClick);
   
+  // Listen for Escape key to close submenus
+  keydownListener = (e) => {
+    if (e.key === 'Escape' && submenuEl?.classList.contains('folder-submenu--visible')) {
+      closeAll();
+    }
+  };
+  document.addEventListener('keydown', keydownListener);
+  
   // Listen for branch changes from the header branch selector
   window.addEventListener('branchChanged', (event) => {
     if (event.detail && event.detail.branch) {
@@ -24,6 +34,10 @@ export function init() {
 
 export function destroy() {
   document.removeEventListener('click', handleDocumentClick);
+  if (keydownListener) {
+    document.removeEventListener('keydown', keydownListener);
+    keydownListener = null;
+  }
   if (submenuEl && submenuEl.parentNode) {
     submenuEl.parentNode.removeChild(submenuEl);
   }
@@ -32,6 +46,7 @@ export function destroy() {
   currentOwner = null;
   currentRepo = null;
   currentBranch = null;
+  currentTrigger = null;
 }
 
 export function toggle(triggerElement, path) {
@@ -55,8 +70,9 @@ export function toggle(triggerElement, path) {
 function open(triggerElement, path, header) {
   const rect = triggerElement.getBoundingClientRect();
   submenuEl.dataset.currentPath = path;
-  submenuEl.style.visibility = 'hidden';
-  submenuEl.classList.add('folder-submenu--visible');
+  
+  // Use positioning class for measurement without visibility
+  submenuEl.classList.add('folder-submenu--positioning');
 
   const submenuRect = submenuEl.getBoundingClientRect();
 
@@ -76,7 +92,14 @@ function open(triggerElement, path, header) {
 
   submenuEl.style.setProperty('--submenu-left', `${left}px`);
   submenuEl.style.setProperty('--submenu-top', `${top}px`);
-  submenuEl.style.visibility = 'visible';
+  
+  // Replace positioning class with visible class
+  submenuEl.classList.remove('folder-submenu--positioning');
+  submenuEl.classList.add('folder-submenu--visible');
+  
+  // Track trigger and update ARIA
+  currentTrigger = triggerElement;
+  currentTrigger.setAttribute('aria-expanded', 'true');
 
   if (header) {
     header.classList.add('submenu-open');
@@ -87,7 +110,11 @@ function open(triggerElement, path, header) {
 function closeAll() {
   if (submenuEl) {
     submenuEl.classList.remove('folder-submenu--visible');
-    submenuEl.style.visibility = '';
+    submenuEl.classList.remove('folder-submenu--positioning');
+  }
+  if (currentTrigger) {
+    currentTrigger.setAttribute('aria-expanded', 'false');
+    currentTrigger = null;
   }
   activeSubmenuHeaders.forEach(header => {
     header.classList.remove('submenu-open');
@@ -100,10 +127,13 @@ function createSubmenu() {
 
   submenuEl = document.createElement('div');
   submenuEl.className = 'folder-submenu';
+  submenuEl.setAttribute('role', 'menu');
 
   const makeMenuItem = (label, emoji, dataAction) => {
     const item = document.createElement('div');
     item.className = 'folder-submenu-item';
+    item.setAttribute('role', 'menuitem');
+    item.setAttribute('tabindex', '-1');
     item.innerHTML = `${emoji} ${label}`;
     item.dataset.action = dataAction;
     return item;

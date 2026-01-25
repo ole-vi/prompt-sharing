@@ -13,7 +13,7 @@ vi.mock('../../modules/firebase-service.js');
 function setupDOM() {
   document.body.innerHTML = `
     <div id="authStatus"></div>
-    <div id="userDisplay" style="display: flex;"></div>
+    <div id="userDisplay"></div>
     <img id="userAvatar" class="hidden" />
     <span id="userName"></span>
     <span id="dropdownUserName"></span>
@@ -132,7 +132,7 @@ describe('Auth Module', () => {
           const signIn = document.getElementById('headerSignIn');
           const signOut = document.getElementById('headerSignOut');
 
-          expect(userDisplay.style.display).toBe('flex');
+          expect(userDisplay.classList.contains('hidden')).toBe(false);
           expect(signIn.classList.contains('hidden')).toBe(false);
           expect(signOut.classList.contains('hidden')).toBe(true);
       });

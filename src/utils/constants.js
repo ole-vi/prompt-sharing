@@ -59,7 +59,9 @@ export const STORAGE_KEYS = {
   expandedState: (owner, repo, branch) => `sidebar:expanded:${owner}/${repo}@${branch}`,
   promptsCache: (owner, repo, branch) => `prompts:${owner}/${repo}@${branch}`,
   showFeatureBranches: "showFeatureBranches",
-  showUserBranches: "showUserBranches"
+  showUserBranches: "showUserBranches",
+  // Internal access log for cache LRU tracking
+  cacheAccessLog: "cache_access_log"
 };
 
 // Error messages
@@ -296,7 +298,9 @@ export const TIMEOUTS = {
  */
 export const LIMITS = {
   firebaseMaxAttempts: 300,
-  componentMaxAttempts: 100
+  componentMaxAttempts: 100,
+  // Maximum number of prompt cache entries stored in sessionStorage
+  promptCacheMaxEntries: 20
 };
 
 /**
