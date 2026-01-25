@@ -4,11 +4,14 @@ import { showToast } from './toast.js';
 import { copyAndOpen } from './copen.js';
 import { toggleVisibility } from '../utils/dom-helpers.js';
 import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';
+import { initSplitButton } from './split-button.js';
+import { COPEN_OPTIONS, COPEN_STORAGE_KEY, COPEN_DEFAULT_LABEL, COPEN_DEFAULT_ICON } from '../utils/copen-config.js';
 // Lazy loaded: jules-keys, jules-modal, jules-queue
 
 let _lastSelectedSourceId = null;
 let _lastSelectedBranch = null;
 let _branchChangeListenerAdded = false;
+let _freeInputCopenSplitBtn = null;
 
 export function getLastSelectedSource() {
   return { sourceId: _lastSelectedSourceId, branch: _lastSelectedBranch };
@@ -85,15 +88,13 @@ export function showFreeInputForm() {
   const queueBtn = document.getElementById('freeInputQueueBtn');
   const splitBtn = document.getElementById('freeInputSplitBtn');
   const saveBtn = document.getElementById('freeInputSaveBtn');
-  const copenBtn = document.getElementById('freeInputCopenBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
+  const copenContainer = document.getElementById('freeInputCopenContainer');
   
-  if (!textarea || !submitBtn || !queueBtn || !splitBtn || !saveBtn || !copenBtn || !cancelBtn) {
+  if (!textarea || !submitBtn || !queueBtn || !splitBtn || !saveBtn || !cancelBtn || !copenContainer) {
     console.warn('Free Input controls not found; skipping UI rendering');
     return;
   }
-  
-  const originalCopenContent = Array.from(copenBtn.childNodes).map(node => node.cloneNode(true));
 
   textarea.value = '';
   
@@ -268,26 +269,6 @@ export function showFreeInputForm() {
     }
   };
 
-  const handleCopen = async (target) => {
-    const promptText = validatePromptText();
-    if (!promptText) return;
-
-    const success = await copyAndOpen(target, promptText);
-
-    if (success) {
-      copenBtn.replaceChildren();
-      const icon = document.createElement('span');
-      icon.className = 'icon icon-inline';
-      icon.setAttribute('aria-hidden', 'true');
-      icon.textContent = 'check_circle';
-      copenBtn.appendChild(icon);
-      copenBtn.appendChild(document.createTextNode(' Copied!'));
-      setTimeout(() => {
-        copenBtn.replaceChildren(...originalCopenContent.map(node => node.cloneNode(true)));
-      }, TIMEOUTS.copyFeedback);
-    }
-  };
-
   const handleCancel = () => {
     hideFreeInputForm();
   };
@@ -374,32 +355,21 @@ export function showFreeInputForm() {
     }
   };
 
-  const copenMenu = document.getElementById('freeInputCopenMenu');
-  
-  copenBtn.onclick = (e) => {
-    e.stopPropagation();
-    if (copenMenu) {
-      copenMenu.classList.toggle('hidden');
-    }
-  };
-  
-  if (copenMenu) {
-    copenMenu.querySelectorAll('.custom-dropdown-item').forEach(item => {
-      item.onclick = async (e) => {
-        e.stopPropagation();
-        const target = item.dataset.target;
-        await handleCopen(target);
-        copenMenu.classList.add('hidden');
-      };
+  // Initialize split button for copen if not already initialized
+  if (!_freeInputCopenSplitBtn && copenContainer) {
+    _freeInputCopenSplitBtn = initSplitButton({
+      container: copenContainer,
+      defaultLabel: COPEN_DEFAULT_LABEL,
+      defaultIcon: COPEN_DEFAULT_ICON,
+      options: COPEN_OPTIONS,
+      onAction: async (target) => {
+        const promptText = validatePromptText();
+        if (!promptText) return;
+        await copyAndOpen(target, promptText);
+      },
+      storageKey: COPEN_STORAGE_KEY
     });
   }
-  
-  const closeCopenMenu = (e) => {
-    if (copenMenu && !copenBtn.contains(e.target) && !copenMenu.contains(e.target)) {
-      copenMenu.classList.add('hidden');
-    }
-  };
-  document.addEventListener('click', closeCopenMenu);
 
   submitBtn.onclick = handleSubmit;
   queueBtn.onclick = handleQueue;
