@@ -1,6 +1,7 @@
 // ===== Jules API Client Module =====
 // Provides access to the Jules API for managing sources, sessions, and activities
 
+import { getAuth, getDb } from './firebase-service.js';
 import { JULES_API_BASE, ERRORS, PAGE_SIZES, JULES_MESSAGES, TIMEOUTS } from '../utils/constants.js';
 import { showToast } from './toast.js';
 import { handleError, ErrorCategory } from '../utils/error-handler.js';
@@ -28,11 +29,12 @@ export async function getDecryptedJulesKey(uid) {
   }
 
   try {
-    if (!window.db) {
+    const db = getDb();
+    if (!db) {
       return null;
     }
 
-    const doc = await window.db.collection('julesKeys').doc(uid).get();
+    const doc = await db.collection('julesKeys').doc(uid).get();
     if (!doc.exists) {
       return null;
     }
@@ -216,7 +218,7 @@ export async function loadJulesProfileInfo(uid) {
 }
 
 export async function callRunJulesFunction(promptText, sourceId, branch = 'master', title = '') {
-  const user = window.auth ? window.auth.currentUser : null;
+  const user = getAuth()?.currentUser || null;
   if (!user) {
     handleError(JULES_MESSAGES.NOT_LOGGED_IN, { source: 'callRunJulesFunction' }, { category: ErrorCategory.AUTH });
     return null;
@@ -282,7 +284,7 @@ async function runJulesAPI(promptText, sourceId, branch, title, user) {
 
 export async function handleTryInJules(promptText) {
   try {
-    const user = window.auth ? window.auth.currentUser : null;
+    const user = getAuth()?.currentUser || null;
     if (!user) {
       try {
         const { signInWithGitHub } = await import('./auth.js');
@@ -300,7 +302,7 @@ export async function handleTryInJules(promptText) {
 }
 
 export async function handleTryInJulesAfterAuth(promptText) {
-  const user = window.auth ? window.auth.currentUser : null;
+  const user = getAuth()?.currentUser || null;
   if (!user) {
     handleError(JULES_MESSAGES.NOT_LOGGED_IN, { source: 'handleTryInJulesAfterAuth' }, { category: ErrorCategory.AUTH });
     return;

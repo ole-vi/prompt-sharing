@@ -29,20 +29,14 @@ function initFirebaseWhenReady() {
       // Initialize services module
       initServices(auth, db, null);
 
-      // Backward compatibility with deprecation warnings
+      // Backward compatibility (silent fallback for external scripts/extensions)
       Object.defineProperty(window, 'auth', {
-        get: () => {
-          console.warn('DEPRECATED: window.auth is deprecated. Use getAuth() from modules/firebase-service.js');
-          return auth;
-        },
+        get: () => auth,
         configurable: true
       });
 
       Object.defineProperty(window, 'db', {
-        get: () => {
-          console.warn('DEPRECATED: window.db is deprecated. Use getDb() from modules/firebase-service.js');
-          return db;
-        },
+        get: () => db,
         configurable: true
       });
 

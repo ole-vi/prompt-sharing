@@ -3,6 +3,7 @@
  * Handles Jules queue page functionality
  */
 
+import { getAuth } from '../modules/firebase-service.js';
 import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
 import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly } from '../modules/jules-queue.js';
 import { createElement, clearElement, waitForDOMReady, waitForHeader } from '../utils/dom-helpers.js';
@@ -24,7 +25,8 @@ function initApp() {
   // Initialize queue functionality
   attachQueueHandlers();
   
-  const user = window.auth?.currentUser;
+  const auth = getAuth();
+  const user = auth?.currentUser;
   if (user) {
     document.getElementById('queueLoading').classList.remove('hidden');
     document.getElementById('queueControls').classList.add('hidden');
@@ -37,7 +39,7 @@ function initApp() {
   }
   
   // Listen for auth state changes
-  window.auth.onAuthStateChanged((user) => {
+  auth.onAuthStateChanged((user) => {
     if (user) {
       document.getElementById('queueLoading').classList.remove('hidden');
       document.getElementById('queueControls').classList.add('hidden');
@@ -52,7 +54,8 @@ function initApp() {
 }
 
 async function loadQueue() {
-  const user = window.auth?.currentUser;
+  const auth = getAuth();
+  const user = auth?.currentUser;
   const listDiv = document.getElementById('allQueueList');
   const loadingDiv = document.getElementById('queueLoading');
   const controlsDiv = document.getElementById('queueControls');

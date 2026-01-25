@@ -1,3 +1,4 @@
+import { getAuth, getDb } from './firebase-service.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { createModal } from '../utils/modal-manager.js';
@@ -16,7 +17,7 @@ let queueCache = [];
 let queuePromptViewerHandlers = new Map();
 
 export async function handleQueueAction(queueItemData) {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   if (!user) {
     handleError(JULES_MESSAGES.SIGN_IN_REQUIRED, { source: 'handleQueueAction' }, { category: ErrorCategory.AUTH, toastType: 'warn' });
     return false;
@@ -32,9 +33,10 @@ export async function handleQueueAction(queueItemData) {
 }
 
 export async function addToJulesQueue(uid, queueItem) {
-  if (!window.db) throw new Error('Firestore not initialized');
+  const db = getDb();
+  if (!db) throw new Error('Firestore not initialized');
   try {
-    const collectionRef = window.db.collection('julesQueues').doc(uid).collection('items');
+    const collectionRef = db.collection('julesQueues').doc(uid).collection('items');
     // Pass object with userId to cacheKey
     const docId = await addDoc(collectionRef, {
       ...queueItem,
@@ -51,9 +53,10 @@ export async function addToJulesQueue(uid, queueItem) {
 }
 
 export async function updateJulesQueueItem(uid, docId, updates) {
-  if (!window.db) throw new Error('Firestore not initialized');
+  const db = getDb();
+  if (!db) throw new Error('Firestore not initialized');
   try {
-    const collectionRef = window.db.collection('julesQueues').doc(uid).collection('items');
+    const collectionRef = db.collection('julesQueues').doc(uid).collection('items');
     await updateDoc(collectionRef, docId, updates, { key: CACHE_KEYS.QUEUE_ITEMS, userId: uid });
     return true;
   } catch (err) {
@@ -63,9 +66,10 @@ export async function updateJulesQueueItem(uid, docId, updates) {
 }
 
 export async function deleteFromJulesQueue(uid, docId) {
-  if (!window.db) throw new Error('Firestore not initialized');
+  const db = getDb();
+  if (!db) throw new Error('Firestore not initialized');
   try {
-    const collectionRef = window.db.collection('julesQueues').doc(uid).collection('items');
+    const collectionRef = db.collection('julesQueues').doc(uid).collection('items');
     await deleteDoc(collectionRef, docId, { key: CACHE_KEYS.QUEUE_ITEMS, userId: uid });
     return true;
   } catch (err) {
@@ -75,9 +79,10 @@ export async function deleteFromJulesQueue(uid, docId) {
 }
 
 export async function listJulesQueue(uid) {
-  if (!window.db) throw new Error('Firestore not initialized');
+  const db = getDb();
+  if (!db) throw new Error('Firestore not initialized');
   try {
-    const collectionRef = window.db.collection('julesQueues').doc(uid).collection('items');
+    const collectionRef = db.collection('julesQueues').doc(uid).collection('items');
     const results = await queryCollection(collectionRef, {
       orderBy: { field: 'createdAt', direction: 'desc' }
     }, { key: CACHE_KEYS.QUEUE_ITEMS, userId: uid });
@@ -722,7 +727,7 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
     return;
   }
   
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   if (!user) {
     handleError(JULES_MESSAGES.NOT_SIGNED_IN, { source: 'saveQueueItemEdit' }, { category: ErrorCategory.AUTH });
     return;
@@ -781,7 +786,7 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
 }
 
 async function loadQueuePage() {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   const listDiv = document.getElementById('allQueueList');
   if (!user) {
     const msg = document.createElement('div');
@@ -821,7 +826,7 @@ async function loadQueuePage() {
 }
 
 async function getUserTimeZone() {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   if (!user) return 'America/New_York';
   
   try {
@@ -871,7 +876,7 @@ function attachQueuePromptViewerHandlers(queueItems) {
 }
 
 async function saveUserTimeZone(timeZone) {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   if (!user) return;
   
   try {
@@ -935,7 +940,7 @@ function getCommonTimeZones() {
 let activeScheduleModal = null;
 
 async function showScheduleModal() {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   if (!user) {
     handleError(JULES_MESSAGES.SIGN_IN_REQUIRED, { source: 'showScheduleModal' }, { category: ErrorCategory.AUTH, toastType: 'warn' });
     return;
@@ -1098,7 +1103,7 @@ function hideScheduleModal() {
 }
 
 async function confirmScheduleItems() {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   if (!user) return;
   
   const dateInput = document.getElementById('scheduleDate');
@@ -1406,7 +1411,7 @@ function createQueueCard(item) {
 }
 
 async function deleteSelectedSubtasks(docId, indices) {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   if (!user) return;
 
   const item = queueCache.find(i => i.id === docId);
@@ -1432,7 +1437,7 @@ async function deleteSelectedSubtasks(docId, indices) {
 }
 
 async function runSelectedSubtasks(docId, indices, suppressPopups = false, openInBackground = false) {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   if (!user) return;
 
   const item = queueCache.find(i => i.id === docId);
@@ -1617,7 +1622,7 @@ function updateScheduleButton() {
 }
 
 async function unscheduleSelectedQueueItems() {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   if (!user) {
     handleError(JULES_MESSAGES.NOT_SIGNED_IN, { source: 'unscheduleSelectedQueueItems' }, { category: ErrorCategory.AUTH });
     return;
@@ -1686,7 +1691,7 @@ function getSelectedQueueIds() {
 }
 
 async function deleteSelectedQueueItems() {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   if (!user) { handleError(JULES_MESSAGES.NOT_SIGNED_IN, { source: 'deleteSelectedQueueItems' }, { category: ErrorCategory.AUTH }); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
@@ -1731,7 +1736,7 @@ function sortByCreatedAt(ids) {
 }
 
 async function runSelectedQueueItems() {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   if (!user) { handleError(JULES_MESSAGES.NOT_SIGNED_IN, { source: 'runSelectedQueueItems' }, { category: ErrorCategory.AUTH }); return; }
   
   const { queueSelections, subtaskSelections } = getSelectedQueueIds();
