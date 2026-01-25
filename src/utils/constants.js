@@ -5,7 +5,6 @@ import { ICONS, createIconWithText } from './icon-helpers.js';
 export const OWNER = "promptroot";
 export const REPO = "promptroot";
 export const BRANCH = "main";
-export const PRETTY_TITLES = true;
 
 // GitHub API
 export const GIST_POINTER_REGEX = /^https:\/\/gist\.githubusercontent\.com\/\S+\/raw\/\S+$/i;

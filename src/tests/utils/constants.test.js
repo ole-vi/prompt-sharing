@@ -7,7 +7,6 @@ describe('constants', () => {
       expect(constants.OWNER).toBe('promptroot');
       expect(constants.REPO).toBe('promptroot');
       expect(constants.BRANCH).toBe('main');
-      expect(constants.PRETTY_TITLES).toBe(true);
     });
 
     it('should export Jules API configuration', () => {
