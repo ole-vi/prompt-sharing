@@ -326,11 +326,13 @@ export const PAGE_SIZES = {
 
 /**
  * Cache durations for various data types.
+ * Note: A duration of 0 means cache persists for the browser session
+ * (until page refresh or sessionStorage is cleared)
  * @type {CacheDurations}
  */
 export const CACHE_DURATIONS = {
   short: 300000, // 5 minutes
-  session: 0
+  session: 0 // Never expires within the session
 };
 
 /**

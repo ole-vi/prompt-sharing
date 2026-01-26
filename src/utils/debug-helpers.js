@@ -1,5 +1,4 @@
 import { getCacheState, CACHE_KEYS } from './session-cache.js';
-import { CACHE_POLICIES } from './constants.js';
 
 export function initDebugHelpers() {
   window.inspectCache = () => {

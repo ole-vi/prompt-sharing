@@ -47,9 +47,11 @@ export function getCacheState(key, userId = null) {
     const age = Date.now() - timestamp;
     
     // Check staleness based on policy TTL
-    // If TTL is session (0), it's never stale within the session
+    // Session-duration caches (ttl === 0) never expire within the session
+    // Time-based caches are stale when age exceeds their TTL
     // If age is NaN (missing timestamp), treat as stale
-    const isStale = isNaN(age) || (policy.ttl !== CACHE_DURATIONS.session && age >= policy.ttl);
+    const isSessionCache = policy.ttl === CACHE_DURATIONS.session;
+    const isStale = isNaN(age) || (!isSessionCache && age >= policy.ttl);
 
     return {
       exists: true,
@@ -80,18 +82,30 @@ export function getCache(key, userId = null) {
     if (!state.exists) return null;
 
     // Handle staleness based on strategy
-    // For now, if CACHE_FIRST and stale, return null (behave like expired)
-    // SWR logic would go here if we were implementing fetching
-    
     if (state.isStale) {
-      if (state.policy.strategy === CACHE_STRATEGIES.CACHE_FIRST) {
-        // Clear expired cache
-        clearCache(key, userId);
-        return null;
+      switch (state.policy.strategy) {
+        case CACHE_STRATEGIES.CACHE_FIRST:
+          // Expired cache is invalid - clear and return null
+          clearCache(key, userId);
+          return null;
+        
+        case CACHE_STRATEGIES.STALE_WHILE_REVALIDATE:
+          // SWR would return stale data and trigger background refresh
+          // Not implemented yet - treat as CACHE_FIRST for now
+          clearCache(key, userId);
+          return null;
+        
+        case CACHE_STRATEGIES.NETWORK_ONLY:
+          // Network-only doesn't use cache - this shouldn't happen
+          // but clear and return null to be safe
+          clearCache(key, userId);
+          return null;
+        
+        default:
+          // Unknown strategy - fail safe by clearing stale cache
+          clearCache(key, userId);
+          return null;
       }
-      // For STALE_WHILE_REVALIDATE, we might return data?
-      // But getCache contract is "return valid data".
-      // Let's stick to returning null if stale for now unless specified otherwise.
     }
 
     return state.data;
