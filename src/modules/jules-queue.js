@@ -2,7 +2,7 @@ import { getAuth } from './firebase-service.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { createModal } from '../utils/modal-manager.js';
-import { getCache, setCache, clearCache, CACHE_KEYS } from '../utils/session-cache.js';
+import { setCache, clearCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { handleError, ErrorCategory } from '../utils/error-handler.js';
