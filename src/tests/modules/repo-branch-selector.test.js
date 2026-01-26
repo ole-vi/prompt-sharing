@@ -1,4 +1,22 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// Setup global mocks
+const mockAuth = {
+  currentUser: null
+};
+
+let mockDb = {
+  collection: vi.fn()
+};
+
+// Mock firebase-service BEFORE importing repo-branch-selector
+// Use function declarations so they evaluate at call-time, not definition-time
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(function() { return global.window?.auth !== undefined ? global.window.auth : mockAuth; }),
+  getDb: vi.fn(function() { return global.window?.db !== undefined ? global.window.db : mockDb; }),
+  getFunctions: vi.fn(() => null)
+}));
+
 import { RepoSelector, BranchSelector } from '../../modules/repo-branch-selector.js';
 
 // Mock dependencies
@@ -47,8 +65,16 @@ global.console = {
 };
 
 global.window = {
-  db: null,
-  getComputedStyle: vi.fn()
+  auth: mockAuth,
+  db: mockDb,
+  getComputedStyle: vi.fn(),
+  firebase: {
+    firestore: {
+      FieldValue: {
+        serverTimestamp: vi.fn(() => 'SERVER_TIMESTAMP')
+      }
+    }
+  }
 };
 
 global.document = {

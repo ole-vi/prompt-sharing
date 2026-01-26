@@ -4,6 +4,7 @@
  */
 
 import { waitForFirebase } from '../shared-init.js';
+import { getAuth } from '../modules/firebase-service.js';
 import { loadProfileDirectly } from '../modules/jules-account.js';
 import { TIMEOUTS } from '../utils/constants.js';
 
@@ -16,7 +17,8 @@ function waitForComponents() {
 }
 
 async function loadProfile() {
-  const user = window.auth?.currentUser;
+  const auth = getAuth();
+  const user = auth?.currentUser;
   
   if (!user) {
     const profileUserName = document.getElementById('profileUserName');
@@ -36,7 +38,8 @@ async function loadProfile() {
 async function initApp() {
   try {
     await waitForFirebase();
-    window.auth.onAuthStateChanged((user) => {
+    const auth = getAuth();
+    auth.onAuthStateChanged((user) => {
       if (user) {
         loadProfile();
       } else {

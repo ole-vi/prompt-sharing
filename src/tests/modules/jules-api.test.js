@@ -1,16 +1,4 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import {
-  clearJulesKeyCache,
-  getDecryptedJulesKey,
-  listJulesSources,
-  loadJulesProfileInfo,
-  callRunJulesFunction,
-  handleTryInJules
-} from '../../modules/jules-api.js';
-
-// Mock global fetch
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
 
 // Mock Web Crypto API with functional implementations
 const mockCrypto = {
@@ -26,13 +14,34 @@ const mockAuth = {
 };
 
 const mockDocGet = vi.fn();
-const mockDb = {
+let mockDb = {
   collection: vi.fn(() => ({
     doc: vi.fn(() => ({
       get: mockDocGet
     }))
   }))
 };
+
+// Mock firebase-service BEFORE importing jules-api
+// Use function declarations so they evaluate at call-time, not definition-time
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(function() { return global.window?.auth !== undefined ? global.window.auth : mockAuth; }),
+  getDb: vi.fn(function() { return global.window?.db !== undefined ? global.window.db : mockDb; }),
+  getFunctions: vi.fn(() => null)
+}));
+
+import {
+  clearJulesKeyCache,
+  getDecryptedJulesKey,
+  listJulesSources,
+  loadJulesProfileInfo,
+  callRunJulesFunction,
+  handleTryInJules
+} from '../../modules/jules-api.js';
+
+// Mock global fetch
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
 
 global.window = {
   crypto: mockCrypto,

@@ -1,3 +1,4 @@
+import { getAuth } from './firebase-service.js';
 import { GIST_POINTER_REGEX, GIST_URL_REGEX, CACHE_DURATIONS } from '../utils/constants.js';
 
 let viaProxy = (url) => url;
@@ -82,7 +83,7 @@ const TOKEN_MAX_AGE = 60 * 24 * 60 * 60 * 1000; // 60 days
 
 async function getGitHubAccessToken() {
   try {
-    const user = window.auth?.currentUser;
+    const user = getAuth()?.currentUser;
     if (!user) return null;
 
     const isGitHubAuth = user.providerData.some(p => p.providerId === 'github.com');

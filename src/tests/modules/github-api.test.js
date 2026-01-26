@@ -1,4 +1,17 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+// Mock firebase-service BEFORE importing github-api
+const mockAuth = {
+  currentUser: null
+};
+
+// Use function declarations so they evaluate at call-time, not definition-time
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(function() { return global.window?.auth !== undefined ? global.window.auth : mockAuth; }),
+  getDb: vi.fn(() => null),
+  getFunctions: vi.fn(() => null)
+}));
+
 import {
   setViaProxy,
   fetchJSON,
@@ -19,11 +32,9 @@ import {
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-// Mock window.auth
-const mockAuth = {
-  currentUser: null
-};
-global.window = { auth: mockAuth };
+// Keep window.auth for backward compatibility with tests
+global.window = global.window || {};
+global.window.auth = mockAuth;
 
 // Mock localStorage
 const mockLocalStorage = (() => {

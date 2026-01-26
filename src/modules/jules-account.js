@@ -1,6 +1,7 @@
 // ===== Jules Profile Modal Module =====
 // Profile modal and sessions history functionality
 
+import { getAuth } from './firebase-service.js';
 import { checkJulesKey, deleteStoredJulesKey } from './jules-keys.js';
 import { showJulesKeyModal } from './jules-modal.js';
 import { showJulesQueueModal } from './jules-queue.js';
@@ -19,7 +20,7 @@ let sessionNextPageToken = null;
 
 export function showUserProfileModal() {
   const modal = document.getElementById('userProfileModal');
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
 
   if (!user) {
     handleError('Not logged in.', { source: 'showUserProfileModal' }, { category: ErrorCategory.AUTH });
@@ -151,7 +152,7 @@ export function showUserProfileModal() {
   
   if (sessionSearchInput) {
     sessionSearchInput.addEventListener('input', () => {
-      const user = window.auth?.currentUser;
+      const user = getAuth()?.currentUser;
       if (!user) return;
       renderAllSessions(allSessionsCache);
     });
@@ -526,7 +527,7 @@ export function hideJulesSessionsHistoryModal() {
 }
 
 async function loadSessionsPage() {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   if (!user) return;
   
   const allSessionsList = document.getElementById('allSessionsList');
