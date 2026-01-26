@@ -90,7 +90,7 @@ export async function batchUnscheduleItems(uid, docIds) {
   const db = getDb();
   if (!db) throw new Error('Firestore not initialized');
   
-  const batch = firebase.firestore().batch();
+  const batch = db.batch();
   
   for (const docId of docIds) {
     const docRef = db.collection('julesQueues').doc(uid).collection('items').doc(docId);

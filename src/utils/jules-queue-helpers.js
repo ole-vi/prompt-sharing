@@ -50,26 +50,6 @@ export function sortByCreatedAt(ids, queueCache) {
   });
 }
 
-export function getSelectedQueueIds() {
-  const queueSelections = [];
-  const subtaskSelections = {};
-  
-  document.querySelectorAll('.queue-checkbox:checked').forEach(cb => {
-    queueSelections.push(cb.dataset.docid);
-  });
-  
-  document.querySelectorAll('.subtask-checkbox:checked').forEach(cb => {
-    const docId = cb.dataset.docid;
-    const index = parseInt(cb.dataset.index);
-    if (!subtaskSelections[docId]) {
-      subtaskSelections[docId] = [];
-    }
-    subtaskSelections[docId].push(index);
-  });
-  
-  return { queueSelections, subtaskSelections };
-}
-
 export function formatScheduledDate(scheduledAt, timeZone) {
   if (!scheduledAt) return '';
   

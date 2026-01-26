@@ -51,7 +51,7 @@ export function updateEditModalState(updates) {
 }
 
 export function resetEditModalState() {
-  editModalState = {
+  Object.assign(editModalState, {
     originalData: null,
     hasUnsavedChanges: false,
     currentDocId: null,
@@ -60,7 +60,7 @@ export function resetEditModalState() {
     branchSelector: null,
     isUnscheduled: false,
     isInitializing: false
-  };
+  });
 }
 
 export function getActiveEditModal() {

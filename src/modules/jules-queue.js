@@ -48,7 +48,6 @@ import {
   parseDateInTimeZone,
   getCommonTimeZones,
   sortByCreatedAt,
-  getSelectedQueueIds,
   formatScheduledDate,
   calculateProgress,
   combineSubtasksToPrompt,
@@ -56,6 +55,26 @@ import {
   validateSchedule,
   cleanIdForDOM
 } from '../utils/jules-queue-helpers.js';
+
+function getSelectedQueueIds() {
+  const queueSelections = [];
+  const subtaskSelections = {};
+
+  document.querySelectorAll('.queue-checkbox:checked').forEach(cb => {
+    queueSelections.push(cb.dataset.docid);
+  });
+
+  document.querySelectorAll('.subtask-checkbox:checked').forEach(cb => {
+    const docId = cb.dataset.docid;
+    const index = parseInt(cb.dataset.index);
+    if (!subtaskSelections[docId]) {
+      subtaskSelections[docId] = [];
+    }
+    subtaskSelections[docId].push(index);
+  });
+
+  return { queueSelections, subtaskSelections };
+}
 
 export async function handleQueueAction(queueItemData) {
   const user = getAuth()?.currentUser;
