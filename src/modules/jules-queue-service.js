@@ -55,7 +55,7 @@ export async function listJulesQueue(uid) {
     const collectionRef = db.collection('julesQueues').doc(uid).collection('items');
     const results = await queryCollection(collectionRef, {
       orderBy: { field: 'createdAt', direction: 'desc' }
-    }, { key: CACHE_KEYS.QUEUE_ITEMS, userId: uid });
+    });
     return results;
   } catch (err) {
     throw err;
@@ -124,4 +124,17 @@ export async function deleteSelectedSubtasks(uid, docId, indices, remaining) {
       updatedAt: getServerTimestamp()
     });
   }
+}
+
+export function subscribeToQueueUpdates(uid, callback) {
+  const db = getDb();
+  if (!db) throw new Error('Firestore not initialized');
+  
+  const collectionRef = db.collection('julesQueues').doc(uid).collection('items');
+  return collectionRef.orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(items);
+  }, (error) => {
+    console.error('Queue subscription error:', error);
+  });
 }

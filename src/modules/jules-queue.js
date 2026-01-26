@@ -22,7 +22,8 @@ import {
   getUserTimeZone as serviceGetUserTimeZone,
   saveUserTimeZone as serviceSaveUserTimeZone,
   batchUnscheduleItems as serviceBatchUnschedule,
-  deleteSelectedSubtasks as serviceDeleteSubtasks
+  deleteSelectedSubtasks as serviceDeleteSubtasks,
+  subscribeToQueueUpdates as serviceSubscribeToQueue
 } from './jules-queue-service.js';
 
 // Store imports
@@ -106,6 +107,10 @@ export async function deleteFromJulesQueue(uid, docId) {
 
 export async function listJulesQueue(uid) {
   return await serviceListQueue(uid);
+}
+
+export function subscribeToQueueUpdates(uid, callback) {
+  return serviceSubscribeToQueue(uid, callback);
 }
 
 export function showJulesQueueModal() {
@@ -785,17 +790,16 @@ async function loadQueuePage() {
   }
 
   try {
-    let items = getCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
+    clearCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
     
-    if (!items) {
-      const loading = document.createElement('div');
-      loading.className = 'panel text-center pad-xl muted-text';
-      loading.textContent = 'Loading queue...';
-      listDiv.replaceChildren();
-      listDiv.appendChild(loading);
-      items = await listJulesQueue(user.uid);
-      setCache(CACHE_KEYS.QUEUE_ITEMS, items, user.uid);
-    }
+    const loading = document.createElement('div');
+    loading.className = 'panel text-center pad-xl muted-text';
+    loading.textContent = 'Loading queue...';
+    listDiv.replaceChildren();
+    listDiv.appendChild(loading);
+    
+    const items = await listJulesQueue(user.uid);
+    setCache(CACHE_KEYS.QUEUE_ITEMS, items, user.uid);
     
     setQueueCache(items);
     renderQueueList(items);
