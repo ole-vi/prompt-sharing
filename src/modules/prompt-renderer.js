@@ -8,6 +8,8 @@ import { showToast } from './toast.js';
 import { copyAndOpen } from './copen.js';
 import { copyText } from '../utils/clipboard.js';
 import statusBar from './status-bar.js';
+import { initSplitButton, destroySplitButton } from './split-button.js';
+import { COPEN_OPTIONS, COPEN_STORAGE_KEY, COPEN_DEFAULT_LABEL, COPEN_DEFAULT_ICON } from '../utils/copen-config.js';
 
 function sanitizeHtml(html) {
   if (typeof window.DOMPurify === 'undefined') {
@@ -60,8 +62,8 @@ let metaEl = null;
 let emptyEl = null;
 let actionsEl = null;
 let copyBtn = null;
-let copenBtn = null;
-let originalCopenLabel = null;
+let copenContainer = null;
+let copenSplitBtn = null;
 let rawBtn = null;
 let ghBtn = null;
 let editBtn = null;
@@ -78,8 +80,19 @@ export function initPromptRenderer() {
   emptyEl = document.getElementById('empty');
   actionsEl = document.getElementById('actions');
   copyBtn = document.getElementById('copyBtn');
-  copenBtn = document.getElementById('copenBtn');
-  if (copenBtn) originalCopenLabel = copenBtn.innerHTML;
+  
+  copenContainer = document.getElementById('copenContainer');
+  if (copenContainer) {
+    copenSplitBtn = initSplitButton({
+      container: copenContainer,
+      defaultLabel: COPEN_DEFAULT_LABEL,
+      defaultIcon: COPEN_DEFAULT_ICON,
+      options: COPEN_OPTIONS,
+      onAction: handleCopenPrompt,
+      storageKey: COPEN_STORAGE_KEY
+    });
+  }
+  
   rawBtn = document.getElementById('rawBtn');
   ghBtn = document.getElementById('ghBtn');
   editBtn = document.getElementById('editBtn');
@@ -96,6 +109,12 @@ export function initPromptRenderer() {
 export function destroyPromptRenderer() {
   document.removeEventListener('click', handleDocumentClick);
   window.removeEventListener('branchChanged', handleBranchChanged);
+  
+  if (copenContainer) {
+    destroySplitButton(copenContainer);
+    copenSplitBtn = null;
+  }
+  
   cacheRaw.clear();
   currentPromptText = null;
   handleTryInJulesCallback = null;
@@ -107,28 +126,10 @@ export function destroyPromptRenderer() {
 
 function handleDocumentClick(event) {
   const target = event.target;
-  const copenMenu = document.getElementById('copenMenu');
   const moreMenu = document.getElementById('moreMenu');
 
   if (target === copyBtn) {
     handleCopyPrompt();
-    return;
-  }
-
-  if (target === copenBtn) {
-    event.stopPropagation();
-    if (copenMenu) {
-      copenMenu.classList.toggle('hidden');
-    }
-    return;
-  }
-
-  const copenMenuItem = target.closest('.custom-dropdown-item[data-target]');
-  if (copenMenuItem && copenMenu && copenMenuItem.parentElement === copenMenu) {
-    event.stopPropagation();
-    const targetApp = copenMenuItem.dataset.target;
-    handleCopenPrompt(targetApp);
-    copenMenu.classList.add('hidden');
     return;
   }
 
@@ -222,7 +223,6 @@ function handleDocumentClick(event) {
     return;
   }
 
-  if (copenMenu) copenMenu.classList.add('hidden');
   if (moreMenu) moreMenu.classList.add('hidden');
 }
 
@@ -539,12 +539,7 @@ async function handleCopyPrompt() {
 
 async function handleCopenPrompt(target) {
   const promptText = getCurrentPromptText();
-  const success = await copyAndOpen(target, promptText);
-
-  if (success) {
-    copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied!';
-    setTimeout(() => (copenBtn.innerHTML = originalCopenLabel), TIMEOUTS.copyFeedback);
-  }
+  await copyAndOpen(target, promptText);
 }
 
 async function handleShareLink() {

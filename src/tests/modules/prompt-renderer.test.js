@@ -181,7 +181,7 @@ describe('prompt-renderer', () => {
       expect(global.document.getElementById).toHaveBeenCalledWith('empty');
       expect(global.document.getElementById).toHaveBeenCalledWith('actions');
       expect(global.document.getElementById).toHaveBeenCalledWith('copyBtn');
-      expect(global.document.getElementById).toHaveBeenCalledWith('copenBtn');
+      expect(global.document.getElementById).toHaveBeenCalledWith('copenContainer');
       expect(global.document.getElementById).toHaveBeenCalledWith('rawBtn');
       expect(global.document.getElementById).toHaveBeenCalledWith('ghBtn');
       expect(global.document.getElementById).toHaveBeenCalledWith('editBtn');
