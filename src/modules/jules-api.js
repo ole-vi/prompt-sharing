@@ -5,6 +5,7 @@ import { getAuth, getDb } from './firebase-service.js';
 import { JULES_API_BASE, ERRORS, PAGE_SIZES, JULES_MESSAGES, TIMEOUTS } from '../utils/constants.js';
 import { showToast } from './toast.js';
 import { handleError, ErrorCategory } from '../utils/error-handler.js';
+import { clearCache, CACHE_KEYS } from '../utils/session-cache.js';
 
 // API key cache for memoization
 const keyCache = new Map();
@@ -238,6 +239,9 @@ export async function callRunJulesFunction(promptText, sourceId, branch = 'maste
   try {
     const sessionUrl = await runJulesAPI(promptText, sourceId, branch, title, user);
     
+    // Invalidate session cache to ensure new session appears in profile
+    clearCache(CACHE_KEYS.JULES_ACCOUNT, user.uid);
+
     if (julesBtn) {
       julesBtn.textContent = originalText;
       julesBtn.disabled = false;

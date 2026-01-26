@@ -322,9 +322,63 @@ export const PAGE_SIZES = {
 
 /**
  * Cache durations for various data types.
+ * Note: A duration of 0 means cache persists for the browser session
+ * (until page refresh or sessionStorage is cleared)
  * @type {CacheDurations}
  */
 export const CACHE_DURATIONS = {
   short: 300000, // 5 minutes
-  session: 0
+  session: 0 // Never expires within the session
+};
+
+/**
+ * Cache strategies enum
+ */
+export const CACHE_STRATEGIES = {
+  CACHE_FIRST: 'cache-first',
+  NETWORK_ONLY: 'network-only',
+  STALE_WHILE_REVALIDATE: 'stale-while-revalidate'
+};
+
+/**
+ * Cache keys for session storage
+ */
+export const CACHE_KEYS = {
+  JULES_ACCOUNT: 'jules_account_info',
+  JULES_SESSIONS: 'jules_sessions',
+  JULES_REPOS: 'jules_repos',
+  QUEUE_ITEMS: 'queue_items',
+  BRANCHES: 'branches_v2',
+  CURRENT_BRANCH: 'current_branch',
+  CURRENT_REPO: 'current_repo',
+  USER_PROFILE: 'user_profile',
+  USER_AVATAR: 'user_avatar'
+};
+
+/**
+ * Cache policies configuration
+ * Maps CACHE_KEYS to specific configurations
+ */
+export const CACHE_POLICIES = {
+  [CACHE_KEYS.JULES_ACCOUNT]: {
+    ttl: CACHE_DURATIONS.session,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST
+  },
+  [CACHE_KEYS.QUEUE_ITEMS]: {
+    ttl: CACHE_DURATIONS.session,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST
+  },
+  [CACHE_KEYS.BRANCHES]: {
+    ttl: CACHE_DURATIONS.session,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST
+  },
+  [CACHE_KEYS.USER_AVATAR]: {
+    ttl: CACHE_DURATIONS.session,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST
+  },
+  // Default policy for other keys
+  DEFAULT: {
+    ttl: CACHE_DURATIONS.short,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST
+  }
 };
