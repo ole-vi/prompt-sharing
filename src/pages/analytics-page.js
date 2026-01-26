@@ -293,21 +293,24 @@ function renderTopPrompts(analytics) {
     const successRate = (prompt.successRate * 100).toFixed(0);
     const prRate = (prompt.prRate * 100).toFixed(0);
     const displayPath = prompt.path.replace(/^prompts\//, '');
+    const badgeClass = prompt.successRate >= 0.8 ? 'success' : prompt.successRate >= 0.5 ? 'warn' : 'danger';
     
     return `
-      <div class="analytics-list-item">
-        <div class="analytics-rank">${index + 1}</div>
-        <div class="analytics-list-content">
-          <div class="analytics-list-title">${displayPath}</div>
-          <div class="analytics-list-meta">
-            ${prompt.total} use${prompt.total !== 1 ? 's' : ''} • 
-            ${successRate}% success • 
-            ${prRate}% with PRs
+      <div class="item">
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
+          <span class="pill" style="min-width: 28px; justify-content: center;">${index + 1}</span>
+          <div style="min-width: 0; flex: 1;">
+            <div class="item-title">${displayPath}</div>
+            <div class="item-meta">
+              ${prompt.total} use${prompt.total !== 1 ? 's' : ''} • 
+              ${successRate}% success • 
+              ${prRate}% with PRs
+            </div>
           </div>
         </div>
-        <div class="analytics-badge ${prompt.successRate >= 0.8 ? 'success' : prompt.successRate >= 0.5 ? 'warning' : 'danger'}">
+        <span class="status-badge status-badge--${badgeClass}">
           ${successRate}%
-        </div>
+        </span>
       </div>
     `;
   }).join('');
@@ -318,44 +321,37 @@ function renderFailureAnalysis(analytics) {
   if (!container) return;
 
   if (analytics.failedSessions === 0) {
-    container.innerHTML = '<p class="muted">No failures recorded 🎉</p>';
+    container.innerHTML = '<p class="muted small-text text-center pad-lg">No failures recorded 🎉</p>';
     return;
   }
 
-  const reasonsHtml = Object.entries(analytics.failureReasons)
-    .sort((a, b) => b[1] - a[1])
-    .map(([reason, count]) => {
-      const displayReason = reason.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-      return `
-        <div class="analytics-failure-item">
-          <span class="analytics-failure-label">${displayReason}</span>
-          <span class="analytics-failure-count">${count}</span>
-        </div>
-      `;
-    }).join('');
-
-  const stepsHtml = Object.entries(analytics.failureSteps)
+  const items = [];
+  
+  // Total failures
+  items.push(`
+    <div class="failure-item">
+      <div class="failure-item__label">Total Failures</div>
+      <div class="failure-item__value">${analytics.failedSessions}</div>
+      <div class="failure-item__desc">${((analytics.failedSessions / analytics.totalSessions) * 100).toFixed(1)}% of sessions</div>
+    </div>
+  `);
+  
+  // Failure reasons
+  Object.entries(analytics.failureReasons)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
-    .map(([step, count]) => {
-      return `
-        <div class="analytics-failure-item">
-          <span class="analytics-failure-label">${step}</span>
-          <span class="analytics-failure-count">${count}</span>
+    .forEach(([reason, count]) => {
+      const displayReason = reason.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      items.push(`
+        <div class="failure-item">
+          <div class="failure-item__label">${displayReason}</div>
+          <div class="failure-item__value">${count}</div>
+          <div class="failure-item__desc">${((count / analytics.failedSessions) * 100).toFixed(0)}% of failures</div>
         </div>
-      `;
-    }).join('');
+      `);
+    });
 
-  container.innerHTML = `
-    <div class="analytics-failure-section">
-      <h3>Failure Reasons</h3>
-      ${reasonsHtml || '<p class="muted">No reason data</p>'}
-    </div>
-    <div class="analytics-failure-section">
-      <h3>Failed at Step</h3>
-      ${stepsHtml || '<p class="muted">No step data</p>'}
-    </div>
-  `;
+  container.innerHTML = `<div class="failure-grid">${items.join('')}</div>`;
 }
 
 function renderRepoPerformance(analytics) {
@@ -368,7 +364,7 @@ function renderRepoPerformance(analytics) {
     .slice(0, 10);
 
   if (repos.length === 0) {
-    container.innerHTML = '<p class="muted">No repository data</p>';
+    container.innerHTML = '<p class="muted small-text text-center pad-lg">No repository data</p>';
     return;
   }
 
@@ -377,20 +373,21 @@ function renderRepoPerformance(analytics) {
     const prRate = (repo.prRate * 100).toFixed(0);
     const displayName = repo.id.replace('sources/github/', '');
     const avgDuration = repo.avgDurationMinutes ? `${repo.avgDurationMinutes} min avg` : 'N/A';
+    const badgeClass = repo.prRate >= 0.7 ? 'success' : repo.prRate >= 0.4 ? 'warn' : 'danger';
     
     return `
-      <div class="analytics-list-item">
-        <div class="analytics-list-content">
-          <div class="analytics-list-title">${displayName}</div>
-          <div class="analytics-list-meta">
+      <div class="item">
+        <div style="min-width: 0; flex: 1;">
+          <div class="item-title">${displayName}</div>
+          <div class="item-meta">
             ${repo.total} session${repo.total !== 1 ? 's' : ''} • 
             ${repo.withPRs} PR${repo.withPRs !== 1 ? 's' : ''} • 
             ${avgDuration}
           </div>
         </div>
-        <div class="analytics-badge ${repo.prRate >= 0.7 ? 'success' : repo.prRate >= 0.4 ? 'warning' : 'danger'}">
+        <span class="status-badge status-badge--${badgeClass}">
           ${prRate}% PRs
-        </div>
+        </span>
       </div>
     `;
   }).join('');
@@ -403,18 +400,18 @@ function renderRecentPRs(analytics) {
   const recentPRs = analytics.prUrls.slice(0, 10);
 
   if (recentPRs.length === 0) {
-    container.innerHTML = '<p class="muted">No PRs created yet</p>';
+    container.innerHTML = '<p class="muted small-text text-center pad-lg">No PRs created yet</p>';
     return;
   }
 
   container.innerHTML = recentPRs.map(pr => {
     return `
-      <div class="analytics-list-item">
-        <div class="analytics-list-content">
-          <div class="analytics-list-title">${pr.title}</div>
-          <div class="analytics-list-meta">
-            <a href="${pr.url}" target="_blank" rel="noopener" class="analytics-pr-link">
-              <span class="icon icon-inline" aria-hidden="true">link</span>
+      <div class="item">
+        <div style="min-width: 0; flex: 1;">
+          <div class="item-title">${pr.title || 'Pull Request'}</div>
+          <div class="item-meta">
+            <a href="${pr.url}" target="_blank" rel="noopener" class="pr-link">
+              <span class="icon icon-inline" aria-hidden="true">open_in_new</span>
               View PR
             </a>
           </div>

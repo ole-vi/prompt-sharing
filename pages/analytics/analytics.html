@@ -22,122 +22,162 @@
 <body data-page="analytics">
 
   <div class="wrap">
-  <main class="main-container analytics-page">
-    <div class="page-header">
-      <h1>Jules Analytics</h1>
-      <p class="page-description">Track session performance, PR success rates, and prompt effectiveness</p>
-    </div>
-
-    <div id="analyticsNotSignedIn" class="hidden text-center pad-lg">
-      <p>Please sign in to view your analytics</p>
-    </div>
-
-    <div id="analyticsLoading" class="hidden text-center pad-lg">
-      <p>Loading analytics...</p>
-    </div>
-
-    <div id="analyticsContent" class="hidden">
-      <!-- Date Range Filter -->
-      <div class="analytics-filters">
-        <label for="dateRangeSelect">Time Period:</label>
-        <select id="dateRangeSelect" class="form-select">
-          <option value="7">Last 7 days</option>
-          <option value="30" selected>Last 30 days</option>
-          <option value="90">Last 90 days</option>
-          <option value="365">Last year</option>
-          <option value="all">All time</option>
-        </select>
-        <button id="refreshAnalyticsBtn" class="btn-secondary" title="Refresh data">
-          <span class="icon" aria-hidden="true">refresh</span>
-          Refresh
-        </button>
+    <main class="card pad-lg">
+      <div class="page-header mb-lg">
+        <h1 class="section-title-lg">
+          <span class="icon icon-inline" aria-hidden="true">bar_chart</span> Jules Analytics
+        </h1>
+        <p class="muted small-text">Track session performance, PR success rates, and prompt effectiveness</p>
       </div>
 
-      <!-- Key Metrics Cards -->
-      <div class="analytics-cards">
-        <div class="analytics-card">
-          <div class="analytics-card-icon">📊</div>
-          <div class="analytics-card-content">
-            <div class="analytics-card-label">Total Sessions</div>
-            <div class="analytics-card-value" id="totalSessionsValue">0</div>
+      <!-- Not Signed In Message -->
+      <div id="analyticsNotSignedIn" class="panel text-center pad-xl hidden">
+        <div class="muted-text small-text">Please sign in to view your analytics.</div>
+      </div>
+
+      <!-- Loading Message -->
+      <div id="analyticsLoading" class="panel text-center pad-xl muted-text hidden">
+        Loading analytics...
+      </div>
+
+      <!-- Analytics Content -->
+      <div id="analyticsContent" class="hidden">
+        <!-- Toolbar with Filters -->
+        <div class="toolbar mb-md">
+          <div class="toolbar-actions">
+            <label class="form-label small-text">
+              Time Period:
+              <select id="dateRangeSelect" class="form-select">
+                <option value="7">Last 7 days</option>
+                <option value="30" selected>Last 30 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="365">Last year</option>
+                <option value="all">All time</option>
+              </select>
+            </label>
+          </div>
+          <div class="toolbar-actions">
+            <button id="refreshAnalyticsBtn" class="btn sm" title="Refresh data">
+              <span class="icon icon-inline" aria-hidden="true">refresh</span>
+              Refresh
+            </button>
           </div>
         </div>
 
-        <div class="analytics-card">
-          <div class="analytics-card-icon">✅</div>
-          <div class="analytics-card-content">
-            <div class="analytics-card-label">Success Rate</div>
-            <div class="analytics-card-value" id="successRateValue">0%</div>
+        <!-- Key Metrics Grid -->
+        <div class="analytics-metrics mb-lg">
+          <div class="metric-card">
+            <div class="metric-card__header">
+              <span class="icon metric-card__icon" aria-hidden="true">fact_check</span>
+              <span class="metric-card__label">Total Sessions</span>
+            </div>
+            <div class="metric-card__value" id="totalSessionsValue">0</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-card__header">
+              <span class="icon metric-card__icon" aria-hidden="true">check_circle</span>
+              <span class="metric-card__label">Success Rate</span>
+            </div>
+            <div class="metric-card__value" id="successRateValue">0.0%</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-card__header">
+              <span class="icon metric-card__icon" aria-hidden="true">merge</span>
+              <span class="metric-card__label">PRs Created</span>
+            </div>
+            <div class="metric-card__value" id="prsCreatedValue">0</div>
+            <div class="metric-card__subtitle muted" id="prRateValue">0.0% of sessions</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-card__header">
+              <span class="icon metric-card__icon" aria-hidden="true">cancel</span>
+              <span class="metric-card__label">Failed Sessions</span>
+            </div>
+            <div class="metric-card__value" id="failedSessionsValue">0</div>
           </div>
         </div>
 
-        <div class="analytics-card">
-          <div class="analytics-card-icon">🔗</div>
-          <div class="analytics-card-content">
-            <div class="analytics-card-label">PRs Created</div>
-            <div class="analytics-card-value" id="prsCreatedValue">0</div>
-            <div class="analytics-card-subtitle" id="prRateValue">0% of sessions</div>
+        <!-- Charts Section -->
+        <div class="analytics-charts-grid mb-lg">
+          <div class="analytics-chart-panel">
+            <h2 class="section-title-md mb-md">Session Status Distribution</h2>
+            <div class="chart-container">
+              <canvas id="statusChart"></canvas>
+            </div>
+          </div>
+
+          <div class="analytics-chart-panel">
+            <h2 class="section-title-md mb-md">Sessions Over Time</h2>
+            <div class="chart-container">
+              <canvas id="timelineChart"></canvas>
+            </div>
           </div>
         </div>
 
-        <div class="analytics-card">
-          <div class="analytics-card-icon">❌</div>
-          <div class="analytics-card-content">
-            <div class="analytics-card-label">Failed Sessions</div>
-            <div class="analytics-card-value" id="failedSessionsValue">0</div>
+        <!-- Data Sections -->
+        <div class="analytics-sections">
+          <!-- Top Prompts -->
+          <div class="analytics-panel mb-lg">
+            <h2 class="section-title-md mb-md">
+              <span class="icon icon-inline" aria-hidden="true">emoji_events</span>
+              Top Performing Prompts
+            </h2>
+            <div id="topPromptsContainer" class="vlist">
+              <p class="muted small-text text-center pad-lg">No data available</p>
+            </div>
+          </div>
+
+          <!-- Failure Analysis -->
+          <div class="analytics-panel mb-lg">
+            <h2 class="section-title-md mb-md">
+              <span class="icon icon-inline" aria-hidden="true">error</span>
+              Failure Analysis
+            </h2>
+            <div id="failureAnalysisContainer">
+              <p class="muted small-text text-center pad-lg">No failures recorded</p>
+            </div>
+          </div>
+
+          <!-- Repository Performance -->
+          <div class="analytics-panel mb-lg">
+            <h2 class="section-title-md mb-md">
+              <span class="icon icon-inline" aria-hidden="true">folder</span>
+              Repository Performance
+            </h2>
+            <div id="repoPerformanceContainer" class="vlist">
+              <p class="muted small-text text-center pad-lg">No data available</p>
+            </div>
+          </div>
+
+          <!-- Recent PRs -->
+          <div class="analytics-panel">
+            <h2 class="section-title-md mb-md">
+              <span class="icon icon-inline" aria-hidden="true">merge</span>
+              Recent Pull Requests
+            </h2>
+            <div id="recentPRsContainer" class="vlist">
+              <p class="muted small-text text-center pad-lg">No PRs created yet</p>
+            </div>
           </div>
         </div>
       </div>
-
-      <!-- Charts Section -->
-      <div class="analytics-section">
-        <h2>Session Status Distribution</h2>
-        <div class="analytics-chart-container">
-          <canvas id="statusChart"></canvas>
-        </div>
-      </div>
-
-      <div class="analytics-section">
-        <h2>Sessions Over Time</h2>
-        <div class="analytics-chart-container">
-          <canvas id="timelineChart"></canvas>
-        </div>
-      </div>
-
-      <!-- Top Prompts -->
-      <div class="analytics-section">
-        <h2>🏆 Top Performing Prompts</h2>
-        <div id="topPromptsContainer" class="analytics-list">
-          <p class="muted">No data available</p>
-        </div>
-      </div>
-
-      <!-- Failure Analysis -->
-      <div class="analytics-section">
-        <h2>❌ Failure Analysis</h2>
-        <div id="failureAnalysisContainer" class="analytics-failure">
-          <p class="muted">No failures recorded</p>
-        </div>
-      </div>
-
-      <!-- Repository Performance -->
-      <div class="analytics-section">
-        <h2>📦 Repository Performance</h2>
-        <div id="repoPerformanceContainer" class="analytics-list">
-          <p class="muted">No data available</p>
-        </div>
-      </div>
-
-      <!-- Recent PRs -->
-      <div class="analytics-section">
-        <h2>🔗 Recent Pull Requests</h2>
-        <div id="recentPRsContainer" class="analytics-list">
-          <p class="muted">No PRs created yet</p>
-        </div>
-      </div>
-    </div>
-  </main>
+    </main>
   </div>
+
+  <footer>
+    <div class="footer-nav">
+      <a href="https://github.com/promptroot/promptroot/blob/main/README.md" target="_blank" rel="noopener" class="footer-nav__item">Help</a>
+      <span class="footer-nav__sep">•</span>
+      <button id="footerFeedbackBtn" class="footer-nav__item">Feedback</button>
+      <span class="footer-nav__sep">•</span>
+      <a href="../../pages/privacy/privacy.html" class="footer-nav__item">Privacy Policy</a>
+      <span class="footer-nav__sep">•</span>
+      <a href="https://github.com/promptroot/promptroot" target="_blank" rel="noopener" class="footer-nav__item">GitHub</a>
+    </div>
+  </footer>
 
   <script type="module" src="../../src/shared-init.js"></script>
   <script type="module" src="../../src/pages/analytics-page.js"></script>
