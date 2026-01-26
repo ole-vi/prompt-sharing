@@ -92,6 +92,32 @@
   margin-bottom: 0;
 }
 
+/* Prompt Item Layout */
+.prompt-item__content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.prompt-item__rank {
+  min-width: 28px;
+  justify-content: center;
+}
+
+.prompt-item__details {
+  min-width: 0;
+  flex: 1;
+}
+
+/* Repo and PR Item Layout */
+.repo-item__content,
+.pr-item__content {
+  min-width: 0;
+  flex: 1;
+}
+
 /* Failure Analysis Grid */
 .failure-grid {
   display: grid;

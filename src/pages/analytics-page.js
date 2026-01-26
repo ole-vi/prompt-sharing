@@ -5,8 +5,9 @@ import { waitForFirebase } from '../shared-init.js';
 import { getAuth } from '../modules/firebase-service.js';
 import { calculateAnalytics } from '../modules/analytics.js';
 import { syncActiveSessions } from '../modules/session-tracking.js';
-import { handleError, ErrorCategory } from '../utils/error-handler.js';
+import { handleError } from '../utils/error-handler.js';
 import { TIMEOUTS } from '../utils/constants.js';
+import { createElement, createIcon, toggleVisibility } from '../utils/dom-helpers.js';
 
 let currentAnalytics = null;
 let statusChartInstance = null;
@@ -67,9 +68,9 @@ async function initApp() {
 }
 
 function showNotSignedIn() {
-  document.getElementById('analyticsLoading')?.classList.add('hidden');
-  document.getElementById('analyticsContent')?.classList.add('hidden');
-  document.getElementById('analyticsNotSignedIn')?.classList.remove('hidden');
+  toggleVisibility(document.getElementById('analyticsLoading'), false);
+  toggleVisibility(document.getElementById('analyticsContent'), false);
+  toggleVisibility(document.getElementById('analyticsNotSignedIn'), true);
 }
 
 async function loadAnalytics() {
@@ -78,9 +79,9 @@ async function loadAnalytics() {
   const notSignedInDiv = document.getElementById('analyticsNotSignedIn');
 
   try {
-    loadingDiv?.classList.remove('hidden');
-    contentDiv?.classList.add('hidden');
-    notSignedInDiv?.classList.add('hidden');
+    toggleVisibility(loadingDiv, true);
+    toggleVisibility(contentDiv, false);
+    toggleVisibility(notSignedInDiv, false);
 
     // Get date range
     const dateRange = getSelectedDateRange();
@@ -97,8 +98,8 @@ async function loadAnalytics() {
     renderRepoPerformance(currentAnalytics);
     renderRecentPRs(currentAnalytics);
 
-    loadingDiv?.classList.add('hidden');
-    contentDiv?.classList.remove('hidden');
+    toggleVisibility(loadingDiv, false);
+    toggleVisibility(contentDiv, true);
   } catch (error) {
     handleError(error, { source: 'loadAnalytics' });
     loadingDiv?.classList.add('hidden');
@@ -272,11 +273,12 @@ function renderTopPrompts(analytics) {
   const container = document.getElementById('topPromptsContainer');
   if (!container) return;
 
+  container.textContent = '';
+
   const prompts = Object.entries(analytics.promptMetrics)
     .map(([path, metric]) => ({ path, ...metric }))
     .filter(p => p.total > 0)
     .sort((a, b) => {
-      // Sort by success rate first, then by total uses
       if (Math.abs(b.successRate - a.successRate) > 0.01) {
         return b.successRate - a.successRate;
       }
@@ -285,56 +287,65 @@ function renderTopPrompts(analytics) {
     .slice(0, 10);
 
   if (prompts.length === 0) {
-    container.innerHTML = '<p class="muted">No prompts used yet</p>';
+    const emptyMsg = createElement('p', 'muted small-text text-center pad-lg', 'No prompts used yet');
+    container.appendChild(emptyMsg);
     return;
   }
 
-  container.innerHTML = prompts.map((prompt, index) => {
+  prompts.forEach((prompt, index) => {
     const successRate = (prompt.successRate * 100).toFixed(0);
     const prRate = (prompt.prRate * 100).toFixed(0);
     const displayPath = prompt.path.replace(/^prompts\//, '');
     const badgeClass = prompt.successRate >= 0.8 ? 'success' : prompt.successRate >= 0.5 ? 'warn' : 'danger';
     
-    return `
-      <div class="item">
-        <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
-          <span class="pill" style="min-width: 28px; justify-content: center;">${index + 1}</span>
-          <div style="min-width: 0; flex: 1;">
-            <div class="item-title">${displayPath}</div>
-            <div class="item-meta">
-              ${prompt.total} use${prompt.total !== 1 ? 's' : ''} • 
-              ${successRate}% success • 
-              ${prRate}% with PRs
-            </div>
-          </div>
-        </div>
-        <span class="status-badge status-badge--${badgeClass}">
-          ${successRate}%
-        </span>
-      </div>
-    `;
-  }).join('');
+    const item = createElement('div', 'item');
+    
+    const content = createElement('div', 'prompt-item__content');
+    
+    const rank = createElement('span', 'pill prompt-item__rank', String(index + 1));
+    
+    const details = createElement('div', 'prompt-item__details');
+    const title = createElement('div', 'item-title', displayPath);
+    const meta = createElement('div', 'item-meta');
+    meta.textContent = `${prompt.total} use${prompt.total !== 1 ? 's' : ''} • ${successRate}% success • ${prRate}% with PRs`;
+    
+    details.appendChild(title);
+    details.appendChild(meta);
+    content.appendChild(rank);
+    content.appendChild(details);
+    
+    const badge = createElement('span', `status-badge status-badge--${badgeClass}`, `${successRate}%`);
+    
+    item.appendChild(content);
+    item.appendChild(badge);
+    container.appendChild(item);
+  });
 }
 
 function renderFailureAnalysis(analytics) {
   const container = document.getElementById('failureAnalysisContainer');
   if (!container) return;
 
+  container.textContent = '';
+
   if (analytics.failedSessions === 0) {
-    container.innerHTML = '<p class="muted small-text text-center pad-lg">No failures recorded 🎉</p>';
+    const emptyMsg = createElement('p', 'muted small-text text-center pad-lg', 'No failures recorded 🎉');
+    container.appendChild(emptyMsg);
     return;
   }
 
-  const items = [];
+  const grid = createElement('div', 'failure-grid');
   
   // Total failures
-  items.push(`
-    <div class="failure-item">
-      <div class="failure-item__label">Total Failures</div>
-      <div class="failure-item__value">${analytics.failedSessions}</div>
-      <div class="failure-item__desc">${((analytics.failedSessions / analytics.totalSessions) * 100).toFixed(1)}% of sessions</div>
-    </div>
-  `);
+  const totalItem = createElement('div', 'failure-item');
+  const totalLabel = createElement('div', 'failure-item__label', 'Total Failures');
+  const totalValue = createElement('div', 'failure-item__value', String(analytics.failedSessions));
+  const totalDesc = createElement('div', 'failure-item__desc', 
+    `${((analytics.failedSessions / analytics.totalSessions) * 100).toFixed(1)}% of sessions`);
+  totalItem.appendChild(totalLabel);
+  totalItem.appendChild(totalValue);
+  totalItem.appendChild(totalDesc);
+  grid.appendChild(totalItem);
   
   // Failure reasons
   Object.entries(analytics.failureReasons)
@@ -342,21 +353,25 @@ function renderFailureAnalysis(analytics) {
     .slice(0, 5)
     .forEach(([reason, count]) => {
       const displayReason = reason.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-      items.push(`
-        <div class="failure-item">
-          <div class="failure-item__label">${displayReason}</div>
-          <div class="failure-item__value">${count}</div>
-          <div class="failure-item__desc">${((count / analytics.failedSessions) * 100).toFixed(0)}% of failures</div>
-        </div>
-      `);
+      const item = createElement('div', 'failure-item');
+      const label = createElement('div', 'failure-item__label', displayReason);
+      const value = createElement('div', 'failure-item__value', String(count));
+      const desc = createElement('div', 'failure-item__desc', 
+        `${((count / analytics.failedSessions) * 100).toFixed(0)}% of failures`);
+      item.appendChild(label);
+      item.appendChild(value);
+      item.appendChild(desc);
+      grid.appendChild(item);
     });
 
-  container.innerHTML = `<div class="failure-grid">${items.join('')}</div>`;
+  container.appendChild(grid);
 }
 
 function renderRepoPerformance(analytics) {
   const container = document.getElementById('repoPerformanceContainer');
   if (!container) return;
+
+  container.textContent = '';
 
   const repos = Object.entries(analytics.repoMetrics)
     .map(([id, metric]) => ({ id, ...metric }))
@@ -364,61 +379,71 @@ function renderRepoPerformance(analytics) {
     .slice(0, 10);
 
   if (repos.length === 0) {
-    container.innerHTML = '<p class="muted small-text text-center pad-lg">No repository data</p>';
+    const emptyMsg = createElement('p', 'muted small-text text-center pad-lg', 'No repository data');
+    container.appendChild(emptyMsg);
     return;
   }
 
-  container.innerHTML = repos.map(repo => {
-    const successRate = (repo.successRate * 100).toFixed(0);
+  repos.forEach(repo => {
     const prRate = (repo.prRate * 100).toFixed(0);
     const displayName = repo.id.replace('sources/github/', '');
     const avgDuration = repo.avgDurationMinutes ? `${repo.avgDurationMinutes} min avg` : 'N/A';
     const badgeClass = repo.prRate >= 0.7 ? 'success' : repo.prRate >= 0.4 ? 'warn' : 'danger';
     
-    return `
-      <div class="item">
-        <div style="min-width: 0; flex: 1;">
-          <div class="item-title">${displayName}</div>
-          <div class="item-meta">
-            ${repo.total} session${repo.total !== 1 ? 's' : ''} • 
-            ${repo.withPRs} PR${repo.withPRs !== 1 ? 's' : ''} • 
-            ${avgDuration}
-          </div>
-        </div>
-        <span class="status-badge status-badge--${badgeClass}">
-          ${prRate}% PRs
-        </span>
-      </div>
-    `;
-  }).join('');
+    const item = createElement('div', 'item');
+    
+    const content = createElement('div', 'repo-item__content');
+    const title = createElement('div', 'item-title', displayName);
+    const meta = createElement('div', 'item-meta');
+    meta.textContent = `${repo.total} session${repo.total !== 1 ? 's' : ''} • ${repo.withPRs} PR${repo.withPRs !== 1 ? 's' : ''} • ${avgDuration}`;
+    
+    content.appendChild(title);
+    content.appendChild(meta);
+    
+    const badge = createElement('span', `status-badge status-badge--${badgeClass}`, `${prRate}% PRs`);
+    
+    item.appendChild(content);
+    item.appendChild(badge);
+    container.appendChild(item);
+  });
 }
 
 function renderRecentPRs(analytics) {
   const container = document.getElementById('recentPRsContainer');
   if (!container) return;
 
+  container.textContent = '';
+
   const recentPRs = analytics.prUrls.slice(0, 10);
 
   if (recentPRs.length === 0) {
-    container.innerHTML = '<p class="muted small-text text-center pad-lg">No PRs created yet</p>';
+    const emptyMsg = createElement('p', 'muted small-text text-center pad-lg', 'No PRs created yet');
+    container.appendChild(emptyMsg);
     return;
   }
 
-  container.innerHTML = recentPRs.map(pr => {
-    return `
-      <div class="item">
-        <div style="min-width: 0; flex: 1;">
-          <div class="item-title">${pr.title || 'Pull Request'}</div>
-          <div class="item-meta">
-            <a href="${pr.url}" target="_blank" rel="noopener" class="pr-link">
-              <span class="icon icon-inline" aria-hidden="true">open_in_new</span>
-              View PR
-            </a>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
+  recentPRs.forEach(pr => {
+    const item = createElement('div', 'item');
+    
+    const content = createElement('div', 'pr-item__content');
+    const title = createElement('div', 'item-title', pr.title || 'Pull Request');
+    
+    const meta = createElement('div', 'item-meta');
+    const link = document.createElement('a');
+    link.href = pr.url;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.className = 'pr-link';
+    const icon = createIcon('open_in_new', 'icon-inline');
+    link.appendChild(icon);
+    link.appendChild(document.createTextNode(' View PR'));
+    meta.appendChild(link);
+    
+    content.appendChild(title);
+    content.appendChild(meta);
+    item.appendChild(content);
+    container.appendChild(item);
+  });
 }
 
 // Initialize when DOM is ready
