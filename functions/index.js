@@ -113,6 +113,40 @@ exports.runJules = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError("internal", "Jules did not return a session URL");
     }
 
+    // Track session in Firestore
+    try {
+      const sessionId = json.name?.split('sessions/')[1] || json.id?.split('sessions/')[1] || json.id;
+      if (sessionId) {
+        await db.doc(`juleSessions/${context.auth.uid}/sessions/${sessionId}`).set({
+          sessionId: sessionId,
+          sessionName: json.name || `sessions/${sessionId}`,
+          promptPath: (data && data.promptPath) || null,
+          promptContent: promptText,
+          sourceId: sourceId,
+          branch: branch,
+          title: (data && data.title) || 'Unnamed Session',
+          status: json.state || 'UNKNOWN',
+          hasPR: false,
+          prUrl: null,
+          prTitle: null,
+          prDescription: null,
+          hasPlan: false,
+          planStepCount: 0,
+          failureStep: null,
+          failureReason: null,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          completedAt: null,
+          lastSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
+          queueItemId: (data && data.queueItemId) || null,
+          userId: context.auth.uid
+        });
+        console.log(`Session ${sessionId} tracked in Firestore for user ${context.auth.uid}`);
+      }
+    } catch (trackError) {
+      console.error('Failed to track session:', trackError.message);
+      // Don't fail the request if tracking fails
+    }
+
     return { sessionUrl: json.url };
 
   } catch (error) {
@@ -224,7 +258,41 @@ exports.runJulesHttp = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    res.json({ sessionUrl: json.url });
+    // Track session in Firestore
+    try {
+      const sessionId = json.name?.split('sessions/')[1] || json.id?.split('sessions/')[1] || json.id;
+      if (sessionId) {
+        await db.collection('juleSessions').doc(uid).collection('sessions').doc(sessionId).set({
+          sessionId: sessionId,
+          sessionName: json.name || `sessions/${sessionId}`,
+          promptPath: req.body.promptPath || null,
+          promptContent: promptText,
+          sourceId: source,
+          branch: startingBranch,
+          title: req.body.title || 'Unnamed Session',
+          status: json.state || 'UNKNOWN',
+          hasPR: false,
+          prUrl: null,
+          prTitle: null,
+          prDescription: null,
+          hasPlan: false,
+          planStepCount: 0,
+          failureStep: null,
+          failureReason: null,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          completedAt: null,
+          lastSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
+          queueItemId: req.body.queueItemId || null,
+          userId: uid
+        });
+        console.log(`Session ${sessionId} tracked in Firestore for user ${uid}`);
+      }
+    } catch (trackError) {
+      console.error('Failed to track session:', trackError.message);
+      // Don't fail the request if tracking fails
+    }
+
+    res.json({ sessionUrl: json.url, sessionId: sessionId || null });
 
   } catch (error) {
     console.error('Error in runJulesHttp:', error.message);
