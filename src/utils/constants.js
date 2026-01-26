@@ -22,9 +22,6 @@ export const STORAGE_KEY_FAVORITE_REPOS = "jules_favorite_repos";
 // Hardcoded favorite branches (always favorites for all users)
 export const HARDCODED_FAVORITE_BRANCHES = ["main", "web-captures"];
 
-// User branches (branch names representing individual users)
-export const USER_BRANCHES = ['dogi', 'jesse', 'saksham'];
-
 export const STORAGE_KEY_FAVORITE_BRANCHES = "favorite_branches";
 
 // Tag definitions
