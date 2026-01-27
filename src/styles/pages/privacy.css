@@ -1,0 +1,19 @@
+/* Page: Privacy */
+
+body[data-page="privacy"] .card {
+  max-width: 900px;
+  margin: 40px auto;
+}
+
+.privacy__section {
+  margin-top: 32px;
+}
+
+.privacy__heading {
+  margin-top: 20px;
+}
+
+.privacy__footer-actions {
+  margin-top: 48px;
+  text-align: center;
+}
