@@ -1,40 +1,36 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-
-// We need to import these dynamically after resetModules
-let promptRenderer;
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { initPromptRenderer, selectFile } from '../../modules/prompt-renderer.js';
 
 // Mock dependencies
-vi.mock('../utils/slug.js', () => ({
+vi.mock('../../utils/slug.js', () => ({
   slugify: vi.fn((str) => str.toLowerCase().replace(/\s+/g, '-'))
 }));
 
-vi.mock('../modules/github-api.js', () => ({
+vi.mock('../../modules/github-api.js', () => ({
   isGistUrl: vi.fn(),
   resolveGistRawUrl: vi.fn(),
   fetchGistContent: vi.fn(),
-  fetchRawFile: vi.fn()
+  fetchRawFile: vi.fn().mockResolvedValue('# Test')
 }));
 
-vi.mock('../utils/constants.js', () => ({
+vi.mock('../../utils/constants.js', () => ({
   CODEX_URL_REGEX: /codex\//,
   TIMEOUTS: { shortDelay: 100 },
-  CACHE_DURATIONS: { short: 300000, session: 0 },
-  COPEN_DEFAULT_LABEL: 'Copy & Open',
-  COPEN_DEFAULT_ICON: 'content_copy',
-  COPEN_OPTIONS: [],
-  COPEN_STORAGE_KEY: 'copen-key'
+  CACHE_DURATIONS: { short: 300000, session: 0 }
 }));
 
-vi.mock('../utils/dom-helpers.js', () => ({
+vi.mock('../../utils/dom-helpers.js', () => ({
   setElementDisplay: vi.fn(),
   toggleVisibility: vi.fn()
 }));
 
-vi.mock('../utils/lazy-loaders.js', () => ({
-  loadMarked: vi.fn()
+vi.mock('../../utils/lazy-loaders.js', () => ({
+  loadMarked: vi.fn().mockResolvedValue({
+    parse: vi.fn().mockReturnValue('<p>Test content</p>')
+  })
 }));
 
-vi.mock('../modules/prompt-list.js', () => ({
+vi.mock('../../modules/prompt-list.js', () => ({
   ensureAncestorsExpanded: vi.fn(),
   loadExpandedState: vi.fn(),
   persistExpandedState: vi.fn(),
@@ -45,18 +41,17 @@ vi.mock('../modules/prompt-list.js', () => ({
   getFiles: vi.fn().mockReturnValue([])
 }));
 
-vi.mock('../modules/toast.js', () => ({ showToast: vi.fn() }));
-vi.mock('../modules/copen.js', () => ({ copyAndOpen: vi.fn() }));
-vi.mock('../modules/status-bar.js', () => ({
-  default: { setActivity: vi.fn(), clearActivity: vi.fn(), showMessage: vi.fn() },
-  statusBar: { setActivity: vi.fn(), clearActivity: vi.fn(), showMessage: vi.fn() }
+vi.mock('../../modules/toast.js', () => ({ showToast: vi.fn() }));
+vi.mock('../../modules/copen.js', () => ({ copyAndOpen: vi.fn() }));
+vi.mock('../../modules/status-bar.js', () => ({
+  default: { setActivity: vi.fn(), clearActivity: vi.fn(), showMessage: vi.fn() }
 }));
-vi.mock('../utils/clipboard.js', () => ({ copyText: vi.fn().mockResolvedValue(true) }));
-vi.mock('../modules/split-button.js', () => ({
+vi.mock('../../utils/clipboard.js', () => ({ copyText: vi.fn().mockResolvedValue(true) }));
+vi.mock('../../modules/split-button.js', () => ({
   initSplitButton: vi.fn(),
   destroySplitButton: vi.fn()
 }));
-vi.mock('../utils/copen-config.js', () => ({
+vi.mock('../../utils/copen-config.js', () => ({
   COPEN_OPTIONS: [],
   COPEN_STORAGE_KEY: 'key',
   COPEN_DEFAULT_LABEL: 'label',
@@ -87,10 +82,7 @@ global.Blob = vi.fn();
 describe('Prompt Renderer Hardening', () => {
   let mockDOMPurify;
 
-  beforeEach(async () => {
-    vi.resetModules();
-    vi.clearAllMocks();
-
+  beforeAll(() => {
     // Mock DOMPurify specifically for this test
     mockDOMPurify = {
       _hooks: {},
@@ -133,42 +125,32 @@ describe('Prompt Renderer Hardening', () => {
     });
 
     global.document.createElement.mockImplementation((tag) => {
-        return { ...mockElement, tagName: tag.toUpperCase() };
+      return { ...mockElement, tagName: tag.toUpperCase() };
     });
-
-    // Re-import modules to reset state
-    const lazyLoaders = await import('../../utils/lazy-loaders.js');
-    lazyLoaders.loadMarked.mockResolvedValue({
-      parse: vi.fn().mockReturnValue('<p>Test content</p>')
-    });
-
-    const githubApi = await import('../../modules/github-api.js');
-    githubApi.fetchRawFile.mockResolvedValue('# Test');
-
-    promptRenderer = await import('../../modules/prompt-renderer.js');
-    promptRenderer.initPromptRenderer();
+    
+    initPromptRenderer();
   });
 
   it('should register afterSanitizeAttributes hook on file selection', async () => {
     const mockFile = { path: 'test.md', name: 'test.md', slug: 'test', type: 'file' };
-    await promptRenderer.selectFile(mockFile, true, 'owner', 'repo', 'main');
+    await selectFile(mockFile, true, 'owner', 'repo', 'main');
 
     expect(mockDOMPurify.addHook).toHaveBeenCalledWith('afterSanitizeAttributes', expect.any(Function));
   });
 
   it('should force target="_blank" and rel="noopener noreferrer" on links via hook', async () => {
     const mockFile = { path: 'test.md', name: 'test.md', slug: 'test', type: 'file' };
-    await promptRenderer.selectFile(mockFile, true, 'owner', 'repo', 'main');
+    await selectFile(mockFile, true, 'owner', 'repo', 'main');
 
     const hook = mockDOMPurify._hooks['afterSanitizeAttributes'];
     expect(hook).toBeDefined();
 
     // Create a real-like mock element for the hook test
     const linkNode = {
-        tagName: 'A',
-        attributes: {},
-        getAttribute: vi.fn(function(attr) { return this.attributes[attr]; }),
-        setAttribute: vi.fn(function(attr, val) { this.attributes[attr] = val; }),
+      tagName: 'A',
+      attributes: {},
+      getAttribute: vi.fn(function(attr) { return this.attributes[attr]; }),
+      setAttribute: vi.fn(function(attr, val) { this.attributes[attr] = val; }),
     };
 
     hook(linkNode);
@@ -181,15 +163,15 @@ describe('Prompt Renderer Hardening', () => {
 
   it('should add rel="noopener noreferrer" if target="_blank" is present on non-links', async () => {
     const mockFile = { path: 'test.md', name: 'test.md', slug: 'test', type: 'file' };
-    await promptRenderer.selectFile(mockFile, true, 'owner', 'repo', 'main');
+    await selectFile(mockFile, true, 'owner', 'repo', 'main');
 
     const hook = mockDOMPurify._hooks['afterSanitizeAttributes'];
 
     const divNode = {
-        tagName: 'DIV',
-        attributes: { 'target': '_blank' },
-        getAttribute: vi.fn(function(attr) { return this.attributes[attr]; }),
-        setAttribute: vi.fn(function(attr, val) { this.attributes[attr] = val; }),
+      tagName: 'DIV',
+      attributes: { 'target': '_blank' },
+      getAttribute: vi.fn(function(attr) { return this.attributes[attr]; }),
+      setAttribute: vi.fn(function(attr, val) { this.attributes[attr] = val; }),
     };
 
     hook(divNode);
@@ -198,10 +180,16 @@ describe('Prompt Renderer Hardening', () => {
   });
 
   it('should not register hook multiple times', async () => {
-    const mockFile = { path: 'test.md', name: 'test.md', slug: 'test', type: 'file' };
-    await promptRenderer.selectFile(mockFile, true, 'owner', 'repo', 'main');
-    await promptRenderer.selectFile(mockFile, true, 'owner', 'repo', 'main');
-
-    expect(mockDOMPurify.addHook).toHaveBeenCalledTimes(1);
+    // The hook was already registered in previous tests
+    // This test verifies the hook count doesn't increase
+    const callCountBefore = mockDOMPurify.addHook.mock.calls.length;
+    
+    const mockFile = { path: 'test2.md', name: 'test2.md', slug: 'test2', type: 'file' };
+    await selectFile(mockFile, true, 'owner', 'repo', 'main');
+    
+    const callCountAfter = mockDOMPurify.addHook.mock.calls.length;
+    
+    // Should not have called addHook again
+    expect(callCountAfter).toBe(callCountBefore);
   });
 });
