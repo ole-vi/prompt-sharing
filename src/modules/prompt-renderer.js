@@ -11,12 +11,27 @@ import statusBar from './status-bar.js';
 import { initSplitButton, destroySplitButton } from './split-button.js';
 import { COPEN_OPTIONS, COPEN_STORAGE_KEY, COPEN_DEFAULT_LABEL, COPEN_DEFAULT_ICON } from '../utils/copen-config.js';
 
+let domPurifyHooksInitialized = false;
+
 function sanitizeHtml(html) {
   if (typeof window.DOMPurify === 'undefined') {
     console.error('DOMPurify not loaded - stripping all HTML tags as safety fallback');
     const div = document.createElement('div');
     div.textContent = html;
     return div.innerHTML;
+  }
+
+  if (!domPurifyHooksInitialized) {
+    window.DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+      if (node.tagName === 'A') {
+        node.setAttribute('target', '_blank');
+      }
+
+      if (node.getAttribute('target') === '_blank') {
+        node.setAttribute('rel', 'noopener noreferrer');
+      }
+    });
+    domPurifyHooksInitialized = true;
   }
 
   const config = {
