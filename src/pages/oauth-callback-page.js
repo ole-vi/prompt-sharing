@@ -69,7 +69,11 @@ import { TIMEOUTS } from '../utils/constants.js';
     const spinner = document.querySelector('.spinner');
     spinner.style.display = 'none';
     messageEl.style.display = 'none';
-    statusDiv.innerHTML = `<div class="error">${message}</div>`;
+    statusDiv.innerHTML = '';
+    const div = document.createElement('div');
+    div.className = 'error';
+    div.textContent = message;
+    statusDiv.appendChild(div);
   }
 
   function showSuccess(message) {
@@ -77,6 +81,10 @@ import { TIMEOUTS } from '../utils/constants.js';
     const spinner = document.querySelector('.spinner');
     spinner.style.display = 'none';
     messageEl.style.display = 'none';
-    statusDiv.innerHTML = `<div class="success">${message}</div>`;
+    statusDiv.innerHTML = '';
+    const div = document.createElement('div');
+    div.className = 'success';
+    div.textContent = message;
+    statusDiv.appendChild(div);
   }
 })();
