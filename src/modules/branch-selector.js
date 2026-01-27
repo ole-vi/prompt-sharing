@@ -1,3 +1,4 @@
+import { getDb } from './firebase-service.js';
 import { FEATURE_PATTERNS, STORAGE_KEYS, HARDCODED_FAVORITE_BRANCHES } from '../utils/constants.js';
 import { getBranches } from './github-api.js';
 import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
@@ -99,13 +100,14 @@ export function getCurrentRepo() {
  */
 async function loadFavoriteBranches() {
   const user = getCurrentUser();
-  if (!user || !window.db) {
+  const db = getDb();
+  if (!user || !db) {
     favoriteBranches = [...HARDCODED_FAVORITE_BRANCHES];
     return;
   }
 
   try {
-    const doc = await window.db.collection('users').doc(user.uid).get();
+    const doc = await db.collection('users').doc(user.uid).get();
     if (doc.exists && doc.data().favoriteBranches) {
       // Merge user favorites with hardcoded favorites
       const userFavorites = doc.data().favoriteBranches || [];
@@ -124,7 +126,8 @@ async function loadFavoriteBranches() {
  */
 async function saveFavoriteBranches(newFavorites) {
   const user = getCurrentUser();
-  if (!user || !window.db) {
+  const db = getDb();
+  if (!user || !db) {
     return;
   }
 
@@ -132,7 +135,7 @@ async function saveFavoriteBranches(newFavorites) {
     // Filter out hardcoded favorites before saving (they're always included)
     const userFavorites = newFavorites.filter(b => !HARDCODED_FAVORITE_BRANCHES.includes(b));
     
-    await window.db.collection('users').doc(user.uid).set({
+    await db.collection('users').doc(user.uid).set({
       favoriteBranches: userFavorites
     }, { merge: true });
     

@@ -1,20 +1,25 @@
 import { getCurrentUser } from './auth.js';
+import { getAuth } from './firebase-service.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { copyAndOpen } from './copen.js';
+import { toggleVisibility } from '../utils/dom-helpers.js';
 import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';
+import { initSplitButton } from './split-button.js';
+import { COPEN_OPTIONS, COPEN_STORAGE_KEY, COPEN_DEFAULT_LABEL, COPEN_DEFAULT_ICON } from '../utils/copen-config.js';
 // Lazy loaded: jules-keys, jules-modal, jules-queue
 
 let _lastSelectedSourceId = null;
 let _lastSelectedBranch = null;
 let _branchChangeListenerAdded = false;
+let _freeInputCopenSplitBtn = null;
 
 export function getLastSelectedSource() {
   return { sourceId: _lastSelectedSourceId, branch: _lastSelectedBranch };
 }
 
 export function showFreeInputModal() {
-  const user = window.auth ? window.auth.currentUser : null;
+  const user = getAuth()?.currentUser || null;
   if (!user) {
     (async () => {
       try {
@@ -32,7 +37,7 @@ export function showFreeInputModal() {
 }
 
 export async function handleFreeInputAfterAuth() {
-  const user = window.auth ? window.auth.currentUser : null;
+  const user = getAuth()?.currentUser || null;
   if (!user) {
     showToast('Not logged in.', 'error');
     return;
@@ -63,25 +68,34 @@ export function showFreeInputForm() {
   const actions = document.getElementById('actions');
   const content = document.getElementById('content');
   
+  // Gracefully handle missing Free Input elements in non-UI contexts (e.g., tests)
+  if (!freeInputSection) {
+    console.warn('Free Input section not found; skipping UI rendering');
+    return;
+  }
+  
   empty.classList.add('hidden');
   if (title) title.classList.add('hidden');
   if (meta) meta.classList.add('hidden');
   if (actions) actions.classList.add('hidden');
   if (content) {
-    content.classList.add('hidden');
+    toggleVisibility(content, false);
   }
   
-  freeInputSection.classList.remove('hidden');
+  toggleVisibility(freeInputSection, true);
   
   const textarea = document.getElementById('freeInputTextarea');
   const submitBtn = document.getElementById('freeInputSubmitBtn');
   const queueBtn = document.getElementById('freeInputQueueBtn');
   const splitBtn = document.getElementById('freeInputSplitBtn');
   const saveBtn = document.getElementById('freeInputSaveBtn');
-  const copenBtn = document.getElementById('freeInputCopenBtn');
   const cancelBtn = document.getElementById('freeInputCancelBtn');
+  const copenContainer = document.getElementById('freeInputCopenContainer');
   
-  const originalCopenContent = Array.from(copenBtn.childNodes).map(node => node.cloneNode(true));
+  if (!textarea || !submitBtn || !queueBtn || !splitBtn || !saveBtn || !cancelBtn || !copenContainer) {
+    console.warn('Free Input controls not found; skipping UI rendering');
+    return;
+  }
 
   textarea.value = '';
   
@@ -256,26 +270,6 @@ export function showFreeInputForm() {
     }
   };
 
-  const handleCopen = async (target) => {
-    const promptText = validatePromptText();
-    if (!promptText) return;
-
-    const success = await copyAndOpen(target, promptText);
-
-    if (success) {
-      copenBtn.replaceChildren();
-      const icon = document.createElement('span');
-      icon.className = 'icon icon-inline';
-      icon.setAttribute('aria-hidden', 'true');
-      icon.textContent = 'check_circle';
-      copenBtn.appendChild(icon);
-      copenBtn.appendChild(document.createTextNode(' Copied!'));
-      setTimeout(() => {
-        copenBtn.replaceChildren(...originalCopenContent.map(node => node.cloneNode(true)));
-      }, TIMEOUTS.copyFeedback);
-    }
-  };
-
   const handleCancel = () => {
     hideFreeInputForm();
   };
@@ -340,7 +334,7 @@ export function showFreeInputForm() {
       return;
     }
 
-    const user = window.auth?.currentUser;
+    const user = getAuth()?.currentUser;
     if (!user) {
       showToast('Please sign in to queue prompts.', 'warn');
       return;
@@ -362,32 +356,21 @@ export function showFreeInputForm() {
     }
   };
 
-  const copenMenu = document.getElementById('freeInputCopenMenu');
-  
-  copenBtn.onclick = (e) => {
-    e.stopPropagation();
-    if (copenMenu) {
-      copenMenu.classList.toggle('hidden');
-    }
-  };
-  
-  if (copenMenu) {
-    copenMenu.querySelectorAll('.custom-dropdown-item').forEach(item => {
-      item.onclick = async (e) => {
-        e.stopPropagation();
-        const target = item.dataset.target;
-        await handleCopen(target);
-        copenMenu.classList.add('hidden');
-      };
+  // Initialize split button for copen if not already initialized
+  if (!_freeInputCopenSplitBtn && copenContainer) {
+    _freeInputCopenSplitBtn = initSplitButton({
+      container: copenContainer,
+      defaultLabel: COPEN_DEFAULT_LABEL,
+      defaultIcon: COPEN_DEFAULT_ICON,
+      options: COPEN_OPTIONS,
+      onAction: async (target) => {
+        const promptText = validatePromptText();
+        if (!promptText) return;
+        await copyAndOpen(target, promptText);
+      },
+      storageKey: COPEN_STORAGE_KEY
     });
   }
-  
-  const closeCopenMenu = (e) => {
-    if (copenMenu && !copenBtn.contains(e.target) && !copenMenu.contains(e.target)) {
-      copenMenu.classList.add('hidden');
-    }
-  };
-  document.addEventListener('click', closeCopenMenu);
 
   submitBtn.onclick = handleSubmit;
   queueBtn.onclick = handleQueue;
@@ -410,14 +393,14 @@ export function hideFreeInputForm() {
   const actions = document.getElementById('actions');
   const content = document.getElementById('content');
   
-  freeInputSection.classList.add('hidden');
+  toggleVisibility(freeInputSection, false);
   
   // Restore the main content area elements
-  empty.classList.remove('hidden');
-  if (title) title.classList.remove('hidden');
-  if (meta) meta.classList.remove('hidden');
-  if (actions) actions.classList.remove('hidden');
-  if (content) content.classList.remove('hidden');
+  toggleVisibility(empty, true);
+  if (title) toggleVisibility(title, true);
+  if (meta) toggleVisibility(meta, true);
+  if (actions) toggleVisibility(actions, true);
+  if (content) toggleVisibility(content, true);
 }
 
 async function populateFreeInputRepoSelection() {

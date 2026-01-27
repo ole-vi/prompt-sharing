@@ -1,10 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// Setup mock auth
+const mockAuth = { currentUser: null };
+
+// Mock firebase-service BEFORE importing github-api
+// Use function declarations so they evaluate at call-time, not definition-time
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(function() { return global.window?.auth !== undefined ? global.window.auth : mockAuth; }),
+  getDb: vi.fn(() => null),
+  getFunctions: vi.fn(() => null)
+}));
+
 import { fetchJSON, listPromptsViaContents } from '../../modules/github-api.js';
 
 describe('GitHub API Module', () => {
     beforeEach(() => {
         global.fetch = vi.fn();
-        window.auth = { currentUser: null };
+        mockAuth.currentUser = null;
+        window.auth = mockAuth;
         localStorage.removeItem('github_access_token');
     });
 
@@ -28,7 +41,8 @@ describe('GitHub API Module', () => {
         });
 
         it('should include auth token if present', async () => {
-            window.auth.currentUser = { providerData: [{ providerId: 'github.com' }] };
+            mockAuth.currentUser = { providerData: [{ providerId: 'github.com' }] };
+            window.auth.currentUser = mockAuth.currentUser;
             localStorage.setItem('github_access_token', JSON.stringify({
                 token: 'gh_token',
                 timestamp: Date.now()

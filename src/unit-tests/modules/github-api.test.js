@@ -1,4 +1,17 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+// Mock firebase-service BEFORE importing github-api
+const mockAuth = {
+  currentUser: null
+};
+
+// Use function declarations so they evaluate at call-time, not definition-time
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(function() { return global.window?.auth !== undefined ? global.window.auth : mockAuth; }),
+  getDb: vi.fn(() => null),
+  getFunctions: vi.fn(() => null)
+}));
+
 import {
   setViaProxy,
   fetchJSON,
@@ -10,18 +23,18 @@ import {
   fetchGistContent,
   isGistPointer,
   isGistUrl,
-  getBranches
+  getBranches,
+  getRateLimitInfo,
+  clearCaches
 } from '../../modules/github-api.js';
 
 // Mock global fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-// Mock window.auth
-const mockAuth = {
-  currentUser: null
-};
-global.window = { auth: mockAuth };
+// Keep window.auth for backward compatibility with tests
+global.window = global.window || {};
+global.window.auth = mockAuth;
 
 // Mock localStorage
 const mockLocalStorage = (() => {
@@ -52,10 +65,16 @@ const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
 
 describe('github-api', () => {
   beforeEach(() => {
+    // Clear all mocks including implementations
+    mockFetch.mockClear();
+    mockFetch.mockReset();
     vi.clearAllMocks();
     mockAuth.currentUser = null;
     mockLocalStorage.clear();
     mockConsoleError.mockClear();
+    
+    // Clear module caches
+    clearCaches();
     
     // Reset proxy function to default (identity function)
     setViaProxy((url) => url);
@@ -928,6 +947,10 @@ describe('github-api', () => {
 
   describe('integration and error handling', () => {
     it('should handle token refresh across multiple API calls', async () => {
+      // Mock Date.now for token expiry checks
+      let mockTime = 1000000;
+      vi.spyOn(Date, 'now').mockImplementation(() => mockTime);
+      
       mockAuth.currentUser = {
         providerData: [{ providerId: 'github.com' }]
       };
@@ -948,7 +971,7 @@ describe('github-api', () => {
       expect(result1).toEqual({ data: 'first' });
 
       // Simulate token expiry
-      vi.setSystemTime(1000000 + 60 * 24 * 60 * 60 * 1000 + 1000);
+      mockTime = 1000000 + 60 * 24 * 60 * 60 * 1000 + 1000;
       
       // Second call should work without auth (token expired and removed)
       mockFetch.mockResolvedValueOnce({

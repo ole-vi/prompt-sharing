@@ -7,7 +7,6 @@ describe('constants', () => {
       expect(constants.OWNER).toBe('promptroot');
       expect(constants.REPO).toBe('promptroot');
       expect(constants.BRANCH).toBe('main');
-      expect(constants.PRETTY_TITLES).toBe(true);
     });
 
     it('should export Jules API configuration', () => {
@@ -151,10 +150,6 @@ describe('constants', () => {
   });
 
   describe('branch classification', () => {
-    it('should define user branches', () => {
-      expect(constants.USER_BRANCHES).toEqual(['dogi', 'jesse', 'saksham']);
-    });
-
     it('should define feature patterns', () => {
       expect(constants.FEATURE_PATTERNS).toEqual([
         'codex/', 'feature/', 'fix/', 'bugfix/', 'hotfix/'

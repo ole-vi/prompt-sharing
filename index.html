@@ -96,16 +96,13 @@
         <div class="actions-right">
           <button id="freeInputSplitBtn" class="btn" title="Split into Subtasks"><span class="icon icon-inline" aria-hidden="true">content_cut</span> Split</button>
           <button id="freeInputSaveBtn" class="btn" title="Save content as a new prompt file"><span class="icon icon-inline" aria-hidden="true">save</span> Save</button>
-          <div class="menu-anchor">
-            <button id="freeInputCopenBtn" class="btn" title="Copy prompt and open in new tab"><span class="icon icon-inline" aria-hidden="true">open_in_new</span> Copen ▼</button>
-            <div id="freeInputCopenMenu" class="menu-panel menu-panel-sm menu-panel--above hidden">
-              <div class="custom-dropdown-item" data-target="blank"><span class="icon icon-inline" aria-hidden="true">public</span> Blank</div>
-              <div class="custom-dropdown-item" data-target="claude"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Claude</div>
-              <div class="custom-dropdown-item" data-target="codex"><span class="icon icon-inline" aria-hidden="true">forum</span> Codex</div>
-              <div class="custom-dropdown-item" data-target="copilot"><span class="icon icon-inline" aria-hidden="true">code</span> Copilot</div>
-              <div class="custom-dropdown-item" data-target="gemini"><span class="icon icon-inline" aria-hidden="true">auto_awesome</span> Gemini</div>
-              <div class="custom-dropdown-item" data-target="chatgpt"><span class="icon icon-inline" aria-hidden="true">chat</span> ChatGPT</div>
-            </div>
+          <div id="freeInputCopenContainer" class="split-btn" title="Copy prompt and open in new tab">
+            <button class="split-btn__action" aria-label="Copy and open in selected app">
+              <span class="icon icon-inline" aria-hidden="true">open_in_new</span>
+              <span>Copen</span>
+            </button>
+            <button class="split-btn__toggle" aria-label="Select app" aria-haspopup="true" aria-expanded="false"></button>
+            <div class="split-btn__menu"></div>
           </div>
           <button id="freeInputCancelBtn" class="btn"><span class="icon icon-inline" aria-hidden="true">clear</span> Clear</button>
           <button id="freeInputQueueBtn" class="btn"><span class="icon icon-inline" aria-hidden="true">schedule</span> Queue</button>
@@ -117,16 +114,13 @@
       <div id="meta" class="hidden"></div>
       <div id="actions" class="hidden">
         <button class="btn" id="copyBtn" title="Copy the entire prompt"><span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy</button>
-        <div class="menu-anchor">
-          <button class="btn" id="copenBtn" title="Copy prompt and open in new tab"><span class="icon icon-inline" aria-hidden="true">open_in_new</span> Copen ▼</button>
-          <div id="copenMenu" class="menu-panel menu-panel-sm menu-panel--below-left hidden">
-            <div class="custom-dropdown-item" data-target="blank"><span class="icon icon-inline" aria-hidden="true">public</span> Blank</div>
-            <div class="custom-dropdown-item" data-target="claude"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Claude</div>
-            <div class="custom-dropdown-item" data-target="codex"><span class="icon icon-inline" aria-hidden="true">forum</span> Codex</div>
-            <div class="custom-dropdown-item" data-target="copilot"><span class="icon icon-inline" aria-hidden="true">code</span> Copilot</div>
-            <div class="custom-dropdown-item" data-target="gemini"><span class="icon icon-inline" aria-hidden="true">auto_awesome</span> Gemini</div>
-            <div class="custom-dropdown-item" data-target="chatgpt"><span class="icon icon-inline" aria-hidden="true">chat</span> ChatGPT</div>
-          </div>
+        <div id="copenContainer" class="split-btn" title="Copy prompt and open in new tab">
+          <button class="split-btn__action" aria-label="Copy and open in selected app">
+            <span class="icon icon-inline" aria-hidden="true">open_in_new</span>
+            <span>Copen</span>
+          </button>
+          <button class="split-btn__toggle" aria-label="Select app" aria-haspopup="true" aria-expanded="false"></button>
+          <div class="split-btn__menu"></div>
         </div>
         <button class="btn" id="julesBtn" title="Try this prompt in Jules"><span class="icon icon-inline" aria-hidden="true">smart_toy</span> Try in Jules</button>
         <button class="btn" id="queueBtn" title="Add this prompt to queue"><span class="icon icon-inline" aria-hidden="true">list_alt</span> Queue</button>
@@ -165,8 +159,6 @@
     <div class="modal-content">
       <h2 id="julesEnvModalTitle">Choose Repository</h2>
       <p>Select a connected repository to open in Jules.</p>
-      
-      <div id="favoriteReposContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
       
       <div id="allReposContainer" class="mb-md">
         <div class="form-row">
@@ -260,14 +252,14 @@
   </div>
 
   <footer>
-    <div style="text-align: center;">
-      <a href="https://github.com/promptroot/promptroot/blob/main/README.md" target="_blank" rel="noopener" style="color: var(--muted); text-decoration: none;">Help</a>
-      <span style="margin: 0 12px;">•</span>
-      <button id="footerFeedbackBtn" style="color: var(--muted); text-decoration: none; background: none; border: none; cursor: pointer; font: inherit; padding: 0;">Feedback</button>
-      <span style="margin: 0 12px;">•</span>
-      <a href="../../pages/privacy/privacy.html" style="color: var(--muted); text-decoration: none;">Privacy Policy</a>
-      <span style="margin: 0 12px;">•</span>
-      <a href="https://github.com/promptroot/promptroot" target="_blank" rel="noopener" style="color: var(--muted); text-decoration: none;">GitHub</a>
+    <div class="footer-nav">
+      <a href="https://github.com/promptroot/promptroot/blob/main/README.md" target="_blank" rel="noopener" class="footer-nav__item">Help</a>
+      <span class="footer-nav__sep">•</span>
+      <button id="footerFeedbackBtn" class="footer-nav__item">Feedback</button>
+      <span class="footer-nav__sep">•</span>
+      <a href="../../pages/privacy/privacy.html" class="footer-nav__item">Privacy Policy</a>
+      <span class="footer-nav__sep">•</span>
+      <a href="https://github.com/promptroot/promptroot" target="_blank" rel="noopener" class="footer-nav__item">GitHub</a>
     </div>
   </footer>
 

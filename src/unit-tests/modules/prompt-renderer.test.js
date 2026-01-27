@@ -33,7 +33,8 @@ vi.mock('../../utils/constants.js', () => ({
 }));
 
 vi.mock('../../utils/dom-helpers.js', () => ({
-  setElementDisplay: vi.fn()
+  setElementDisplay: vi.fn(),
+  toggleVisibility: vi.fn()
 }));
 
 vi.mock('../../utils/lazy-loaders.js', () => ({
@@ -126,12 +127,24 @@ describe('prompt-renderer', () => {
       removeAttribute: vi.fn(),
       setAttribute: vi.fn(),
       getAttribute: vi.fn(),
-      dataset: {}
+      dataset: {},
+      childNodes: [],
+      focus: vi.fn()
     };
 
     global.document.getElementById.mockImplementation((id) => {
-      if (['content', 'title', 'meta', 'empty', 'actions', 'copyBtn', 'copenBtn', 
-           'rawBtn', 'ghBtn', 'editBtn', 'shareBtn', 'julesBtn', 'freeInputBtn', 'moreBtn'].includes(id)) {
+      // Include all IDs used in prompt-renderer AND jules-free-input (which is dynamically imported)
+      const allowedIds = [
+        'content', 'title', 'meta', 'empty', 'actions', 'copyBtn', 'copenBtn',
+        'rawBtn', 'ghBtn', 'editBtn', 'shareBtn', 'julesBtn', 'freeInputBtn', 'moreBtn',
+        'freeInputSection', 'freeInputTextarea', 'freeInputSubmitBtn', 'freeInputQueueBtn',
+        'freeInputSplitBtn', 'freeInputSaveBtn', 'freeInputCopenBtn', 'freeInputCancelBtn',
+        'freeInputRepoDropdownText', 'freeInputRepoDropdownBtn', 'freeInputRepoDropdownMenu',
+        'freeInputBranchDropdownBtn', 'freeInputBranchDropdownText', 'freeInputBranchDropdownMenu',
+        'freeInputCopenMenu'
+      ];
+
+      if (allowedIds.includes(id)) {
         return { ...mockElement, id };
       }
       return null;
@@ -168,7 +181,7 @@ describe('prompt-renderer', () => {
       expect(global.document.getElementById).toHaveBeenCalledWith('empty');
       expect(global.document.getElementById).toHaveBeenCalledWith('actions');
       expect(global.document.getElementById).toHaveBeenCalledWith('copyBtn');
-      expect(global.document.getElementById).toHaveBeenCalledWith('copenBtn');
+      expect(global.document.getElementById).toHaveBeenCalledWith('copenContainer');
       expect(global.document.getElementById).toHaveBeenCalledWith('rawBtn');
       expect(global.document.getElementById).toHaveBeenCalledWith('ghBtn');
       expect(global.document.getElementById).toHaveBeenCalledWith('editBtn');

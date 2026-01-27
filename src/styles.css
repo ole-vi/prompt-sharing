@@ -7,6 +7,7 @@
 /* Components */
 @import url('./styles/components/header.css');
 @import url('./styles/components/buttons.css');
+@import url('./styles/components/split-button.css');
 @import url('./styles/components/pills.css');
 @import url('./styles/components/dropdown.css');
 @import url('./styles/components/modals.css');

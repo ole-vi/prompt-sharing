@@ -1,6 +1,7 @@
 // ===== Jules Profile Modal Module =====
 // Profile modal and sessions history functionality
 
+import { getAuth } from './firebase-service.js';
 import { checkJulesKey, deleteStoredJulesKey } from './jules-keys.js';
 import { showJulesKeyModal } from './jules-modal.js';
 import { showJulesQueueModal } from './jules-queue.js';
@@ -12,13 +13,14 @@ import { showConfirm } from './confirm-modal.js';
 import { attachPromptViewerHandlers } from './prompt-viewer.js';
 import { TIMEOUTS, JULES_UI_TEXT, CSS_CLASSES } from '../utils/constants.js';
 import { renderStatus, STATUS_TYPES } from './status-renderer.js';
+import { toggleVisibility } from '../utils/dom-helpers.js';
 
 let allSessionsCache = [];
 let sessionNextPageToken = null;
 
 export function showUserProfileModal() {
   const modal = document.getElementById('userProfileModal');
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
 
   if (!user) {
     handleError('Not logged in.', { source: 'showUserProfileModal' }, { category: ErrorCategory.AUTH });
@@ -50,15 +52,15 @@ export function showUserProfileModal() {
     }
     
     if (hasKey) {
-      if (addBtn) addBtn.classList.add('hidden');
-      if (dangerZoneSection) dangerZoneSection.classList.remove('hidden');
-      if (julesProfileInfoSection) julesProfileInfoSection.classList.remove('hidden');
+      if (addBtn) toggleVisibility(addBtn, false);
+      if (dangerZoneSection) toggleVisibility(dangerZoneSection, true);
+      if (julesProfileInfoSection) toggleVisibility(julesProfileInfoSection, true);
       
       await loadAndDisplayJulesProfile(user.uid);
     } else {
-      if (addBtn) addBtn.classList.remove('hidden');
-      if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
-      if (julesProfileInfoSection) julesProfileInfoSection.classList.add('hidden');
+      if (addBtn) toggleVisibility(addBtn, true);
+      if (dangerZoneSection) toggleVisibility(dangerZoneSection, false);
+      if (julesProfileInfoSection) toggleVisibility(julesProfileInfoSection, false);
     }
   });
 
@@ -99,9 +101,9 @@ export function showUserProfileModal() {
 
           resetBtn.disabled = false;
           
-          if (addBtn) addBtn.classList.remove('hidden');
-          if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
-          if (julesProfileInfoSection) julesProfileInfoSection.classList.add('hidden');
+          if (addBtn) toggleVisibility(addBtn, true);
+          if (dangerZoneSection) toggleVisibility(dangerZoneSection, false);
+          if (julesProfileInfoSection) toggleVisibility(julesProfileInfoSection, false);
           
           showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
         } else {
@@ -150,7 +152,7 @@ export function showUserProfileModal() {
   
   if (sessionSearchInput) {
     sessionSearchInput.addEventListener('input', () => {
-      const user = window.auth?.currentUser;
+      const user = getAuth()?.currentUser;
       if (!user) return;
       renderAllSessions(allSessionsCache);
     });
@@ -525,7 +527,7 @@ export function hideJulesSessionsHistoryModal() {
 }
 
 async function loadSessionsPage() {
-  const user = window.auth?.currentUser;
+  const user = getAuth()?.currentUser;
   if (!user) return;
   
   const allSessionsList = document.getElementById('allSessionsList');
@@ -550,11 +552,11 @@ async function loadSessionsPage() {
       renderAllSessions(allSessionsCache);
       
       if (sessionNextPageToken) {
-        loadMoreSection.classList.remove('hidden');
+        toggleVisibility(loadMoreSection, true);
         loadMoreBtn.disabled = false;
         loadMoreBtn.textContent = 'Load More';
       } else {
-        loadMoreSection.classList.add('hidden');
+        toggleVisibility(loadMoreSection, false);
       }
     } else if (allSessionsCache.length === 0) {
       const emptyMsg = document.createElement('div');
@@ -728,15 +730,15 @@ export async function loadProfileDirectly(user) {
   }
   
   if (hasKey) {
-    if (addBtn) addBtn.classList.add('hidden');
-    if (dangerZoneSection) dangerZoneSection.classList.remove('hidden');
-    if (julesProfileInfoSection) julesProfileInfoSection.classList.remove('hidden');
+    if (addBtn) toggleVisibility(addBtn, false);
+    if (dangerZoneSection) toggleVisibility(dangerZoneSection, true);
+    if (julesProfileInfoSection) toggleVisibility(julesProfileInfoSection, true);
     
     await loadAndDisplayJulesProfile(user.uid);
   } else {
-    if (addBtn) addBtn.classList.remove('hidden');
-    if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
-    if (julesProfileInfoSection) julesProfileInfoSection.classList.add('hidden');
+    if (addBtn) toggleVisibility(addBtn, true);
+    if (dangerZoneSection) toggleVisibility(dangerZoneSection, false);
+    if (julesProfileInfoSection) toggleVisibility(julesProfileInfoSection, false);
   }
 
   // Attach event handlers
@@ -769,9 +771,9 @@ export async function loadProfileDirectly(user) {
           resetBtn.textContent = originalResetLabel;
           resetBtn.disabled = false;
           
-          if (addBtn) addBtn.classList.remove('hidden');
-          if (dangerZoneSection) dangerZoneSection.classList.add('hidden');
-          if (julesProfileInfoSection) julesProfileInfoSection.classList.add('hidden');
+          if (addBtn) toggleVisibility(addBtn, true);
+          if (dangerZoneSection) toggleVisibility(dangerZoneSection, false);
+          if (julesProfileInfoSection) toggleVisibility(julesProfileInfoSection, false);
           
           showToast('Jules API key has been deleted. You can enter a new one next time.', 'success');
         } else {
@@ -804,13 +806,13 @@ export async function loadJulesAccountInfo(user) {
   
   if (!hasKey) {
     if (julesProfileInfoSection) {
-      julesProfileInfoSection.classList.add('hidden');
+      toggleVisibility(julesProfileInfoSection, false);
     }
     return;
   }
 
   if (julesProfileInfoSection) {
-    julesProfileInfoSection.classList.remove('hidden');
+    toggleVisibility(julesProfileInfoSection, true);
   }
 
   await loadAndDisplayJulesProfile(user.uid);

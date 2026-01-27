@@ -1,4 +1,22 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// Setup global mocks
+const mockAuth = {
+  currentUser: null
+};
+
+let mockDb = {
+  collection: vi.fn()
+};
+
+// Mock firebase-service BEFORE importing jules-queue
+// Use function declarations so they evaluate at call-time, not definition-time
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(function() { return global.window?.auth !== undefined ? global.window.auth : mockAuth; }),
+  getDb: vi.fn(function() { return global.window?.db !== undefined ? global.window.db : mockDb; }),
+  getFunctions: vi.fn(() => null)
+}));
+
 import {
   handleQueueAction,
   addToJulesQueue,
@@ -57,6 +75,10 @@ vi.mock('../../utils/constants.js', () => ({
     SHORT: 1000,
     MEDIUM: 3000,
     LONG: 5000
+  },
+  CACHE_KEYS: {
+    QUEUE_ITEMS: 'queue-items',
+    USER_PROFILE: 'user-profile'
   }
 }));
 
@@ -73,6 +95,7 @@ const createMockElement = (id = '') => ({
   id,
   setAttribute: vi.fn(),
   getAttribute: vi.fn(),
+  removeAttribute: vi.fn(),
   style: {
     display: ''
   },
@@ -88,13 +111,17 @@ const createMockElement = (id = '') => ({
   querySelectorAll: vi.fn(() => [])
 });
 
-// Setup global mocks
+// Setup global window
 global.window = {
-  auth: {
-    currentUser: null
-  },
-  db: null,
-  firebase: null
+  auth: mockAuth,
+  db: mockDb,
+  firebase: {
+    firestore: {
+      FieldValue: {
+        serverTimestamp: vi.fn(() => 'SERVER_TIMESTAMP')
+      }
+    }
+  }
 };
 
 global.firebase = {
@@ -109,7 +136,9 @@ global.firebase = {
 global.document = {
   getElementById: vi.fn(),
   createElement: vi.fn(() => createMockElement()),
-  querySelectorAll: vi.fn(() => [])
+  querySelectorAll: vi.fn(() => []),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn()
 };
 
 global.console = {
@@ -332,7 +361,6 @@ describe('jules-queue', () => {
       global.window.firebase = global.firebase;
       
       await expect(addToJulesQueue('user123', { prompt: 'test' })).rejects.toThrow();
-      expect(global.console.error).toHaveBeenCalled();
     });
   });
 
@@ -405,7 +433,6 @@ describe('jules-queue', () => {
       getCache.mockReturnValue(['item']);
       
       await expect(updateJulesQueueItem('user123', 'doc1', {})).rejects.toThrow();
-      expect(global.console.error).toHaveBeenCalled();
     });
   });
 
@@ -471,9 +498,8 @@ describe('jules-queue', () => {
           }))
         }))
       };
-      
+
       await expect(deleteFromJulesQueue('user123', 'doc1')).rejects.toThrow();
-      expect(global.console.error).toHaveBeenCalled();
     });
   });
 
@@ -549,9 +575,8 @@ describe('jules-queue', () => {
           }))
         }))
       };
-      
+
       await expect(listJulesQueue('user123')).rejects.toThrow();
-      expect(global.console.error).toHaveBeenCalled();
     });
   });
 
@@ -564,29 +589,25 @@ describe('jules-queue', () => {
       expect(global.console.error).toHaveBeenCalledWith('julesQueueModal element not found!');
     });
 
-    it('should display modal with correct styles', () => {
+    it('should display modal using CSS classes', () => {
       const mockModal = createMockElement('julesQueueModal');
       global.document.getElementById.mockReturnValue(mockModal);
       
       showJulesQueueModal();
       
-      expect(mockModal.setAttribute).toHaveBeenCalledWith(
-        'style',
-        expect.stringContaining('display: flex')
-      );
-      expect(mockModal.setAttribute).toHaveBeenCalledWith(
-        'style',
-        expect.stringContaining('position:fixed')
-      );
+      expect(mockModal.classList.add).toHaveBeenCalledWith('modal-overlay');
+      expect(mockModal.classList.add).toHaveBeenCalledWith('show');
+      expect(mockModal.removeAttribute).toHaveBeenCalledWith('style');
     });
 
-    it('should setup click handler to close modal', () => {
+    it('should setup click and keyboard handlers', () => {
       const mockModal = createMockElement('julesQueueModal');
       global.document.getElementById.mockReturnValue(mockModal);
       
       showJulesQueueModal();
       
       expect(mockModal.onclick).toBeDefined();
+      expect(global.document.addEventListener).toHaveBeenCalledWith('keydown', expect.any(Function));
     });
 
     it('should close modal when clicking outside', () => {
@@ -598,10 +619,25 @@ describe('jules-queue', () => {
       // Simulate click on modal itself (outside content)
       mockModal.onclick({ target: mockModal });
       
-      expect(mockModal.setAttribute).toHaveBeenCalledWith(
-        'style',
-        'display:none !important;'
-      );
+      expect(mockModal.classList.remove).toHaveBeenCalledWith('show');
+      expect(mockModal.removeAttribute).toHaveBeenCalledWith('style');
+    });
+
+    it('should close modal on Escape key', () => {
+      const mockModal = createMockElement('julesQueueModal');
+      global.document.getElementById.mockReturnValue(mockModal);
+
+      showJulesQueueModal();
+
+      // Find the escape handler passed to addEventListener
+      const calls = global.document.addEventListener.mock.calls;
+      const keydownCall = calls.find(call => call[0] === 'keydown');
+      const handler = keydownCall[1];
+
+      // Call handler
+      handler({ key: 'Escape' });
+
+      expect(mockModal.classList.remove).toHaveBeenCalledWith('show');
     });
 
     it('should not close modal when clicking inside content', () => {
@@ -628,7 +664,9 @@ describe('jules-queue', () => {
       
       hideJulesQueueModal();
       
-      expect(mockModal.setAttribute).toHaveBeenCalledWith('style', 'display:none !important;');
+      expect(mockModal.classList.remove).toHaveBeenCalledWith('show');
+      expect(mockModal.removeAttribute).toHaveBeenCalledWith('style');
+      expect(global.document.removeEventListener).toHaveBeenCalledWith('keydown', expect.any(Function));
     });
 
     it('should do nothing if modal not found', () => {

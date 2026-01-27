@@ -1,4 +1,22 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// Setup global mocks
+const mockAuth = {
+  currentUser: null
+};
+
+let mockDb = {
+  collection: vi.fn()
+};
+
+// Mock firebase-service BEFORE importing jules-modal
+// Use function declarations so they evaluate at call-time, not definition-time
+vi.mock('../../modules/firebase-service.js', () => ({
+  getAuth: vi.fn(function() { return global.window?.auth !== undefined ? global.window.auth : mockAuth; }),
+  getDb: vi.fn(function() { return global.window?.db !== undefined ? global.window.db : mockDb; }),
+  getFunctions: vi.fn(() => null)
+}));
+
 import {
   loadSubtaskErrorModal,
   openUrlInBackground,
@@ -40,8 +58,12 @@ vi.mock('../../modules/toast.js', () => ({
   showToast: vi.fn()
 }));
 
-// Setup global mocks
+// Setup global fetch and document
 global.fetch = vi.fn();
+global.window = {
+  auth: mockAuth,
+  db: mockDb
+};
 global.document = {
   body: {
     appendChild: vi.fn(),

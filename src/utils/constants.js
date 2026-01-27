@@ -5,7 +5,6 @@ import { ICONS, createIconWithText } from './icon-helpers.js';
 export const OWNER = "promptroot";
 export const REPO = "promptroot";
 export const BRANCH = "main";
-export const PRETTY_TITLES = true;
 
 // GitHub API
 export const GIST_POINTER_REGEX = /^https:\/\/gist\.githubusercontent\.com\/\S+\/raw\/\S+$/i;
@@ -21,9 +20,6 @@ export const STORAGE_KEY_FAVORITE_REPOS = "jules_favorite_repos";
 
 // Hardcoded favorite branches (always favorites for all users)
 export const HARDCODED_FAVORITE_BRANCHES = ["main", "web-captures"];
-
-// User branches (branch names representing individual users)
-export const USER_BRANCHES = ['dogi', 'jesse', 'saksham'];
 
 export const STORAGE_KEY_FAVORITE_BRANCHES = "favorite_branches";
 
@@ -59,7 +55,9 @@ export const STORAGE_KEYS = {
   expandedState: (owner, repo, branch) => `sidebar:expanded:${owner}/${repo}@${branch}`,
   promptsCache: (owner, repo, branch) => `prompts:${owner}/${repo}@${branch}`,
   showFeatureBranches: "showFeatureBranches",
-  showUserBranches: "showUserBranches"
+  showUserBranches: "showUserBranches",
+  // Internal access log for cache LRU tracking
+  cacheAccessLog: "cache_access_log"
 };
 
 // Error messages
@@ -296,7 +294,9 @@ export const TIMEOUTS = {
  */
 export const LIMITS = {
   firebaseMaxAttempts: 300,
-  componentMaxAttempts: 100
+  componentMaxAttempts: 100,
+  // Maximum number of prompt cache entries stored in sessionStorage
+  promptCacheMaxEntries: 20
 };
 
 /**
@@ -322,9 +322,63 @@ export const PAGE_SIZES = {
 
 /**
  * Cache durations for various data types.
+ * Note: A duration of 0 means cache persists for the browser session
+ * (until page refresh or sessionStorage is cleared)
  * @type {CacheDurations}
  */
 export const CACHE_DURATIONS = {
   short: 300000, // 5 minutes
-  session: 0
+  session: 0 // Never expires within the session
+};
+
+/**
+ * Cache strategies enum
+ */
+export const CACHE_STRATEGIES = {
+  CACHE_FIRST: 'cache-first',
+  NETWORK_ONLY: 'network-only',
+  STALE_WHILE_REVALIDATE: 'stale-while-revalidate'
+};
+
+/**
+ * Cache keys for session storage
+ */
+export const CACHE_KEYS = {
+  JULES_ACCOUNT: 'jules_account_info',
+  JULES_SESSIONS: 'jules_sessions',
+  JULES_REPOS: 'jules_repos',
+  QUEUE_ITEMS: 'queue_items',
+  BRANCHES: 'branches_v2',
+  CURRENT_BRANCH: 'current_branch',
+  CURRENT_REPO: 'current_repo',
+  USER_PROFILE: 'user_profile',
+  USER_AVATAR: 'user_avatar'
+};
+
+/**
+ * Cache policies configuration
+ * Maps CACHE_KEYS to specific configurations
+ */
+export const CACHE_POLICIES = {
+  [CACHE_KEYS.JULES_ACCOUNT]: {
+    ttl: CACHE_DURATIONS.session,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST
+  },
+  [CACHE_KEYS.QUEUE_ITEMS]: {
+    ttl: CACHE_DURATIONS.session,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST
+  },
+  [CACHE_KEYS.BRANCHES]: {
+    ttl: CACHE_DURATIONS.session,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST
+  },
+  [CACHE_KEYS.USER_AVATAR]: {
+    ttl: CACHE_DURATIONS.session,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST
+  },
+  // Default policy for other keys
+  DEFAULT: {
+    ttl: CACHE_DURATIONS.short,
+    strategy: CACHE_STRATEGIES.CACHE_FIRST
+  }
 };

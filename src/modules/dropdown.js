@@ -20,7 +20,6 @@ function toggleDropdown(dropdown) {
 function openDropdown(dropdown) {
   closeAllDropdowns();
   dropdown.menu.classList.add('open');
-  dropdown.menu.style.display = ''; // Clear inline style if present
   dropdown.btn.setAttribute('aria-expanded', 'true');
   openDropdowns.add(dropdown);
 }
@@ -61,7 +60,6 @@ export function initDropdown(btn, menu, container = null) {
   const dropdownContainer = container || menu.parentNode;
   const dropdown = { btn, menu, container: dropdownContainer };
 
-  // Add missing ARIA attributes
   btn.setAttribute('aria-haspopup', 'true');
   if (!btn.hasAttribute('aria-expanded')) {
     btn.setAttribute('aria-expanded', 'false');

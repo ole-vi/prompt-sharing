@@ -1,13 +1,15 @@
 import { slugify } from '../utils/slug.js';
 import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './github-api.js';
 import { CODEX_URL_REGEX, TIMEOUTS } from '../utils/constants.js';
-import { setElementDisplay } from '../utils/dom-helpers.js';
+import { toggleVisibility } from '../utils/dom-helpers.js';
 import { loadMarked } from '../utils/lazy-loaders.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
 import { copyAndOpen } from './copen.js';
 import { copyText } from '../utils/clipboard.js';
 import statusBar from './status-bar.js';
+import { initSplitButton, destroySplitButton } from './split-button.js';
+import { COPEN_OPTIONS, COPEN_STORAGE_KEY, COPEN_DEFAULT_LABEL, COPEN_DEFAULT_ICON } from '../utils/copen-config.js';
 
 function sanitizeHtml(html) {
   if (typeof window.DOMPurify === 'undefined') {
@@ -60,8 +62,8 @@ let metaEl = null;
 let emptyEl = null;
 let actionsEl = null;
 let copyBtn = null;
-let copenBtn = null;
-let originalCopenLabel = null;
+let copenContainer = null;
+let copenSplitBtn = null;
 let rawBtn = null;
 let ghBtn = null;
 let editBtn = null;
@@ -78,8 +80,19 @@ export function initPromptRenderer() {
   emptyEl = document.getElementById('empty');
   actionsEl = document.getElementById('actions');
   copyBtn = document.getElementById('copyBtn');
-  copenBtn = document.getElementById('copenBtn');
-  if (copenBtn) originalCopenLabel = copenBtn.innerHTML;
+  
+  copenContainer = document.getElementById('copenContainer');
+  if (copenContainer) {
+    copenSplitBtn = initSplitButton({
+      container: copenContainer,
+      defaultLabel: COPEN_DEFAULT_LABEL,
+      defaultIcon: COPEN_DEFAULT_ICON,
+      options: COPEN_OPTIONS,
+      onAction: handleCopenPrompt,
+      storageKey: COPEN_STORAGE_KEY
+    });
+  }
+  
   rawBtn = document.getElementById('rawBtn');
   ghBtn = document.getElementById('ghBtn');
   editBtn = document.getElementById('editBtn');
@@ -96,6 +109,12 @@ export function initPromptRenderer() {
 export function destroyPromptRenderer() {
   document.removeEventListener('click', handleDocumentClick);
   window.removeEventListener('branchChanged', handleBranchChanged);
+  
+  if (copenContainer) {
+    destroySplitButton(copenContainer);
+    copenSplitBtn = null;
+  }
+  
   cacheRaw.clear();
   currentPromptText = null;
   handleTryInJulesCallback = null;
@@ -107,28 +126,10 @@ export function destroyPromptRenderer() {
 
 function handleDocumentClick(event) {
   const target = event.target;
-  const copenMenu = document.getElementById('copenMenu');
   const moreMenu = document.getElementById('moreMenu');
 
   if (target === copyBtn) {
     handleCopyPrompt();
-    return;
-  }
-
-  if (target === copenBtn) {
-    event.stopPropagation();
-    if (copenMenu) {
-      copenMenu.classList.toggle('hidden');
-    }
-    return;
-  }
-
-  const copenMenuItem = target.closest('.custom-dropdown-item[data-target]');
-  if (copenMenuItem && copenMenu && copenMenuItem.parentElement === copenMenu) {
-    event.stopPropagation();
-    const targetApp = copenMenuItem.dataset.target;
-    handleCopenPrompt(targetApp);
-    copenMenu.classList.add('hidden');
     return;
   }
 
@@ -222,15 +223,14 @@ function handleDocumentClick(event) {
     return;
   }
 
-  if (copenMenu) copenMenu.classList.add('hidden');
   if (moreMenu) moreMenu.classList.add('hidden');
 }
 
 async function handleBranchChanged() {
-  setElementDisplay(titleEl, false);
-  setElementDisplay(metaEl, false);
-  setElementDisplay(actionsEl, false);
-  setElementDisplay(emptyEl, false);
+  toggleVisibility(titleEl, false);
+  toggleVisibility(metaEl, false);
+  toggleVisibility(actionsEl, false);
+  toggleVisibility(emptyEl, false);
   if (contentEl) contentEl.innerHTML = '';
   setCurrentSlug(null);
   currentPromptText = null;
@@ -264,7 +264,7 @@ export async function selectBySlug(slug, files, owner, repo, branch) {
 export async function selectFile(f, pushHash, owner, repo, branch) {
   if (!f) {
     if (editBtn) {
-      editBtn.classList.add('hidden');
+      toggleVisibility(editBtn, false);
       editBtn.removeAttribute('href');
     }
     currentFile = null;
@@ -285,19 +285,18 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     freeInputSection.classList.add('hidden');
   }
 
-  setElementDisplay(emptyEl, false);
-  setElementDisplay(titleEl, true);
-  setElementDisplay(metaEl, true);
-  setElementDisplay(actionsEl, true);
+  toggleVisibility(emptyEl, false);
+  toggleVisibility(titleEl, true);
+  toggleVisibility(metaEl, true);
+  toggleVisibility(actionsEl, true);
   
-  // Clear inline styles that might have been set by showFreeInputForm
-  if (titleEl) titleEl.style.display = '';
-  if (metaEl) metaEl.style.display = '';
-  if (actionsEl) actionsEl.style.display = '';
+  // Ensure visibility (replaces previous inline style clearing)
+  if (titleEl) toggleVisibility(titleEl, true);
+  if (metaEl) toggleVisibility(metaEl, true);
+  if (actionsEl) toggleVisibility(actionsEl, true);
   
   if (contentEl) {
-    contentEl.style.display = '';
-    contentEl.classList.remove('hidden');
+    toggleVisibility(contentEl, true);
   }
 
   titleEl.textContent = f.name.replace(/\.md$/i, '');
@@ -441,10 +440,10 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   editBtn.href = `https://github.com/${owner}/${repo}/edit/${branch}/${f.path}`;
 
   if (isCodexContent) {
-    copyBtn.classList.add('hidden');
+    toggleVisibility(copyBtn, false);
     shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
   } else {
-    copyBtn.classList.remove('hidden');
+    toggleVisibility(copyBtn, true);
     copyBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">content_copy</span> Copy prompt';
     shareBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
   }
@@ -540,12 +539,7 @@ async function handleCopyPrompt() {
 
 async function handleCopenPrompt(target) {
   const promptText = getCurrentPromptText();
-  const success = await copyAndOpen(target, promptText);
-
-  if (success) {
-    copenBtn.innerHTML = '<span class="icon icon-inline" aria-hidden="true">check_circle</span> Copied!';
-    setTimeout(() => (copenBtn.innerHTML = originalCopenLabel), TIMEOUTS.copyFeedback);
-  }
+  await copyAndOpen(target, promptText);
 }
 
 async function handleShareLink() {

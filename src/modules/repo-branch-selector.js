@@ -1,5 +1,7 @@
 import { getCurrentUser } from './auth.js';
+import { getDb } from './firebase-service.js';
 import { showToast } from './toast.js';
+import { toggleVisibility } from '../utils/dom-helpers.js';
 
 function extractDefaultBranch(source) {
   const defaultBranchObj = source?.githubRepo?.defaultBranch ||
@@ -19,7 +21,7 @@ function setupClickOutsideClose(targetBtn, targetMenu) {
   
   const closeDropdown = (e) => {
     if (!targetBtn.contains(e.target) && !targetMenu.contains(e.target)) {
-      targetMenu.style.display = 'none';
+      targetMenu.classList.remove('open');
       targetBtn.setAttribute('aria-expanded', 'false');
     }
   };
@@ -78,8 +80,9 @@ export class RepoSelector {
     
     this.favorites = DEFAULT_FAVORITE_REPOS;
     try {
-      if (window.db) {
-        const doc = await window.db.collection('users').doc(user.uid).get();
+      const db = getDb();
+      if (db) {
+        const doc = await db.collection('users').doc(user.uid).get();
         if (doc.exists && doc.data().favoriteRepos) {
           this.favorites = doc.data().favoriteRepos;
         }
@@ -148,8 +151,8 @@ export class RepoSelector {
   setupDropdownToggle() {
     this.dropdownBtn.onclick = async (e) => {
       e.stopPropagation();
-      if (this.dropdownMenu.style.display === 'block') {
-        this.dropdownMenu.style.display = 'none';
+      if (this.dropdownMenu.classList.contains('open')) {
+        this.dropdownMenu.classList.remove('open');
         this.dropdownBtn.setAttribute('aria-expanded', 'false');
         return;
       }
@@ -178,7 +181,7 @@ export class RepoSelector {
     loadingIndicator.className = 'dropdown-loading';
     loadingIndicator.textContent = 'Loading...';
     this.dropdownMenu.appendChild(loadingIndicator);
-    this.dropdownMenu.style.display = 'block';
+    this.dropdownMenu.classList.add('open');
     
     await new Promise(resolve => setTimeout(resolve, 0));
     
@@ -192,7 +195,7 @@ export class RepoSelector {
       this.renderAllRepos();
     }
     
-    this.dropdownMenu.style.display = 'block';
+    this.dropdownMenu.classList.add('open');
   }
 
   async renderFavorites() {
@@ -200,7 +203,7 @@ export class RepoSelector {
       const item = this.createRepoItem(fav.name, fav.id, true, async () => {
         this.selectedSourceId = fav.id;
         this.dropdownText.textContent = fav.name;
-        this.dropdownMenu.style.display = 'none';
+        this.dropdownMenu.classList.remove('open');
         
         // Save repo selection
         this.saveToStorage();
@@ -306,7 +309,7 @@ export class RepoSelector {
       const item = this.createRepoItem(repoName, source.name || source.id, false, () => {
         this.selectedSourceId = source.name || source.id;
         this.dropdownText.textContent = repoName;
-        this.dropdownMenu.style.display = 'none';
+        this.dropdownMenu.classList.remove('open');
         
         // Save repo selection
         this.saveToStorage();
@@ -336,7 +339,7 @@ export class RepoSelector {
       e.stopPropagation();
       if (isFavorite) {
         await this.removeFavorite(id);
-        this.dropdownMenu.style.display = 'none';
+        this.dropdownMenu.classList.remove('open');
         this.dropdownBtn.setAttribute('aria-expanded', 'false');
         setTimeout(() => this.populateDropdown(), 0);
       } else {
@@ -412,8 +415,9 @@ export class RepoSelector {
   async saveFavorites(newFavorites) {
     const user = getCurrentUser();
     try {
-      if (window.db) {
-        await window.db.collection('users').doc(user.uid).set({
+      const db = getDb();
+      if (db) {
+        await db.collection('users').doc(user.uid).set({
           favoriteRepos: newFavorites
         }, { merge: true });
         this.favorites = newFavorites;
@@ -428,9 +432,10 @@ export class RepoSelector {
     const newFavorite = { id: sourceId, name, branch };
     
     try {
-      if (window.db) {
-        await window.db.collection('users').doc(user.uid).set({
-          favoriteRepos: window.firebase.firestore.FieldValue.arrayUnion(newFavorite)
+      const db = getDb();
+      if (db) {
+        await db.collection('users').doc(user.uid).set({
+          favoriteRepos: firebase.firestore.FieldValue.arrayUnion(newFavorite)
         }, { merge: true });
         this.favorites = [...this.favorites, newFavorite];
       }
@@ -446,9 +451,10 @@ export class RepoSelector {
     if (!favoriteToRemove) return;
     
     try {
-      if (window.db) {
-        await window.db.collection('users').doc(user.uid).set({
-          favoriteRepos: window.firebase.firestore.FieldValue.arrayRemove(favoriteToRemove)
+      const db = getDb();
+      if (db) {
+        await db.collection('users').doc(user.uid).set({
+          favoriteRepos: firebase.firestore.FieldValue.arrayRemove(favoriteToRemove)
         }, { merge: true });
         this.favorites = this.favorites.filter(f => f.id !== sourceId);
       }
@@ -534,8 +540,8 @@ export class BranchSelector {
   setupDropdownToggle() {
     this.dropdownBtn.onclick = (e) => {
       e.stopPropagation();
-      if (this.dropdownMenu.style.display === 'block') {
-        this.dropdownMenu.style.display = 'none';
+      if (this.dropdownMenu.classList.contains('open')) {
+        this.dropdownMenu.classList.remove('open');
         this.dropdownBtn.setAttribute('aria-expanded', 'false');
         return;
       }
@@ -568,7 +574,7 @@ export class BranchSelector {
     const currentItem = document.createElement('div');
     currentItem.className = 'dropdown-item-with-star selected';
     currentItem.onclick = () => {
-      this.dropdownMenu.style.display = 'none';
+      this.dropdownMenu.classList.remove('open');
       this.dropdownBtn.setAttribute('aria-expanded', 'false');
     };
     
@@ -612,7 +618,7 @@ export class BranchSelector {
         }
 
         this.allBranchesLoaded = true;
-        showMoreBtn.style.display = 'none';
+        toggleVisibility(showMoreBtn, false);
         
         allBranches.forEach(branch => {
           if (branch.name === this.selectedBranch) return;
@@ -631,7 +637,7 @@ export class BranchSelector {
           
           item.onclick = () => {
             this.setSelectedBranch(branch.name);
-            this.dropdownMenu.style.display = 'none';
+            this.dropdownMenu.classList.remove('open');
             this.dropdownBtn.setAttribute('aria-expanded', 'false');
           };
           
@@ -649,7 +655,7 @@ export class BranchSelector {
     
     this.dropdownMenu.appendChild(showMoreBtn);
     
-    this.dropdownMenu.style.display = 'block';
+    this.dropdownMenu.classList.add('open');
   }
 
   setSelectedBranch(branch) {
