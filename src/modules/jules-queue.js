@@ -1,8 +1,8 @@
-import { getAuth, getDb } from './firebase-service.js';
+import { getAuth } from './firebase-service.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
 import statusBar from './status-bar.js';
 import { createModal } from '../utils/modal-manager.js';
-import { getCache, setCache, CACHE_KEYS } from '../utils/session-cache.js';
+import { setCache, clearCache, CACHE_KEYS } from '../utils/session-cache.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
 import { handleError, ErrorCategory } from '../utils/error-handler.js';
@@ -10,11 +10,72 @@ import { showConfirm } from './confirm-modal.js';
 import { JULES_MESSAGES, JULES_UI_TEXT, TIMEOUTS } from '../utils/constants.js';
 import { callRunJulesFunction } from './jules-api.js';
 import { openUrlInBackground, showSubtaskErrorModal } from './jules-modal.js';
-import { addDoc, updateDoc, deleteDoc, queryCollection, setDoc, getDoc, getServerTimestamp, getFieldDelete } from '../utils/firestore-helpers.js';
+import { getServerTimestamp, getFieldDelete } from '../utils/firestore-helpers.js';
 import { showPromptViewer } from './prompt-viewer.js';
 
-let queueCache = [];
-let queuePromptViewerHandlers = new Map();
+// Service layer imports
+import {
+  addToJulesQueue as serviceAddToQueue,
+  updateJulesQueueItem as serviceUpdateItem,
+  deleteFromJulesQueue as serviceDeleteItem,
+  listJulesQueue as serviceListQueue,
+  getUserTimeZone as serviceGetUserTimeZone,
+  saveUserTimeZone as serviceSaveUserTimeZone,
+  batchUnscheduleItems as serviceBatchUnschedule,
+  deleteSelectedSubtasks as serviceDeleteSubtasks,
+  subscribeToQueueUpdates as serviceSubscribeToQueue
+} from './jules-queue-service.js';
+
+// Store imports
+import {
+  getQueueCache,
+  setQueueCache,
+  findQueueItem,
+  clearPromptViewerHandlers,
+  registerPromptViewerHandler,
+  getEditModalState,
+  updateEditModalState,
+  resetEditModalState,
+  getActiveEditModal,
+  setActiveEditModal,
+  getActiveScheduleModal,
+  setActiveScheduleModal,
+  getQueueModalEscapeHandler,
+  setQueueModalEscapeHandler
+} from './jules-queue-store.js';
+
+// Helper imports
+import {
+  parseDateInTimeZone,
+  getCommonTimeZones,
+  sortByCreatedAt,
+  formatScheduledDate,
+  calculateProgress,
+  combineSubtasksToPrompt,
+  extractSubtasksFromDOM,
+  validateSchedule,
+  cleanIdForDOM
+} from '../utils/jules-queue-helpers.js';
+
+function getSelectedQueueIds() {
+  const queueSelections = [];
+  const subtaskSelections = {};
+
+  document.querySelectorAll('.queue-checkbox:checked').forEach(cb => {
+    queueSelections.push(cb.dataset.docid);
+  });
+
+  document.querySelectorAll('.subtask-checkbox:checked').forEach(cb => {
+    const docId = cb.dataset.docid;
+    const index = parseInt(cb.dataset.index);
+    if (!subtaskSelections[docId]) {
+      subtaskSelections[docId] = [];
+    }
+    subtaskSelections[docId].push(index);
+  });
+
+  return { queueSelections, subtaskSelections };
+}
 
 export async function handleQueueAction(queueItemData) {
   const user = getAuth()?.currentUser;
@@ -33,67 +94,24 @@ export async function handleQueueAction(queueItemData) {
 }
 
 export async function addToJulesQueue(uid, queueItem) {
-  const db = getDb();
-  if (!db) throw new Error('Firestore not initialized');
-  try {
-    const collectionRef = db.collection('julesQueues').doc(uid).collection('items');
-    // Pass object with userId to cacheKey
-    const docId = await addDoc(collectionRef, {
-      ...queueItem,
-      autoOpen: queueItem.autoOpen !== false,
-      createdAt: getServerTimestamp(),
-      status: 'pending'
-    }, { key: CACHE_KEYS.QUEUE_ITEMS, userId: uid });
-
-    return docId;
-  } catch (err) {
-    console.error('Failed to add to queue', err);
-    throw err;
-  }
+  return await serviceAddToQueue(uid, queueItem);
 }
 
 export async function updateJulesQueueItem(uid, docId, updates) {
-  const db = getDb();
-  if (!db) throw new Error('Firestore not initialized');
-  try {
-    const collectionRef = db.collection('julesQueues').doc(uid).collection('items');
-    await updateDoc(collectionRef, docId, updates, { key: CACHE_KEYS.QUEUE_ITEMS, userId: uid });
-    return true;
-  } catch (err) {
-    console.error('Failed to update queue item', err);
-    throw err;
-  }
+  return await serviceUpdateItem(uid, docId, updates);
 }
 
 export async function deleteFromJulesQueue(uid, docId) {
-  const db = getDb();
-  if (!db) throw new Error('Firestore not initialized');
-  try {
-    const collectionRef = db.collection('julesQueues').doc(uid).collection('items');
-    await deleteDoc(collectionRef, docId, { key: CACHE_KEYS.QUEUE_ITEMS, userId: uid });
-    return true;
-  } catch (err) {
-    console.error('Failed to delete queue item', err);
-    throw err;
-  }
+  return await serviceDeleteItem(uid, docId);
 }
 
 export async function listJulesQueue(uid) {
-  const db = getDb();
-  if (!db) throw new Error('Firestore not initialized');
-  try {
-    const collectionRef = db.collection('julesQueues').doc(uid).collection('items');
-    const results = await queryCollection(collectionRef, {
-      orderBy: { field: 'createdAt', direction: 'desc' }
-    }, { key: CACHE_KEYS.QUEUE_ITEMS, userId: uid });
-    return results;
-  } catch (err) {
-    console.error('Failed to list queue', err);
-    throw err;
-  }
+  return await serviceListQueue(uid);
 }
 
-let queueModalEscapeHandler = null;
+export function subscribeToQueueUpdates(uid, callback) {
+  return serviceSubscribeToQueue(uid, callback);
+}
 
 export function showJulesQueueModal() {
   const modal = document.getElementById('julesQueueModal');
@@ -112,13 +130,16 @@ export function showJulesQueueModal() {
     }
   };
 
-  if (queueModalEscapeHandler) document.removeEventListener('keydown', queueModalEscapeHandler);
-  queueModalEscapeHandler = (e) => {
+  const existingHandler = getQueueModalEscapeHandler();
+  if (existingHandler) document.removeEventListener('keydown', existingHandler);
+  
+  const escapeHandler = (e) => {
     if (e.key === 'Escape') {
       hideJulesQueueModal();
     }
   };
-  document.addEventListener('keydown', queueModalEscapeHandler);
+  setQueueModalEscapeHandler(escapeHandler);
+  document.addEventListener('keydown', escapeHandler);
   
   loadQueuePage();
 }
@@ -130,14 +151,15 @@ export function hideJulesQueueModal() {
     modal.removeAttribute('style');
   }
 
-  if (queueModalEscapeHandler) {
-    document.removeEventListener('keydown', queueModalEscapeHandler);
-    queueModalEscapeHandler = null;
+  const handler = getQueueModalEscapeHandler();
+  if (handler) {
+    document.removeEventListener('keydown', handler);
+    setQueueModalEscapeHandler(null);
   }
 }
 
 export function renderQueueListDirectly(items) {
-  queueCache = items;
+  setQueueCache(items);
   renderQueueList(items);
 }
 
@@ -145,27 +167,16 @@ export function attachQueueHandlers() {
   attachQueueModalHandlers();
 }
 
-let editModalState = {
-  originalData: null,
-  hasUnsavedChanges: false,
-  currentDocId: null,
-  currentType: null,
-  repoSelector: null,
-  branchSelector: null,
-  isUnscheduled: false,
-  isInitializing: false
-};
-
-let activeEditModal = null;
-
 async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu) {
+  const editModalState = getEditModalState();
+  
   const branchSelector = new BranchSelector({
     dropdownBtn: branchDropdownBtn,
     dropdownText: branchDropdownText,
     dropdownMenu: branchDropdownMenu,
     onSelect: (selectedBranch) => {
       if (!editModalState.isInitializing) {
-        editModalState.hasUnsavedChanges = true;
+        updateEditModalState({ hasUnsavedChanges: true });
       }
     }
   });
@@ -177,25 +188,25 @@ async function initializeEditRepoAndBranch(sourceId, branch, repoDropdownBtn, re
     branchSelector: branchSelector,
     onSelect: (selectedSourceId) => {
       if (!editModalState.isInitializing) {
-        editModalState.hasUnsavedChanges = true;
+        updateEditModalState({ hasUnsavedChanges: true });
       }
     }
   });
 
-  editModalState.repoSelector = repoSelector;
-  editModalState.branchSelector = branchSelector;
+  updateEditModalState({ repoSelector, branchSelector });
 
   await repoSelector.initialize(sourceId, branch);
 }
 
 function setupSubtasksEventDelegation() {
   const subtasksList = document.getElementById('editQueueSubtasksList');
-  if (!subtasksList || !activeEditModal) return;
+  const activeModal = getActiveEditModal();
+  if (!subtasksList || !activeModal) return;
   
   if (subtasksList.dataset.listenerAttached) return;
   subtasksList.dataset.listenerAttached = 'true';
   
-  activeEditModal.addListener(subtasksList, 'click', (event) => {
+  activeModal.addListener(subtasksList, 'click', (event) => {
     const target = event.target;
     
     if (target.classList.contains('add-subtask-btn')) {
@@ -211,9 +222,9 @@ function setupSubtasksEventDelegation() {
     }
   });
   
-  activeEditModal.addListener(subtasksList, 'input', (event) => {
+  activeModal.addListener(subtasksList, 'input', (event) => {
     if (event.target.classList.contains('edit-subtask-content')) {
-      editModalState.hasUnsavedChanges = true;
+      updateEditModalState({ hasUnsavedChanges: true });
     }
   });
 }
@@ -226,16 +237,8 @@ function displayScheduleStatus(item) {
   if (!statusGroup || !scheduleText) return;
   
   if (item.status === 'scheduled' && item.scheduledAt) {
-    const scheduledDate = new Date(item.scheduledAt.seconds * 1000);
     const timeZone = item.scheduledTimeZone || 'America/New_York';
-    const dateStr = scheduledDate.toLocaleString('en-US', {
-      timeZone: timeZone,
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const dateStr = formatScheduledDate(item.scheduledAt, timeZone);
     scheduleText.textContent = `Scheduled for ${dateStr} (${timeZone})`;
     statusGroup.classList.remove('hidden');
     
@@ -255,28 +258,30 @@ function unscheduleQueueItem() {
     statusGroup.classList.add('hidden');
   }
   
-  editModalState.isUnscheduled = true;
-  editModalState.hasUnsavedChanges = true;
+  updateEditModalState({ isUnscheduled: true, hasUnsavedChanges: true });
   
   showToast('Item marked for unscheduling. Click Save to confirm.', 'info');
 }
 
 async function openEditQueueModal(docId) {
-  const item = queueCache.find(i => i.id === docId);
+  const item = findQueueItem(docId);
   if (!item) {
     handleError(JULES_MESSAGES.QUEUE_NOT_FOUND, { source: 'openEditQueueModal' }, { category: ErrorCategory.VALIDATION });
     return;
   }
 
   // Cleanup existing modal
-  if (activeEditModal) {
-    activeEditModal.destroy();
-    activeEditModal = null;
+  const existingModal = getActiveEditModal();
+  if (existingModal) {
+    existingModal.destroy();
+    setActiveEditModal(null);
   }
 
-  editModalState.currentDocId = docId;
-  editModalState.hasUnsavedChanges = false;
-  editModalState.isInitializing = true;
+  updateEditModalState({
+    currentDocId: docId,
+    hasUnsavedChanges: false,
+    isInitializing: true
+  });
 
   const modal = document.createElement('div');
   modal.id = 'editQueueItemModal';
@@ -458,38 +463,34 @@ async function openEditQueueModal(docId) {
   modal.appendChild(dialog);
   document.body.appendChild(modal);
 
-  activeEditModal = createModal({
+  const newModal = createModal({
     element: modal,
     closeOnBackdropClick: false,
     onDestroy: () => {
-      activeEditModal = null;
-      editModalState.hasUnsavedChanges = false;
-      editModalState.originalData = null;
-      editModalState.currentDocId = null;
-      editModalState.isInitializing = false;
-      editModalState.currentType = null;
-      editModalState.repoSelector = null;
-      editModalState.branchSelector = null;
-      editModalState.isUnscheduled = false;
+      setActiveEditModal(null);
+      resetEditModalState();
     }
   });
+  
+  setActiveEditModal(newModal);
 
   // Track listeners
-  activeEditModal.addListener(closeBtn, 'click', () => closeEditModal());
-  activeEditModal.addListener(cancelBtn, 'click', () => closeEditModal());
-  activeEditModal.addListener(modal, 'click', (e) => {
+  newModal.addListener(closeBtn, 'click', () => closeEditModal());
+  newModal.addListener(cancelBtn, 'click', () => closeEditModal());
+  newModal.addListener(modal, 'click', (e) => {
     if (e.target === modal) closeEditModal();
   });
-  activeEditModal.addListener(saveBtn, 'click', async () => {
-    await saveQueueItemEdit(editModalState.currentDocId, closeEditModal);
+  newModal.addListener(saveBtn, 'click', async () => {
+    const state = getEditModalState();
+    await saveQueueItemEdit(state.currentDocId, closeEditModal);
   });
 
   // Add listeners for dynamic toggle buttons
-  activeEditModal.addListener(convertToSubtasksBtn, 'click', convertToSubtasks);
-  activeEditModal.addListener(convertToSingleBtn, 'click', convertToSingle);
+  newModal.addListener(convertToSubtasksBtn, 'click', convertToSubtasks);
+  newModal.addListener(convertToSingleBtn, 'click', convertToSingle);
 
   if (unscheduleBtn) {
-    activeEditModal.addListener(unscheduleBtn, 'click', unscheduleQueueItem);
+    newModal.addListener(unscheduleBtn, 'click', unscheduleQueueItem);
   }
 
   setupSubtasksEventDelegation();
@@ -510,8 +511,10 @@ async function openEditQueueModal(docId) {
     promptGroup2.classList.remove('hidden');
     subtasksGroup2.classList.add('hidden');
     promptTextarea2.value = item.prompt || '';
-    editModalState.originalData = { prompt: item.prompt || '' };
-    editModalState.currentType = 'single';
+    updateEditModalState({
+      originalData: { prompt: item.prompt || '' },
+      currentType: 'single'
+    });
   } else if (item.type === 'subtasks') {
     typeDiv.textContent = 'Subtasks Batch';
     promptGroup2.classList.add('hidden');
@@ -520,36 +523,34 @@ async function openEditQueueModal(docId) {
     const subtasks = item.remaining || [];
     renderSubtasksList(subtasks);
     
-    editModalState.originalData = { 
-      subtasks: subtasks.map(s => s.fullContent || '') 
-    };
-    editModalState.currentType = 'subtasks';
+    updateEditModalState({
+      originalData: { subtasks: subtasks.map(s => s.fullContent || '') },
+      currentType: 'subtasks'
+    });
     updateConvertToSingleButtonVisibility();
   }
 
-  editModalState.originalData.sourceId = item.sourceId || '';
-  editModalState.originalData.branch = item.branch || 'master';
+  const currentState = getEditModalState();
+  currentState.originalData.sourceId = item.sourceId || '';
+  currentState.originalData.branch = item.branch || 'master';
 
   displayScheduleStatus(item);
 
   await initializeEditRepoAndBranch(item.sourceId, item.branch || 'master', repoDropdownBtn, repoDropdownText, repoDropdownMenu, branchDropdownBtn, branchDropdownText, branchDropdownMenu);
 
-  editModalState.isInitializing = false;
+  updateEditModalState({ isInitializing: false });
 
-  activeEditModal.show();
+  newModal.show();
 
   const trackChanges = () => {
-    editModalState.hasUnsavedChanges = true;
+    updateEditModalState({ hasUnsavedChanges: true });
   };
 
   if (promptTextarea2) {
-    activeEditModal.addListener(promptTextarea2, 'input', trackChanges);
+    newModal.addListener(promptTextarea2, 'input', trackChanges);
   }
 }
 
-/**
- * Convert single prompt to subtasks
- */
 function convertToSubtasks() {
   const promptTextarea = document.getElementById('editQueuePrompt');
   const promptContent = promptTextarea.value.trim();
@@ -565,17 +566,13 @@ function convertToSubtasks() {
   const subtasks = promptContent ? [{ fullContent: promptContent }] : [{ fullContent: '' }];
   renderSubtasksList(subtasks);
   
-  editModalState.currentType = 'subtasks';
-  editModalState.hasUnsavedChanges = true;
+  updateEditModalState({ currentType: 'subtasks', hasUnsavedChanges: true });
   
   updateConvertToSingleButtonVisibility();
 }
 
-/**
- * Convert subtasks to single prompt
- */
 async function convertToSingle() {
-  const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => textarea.value);
+  const currentSubtasks = extractSubtasksFromDOM();
   
   if (currentSubtasks.length > 1) {
     const confirmed = await showConfirm('This will combine all subtasks into a single prompt. Continue?', {
@@ -591,15 +588,14 @@ async function convertToSingle() {
   const typeDiv = document.getElementById('editQueueType');
   const promptTextarea = document.getElementById('editQueuePrompt');
   
-  const combinedPrompt = currentSubtasks.join('\n\n---\n\n');
+  const combinedPrompt = combineSubtasksToPrompt(currentSubtasks);
   
   subtasksGroup.classList.add('hidden');
   promptGroup.classList.remove('hidden');
   typeDiv.textContent = 'Single Prompt';
   promptTextarea.value = combinedPrompt;
   
-  editModalState.currentType = 'single';
-  editModalState.hasUnsavedChanges = true;
+  updateEditModalState({ currentType: 'single', hasUnsavedChanges: true });
 }
 
 function updateConvertToSingleButtonVisibility() {
@@ -668,15 +664,13 @@ function renderSubtasksList(subtasks) {
 }
 
 function addNewSubtask() {
-  const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => ({
-    fullContent: textarea.value
-  }));
+  const currentSubtasks = extractSubtasksFromDOM();
   
   currentSubtasks.push({ fullContent: '' });
   
   renderSubtasksList(currentSubtasks);
   
-  editModalState.hasUnsavedChanges = true;
+  updateEditModalState({ hasUnsavedChanges: true });
   
   const textareas = document.querySelectorAll('.edit-subtask-content');
   if (textareas.length > 0) {
@@ -685,9 +679,7 @@ function addNewSubtask() {
 }
 
 async function removeSubtask(index) {
-  const currentSubtasks = Array.from(document.querySelectorAll('.edit-subtask-content')).map(textarea => ({
-    fullContent: textarea.value
-  }));
+  const currentSubtasks = extractSubtasksFromDOM();
   
   if (currentSubtasks.length <= 1) {
     const confirmed = await showConfirm('This is the last subtask. Removing it will leave no subtasks. Continue?', {
@@ -702,12 +694,14 @@ async function removeSubtask(index) {
   
   renderSubtasksList(currentSubtasks);
   
-  editModalState.hasUnsavedChanges = true;
+  updateEditModalState({ hasUnsavedChanges: true });
 }
 
 async function closeEditModal(force = false) {
-  if (!activeEditModal) return;
+  const activeModal = getActiveEditModal();
+  if (!activeModal) return;
   
+  const editModalState = getEditModalState();
   if (!force && editModalState.hasUnsavedChanges) {
     const confirmed = await showConfirm('You have unsaved changes. Are you sure you want to close?', {
       title: 'Unsaved Changes',
@@ -717,11 +711,11 @@ async function closeEditModal(force = false) {
     if (!confirmed) return;
   }
 
-  activeEditModal.destroy();
+  activeModal.destroy();
 }
 
 async function saveQueueItemEdit(docId, closeModalCallback) {
-  const item = queueCache.find(i => i.id === docId);
+  const item = findQueueItem(docId);
   if (!item) {
     showToast(JULES_MESSAGES.QUEUE_NOT_FOUND, 'error');
     return;
@@ -734,6 +728,7 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
   }
 
   try {
+    const editModalState = getEditModalState();
     const sourceId = editModalState.repoSelector?.getSelectedSourceId();
     const branch = editModalState.branchSelector?.getSelectedBranch();
     
@@ -761,10 +756,7 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
         updates.totalCount = getFieldDelete();
       }
     } else if (currentType === 'subtasks') {
-      const subtaskTextareas = document.querySelectorAll('.edit-subtask-content');
-      const updatedSubtasks = Array.from(subtaskTextareas).map(textarea => ({
-        fullContent: textarea.value
-      }));
+      const updatedSubtasks = extractSubtasksFromDOM();
       updates.type = 'subtasks';
       updates.remaining = updatedSubtasks;
       updates.totalCount = updatedSubtasks.length;
@@ -776,7 +768,7 @@ async function saveQueueItemEdit(docId, closeModalCallback) {
     await updateJulesQueueItem(user.uid, item.id, updates);
     
     showToast(JULES_MESSAGES.QUEUE_UPDATED, 'success');
-    editModalState.hasUnsavedChanges = false;
+    updateEditModalState({ hasUnsavedChanges: false });
     closeModalCallback(true);
     
     await loadQueuePage();
@@ -798,19 +790,18 @@ async function loadQueuePage() {
   }
 
   try {
-    let items = getCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
+    clearCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
     
-    if (!items) {
-      const loading = document.createElement('div');
-      loading.className = 'panel text-center pad-xl muted-text';
-      loading.textContent = 'Loading queue...';
-      listDiv.replaceChildren();
-      listDiv.appendChild(loading);
-      items = await listJulesQueue(user.uid);
-      setCache(CACHE_KEYS.QUEUE_ITEMS, items, user.uid);
-    }
+    const loading = document.createElement('div');
+    loading.className = 'panel text-center pad-xl muted-text';
+    loading.textContent = 'Loading queue...';
+    listDiv.replaceChildren();
+    listDiv.appendChild(loading);
     
-    queueCache = items;
+    const items = await listJulesQueue(user.uid);
+    setCache(CACHE_KEYS.QUEUE_ITEMS, items, user.uid);
+    
+    setQueueCache(items);
     renderQueueList(items);
     attachQueueModalHandlers();
   } catch (err) {
@@ -825,37 +816,12 @@ async function loadQueuePage() {
   }
 }
 
-async function getUserTimeZone() {
-  const user = getAuth()?.currentUser;
-  if (!user) return 'America/New_York';
-  
-  try {
-    // Pass object with userId to cacheKey
-    const profileData = await getDoc('userProfiles', user.uid, { key: CACHE_KEYS.USER_PROFILE, userId: user.uid });
-    if (profileData && profileData.preferredTimeZone) {
-      return profileData.preferredTimeZone;
-    }
-  } catch (err) {
-    console.warn('Failed to fetch user timezone preference', err);
-  }
-  
-  const cached = getCache(CACHE_KEYS.USER_PROFILE, user.uid);
-  if (cached?.preferredTimeZone) {
-    return cached.preferredTimeZone;
-  }
-  
-  return 'America/New_York';
-}
-
 function attachQueuePromptViewerHandlers(queueItems) {
-  queuePromptViewerHandlers.forEach((handler, key) => {
-    delete window[key];
-  });
-  queuePromptViewerHandlers.clear();
+  clearPromptViewerHandlers();
   
   queueItems.forEach(item => {
     if (item.prompt || (item.type === 'subtasks' && item.remaining && item.remaining.length > 0)) {
-      const cleanId = item.id.replace(/[^a-zA-Z0-9]/g, '_');
+      const cleanId = cleanIdForDOM(item.id);
       const handlerKey = `viewQueuePrompt_${cleanId}`;
       
       let promptContent = '';
@@ -869,75 +835,10 @@ function attachQueuePromptViewerHandlers(queueItems) {
       }
       
       const handler = () => showPromptViewer(promptContent, item.id);
-      window[handlerKey] = handler;
-      queuePromptViewerHandlers.set(handlerKey, handler);
+      registerPromptViewerHandler(handlerKey, handler);
     }
   });
 }
-
-async function saveUserTimeZone(timeZone) {
-  const user = getAuth()?.currentUser;
-  if (!user) return;
-  
-  try {
-    // Pass object with userId to cacheKey
-    await setDoc('userProfiles', user.uid, {
-      preferredTimeZone: timeZone,
-      updatedAt: getServerTimestamp()
-    }, { merge: true }, { key: CACHE_KEYS.USER_PROFILE, userId: user.uid });
-    
-    const cached = getCache(CACHE_KEYS.USER_PROFILE, user.uid) || {};
-    setCache(CACHE_KEYS.USER_PROFILE, { ...cached, preferredTimeZone: timeZone }, user.uid);
-  } catch (err) {
-    console.warn('Failed to save timezone preference', err);
-  }
-}
-
-function parseDateInTimeZone(dateTimeStr, timeZone) {
-  const parts = dateTimeStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/);
-  if (!parts) {
-    throw new Error('Invalid date format');
-  }
-  
-  const [, year, month, day, hour, minute, second] = parts;
-  const dateInTz = new Date(new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`).toLocaleString('en-US', { timeZone }));
-  const dateInLocal = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`);
-  const offset = dateInLocal - dateInTz;
-  
-  return new Date(dateInLocal.getTime() - offset);
-}
-
-function getCommonTimeZones() {
-  return [
-    { value: 'America/New_York', label: 'New York (ET)' },
-    { value: 'America/Chicago', label: 'Chicago (CT)' },
-    { value: 'America/Denver', label: 'Denver (MT)' },
-    { value: 'America/Los_Angeles', label: 'Los Angeles (PT)' },
-    { value: 'America/Anchorage', label: 'Anchorage (AKT)' },
-    { value: 'Pacific/Honolulu', label: 'Honolulu (HT)' },
-    { value: 'America/Mexico_City', label: 'Mexico City (CST)' },
-    { value: 'America/Toronto', label: 'Toronto (ET)' },
-    { value: 'America/Sao_Paulo', label: 'São Paulo (BRT)' },
-    { value: 'America/Buenos_Aires', label: 'Buenos Aires (ART)' },
-    { value: 'Europe/London', label: 'London (GMT/BST)' },
-    { value: 'Europe/Paris', label: 'Paris (CET/CEST)' },
-    { value: 'Europe/Berlin', label: 'Berlin (CET/CEST)' },
-    { value: 'Europe/Moscow', label: 'Moscow (MSK)' },
-    { value: 'Africa/Cairo', label: 'Cairo (EET)' },
-    { value: 'Africa/Johannesburg', label: 'Johannesburg (SAST)' },
-    { value: 'Asia/Dubai', label: 'Dubai (GST)' },
-    { value: 'Asia/Kolkata', label: 'India (IST)' },
-    { value: 'Asia/Singapore', label: 'Singapore (SGT)' },
-    { value: 'Asia/Bangkok', label: 'Bangkok (ICT)' },
-    { value: 'Asia/Shanghai', label: 'Shanghai (CST)' },
-    { value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
-    { value: 'Australia/Sydney', label: 'Sydney (AEDT/AEST)' },
-    { value: 'Pacific/Auckland', label: 'Auckland (NZDT/NZST)' },
-    { value: 'UTC', label: 'UTC' }
-  ];
-}
-
-let activeScheduleModal = null;
 
 async function showScheduleModal() {
   const user = getAuth()?.currentUser;
@@ -958,15 +859,14 @@ async function showScheduleModal() {
     return;
   }
   
-  const userTimeZone = await getUserTimeZone();
+  const userTimeZone = await serviceGetUserTimeZone(user.uid);
   
-  if (activeScheduleModal) {
-    activeScheduleModal.destroy();
-    activeScheduleModal = null;
+  const existingModal = getActiveScheduleModal();
+  if (existingModal) {
+    existingModal.destroy();
+    setActiveScheduleModal(null);
   }
 
-  // Reload content (container is cleared by destroy if we had parent issues, but here parent persists)
-  // Actually, loadScheduleModal sets innerHTML of container.
   await loadScheduleModal();
 
   const modalElement = document.getElementById('scheduleQueueModal');
@@ -975,17 +875,19 @@ async function showScheduleModal() {
     return;
   }
   
-  activeScheduleModal = createModal({
+  const newModal = createModal({
     element: modalElement,
     closeOnBackdropClick: false,
-    onDestroy: () => { activeScheduleModal = null; }
+    onDestroy: () => { setActiveScheduleModal(null); }
   });
+  
+  setActiveScheduleModal(newModal);
 
   populateTimeZoneDropdown(userTimeZone);
   initializeScheduleModalInputs();
   attachScheduleModalHandlers();
   
-  activeScheduleModal.show();
+  newModal.show();
 }
 
 async function loadScheduleModal() {
@@ -1070,35 +972,38 @@ function initializeScheduleModalInputs() {
     updateDefaultTime();
   }
   
-  if (tzSelect && activeScheduleModal) {
+  const activeModal = getActiveScheduleModal();
+  if (tzSelect && activeModal) {
     const handleTzChange = () => {
       updateMinDate();
       updateDefaultTime();
     };
-    activeScheduleModal.addListener(tzSelect, 'change', handleTzChange);
+    activeModal.addListener(tzSelect, 'change', handleTzChange);
   }
 }
 
 function attachScheduleModalHandlers() {
-  if (!activeScheduleModal) return;
+  const activeModal = getActiveScheduleModal();
+  if (!activeModal) return;
   
-  const modal = activeScheduleModal.element;
+  const modal = activeModal.element;
   const closeBtn = document.getElementById('closeScheduleModal');
   const cancelBtn = document.getElementById('cancelSchedule');
   const confirmBtn = document.getElementById('confirmSchedule');
   
-  if (closeBtn) activeScheduleModal.addListener(closeBtn, 'click', hideScheduleModal);
-  if (cancelBtn) activeScheduleModal.addListener(cancelBtn, 'click', hideScheduleModal);
-  if (confirmBtn) activeScheduleModal.addListener(confirmBtn, 'click', confirmScheduleItems);
+  if (closeBtn) activeModal.addListener(closeBtn, 'click', hideScheduleModal);
+  if (cancelBtn) activeModal.addListener(cancelBtn, 'click', hideScheduleModal);
+  if (confirmBtn) activeModal.addListener(confirmBtn, 'click', confirmScheduleItems);
   
-  activeScheduleModal.addListener(modal, 'click', (e) => {
+  activeModal.addListener(modal, 'click', (e) => {
     if (e.target === modal) hideScheduleModal();
   });
 }
 
 function hideScheduleModal() {
-  if (activeScheduleModal) {
-    activeScheduleModal.destroy();
+  const activeModal = getActiveScheduleModal();
+  if (activeModal) {
+    activeModal.destroy();
   }
 }
 
@@ -1128,14 +1033,14 @@ async function confirmScheduleItems() {
   const dateTimeStr = `${selectedDate}T${selectedTime}:00`;
   const scheduledDate = parseDateInTimeZone(dateTimeStr, selectedTimeZone);
   
-  const now = new Date();
-  if (scheduledDate < now) {
-    errorDiv.textContent = 'Scheduled time must be in the future';
+  const validation = validateSchedule(scheduledDate);
+  if (!validation.valid) {
+    errorDiv.textContent = validation.error;
     errorDiv.classList.remove('hidden');
     return;
   }
   
-  await saveUserTimeZone(selectedTimeZone);
+  await serviceSaveUserTimeZone(user.uid, selectedTimeZone);
   
   const { queueSelections } = getSelectedQueueIds();
   
@@ -1329,16 +1234,8 @@ function createQueueCard(item) {
   
   // Scheduled info
   if (status === 'scheduled' && item.scheduledAt) {
-    const scheduledDate = new Date(item.scheduledAt.seconds * 1000);
     const timeZone = item.scheduledTimeZone || 'America/New_York';
-    const dateStr = scheduledDate.toLocaleString('en-US', { 
-      timeZone: timeZone,
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const dateStr = formatScheduledDate(item.scheduledAt, timeZone);
     const retryCount = item.retryCount || 0;
     const retryInfo = retryCount > 0 ? ` (Retry ${retryCount}/3)` : '';
     
@@ -1414,33 +1311,17 @@ async function deleteSelectedSubtasks(docId, indices) {
   const user = getAuth()?.currentUser;
   if (!user) return;
 
-  const item = queueCache.find(i => i.id === docId);
+  const item = findQueueItem(docId);
   if (!item || !Array.isArray(item.remaining)) return;
 
-  const sortedIndices = indices.sort((a, b) => b - a);
-  const newRemaining = item.remaining.slice();
-  
-  for (const index of sortedIndices) {
-    if (index >= 0 && index < newRemaining.length) {
-      newRemaining.splice(index, 1);
-    }
-  }
-
-  if (newRemaining.length === 0) {
-    await deleteFromJulesQueue(user.uid, docId);
-  } else {
-    await updateJulesQueueItem(user.uid, docId, {
-      remaining: newRemaining,
-      updatedAt: getServerTimestamp()
-    });
-  }
+  await serviceDeleteSubtasks(user.uid, docId, indices, item.remaining);
 }
 
 async function runSelectedSubtasks(docId, indices, suppressPopups = false, openInBackground = false) {
   const user = getAuth()?.currentUser;
   if (!user) return;
 
-  const item = queueCache.find(i => i.id === docId);
+  const item = findQueueItem(docId);
   if (!item || !Array.isArray(item.remaining)) return;
 
   const sortedIndices = indices.sort((a, b) => a - b);
@@ -1547,7 +1428,7 @@ function attachQueueModalHandlers() {
     viewBtn.onclick = (e) => {
       e.stopPropagation();
       const docId = viewBtn.dataset.docid;
-      const cleanId = docId.replace(/[^a-zA-Z0-9]/g, '_');
+      const cleanId = cleanIdForDOM(docId);
       const handlerKey = `viewQueuePrompt_${cleanId}`;
       if (window[handlerKey]) {
         window[handlerKey]();
@@ -1593,6 +1474,7 @@ function updateScheduleButton() {
     return;
   }
   
+  const queueCache = getQueueCache();
   const allScheduled = queueSelections.every(docId => {
     const item = queueCache.find(i => i.id === docId);
     return item && item.status === 'scheduled';
@@ -1645,22 +1527,8 @@ async function unscheduleSelectedQueueItems() {
   if (!confirmed) return;
   
   try {
-    const batch = firebase.firestore().batch();
+    await serviceBatchUnschedule(user.uid, queueSelections);
     
-    for (const docId of queueSelections) {
-      const docRef = firebase.firestore().collection('julesQueues').doc(user.uid).collection('items').doc(docId);
-      batch.update(docRef, {
-        status: 'pending',
-        scheduledAt: getFieldDelete(),
-        scheduledTimeZone: getFieldDelete(),
-        activatedAt: getFieldDelete(),
-        updatedAt: getServerTimestamp()
-      });
-    }
-    
-    await batch.commit();
-    
-    const { clearCache, CACHE_KEYS } = await import('../utils/session-cache.js');
     clearCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
     
     showToast(`${queueSelections.length} ${itemText} unscheduled`, 'success');
@@ -1668,26 +1536,6 @@ async function unscheduleSelectedQueueItems() {
   } catch (err) {
     handleError(err, { source: 'unscheduleSelectedQueueItems' });
   }
-}
-
-function getSelectedQueueIds() {
-  const queueSelections = [];
-  const subtaskSelections = {};
-  
-  document.querySelectorAll('.queue-checkbox:checked').forEach(cb => {
-    queueSelections.push(cb.dataset.docid);
-  });
-  
-  document.querySelectorAll('.subtask-checkbox:checked').forEach(cb => {
-    const docId = cb.dataset.docid;
-    const index = parseInt(cb.dataset.index);
-    if (!subtaskSelections[docId]) {
-      subtaskSelections[docId] = [];
-    }
-    subtaskSelections[docId].push(index);
-  });
-  
-  return { queueSelections, subtaskSelections };
 }
 
 async function deleteSelectedQueueItems() {
@@ -1727,14 +1575,6 @@ async function deleteSelectedQueueItems() {
   }
 }
 
-function sortByCreatedAt(ids) {
-  return ids.slice().sort((a, b) => {
-    const itemA = queueCache.find(i => i.id === a);
-    const itemB = queueCache.find(i => i.id === b);
-    return (itemA?.createdAt?.seconds || 0) - (itemB?.createdAt?.seconds || 0);
-  });
-}
-
 async function runSelectedQueueItems() {
   const user = getAuth()?.currentUser;
   if (!user) { handleError(JULES_MESSAGES.NOT_SIGNED_IN, { source: 'runSelectedQueueItems' }, { category: ErrorCategory.AUTH }); return; }
@@ -1767,6 +1607,7 @@ async function runSelectedQueueItems() {
     if (pauseBtn) pauseBtn.disabled = true;
   });
 
+  const queueCache = getQueueCache();
   const sortedSubtaskEntries = Object.entries(subtaskSelections).sort(([a], [b]) => 
     (queueCache.find(i => i.id === a)?.createdAt?.seconds || 0) - (queueCache.find(i => i.id === b)?.createdAt?.seconds || 0)
   );
@@ -1818,7 +1659,7 @@ async function runSelectedQueueItems() {
     }
   }
   
-  for (const id of sortByCreatedAt(queueSelections)) {
+  for (const id of sortByCreatedAt(queueSelections, queueCache)) {
     if (paused) break;
     const item = queueCache.find(i => i.id === id);
     if (!item) continue;
@@ -1914,7 +1755,7 @@ async function runSelectedQueueItems() {
 
               try {
                 const done = initialCount - remaining.length;
-                const percent = initialCount > 0 ? Math.round((done / initialCount) * 100) : 100;
+                const percent = calculateProgress(done, initialCount);
                 statusBar.setProgress(`${done}/${initialCount}`, percent);
                 statusBar.showMessage(`Processing subtask ${done}/${initialCount}`, { timeout: 0 });
               } catch (e) {
