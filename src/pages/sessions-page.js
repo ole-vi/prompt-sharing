@@ -56,11 +56,20 @@ async function loadSessionsPage() {
         loadMoreSection.classList.add('hidden');
       }
     } else if (allSessionsCache.length === 0) {
-      allSessionsList.innerHTML = '<div class="muted text-center pad-lg">No sessions found</div>';
+      allSessionsList.replaceChildren();
+      const noSessionsDiv = createElement('div', { className: 'muted text-center pad-lg' });
+      noSessionsDiv.textContent = 'No sessions found';
+      allSessionsList.appendChild(noSessionsDiv);
     }
   } catch (error) {
     if (allSessionsCache.length === 0) {
-      allSessionsList.innerHTML = `<div class="text-center pad-lg" style="color:#e74c3c;">Failed to load sessions: ${error.message}</div>`;
+      allSessionsList.replaceChildren();
+      const errorDiv = createElement('div', { 
+        className: 'text-center pad-lg',
+        style: 'color:#e74c3c;'
+      });
+      errorDiv.textContent = `Failed to load sessions: ${error.message}`;
+      allSessionsList.appendChild(errorDiv);
     }
     loadMoreBtn.disabled = false;
     loadMoreBtn.textContent = 'Load More';
@@ -97,11 +106,16 @@ export async function renderAllSessions(sessions) {
   }
   
   if (filteredSessions.length === 0 && searchTerm) {
-    allSessionsList.innerHTML = '<div style="color:var(--muted); text-align:center; padding:24px;">No sessions match your search</div>';
+    allSessionsList.replaceChildren();
+    const noResultsDiv = createElement('div', {
+      style: 'color:var(--muted); text-align:center; padding:24px;'
+    });
+    noResultsDiv.textContent = 'No sessions match your search';
+    allSessionsList.appendChild(noResultsDiv);
     return;
   }
   
-  allSessionsList.innerHTML = '';
+  allSessionsList.replaceChildren();
 
   filteredSessions.forEach(session => {
     const state = session.state || 'UNKNOWN';
