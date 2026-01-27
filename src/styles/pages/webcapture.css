@@ -1,2 +1,24 @@
 /* Page: Webcapture */
-/* Add any webcapture-specific overrides here. */
+
+.webcapture__troubleshoot-text {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 4px 0 0;
+}
+
+.webcapture__status {
+  flex: 1;
+}
+
+.webcapture__progress {
+  margin-left: 12px;
+}
+
+.webcapture__status-btn {
+  margin-left: 12px;
+  padding: 6px 10px;
+}
+
+.webcapture__footer {
+  margin-top: 40px;
+}
