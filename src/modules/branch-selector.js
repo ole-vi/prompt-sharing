@@ -300,7 +300,10 @@ export async function loadBranches() {
   if (!branchSelect) return;
 
   branchSelect.disabled = true;
-  branchSelect.innerHTML = `<option>Loading branches…</option>`;
+  branchSelect.innerHTML = '';
+  const loadingOpt = document.createElement('option');
+  loadingOpt.textContent = 'Loading branches…';
+  branchSelect.appendChild(loadingOpt);
 
   try {
     // Check cache first
@@ -393,7 +396,11 @@ export async function loadBranches() {
     // Populate custom dropdown menu with favorites support
     await populateCustomDropdownMenu(branches);
   } catch (e) {
-    branchSelect.innerHTML = `<option value="${currentBranch}">${currentBranch}</option>`;
+    branchSelect.innerHTML = '';
+    const errorOpt = document.createElement('option');
+    errorOpt.value = currentBranch;
+    errorOpt.textContent = currentBranch;
+    branchSelect.appendChild(errorOpt);
     branchSelect.title = (e && e.message) ? e.message : 'Failed to load branches';
   } finally {
     branchSelect.disabled = false;

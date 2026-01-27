@@ -492,7 +492,9 @@ describe('branch-selector', () => {
     it('should show loading message', async () => {
       const loadPromise = loadBranches();
       
-      expect(mockSelect.innerHTML).toContain('Loading');
+      expect(mockSelect.appendChild).toHaveBeenCalledWith(
+        expect.objectContaining({ textContent: 'Loading branches…' })
+      );
       
       await loadPromise;
     });
@@ -552,7 +554,12 @@ describe('branch-selector', () => {
       
       await loadBranches();
       
-      expect(mockSelect.innerHTML).toContain('main');
+      expect(mockSelect.appendChild).toHaveBeenCalledWith(
+        expect.objectContaining({
+          value: 'main',
+          textContent: 'main'
+        })
+      );
       expect(mockSelect.title).toBeTruthy();
       expect(mockSelect.disabled).toBe(false);
     });
