@@ -9,7 +9,6 @@ import {
   selectFile
 } from '../../modules/prompt-renderer.js';
 
-// Mock all dependencies
 vi.mock('../../utils/slug.js', () => ({
   slugify: vi.fn((str) => str.toLowerCase().replace(/\s+/g, '-'))
 }));
@@ -72,7 +71,6 @@ vi.mock('../../utils/clipboard.js', () => ({
   copyText: vi.fn().mockResolvedValue(true)
 }));
 
-// Global mocks
 global.document = {
   getElementById: vi.fn(),
   addEventListener: vi.fn(),
@@ -104,7 +102,6 @@ describe('prompt-renderer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     
-    // Mock DOM elements
     const mockElement = {
       innerHTML: '',
       textContent: '',
@@ -133,7 +130,6 @@ describe('prompt-renderer', () => {
     };
 
     global.document.getElementById.mockImplementation((id) => {
-      // Include all IDs used in prompt-renderer AND jules-free-input (which is dynamically imported)
       const allowedIds = [
         'content', 'title', 'meta', 'empty', 'actions', 'copyBtn', 'copenBtn',
         'rawBtn', 'ghBtn', 'editBtn', 'shareBtn', 'julesBtn', 'freeInputBtn', 'moreBtn',
@@ -307,17 +303,14 @@ describe('prompt-renderer', () => {
     };
 
     beforeEach(async () => {
-      // Ensure clean state by destroying first, then reinitializing to clear cache
       destroyPromptRenderer();
       initPromptRenderer();
       
-      // Reset all mocks in this beforeEach
       const { fetchRawFile } = await import('../../modules/github-api.js');
       const { loadMarked } = await import('../../utils/lazy-loaders.js');
       
       vi.clearAllMocks();
       
-      // Set default behavior for all tests unless overridden
       fetchRawFile.mockResolvedValue('# Test Content\nThis is a test file.');
       loadMarked.mockResolvedValue({
         parse: vi.fn().mockReturnValue('<h1>Test Content</h1><p>This is a test file.</p>')
@@ -335,14 +328,12 @@ describe('prompt-renderer', () => {
       fetchRawFile.mockReset();
       fetchRawFile.mockRejectedValue(new Error('Fetch failed'));
 
-      // The current implementation doesn't handle fetch errors, so it throws
       await expect(selectFile(mockFile, true, 'owner', 'repo', 'main')).rejects.toThrow('Fetch failed');
     });
 
     it('should update URL hash when pushHash is true', async () => {
       await selectFile(mockFile, true, 'owner', 'repo', 'main');
 
-      // Hash should be updated (implementation-dependent)
       expect(window.location.hash).toBeDefined();
     });
 
@@ -351,7 +342,6 @@ describe('prompt-renderer', () => {
       
       await selectFile(mockFile, false, 'owner', 'repo', 'main');
 
-      // Hash should remain unchanged if pushHash is false
       expect(window.location.hash).toBe(originalHash);
     });
 
@@ -378,13 +368,11 @@ describe('prompt-renderer', () => {
       fetchRawFile.mockReset();
       fetchRawFile.mockResolvedValue('# Test Content\nThis is a test file.');
       
-      // First call
       await selectFile(mockFile, true, 'owner', 'repo', 'main');
       expect(fetchRawFile).toHaveBeenCalledTimes(1);
       
-      // Second call should use cache
       await selectFile(mockFile, true, 'owner', 'repo', 'main');
-      expect(fetchRawFile).toHaveBeenCalledTimes(1); // Still 1, used cache
+      expect(fetchRawFile).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -392,14 +380,12 @@ describe('prompt-renderer', () => {
     beforeEach(async () => {
       initPromptRenderer();
       
-      // Reset mocks for error handling tests
       const { fetchRawFile } = await import('../../modules/github-api.js');
       const { loadMarked } = await import('../../utils/lazy-loaders.js');
       
       fetchRawFile.mockReset();
       loadMarked.mockReset();
       
-      // Set default behavior
       fetchRawFile.mockResolvedValue('# Test Content');
       loadMarked.mockResolvedValue({
         parse: vi.fn().mockReturnValue('<h1>Test Content</h1>')
@@ -413,12 +399,10 @@ describe('prompt-renderer', () => {
 
       const mockFile = { path: 'test.md', name: 'test.md', slug: 'test', type: 'file' };
       
-      // The current implementation doesn't handle loadMarked errors, so it throws
       await expect(selectFile(mockFile, true, 'owner', 'repo', 'main')).rejects.toThrow('Markdown parsing failed');
     });
 
     it('should handle DOM manipulation errors gracefully', () => {
-      // Mock DOM to return null elements (common error scenario)
       global.document.getElementById.mockReturnValue(null);
 
       expect(() => initPromptRenderer()).not.toThrow();
@@ -455,7 +439,6 @@ describe('prompt-renderer', () => {
       // Import the mocked function
       const { copyText } = await import('../../utils/clipboard.js');
 
-      // Simulate click event on copy button
       const clickEvent = { target: mockButtons.copyBtn, preventDefault: vi.fn(), stopPropagation: vi.fn() };
       const documentClickHandlers = global.document.addEventListener.mock.calls.filter(call => call[0] === 'click');
       if (documentClickHandlers.length > 0) {
@@ -470,7 +453,6 @@ describe('prompt-renderer', () => {
       setHandleTryInJulesCallback(mockCallback);
       setCurrentPromptText('test prompt for jules');
       
-      // Simulate click event on jules button
       const clickEvent = { target: mockButtons.julesBtn, preventDefault: vi.fn(), stopPropagation: vi.fn() };
       const documentClickHandlers = global.document.addEventListener.mock.calls.filter(call => call[0] === 'click');
       if (documentClickHandlers.length > 0) {
@@ -491,14 +473,11 @@ describe('prompt-renderer', () => {
       
       vi.clearAllMocks();
       
-      // Set default behavior
       loadMarked.mockResolvedValue({
         parse: vi.fn().mockReturnValue('<h1>Test Content</h1>')
       });
     });
 
-    // Skipped: Test isolation issues - previous tests cache content that interferes
-    // Would need to mock sessionStorage and clear between tests properly
     it.skip('should handle complete workflow: init -> select file -> destroy', async () => {
       setCurrentPromptText('# Test Direct Set');
       expect(getCurrentPromptText()).toBe('# Test Direct Set');
@@ -541,14 +520,12 @@ describe('prompt-renderer', () => {
         Promise.resolve(`# Content for ${path}`)
       );
 
-      // Rapid selection changes
       const promises = files.map(file => 
         selectFile(file, true, 'owner', 'repo', 'main')
       );
 
       await Promise.all(promises);
 
-      // Should handle concurrent selections gracefully
       expect(fetchRawFile).toHaveBeenCalledTimes(3);
     });
   });
