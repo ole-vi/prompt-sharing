@@ -4,7 +4,7 @@
 import { getAuth, getDb } from './firebase-service.js';
 import { getServerTimestamp } from '../utils/firestore-helpers.js';
 import { handleError, ErrorCategory } from '../utils/error-handler.js';
-import { getJulesSession, getJulesSessionActivities, getDecryptedJulesKey } from './jules-api.js';
+import { getJulesSession, getJulesSessionActivities, getDecryptedJulesKey, listJulesSessions } from './jules-api.js';
 import { CACHE_KEYS } from '../utils/session-cache.js';
 
 /**
@@ -150,13 +150,17 @@ export async function syncSessionFromAPI(sessionId, apiKey = null) {
 
     // Fetch latest session data from Jules API
     const session = await getJulesSession(apiKey, sessionId);
+    
+    // Find PR data in outputs array (could be at any index)
+    const prOutput = session.outputs?.find(output => output.pullRequest);
+    const pullRequest = prOutput?.pullRequest;
 
     const updates = {
       status: session.state || 'UNKNOWN',
-      hasPR: !!(session.outputs?.[0]?.pullRequest?.url),
-      prUrl: session.outputs?.[0]?.pullRequest?.url || null,
-      prTitle: session.outputs?.[0]?.pullRequest?.title || null,
-      prDescription: session.outputs?.[0]?.pullRequest?.description || null
+      hasPR: !!pullRequest?.url,
+      prUrl: pullRequest?.url || null,
+      prTitle: pullRequest?.title || null,
+      prDescription: pullRequest?.description || null
     };
 
     // Set completion time if completed or failed
@@ -322,15 +326,37 @@ export async function syncActiveSessions() {
   }
 
   try {
-    const activeSessions = await getUserSessions({
-      status: 'IN_PROGRESS'
+    // Get ALL sessions and filter in memory to avoid index requirements
+    const db = getDb();
+    const allSessionsSnapshot = await db
+      .collection('juleSessions')
+      .doc(user.uid)
+      .collection('sessions')
+      .get();
+    
+    const allSessions = allSessionsSnapshot.docs.map(doc => ({ 
+      sessionId: doc.id, 
+      ...doc.data() 
+    }));
+    
+    // Filter to sessions that need syncing
+    const toSync = allSessions.filter(session => {
+      // Active or unknown status sessions
+      if (['IN_PROGRESS', 'PLANNING', 'QUEUED', 'UNKNOWN'].includes(session.status)) return true;
+      
+      // Completed sessions without PR data
+      if (session.status === 'COMPLETED') {
+        if (session.hasPR === undefined || session.hasPR === null || session.hasPR === false) return true;
+        if (!session.completedAt) return true;
+        
+        // Completed in last hour
+        const completedTime = session.completedAt.toDate?.() || new Date(session.completedAt);
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+        if (completedTime > oneHourAgo) return true;
+      }
+      
+      return false;
     });
-
-    // Also get PLANNING and QUEUED sessions
-    const planningSessions = await getUserSessions({ status: 'PLANNING' });
-    const queuedSessions = await getUserSessions({ status: 'QUEUED' });
-
-    const allActive = [...activeSessions, ...planningSessions, ...queuedSessions];
 
     const apiKey = await getDecryptedJulesKey(user.uid);
     if (!apiKey) {
@@ -338,9 +364,9 @@ export async function syncActiveSessions() {
       return;
     }
 
-    console.log(`[Session Tracking] Syncing ${allActive.length} active sessions`);
+    console.log(`[Session Tracking] Syncing ${toSync.length} sessions`);
 
-    for (const session of allActive) {
+    for (const session of toSync) {
       try {
         await syncSessionFromAPI(session.sessionId, apiKey);
       } catch (err) {
@@ -392,6 +418,111 @@ export async function deleteTrackedSession(sessionId) {
     console.log('[Session Tracking] Deleted session:', sessionId);
   } catch (error) {
     handleError(error, { source: 'deleteTrackedSession' });
+    throw error;
+  }
+}
+
+/**
+ * Import all historical Jules sessions from API into Firestore
+ * @returns {Promise<{imported: number, skipped: number, errors: number}>} Import stats
+ */
+export async function importJulesHistory() {
+  const user = getAuth()?.currentUser;
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const db = getDb();
+  if (!db) {
+    throw new Error('Firestore not initialized');
+  }
+
+  const apiKey = await getDecryptedJulesKey(user.uid);
+  if (!apiKey) {
+    throw new Error('Jules API key not found. Please add your API key in settings.');
+  }
+
+  const stats = { imported: 0, skipped: 0, errors: 0 };
+  let pageToken = null;
+
+  try {
+    console.log('[Session Tracking] Starting Jules history import...');
+
+    do {
+      // Fetch page of sessions
+      const response = await listJulesSessions(apiKey, 100, pageToken);
+      const sessions = response.sessions || [];
+      
+      console.log(`[Session Tracking] Processing ${sessions.length} sessions...`);
+
+      for (const session of sessions) {
+        try {
+          const sessionId = session.id;
+          
+          // Check if session already exists
+          const sessionRef = db
+            .collection('juleSessions')
+            .doc(user.uid)
+            .collection('sessions')
+            .doc(sessionId);
+          
+          const existingDoc = await sessionRef.get();
+          if (existingDoc.exists) {
+            stats.skipped++;
+            continue;
+          }
+
+          // Find PR data in outputs
+          const prOutput = session.outputs?.find(output => output.pullRequest);
+          const pullRequest = prOutput?.pullRequest;
+
+          // Extract source and branch
+          const sourceId = session.sourceContext?.source || null;
+          const branch = session.sourceContext?.githubRepoContext?.startingBranch || null;
+
+          // Create session document
+          const sessionData = {
+            sessionId,
+            sessionName: session.name,
+            title: session.title || 'Untitled Session',
+            promptContent: session.prompt || '',
+            promptPath: null, // Historical sessions don't have this
+            sourceId,
+            branch,
+            status: session.state || 'UNKNOWN',
+            sessionUrl: session.url || `https://jules.google.com/session/${sessionId}`,
+            createdAt: session.createTime ? new Date(session.createTime) : getServerTimestamp(),
+            completedAt: (session.state === 'COMPLETED' || session.state === 'FAILED') && session.updateTime 
+              ? new Date(session.updateTime) 
+              : null,
+            hasPR: !!pullRequest?.url,
+            prUrl: pullRequest?.url || null,
+            prTitle: pullRequest?.title || null,
+            prDescription: pullRequest?.description || null,
+            imported: true,
+            importedAt: getServerTimestamp()
+          };
+
+          await sessionRef.set(sessionData);
+          stats.imported++;
+          
+          if (stats.imported % 10 === 0) {
+            console.log(`[Session Tracking] Imported ${stats.imported} sessions so far...`);
+          }
+        } catch (err) {
+          console.error(`[Session Tracking] Failed to import session ${session.id}:`, err);
+          stats.errors++;
+        }
+      }
+
+      pageToken = response.nextPageToken;
+    } while (pageToken);
+
+    console.log('[Session Tracking] Import complete:', stats);
+    return stats;
+  } catch (error) {
+    console.error('[Session Tracking] History import failed:', error);
+    handleError(error, { source: 'importJulesHistory' });
     throw error;
   }
 }

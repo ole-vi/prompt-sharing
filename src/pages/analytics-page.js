@@ -4,10 +4,11 @@
 import { waitForFirebase } from '../shared-init.js';
 import { getAuth } from '../modules/firebase-service.js';
 import { calculateAnalytics } from '../modules/analytics.js';
-import { syncActiveSessions } from '../modules/session-tracking.js';
+import { syncActiveSessions, importJulesHistory } from '../modules/session-tracking.js';
 import { handleError } from '../utils/error-handler.js';
 import { TIMEOUTS } from '../utils/constants.js';
 import { createElement, createIcon, toggleVisibility } from '../utils/dom-helpers.js';
+import { showToast } from '../modules/toast.js';
 
 let currentAnalytics = null;
 let statusChartInstance = null;
@@ -59,6 +60,34 @@ async function initApp() {
         } finally {
           refreshBtn.disabled = false;
           refreshBtn.querySelector('.icon').textContent = 'refresh';
+        }
+      });
+    }
+
+    // Import history button
+    const importBtn = document.getElementById('importHistoryBtn');
+    if (importBtn) {
+      importBtn.addEventListener('click', async () => {
+        if (!confirm('This will import all your Jules sessions from history. This may take a few minutes. Continue?')) {
+          return;
+        }
+
+        importBtn.disabled = true;
+        importBtn.querySelector('.icon').textContent = 'hourglass_empty';
+        const originalText = importBtn.childNodes[2].textContent;
+        importBtn.childNodes[2].textContent = ' Importing...';
+        
+        try {
+          const stats = await importJulesHistory();
+          showToast(`Import complete: ${stats.imported} imported, ${stats.skipped} skipped, ${stats.errors} errors`, 'success');
+          await loadAnalytics();
+        } catch (error) {
+          handleError(error, { source: 'importHistory' });
+          showToast('Failed to import history. Check console for details.', 'error');
+        } finally {
+          importBtn.disabled = false;
+          importBtn.querySelector('.icon').textContent = 'download';
+          importBtn.childNodes[2].textContent = originalText;
         }
       });
     }
