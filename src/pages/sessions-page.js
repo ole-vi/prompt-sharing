@@ -1,8 +1,9 @@
 import { waitForFirebase } from '../shared-init.js';
 import { getAuth } from '../modules/firebase-service.js';
 import { listJulesSessions, getDecryptedJulesKey } from '../modules/jules-api.js';
-import { attachPromptViewerHandlers } from '../modules/prompt-viewer.js';
+import { showPromptViewer } from '../modules/prompt-viewer.js';
 import { debounce } from '../utils/debounce.js';
+import { createElement, createIcon } from '../utils/dom-helpers.js';
 import { TIMEOUTS } from '../utils/constants.js';
 import { loadFuse } from '../utils/lazy-loaders.js';
 
@@ -66,7 +67,7 @@ async function loadSessionsPage() {
   }
 }
 
-async function renderAllSessions(sessions) {
+export async function renderAllSessions(sessions) {
   const allSessionsList = document.getElementById('allSessionsList');
   const searchInput = document.getElementById('sessionSearchInput');
   const searchTerm = searchInput.value.trim();
@@ -100,7 +101,9 @@ async function renderAllSessions(sessions) {
     return;
   }
   
-  allSessionsList.innerHTML = filteredSessions.map(session => {
+  allSessionsList.innerHTML = '';
+
+  filteredSessions.forEach(session => {
     const state = session.state || 'UNKNOWN';
     const stateIcons = {
       'COMPLETED': 'check_circle',
@@ -129,21 +132,52 @@ async function renderAllSessions(sessions) {
     const sessionId = session.name?.split('sessions/')[1] || session.id?.split('sessions/')[1] || session.id;
     const sessionUrl = sessionId ? `https://jules.google.com/session/${sessionId}` : 'https://jules.google.com';
     
-    return `
-      <div class="session-card" onclick="window.open('${sessionUrl}', '_blank', 'noopener')">
-        <div class="session-meta">${createdAt}</div>
-        <div class="session-prompt">${displayPrompt}</div>
-        <div class="session-row">
-          <span class="session-pill"><span class="icon icon-inline" aria-hidden="true">${stateIcon}</span> ${stateLabel}</span>
-          ${prUrl ? `<a href="${prUrl}" target="_blank" rel="noopener" class="small-text" onclick="event.stopPropagation()"><span class="icon icon-inline" aria-hidden="true">link</span> View PR</a>` : ''}
-          <span class="session-hint"><span class="icon icon-inline" aria-hidden="true">info</span> Click to view session</span>
-          <button class="btn-icon session-view-btn" onclick="event.stopPropagation(); window.viewPrompt_${sessionId.replace(/[^a-zA-Z0-9]/g, '_')}()" title="View full prompt"><span class="icon" aria-hidden="true">visibility</span></button>
-        </div>
-      </div>
-    `;
-  }).join('');
-  
-  attachPromptViewerHandlers(filteredSessions);
+    const card = createElement('div', 'session-card');
+    card.onclick = () => window.open(sessionUrl, '_blank', 'noopener');
+
+    const metaDiv = createElement('div', 'session-meta', createdAt);
+    const promptDiv = createElement('div', 'session-prompt', displayPrompt);
+
+    const rowDiv = createElement('div', 'session-row');
+
+    const pillSpan = createElement('span', 'session-pill');
+    const iconSpan = createIcon(stateIcon, 'icon-inline');
+    pillSpan.appendChild(iconSpan);
+    pillSpan.appendChild(document.createTextNode(' ' + stateLabel));
+    rowDiv.appendChild(pillSpan);
+
+    if (prUrl) {
+      const link = createElement('a', 'small-text', ' View PR');
+      link.href = prUrl;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.onclick = (e) => e.stopPropagation();
+      const linkIcon = createIcon('link', 'icon-inline');
+      link.prepend(linkIcon);
+      rowDiv.appendChild(link);
+    }
+
+    const hintSpan = createElement('span', 'session-hint', ' Click to view session');
+    const hintIcon = createIcon('info', 'icon-inline');
+    hintSpan.prepend(hintIcon);
+    rowDiv.appendChild(hintSpan);
+
+    const viewBtn = createElement('button', 'btn-icon session-view-btn');
+    viewBtn.title = 'View full prompt';
+    viewBtn.onclick = (e) => {
+      e.stopPropagation();
+      showPromptViewer(session.prompt || 'No prompt text available', sessionId);
+    };
+    const viewIcon = createIcon('visibility');
+    viewBtn.appendChild(viewIcon);
+    rowDiv.appendChild(viewBtn);
+
+    card.appendChild(metaDiv);
+    card.appendChild(promptDiv);
+    card.appendChild(rowDiv);
+
+    allSessionsList.appendChild(card);
+  });
 }
 
 async function loadSessions() {
