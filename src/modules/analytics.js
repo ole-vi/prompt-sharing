@@ -249,7 +249,12 @@ function aggregateSessionData(sessions) {
   // Calculate derived metrics
   if (analytics.totalSessions > 0) {
     analytics.prCreationRate = analytics.sessionsWithPRs / analytics.totalSessions;
-    analytics.successRate = analytics.completedSessions / analytics.totalSessions;
+  }
+
+  // Completion rate: completed / (completed + failed)
+  const finishedSessions = analytics.completedSessions + analytics.failedSessions;
+  if (finishedSessions > 0) {
+    analytics.successRate = analytics.completedSessions / finishedSessions;
   }
 
   if (analytics.sessionsWithPlans > 0) {

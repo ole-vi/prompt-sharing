@@ -12,12 +12,6 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.metric-card:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 12px rgba(77, 217, 255, 0.15);
 }
 
 .metric-card__header {
@@ -38,6 +32,13 @@
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.metric-card__label .icon {
+  cursor: default;
 }
 
 .metric-card__value {

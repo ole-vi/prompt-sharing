@@ -84,7 +84,6 @@ export async function trackSessionCreation(sessionData) {
       .doc(sessionData.sessionId)
       .set(sessionDoc);
 
-    console.log('[Session Tracking] Created session:', sessionData.sessionId);
     return sessionData.sessionId;
   } catch (error) {
     handleError(error, { source: 'trackSessionCreation' });
@@ -120,8 +119,6 @@ export async function updateSessionStatus(sessionId, updates) {
       .collection('sessions')
       .doc(sessionId)
       .update(updateData);
-
-    console.log('[Session Tracking] Updated session:', sessionId, updates);
   } catch (error) {
     handleError(error, { source: 'updateSessionStatus' });
     throw error;
@@ -253,8 +250,6 @@ export async function analyzeSessionActivities(sessionId, apiKey = null) {
     };
 
     await updateSessionStatus(sessionId, updates);
-
-    console.log('[Session Tracking] Analyzed activities for session:', sessionId);
   } catch (error) {
     handleError(error, { source: 'analyzeSessionActivities' });
     throw error;
@@ -364,8 +359,6 @@ export async function syncActiveSessions() {
       return;
     }
 
-    console.log(`[Session Tracking] Syncing ${toSync.length} sessions`);
-
     for (const session of toSync) {
       try {
         await syncSessionFromAPI(session.sessionId, apiKey);
@@ -414,8 +407,6 @@ export async function deleteTrackedSession(sessionId) {
       .collection('sessions')
       .doc(sessionId)
       .delete();
-
-    console.log('[Session Tracking] Deleted session:', sessionId);
   } catch (error) {
     handleError(error, { source: 'deleteTrackedSession' });
     throw error;
@@ -446,14 +437,10 @@ export async function importJulesHistory() {
   let pageToken = null;
 
   try {
-    console.log('[Session Tracking] Starting Jules history import...');
-
     do {
       // Fetch page of sessions
       const response = await listJulesSessions(apiKey, 100, pageToken);
       const sessions = response.sessions || [];
-      
-      console.log(`[Session Tracking] Processing ${sessions.length} sessions...`);
 
       for (const session of sessions) {
         try {
@@ -505,10 +492,6 @@ export async function importJulesHistory() {
 
           await sessionRef.set(sessionData);
           stats.imported++;
-          
-          if (stats.imported % 10 === 0) {
-            console.log(`[Session Tracking] Imported ${stats.imported} sessions so far...`);
-          }
         } catch (err) {
           console.error(`[Session Tracking] Failed to import session ${session.id}:`, err);
           stats.errors++;
@@ -518,7 +501,6 @@ export async function importJulesHistory() {
       pageToken = response.nextPageToken;
     } while (pageToken);
 
-    console.log('[Session Tracking] Import complete:', stats);
     return stats;
   } catch (error) {
     console.error('[Session Tracking] History import failed:', error);
