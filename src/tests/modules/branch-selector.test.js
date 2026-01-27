@@ -95,6 +95,11 @@ const createMockElement = (id, type = 'select') => {
     },
     addEventListener: vi.fn(),
     appendChild: vi.fn(),
+    replaceChildren: vi.fn(function() {
+      // Simulate clearing children by resetting innerHTML
+      this.innerHTML = '';
+      this.options = [];
+    }),
     options: [],
     style: {},
     textContent: '',
@@ -143,6 +148,10 @@ global.document = {
         setAttribute: vi.fn(),
         addEventListener: vi.fn(),
         appendChild: vi.fn(),
+        replaceChildren: vi.fn(function() {
+          // Simulate clearing children by resetting innerHTML
+          this.innerHTML = '';
+        }),
         dataset: {}
       };
     }
