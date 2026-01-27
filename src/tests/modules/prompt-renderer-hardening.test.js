@@ -137,15 +137,15 @@ describe('Prompt Renderer Hardening', () => {
     });
 
     // Re-import modules to reset state
-    const lazyLoaders = await import('../utils/lazy-loaders.js');
+    const lazyLoaders = await import('../../utils/lazy-loaders.js');
     lazyLoaders.loadMarked.mockResolvedValue({
       parse: vi.fn().mockReturnValue('<p>Test content</p>')
     });
 
-    const githubApi = await import('../modules/github-api.js');
+    const githubApi = await import('../../modules/github-api.js');
     githubApi.fetchRawFile.mockResolvedValue('# Test');
 
-    promptRenderer = await import('../modules/prompt-renderer.js');
+    promptRenderer = await import('../../modules/prompt-renderer.js');
     promptRenderer.initPromptRenderer();
   });
 
