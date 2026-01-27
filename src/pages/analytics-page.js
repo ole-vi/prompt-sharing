@@ -9,6 +9,7 @@ import { handleError } from '../utils/error-handler.js';
 import { TIMEOUTS } from '../utils/constants.js';
 import { createElement, createIcon, toggleVisibility } from '../utils/dom-helpers.js';
 import { showToast } from '../modules/toast.js';
+import { showConfirm } from '../modules/confirm-modal.js';
 
 let currentAnalytics = null;
 let statusChartInstance = null;
@@ -68,7 +69,17 @@ async function initApp() {
     const importBtn = document.getElementById('importHistoryBtn');
     if (importBtn) {
       importBtn.addEventListener('click', async () => {
-        if (!confirm('This will import all your Jules sessions from history. This may take a few minutes. Continue?')) {
+        const confirmed = await showConfirm(
+          'This will import all your Jules sessions from history. This may take a few minutes. Continue?',
+          {
+            title: 'Import Jules History',
+            confirmText: 'Import',
+            confirmStyle: 'primary',
+            cancelText: 'Cancel'
+          }
+        );
+        
+        if (!confirmed) {
           return;
         }
 
