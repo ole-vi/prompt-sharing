@@ -3,6 +3,9 @@ const openDropdowns = new Set();
 function closeAllDropdowns() {
   for (const dropdown of openDropdowns) {
     dropdown.menu.classList.remove('open');
+    if (dropdown.menu.style.display === 'block' || dropdown.menu.style.display === 'none') {
+      dropdown.menu.style.display = '';
+    }
     dropdown.btn.setAttribute('aria-expanded', 'false');
   }
   openDropdowns.clear();
@@ -20,12 +23,18 @@ function toggleDropdown(dropdown) {
 function openDropdown(dropdown) {
   closeAllDropdowns();
   dropdown.menu.classList.add('open');
+  if (dropdown.menu.style.display === 'none') {
+    dropdown.menu.style.display = '';
+  }
   dropdown.btn.setAttribute('aria-expanded', 'true');
   openDropdowns.add(dropdown);
 }
 
 function closeDropdown(dropdown) {
   dropdown.menu.classList.remove('open');
+  if (dropdown.menu.style.display === 'block') {
+    dropdown.menu.style.display = '';
+  }
   dropdown.btn.setAttribute('aria-expanded', 'false');
   openDropdowns.delete(dropdown);
 }
