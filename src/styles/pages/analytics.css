@@ -202,6 +202,24 @@
   text-underline-offset: 3px;
 }
 
+.pr-link--btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pr-link--disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+  font-weight: 400;
+}
+
+.pr-link--disabled:hover {
+  text-decoration: none;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 1000px) {
   .analytics-charts-grid {

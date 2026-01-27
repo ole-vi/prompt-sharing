@@ -10,6 +10,8 @@ import { TIMEOUTS } from '../utils/constants.js';
 import { createElement, createIcon, toggleVisibility } from '../utils/dom-helpers.js';
 import { showToast } from '../modules/toast.js';
 import { showConfirm } from '../modules/confirm-modal.js';
+import { showPromptViewer } from '../modules/prompt-viewer.js';
+import statusBar from '../modules/status-bar.js';
 
 let currentAnalytics = null;
 let statusChartInstance = null;
@@ -26,6 +28,9 @@ function waitForComponents() {
 async function initApp() {
   try {
     await waitForFirebase();
+    
+    // Initialize status bar
+    statusBar.init();
 
     const auth = getAuth();
     
@@ -53,11 +58,22 @@ async function initApp() {
         refreshBtn.querySelector('.icon').textContent = 'hourglass_empty';
         
         try {
-          // Sync active sessions first
-          await syncActiveSessions();
+          // Show status bar and sync with progress updates
+          statusBar.showMessage('Syncing sessions...', { timeout: 0 });
+          
+          await syncActiveSessions((synced, total) => {
+            statusBar.setProgress(`${synced} / ${total}`, (synced / total) * 100);
+          });
+          
+          statusBar.clearProgress();
+          statusBar.showMessage('Loading analytics...', { timeout: 0 });
+          
           await loadAnalytics();
+          
+          statusBar.showMessage('Refresh complete!', { timeout: 3000 });
         } catch (error) {
           handleError(error, { source: 'refreshAnalytics' });
+          statusBar.showMessage('Refresh failed', { timeout: 3000 });
         } finally {
           refreshBtn.disabled = false;
           refreshBtn.querySelector('.icon').textContent = 'refresh';
@@ -89,12 +105,24 @@ async function initApp() {
         importBtn.childNodes[2].textContent = ' Importing...';
         
         try {
-          const stats = await importJulesHistory();
+          // Show status bar with progress
+          statusBar.showMessage('Importing Jules history...', { timeout: 0 });
+          
+          const stats = await importJulesHistory((processed, total) => {
+            statusBar.setProgress(`${processed} / ${total}`, (processed / total) * 100);
+          });
+          
+          statusBar.clearProgress();
+          statusBar.showMessage('Loading analytics...', { timeout: 0 });
+          
           showToast(`Import complete: ${stats.imported} imported, ${stats.skipped} skipped, ${stats.errors} errors`, 'success');
           await loadAnalytics();
+          
+          statusBar.showMessage('Import complete!', { timeout: 3000 });
         } catch (error) {
           handleError(error, { source: 'importHistory' });
           showToast('Failed to import history. Check console for details.', 'error');
+          statusBar.showMessage('Import failed', { timeout: 3000 });
         } finally {
           importBtn.disabled = false;
           importBtn.querySelector('.icon').textContent = 'download';
@@ -368,43 +396,49 @@ function renderFailureAnalysis(analytics) {
 
   container.textContent = '';
 
-  if (analytics.failedSessions === 0) {
+  const recentFailures = analytics.recentFailures || [];
+
+  if (recentFailures.length === 0) {
     const emptyMsg = createElement('p', 'muted small-text text-center pad-lg', 'No failures recorded 🎉');
     container.appendChild(emptyMsg);
     return;
   }
 
-  const grid = createElement('div', 'failure-grid');
-  
-  // Total failures
-  const totalItem = createElement('div', 'failure-item');
-  const totalLabel = createElement('div', 'failure-item__label', 'Total Failures');
-  const totalValue = createElement('div', 'failure-item__value', String(analytics.failedSessions));
-  const totalDesc = createElement('div', 'failure-item__desc', 
-    `${((analytics.failedSessions / analytics.totalSessions) * 100).toFixed(1)}% of sessions`);
-  totalItem.appendChild(totalLabel);
-  totalItem.appendChild(totalValue);
-  totalItem.appendChild(totalDesc);
-  grid.appendChild(totalItem);
-  
-  // Failure reasons
-  Object.entries(analytics.failureReasons)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .forEach(([reason, count]) => {
-      const displayReason = reason.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-      const item = createElement('div', 'failure-item');
-      const label = createElement('div', 'failure-item__label', displayReason);
-      const value = createElement('div', 'failure-item__value', String(count));
-      const desc = createElement('div', 'failure-item__desc', 
-        `${((count / analytics.failedSessions) * 100).toFixed(0)}% of failures`);
-      item.appendChild(label);
-      item.appendChild(value);
-      item.appendChild(desc);
-      grid.appendChild(item);
-    });
-
-  container.appendChild(grid);
+  recentFailures.forEach(failure => {
+    const item = createElement('div', 'item');
+    
+    const content = createElement('div', 'failure-item__content');
+    const title = createElement('div', 'pr-title', failure.title || 'Failed Session');
+    
+    const meta = createElement('div', 'item-meta');
+    
+    // Failure reason if available
+    if (failure.reason) {
+      const reason = failure.reason.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      const reasonSpan = createElement('span', 'failure-reason', reason);
+      meta.appendChild(reasonSpan);
+      
+      // Separator
+      const sep = createElement('span', 'muted', ' • ');
+      meta.appendChild(sep);
+    }
+    
+    // Session link
+    const sessionLink = document.createElement('a');
+    sessionLink.href = failure.sessionUrl;
+    sessionLink.target = '_blank';
+    sessionLink.rel = 'noopener';
+    sessionLink.className = 'pr-link';
+    const sessionIcon = createIcon('smart_toy', 'icon-inline');
+    sessionLink.appendChild(sessionIcon);
+    sessionLink.appendChild(document.createTextNode(' View Session'));
+    meta.appendChild(sessionLink);
+    
+    content.appendChild(title);
+    content.appendChild(meta);
+    item.appendChild(content);
+    container.appendChild(item);
+  });
 }
 
 function renderRepoPerformance(analytics) {
@@ -427,7 +461,6 @@ function renderRepoPerformance(analytics) {
   repos.forEach(repo => {
     const prRate = (repo.prRate * 100).toFixed(0);
     const displayName = repo.id.replace('sources/github/', '');
-    const avgDuration = repo.avgDurationMinutes ? `${repo.avgDurationMinutes} min avg` : 'N/A';
     const badgeClass = repo.prRate >= 0.7 ? 'success' : repo.prRate >= 0.4 ? 'warn' : 'danger';
     
     const item = createElement('div', 'item');
@@ -435,7 +468,7 @@ function renderRepoPerformance(analytics) {
     const content = createElement('div', 'repo-item__content');
     const title = createElement('div', 'item-title', displayName);
     const meta = createElement('div', 'item-meta');
-    meta.textContent = `${repo.total} session${repo.total !== 1 ? 's' : ''} • ${repo.withPRs} PR${repo.withPRs !== 1 ? 's' : ''} • ${avgDuration}`;
+    meta.textContent = `${repo.total} session${repo.total !== 1 ? 's' : ''} • ${repo.withPRs} PR${repo.withPRs !== 1 ? 's' : ''}`;
     
     content.appendChild(title);
     content.appendChild(meta);
@@ -466,18 +499,59 @@ function renderRecentPRs(analytics) {
     const item = createElement('div', 'item');
     
     const content = createElement('div', 'pr-item__content');
-    const title = createElement('div', 'item-title', pr.title || 'Pull Request');
+    const title = createElement('div', 'pr-title', pr.title || 'Pull Request');
     
     const meta = createElement('div', 'item-meta');
-    const link = document.createElement('a');
-    link.href = pr.url;
-    link.target = '_blank';
-    link.rel = 'noopener';
-    link.className = 'pr-link';
-    const icon = createIcon('open_in_new', 'icon-inline');
-    link.appendChild(icon);
-    link.appendChild(document.createTextNode(' View PR'));
-    meta.appendChild(link);
+    
+    // Jules session link
+    const julesLink = document.createElement('a');
+    julesLink.href = pr.sessionUrl;
+    julesLink.target = '_blank';
+    julesLink.rel = 'noopener';
+    julesLink.className = 'pr-link';
+    const julesIcon = createIcon('smart_toy', 'icon-inline');
+    julesLink.appendChild(julesIcon);
+    julesLink.appendChild(document.createTextNode(' View Session'));
+    meta.appendChild(julesLink);
+    
+    // Separator
+    const sep1 = createElement('span', 'muted', ' • ');
+    meta.appendChild(sep1);
+    
+    // PR link
+    const prLink = document.createElement('a');
+    prLink.href = pr.url;
+    prLink.target = '_blank';
+    prLink.rel = 'noopener';
+    prLink.className = 'pr-link';
+    const prIcon = createIcon('open_in_new', 'icon-inline');
+    prLink.appendChild(prIcon);
+    prLink.appendChild(document.createTextNode(' View PR'));
+    meta.appendChild(prLink);
+    
+    // Separator
+    const sep2 = createElement('span', 'muted', ' • ');
+    meta.appendChild(sep2);
+    
+    // Prompt viewer button (eye icon)
+    const promptBtn = document.createElement('button');
+    promptBtn.className = pr.promptContent ? 'pr-link pr-link--btn' : 'pr-link pr-link--disabled';
+    promptBtn.title = pr.promptContent ? 'View prompt content' : 'No prompt content available';
+    if (!pr.promptContent) {
+      promptBtn.disabled = true;
+    }
+    const promptIcon = createIcon('visibility', 'icon-inline');
+    promptBtn.appendChild(promptIcon);
+    promptBtn.appendChild(document.createTextNode(' View Prompt'));
+    
+    if (pr.promptContent) {
+      promptBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showPromptViewer(pr.promptContent, pr.sessionId);
+      });
+    }
+    
+    meta.appendChild(promptBtn);
     
     content.appendChild(title);
     content.appendChild(meta);

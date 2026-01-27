@@ -152,17 +152,21 @@ export async function syncSessionFromAPI(sessionId, apiKey = null) {
     const prOutput = session.outputs?.find(output => output.pullRequest);
     const pullRequest = prOutput?.pullRequest;
 
+    // Parse API update time
+    const apiUpdateTime = session.updateTime ? new Date(session.updateTime) : null;
+
     const updates = {
       status: session.state || 'UNKNOWN',
       hasPR: !!pullRequest?.url,
       prUrl: pullRequest?.url || null,
       prTitle: pullRequest?.title || null,
-      prDescription: pullRequest?.description || null
+      prDescription: pullRequest?.description || null,
+      apiUpdateTime
     };
 
-    // Set completion time if completed or failed
-    if ((session.state === 'COMPLETED' || session.state === 'FAILED') && !updates.completedAt) {
-      updates.completedAt = getServerTimestamp();
+    // Set completion time from API updateTime if completed or failed
+    if ((session.state === 'COMPLETED' || session.state === 'FAILED') && session.updateTime) {
+      updates.completedAt = new Date(session.updateTime);
     }
 
     await updateSessionStatus(sessionId, updates);
@@ -313,61 +317,148 @@ export async function getUserSessions(options = {}) {
 
 /**
  * Sync all active (non-terminal) sessions
+ * @param {Function} progressCallback - Optional callback (synced, total)
  */
-export async function syncActiveSessions() {
+export async function syncActiveSessions(progressCallback = null) {
   const user = getAuth()?.currentUser;
   if (!user) {
     return;
   }
 
   try {
-    // Get ALL sessions and filter in memory to avoid index requirements
     const db = getDb();
+    const apiKey = await getDecryptedJulesKey(user.uid);
+    if (!apiKey) {
+      console.warn('[Session Tracking] No API key found for sync');
+      throw new Error('Jules API key not configured');
+    }
+
+    // Fetch ALL sessions from Jules API (bulk operation)
+    const apiSessions = new Map();
+    let pageToken = null;
+    
+    do {
+      const response = await listJulesSessions(apiKey, 100, pageToken);
+      const sessions = response.sessions || [];
+      
+      sessions.forEach(session => {
+        apiSessions.set(session.id, session);
+      });
+      
+      pageToken = response.nextPageToken;
+    } while (pageToken);
+
+    console.log(`[Session Tracking] Fetched ${apiSessions.size} sessions from API`);
+
+    // Get all local sessions
     const allSessionsSnapshot = await db
       .collection('juleSessions')
       .doc(user.uid)
       .collection('sessions')
       .get();
     
-    const allSessions = allSessionsSnapshot.docs.map(doc => ({ 
-      sessionId: doc.id, 
-      ...doc.data() 
-    }));
-    
-    // Filter to sessions that need syncing
-    const toSync = allSessions.filter(session => {
-      // Active or unknown status sessions
-      if (['IN_PROGRESS', 'PLANNING', 'QUEUED', 'UNKNOWN'].includes(session.status)) return true;
-      
-      // Completed sessions without PR data
-      if (session.status === 'COMPLETED') {
-        if (session.hasPR === undefined || session.hasPR === null || session.hasPR === false) return true;
-        if (!session.completedAt) return true;
-        
-        // Completed in last hour
-        const completedTime = session.completedAt.toDate?.() || new Date(session.completedAt);
-        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-        if (completedTime > oneHourAgo) return true;
-      }
-      
-      return false;
+    const localSessions = new Map();
+    allSessionsSnapshot.docs.forEach(doc => {
+      localSessions.set(doc.id, { docRef: doc.ref, ...doc.data() });
     });
 
-    const apiKey = await getDecryptedJulesKey(user.uid);
-    if (!apiKey) {
-      console.warn('[Session Tracking] No API key found for sync');
-      return;
-    }
+    // Find sessions that need updating
+    const toUpdate = [];
+    
+    apiSessions.forEach((apiSession, sessionId) => {
+      const localSession = localSessions.get(sessionId);
+      
+      if (!localSession) {
+        // New session not in local DB
+        toUpdate.push(apiSession);
+      } else {
+        // Always update to fix any bad timestamps - we can optimize this later
+        toUpdate.push(apiSession);
+        
+        // TODO: Re-enable timestamp comparison after fixing existing data
+        // const localUpdateTime = localSession.apiUpdateTime?.toDate?.() || new Date(localSession.apiUpdateTime || 0);
+        // const apiUpdateTime = apiSession.updateTime ? new Date(apiSession.updateTime) : new Date();
+        // if (apiUpdateTime > localUpdateTime) {
+        //   toUpdate.push(apiSession);
+        // }
+      }
+    });
 
-    for (const session of toSync) {
+    console.log(`[Session Tracking] Syncing ${toUpdate.length} changed sessions`);
+
+    // Update changed sessions
+    for (let i = 0; i < toUpdate.length; i++) {
+      const session = toUpdate[i];
+      
       try {
-        await syncSessionFromAPI(session.sessionId, apiKey);
+        const sessionId = session.id;
+        const sessionRef = db
+          .collection('juleSessions')
+          .doc(user.uid)
+          .collection('sessions')
+          .doc(sessionId);
+
+        // Find PR data in outputs
+        const prOutput = session.outputs?.find(output => output.pullRequest);
+        const pullRequest = prOutput?.pullRequest;
+
+        // Extract source and branch
+        const sourceId = session.sourceContext?.source || null;
+        const branch = session.sourceContext?.githubRepoContext?.startingBranch || null;
+        const apiUpdateTime = session.updateTime ? new Date(session.updateTime) : null;
+
+        const completedAt = (session.state === 'COMPLETED' || session.state === 'FAILED') && session.updateTime 
+          ? new Date(session.updateTime) 
+          : null;
+
+        // Debug logging for sessions that should have proper timestamps
+        if (completedAt && session.state === 'COMPLETED') {
+          const created = session.createTime ? new Date(session.createTime) : null;
+          if (created) {
+            const durationMinutes = (completedAt.getTime() - created.getTime()) / (1000 * 60);
+            if (durationMinutes > 1440) {
+              console.warn(`[Session Tracking] Setting completedAt from updateTime for session ${sessionId}:`, {
+                createTime: session.createTime,
+                updateTime: session.updateTime,
+                calculatedDuration: Math.round(durationMinutes),
+                state: session.state
+              });
+            }
+          }
+        }
+
+        const sessionData = {
+          sessionId,
+          sessionName: session.name,
+          title: session.title || 'Untitled Session',
+          promptContent: session.prompt || '',
+          sourceId,
+          branch,
+          status: session.state || 'UNKNOWN',
+          sessionUrl: session.url || `https://jules.google.com/session/${sessionId}`,
+          createdAt: session.createTime ? new Date(session.createTime) : getServerTimestamp(),
+          completedAt,
+          hasPR: !!pullRequest?.url,
+          prUrl: pullRequest?.url || null,
+          prTitle: pullRequest?.title || null,
+          prDescription: pullRequest?.description || null,
+          apiUpdateTime
+        };
+
+        await sessionRef.set(sessionData, { merge: true });
+
+        if (progressCallback) {
+          progressCallback(i + 1, toUpdate.length);
+        }
       } catch (err) {
-        console.error(`[Session Tracking] Failed to sync session ${session.sessionId}:`, err);
+        console.error(`[Session Tracking] Failed to sync session ${session.id}:`, err);
       }
     }
+
+    console.log('[Session Tracking] Sync complete');
   } catch (error) {
     handleError(error, { source: 'syncActiveSessions' });
+    throw error; // Re-throw to ensure finally block runs
   }
 }
 
@@ -415,9 +506,10 @@ export async function deleteTrackedSession(sessionId) {
 
 /**
  * Import all historical Jules sessions from API into Firestore
+ * @param {Function} progressCallback - Optional callback (processed, total)
  * @returns {Promise<{imported: number, skipped: number, errors: number}>} Import stats
  */
-export async function importJulesHistory() {
+export async function importJulesHistory(progressCallback = null) {
   const user = getAuth()?.currentUser;
   if (!user) {
     throw new Error('User not authenticated');
@@ -435,71 +527,100 @@ export async function importJulesHistory() {
 
   const stats = { imported: 0, skipped: 0, errors: 0 };
   let pageToken = null;
+  const allApiSessions = [];
 
   try {
+    // First, fetch all sessions from API
     do {
-      // Fetch page of sessions
       const response = await listJulesSessions(apiKey, 100, pageToken);
       const sessions = response.sessions || [];
-
-      for (const session of sessions) {
-        try {
-          const sessionId = session.id;
-          
-          // Check if session already exists
-          const sessionRef = db
-            .collection('juleSessions')
-            .doc(user.uid)
-            .collection('sessions')
-            .doc(sessionId);
-          
-          const existingDoc = await sessionRef.get();
-          if (existingDoc.exists) {
-            stats.skipped++;
-            continue;
-          }
-
-          // Find PR data in outputs
-          const prOutput = session.outputs?.find(output => output.pullRequest);
-          const pullRequest = prOutput?.pullRequest;
-
-          // Extract source and branch
-          const sourceId = session.sourceContext?.source || null;
-          const branch = session.sourceContext?.githubRepoContext?.startingBranch || null;
-
-          // Create session document
-          const sessionData = {
-            sessionId,
-            sessionName: session.name,
-            title: session.title || 'Untitled Session',
-            promptContent: session.prompt || '',
-            promptPath: null, // Historical sessions don't have this
-            sourceId,
-            branch,
-            status: session.state || 'UNKNOWN',
-            sessionUrl: session.url || `https://jules.google.com/session/${sessionId}`,
-            createdAt: session.createTime ? new Date(session.createTime) : getServerTimestamp(),
-            completedAt: (session.state === 'COMPLETED' || session.state === 'FAILED') && session.updateTime 
-              ? new Date(session.updateTime) 
-              : null,
-            hasPR: !!pullRequest?.url,
-            prUrl: pullRequest?.url || null,
-            prTitle: pullRequest?.title || null,
-            prDescription: pullRequest?.description || null,
-            imported: true,
-            importedAt: getServerTimestamp()
-          };
-
-          await sessionRef.set(sessionData);
-          stats.imported++;
-        } catch (err) {
-          console.error(`[Session Tracking] Failed to import session ${session.id}:`, err);
-          stats.errors++;
-        }
-      }
-
+      allApiSessions.push(...sessions);
       pageToken = response.nextPageToken;
     } while (pageToken);
+
+    const totalSessions = allApiSessions.length;
+    console.log(`[Session Tracking] Fetched ${totalSessions} sessions from API`);
+
+    // Now process each session
+    for (let i = 0; i < allApiSessions.length; i++) {
+      const session = allApiSessions[i];
+      
+      try {
+        const sessionId = session.id;
+        
+        // Check if session already exists
+        const sessionRef = db
+          .collection('juleSessions')
+          .doc(user.uid)
+          .collection('sessions')
+          .doc(sessionId);
+        
+        const existingDoc = await sessionRef.get();
+        if (existingDoc.exists) {
+          // Check if API version is newer than what we have
+          const existingData = existingDoc.data();
+          const existingUpdateTime = existingData.apiUpdateTime?.toDate?.() || new Date(existingData.apiUpdateTime || 0);
+          const apiUpdateTime = session.updateTime ? new Date(session.updateTime) : new Date();
+          
+          if (apiUpdateTime <= existingUpdateTime) {
+            stats.skipped++;
+            if (progressCallback) {
+              progressCallback(i + 1, totalSessions);
+            }
+            continue;
+          }
+          // If newer, we'll update it below
+        }
+
+        // Find PR data in outputs
+        const prOutput = session.outputs?.find(output => output.pullRequest);
+        const pullRequest = prOutput?.pullRequest;
+
+        // Extract source and branch
+        const sourceId = session.sourceContext?.source || null;
+        const branch = session.sourceContext?.githubRepoContext?.startingBranch || null;
+        
+        const apiUpdateTime = session.updateTime ? new Date(session.updateTime) : null;
+
+        // Create session document
+        const sessionData = {
+          sessionId,
+          sessionName: session.name,
+          title: session.title || 'Untitled Session',
+          promptContent: session.prompt || '',
+          promptPath: null, // Historical sessions don't have this
+          sourceId,
+          branch,
+          status: session.state || 'UNKNOWN',
+          sessionUrl: session.url || `https://jules.google.com/session/${sessionId}`,
+          createdAt: session.createTime ? new Date(session.createTime) : getServerTimestamp(),
+          completedAt: (session.state === 'COMPLETED' || session.state === 'FAILED') && session.updateTime 
+            ? new Date(session.updateTime) 
+            : null,
+          hasPR: !!pullRequest?.url,
+          prUrl: pullRequest?.url || null,
+          prTitle: pullRequest?.title || null,
+          prDescription: pullRequest?.description || null,
+          apiUpdateTime,
+          imported: true,
+          importedAt: getServerTimestamp()
+        };
+
+        await sessionRef.set(sessionData);
+        stats.imported++;
+        
+        if (progressCallback) {
+          progressCallback(i + 1, totalSessions);
+        }
+      } catch (err) {
+        console.error(`[Session Tracking] Failed to import session ${session.id}:`, err);
+        stats.errors++;
+        
+        if (progressCallback) {
+          progressCallback(i + 1, totalSessions);
+        }
+      }
+    }
 
     return stats;
   } catch (error) {

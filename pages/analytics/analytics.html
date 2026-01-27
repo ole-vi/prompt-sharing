@@ -27,7 +27,6 @@
         <h1 class="section-title-lg">
           <span class="icon icon-inline" aria-hidden="true">bar_chart</span> Jules Analytics
         </h1>
-        <p class="muted small-text">Track session performance, PR success rates, and prompt effectiveness</p>
       </div>
 
       <!-- Not Signed In Message -->
@@ -135,17 +134,6 @@
 
         <!-- Data Sections -->
         <div class="analytics-sections">
-          <!-- Top Prompts -->
-          <div class="analytics-panel mb-lg">
-            <h2 class="section-title-md mb-md">
-              <span class="icon icon-inline" aria-hidden="true">emoji_events</span>
-              Top Performing Prompts
-            </h2>
-            <div id="topPromptsContainer" class="vlist">
-              <p class="muted small-text text-center pad-lg">No data available</p>
-            </div>
-          </div>
-
           <!-- Failure Analysis -->
           <div class="analytics-panel mb-lg">
             <h2 class="section-title-md mb-md">
@@ -181,6 +169,15 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <div id="statusBar" class="hidden" aria-live="polite">
+    <div class="status-inner">
+      <div class="status-msg flex-1">Ready</div>
+      <div class="status-progress hidden"></div>
+      <button class="status-action btn hidden">Action</button>
+      <button class="status-close btn-icon" title="Close" aria-label="Close">✕</button>
+    </div>
   </div>
 
   <footer>

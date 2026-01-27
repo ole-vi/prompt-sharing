@@ -100,7 +100,6 @@ function aggregateSessionData(sessions) {
     branchMetrics: {},
     
     // Timing metrics
-    avgSessionDuration: 0,
     completionTimes: [],
     
     // Raw data for charts
@@ -115,8 +114,6 @@ function aggregateSessionData(sessions) {
       UNKNOWN: 0
     }
   };
-
-  const sessionDurations = [];
 
   sessions.forEach(session => {
     // Status counts
@@ -139,7 +136,10 @@ function aggregateSessionData(sessions) {
       analytics.prUrls.push({
         url: session.prUrl,
         title: session.prTitle || 'Untitled PR',
-        sessionId: session.sessionId
+        sessionId: session.sessionId,
+        sessionUrl: session.sessionUrl || `https://jules.google.com/session/${session.sessionId}`,
+        promptPath: session.promptPath,
+        promptContent: session.promptContent || ''
       });
     }
 
@@ -153,6 +153,8 @@ function aggregateSessionData(sessions) {
     if (status === 'FAILED') {
       analytics.failures.push({
         sessionId: session.sessionId,
+        sessionUrl: session.sessionUrl || `https://jules.google.com/session/${session.sessionId}`,
+        title: session.title || 'Untitled Session',
         reason: session.failureReason,
         step: session.failureStep,
         prompt: session.promptPath
@@ -196,8 +198,7 @@ function aggregateSessionData(sessions) {
           total: 0,
           completed: 0,
           failed: 0,
-          withPRs: 0,
-          durations: []
+          withPRs: 0
         };
       }
 
@@ -220,19 +221,7 @@ function aggregateSessionData(sessions) {
     if (session.createdAt && session.completedAt) {
       const created = session.createdAt.toDate?.() || new Date(session.createdAt.seconds * 1000);
       const completed = session.completedAt.toDate?.() || new Date(session.completedAt.seconds * 1000);
-      const duration = completed - created;
-      
-      sessionDurations.push(duration);
-      analytics.completionTimes.push({
-        sessionId: session.sessionId,
-        duration: duration,
-        durationMinutes: Math.round(duration / 60000)
-      });
-
-      // Add to repo metrics
-      if (session.sourceId && analytics.repoMetrics[session.sourceId]) {
-        analytics.repoMetrics[session.sourceId].durations.push(duration);
-      }
+      // Session completed within time period
     }
 
     // Timeline data
@@ -261,11 +250,7 @@ function aggregateSessionData(sessions) {
     analytics.avgPlanSteps = analytics.totalPlanSteps / analytics.sessionsWithPlans;
   }
 
-  if (sessionDurations.length > 0) {
-    const sum = sessionDurations.reduce((a, b) => a + b, 0);
-    analytics.avgSessionDuration = sum / sessionDurations.length;
-    analytics.avgSessionDurationMinutes = Math.round(analytics.avgSessionDuration / 60000);
-  }
+  // Session duration calculation removed due to data quality issues
 
   // Calculate prompt-level metrics
   Object.keys(analytics.promptMetrics).forEach(promptPath => {
@@ -283,11 +268,7 @@ function aggregateSessionData(sessions) {
       metric.successRate = metric.completed / metric.total;
       metric.prRate = metric.withPRs / metric.total;
     }
-    if (metric.durations.length > 0) {
-      const sum = metric.durations.reduce((a, b) => a + b, 0);
-      metric.avgDuration = sum / metric.durations.length;
-      metric.avgDurationMinutes = Math.round(metric.avgDuration / 60000);
-    }
+
   });
 
   // Find most used and best performing prompts
@@ -318,6 +299,9 @@ function aggregateSessionData(sessions) {
   }
 
   analytics.uniqueReposUsed = Object.keys(analytics.repoMetrics).length;
+  
+  // Add recent failures for display
+  analytics.recentFailures = analytics.failures.slice(0, 10);
 
   return analytics;
 }
