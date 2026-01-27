@@ -153,9 +153,7 @@ export class RepoSelector {
       e.stopPropagation();
       if (this.dropdownMenu.classList.contains('open')) {
         this.dropdownMenu.classList.remove('open');
-        if (this.dropdownMenu.style.display === 'block') {
-          this.dropdownMenu.style.display = '';
-        }
+        this.dropdownMenu.style.display = '';
         this.dropdownBtn.setAttribute('aria-expanded', 'false');
         return;
       }
@@ -185,9 +183,7 @@ export class RepoSelector {
     loadingIndicator.textContent = 'Loading...';
     this.dropdownMenu.appendChild(loadingIndicator);
     this.dropdownMenu.classList.add('open');
-    if (this.dropdownMenu.style.display === 'none') {
-      this.dropdownMenu.style.display = '';
-    }
+    this.dropdownMenu.style.display = '';
     
     await new Promise(resolve => setTimeout(resolve, 0));
     
@@ -202,9 +198,7 @@ export class RepoSelector {
     }
     
     this.dropdownMenu.classList.add('open');
-    if (this.dropdownMenu.style.display === 'none') {
-      this.dropdownMenu.style.display = '';
-    }
+    this.dropdownMenu.style.display = '';
   }
 
   async renderFavorites() {
@@ -213,9 +207,7 @@ export class RepoSelector {
         this.selectedSourceId = fav.id;
         this.dropdownText.textContent = fav.name;
         this.dropdownMenu.classList.remove('open');
-        if (this.dropdownMenu.style.display === 'block') {
-          this.dropdownMenu.style.display = '';
-        }
+        this.dropdownMenu.style.display = '';
         
         // Save repo selection
         this.saveToStorage();
@@ -322,9 +314,7 @@ export class RepoSelector {
         this.selectedSourceId = source.name || source.id;
         this.dropdownText.textContent = repoName;
         this.dropdownMenu.classList.remove('open');
-        if (this.dropdownMenu.style.display === 'block') {
-          this.dropdownMenu.style.display = '';
-        }
+        this.dropdownMenu.style.display = '';
         
         // Save repo selection
         this.saveToStorage();
@@ -355,9 +345,7 @@ export class RepoSelector {
       if (isFavorite) {
         await this.removeFavorite(id);
         this.dropdownMenu.classList.remove('open');
-        if (this.dropdownMenu.style.display === 'block') {
-          this.dropdownMenu.style.display = '';
-        }
+        this.dropdownMenu.style.display = '';
         this.dropdownBtn.setAttribute('aria-expanded', 'false');
         setTimeout(() => this.populateDropdown(), 0);
       } else {
@@ -560,9 +548,7 @@ export class BranchSelector {
       e.stopPropagation();
       if (this.dropdownMenu.classList.contains('open')) {
         this.dropdownMenu.classList.remove('open');
-        if (this.dropdownMenu.style.display === 'block') {
-          this.dropdownMenu.style.display = '';
-        }
+        this.dropdownMenu.style.display = '';
         this.dropdownBtn.setAttribute('aria-expanded', 'false');
         return;
       }
@@ -596,9 +582,7 @@ export class BranchSelector {
     currentItem.className = 'dropdown-item-with-star selected';
     currentItem.onclick = () => {
       this.dropdownMenu.classList.remove('open');
-      if (this.dropdownMenu.style.display === 'block') {
-        this.dropdownMenu.style.display = '';
-      }
+      this.dropdownMenu.style.display = '';
       this.dropdownBtn.setAttribute('aria-expanded', 'false');
     };
     
@@ -662,9 +646,7 @@ export class BranchSelector {
           item.onclick = () => {
             this.setSelectedBranch(branch.name);
             this.dropdownMenu.classList.remove('open');
-            if (this.dropdownMenu.style.display === 'block') {
-              this.dropdownMenu.style.display = '';
-            }
+            this.dropdownMenu.style.display = '';
             this.dropdownBtn.setAttribute('aria-expanded', 'false');
           };
           
