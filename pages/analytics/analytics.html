@@ -41,20 +41,9 @@
 
       <!-- Analytics Content -->
       <div id="analyticsContent" class="hidden">
-        <!-- Toolbar with Filters -->
-        <div class="toolbar mb-md">
-          <div class="toolbar-actions">
-            <label class="form-label small-text">
-              Time Period:
-              <select id="dateRangeSelect" class="form-select">
-                <option value="7">Last 7 days</option>
-                <option value="30" selected>Last 30 days</option>
-                <option value="90">Last 90 days</option>
-                <option value="365">Last year</option>
-                <option value="all">All time</option>
-              </select>
-            </label>
-          </div>
+        <!-- Toolbar with Actions -->
+        <div class="toolbar mb-md" style="justify-content: space-between;">
+          <a href="../jules/jules.html" class="btn primary sm"><span class="icon icon-inline" aria-hidden="true">arrow_back</span> Back to Jules</a>
           <div class="toolbar-actions">
             <button id="importHistoryBtn" class="btn primary sm" title="Import all Jules history">
               <span class="icon icon-inline" aria-hidden="true">download</span>
@@ -65,6 +54,20 @@
               Refresh
             </button>
           </div>
+        </div>
+
+        <!-- Time Period Filter -->
+        <div class="mb-md">
+          <label class="form-label small-text">
+            Time Period:
+            <select id="dateRangeSelect" class="form-select">
+              <option value="7">Last 7 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="365">Last year</option>
+              <option value="all">All time</option>
+            </select>
+          </label>
         </div>
 
         <!-- Key Metrics Grid -->
