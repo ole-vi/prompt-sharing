@@ -3,9 +3,16 @@
 import { showToast } from './toast.js';
 import { setCache, getCache } from '../utils/session-cache.js';
 import { getAuth } from './firebase-service.js';
+import { GITHUB_CONFIG } from '../utils/constants.js';
 // Lazy loaded: jules-api.js (for clearJulesKeyCache)
 
 let currentUser = null;
+
+export function generateNonce() {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+}
 
 export function getCurrentUser() {
   const auth = getAuth();
@@ -26,32 +33,30 @@ export async function signInWithGitHub(forceAccountSelection = false) {
       showToast('Authentication not ready. Please refresh the page.', 'error');
       return;
     }
-    const provider = new firebase.auth.GithubAuthProvider();
-    provider.addScope('public_repo');  // Allow write access to public repos
-    
-    // Force account selection when switching accounts or if explicitly requested
+
+    // Generate and store nonce
+    const nonce = generateNonce();
+    sessionStorage.setItem('oauth_nonce', nonce);
+
+    // Construct OAuth URL
+    const state = `webapp-${nonce}`;
+    const params = new URLSearchParams({
+      client_id: GITHUB_CONFIG.clientId,
+      redirect_uri: GITHUB_CONFIG.redirectUri,
+      scope: 'public_repo',
+      state: state
+    });
+
     if (forceAccountSelection) {
-      provider.setCustomParameters({
-        prompt: 'select_account'
-      });
+      params.append('prompt', 'select_account');
     }
-    
-    const result = await auth.signInWithPopup(provider);
-    
-    if (result.credential && result.credential.accessToken) {
-      const tokenData = {
-        token: result.credential.accessToken,
-        timestamp: Date.now()
-      };
-      localStorage.setItem('github_access_token', JSON.stringify(tokenData));
-    } else {
-      console.warn('GitHub sign-in succeeded but no access token was returned. Falling back to unauthenticated GitHub requests.', {
-        hasCredential: !!result.credential
-      });
-    }
+
+    // Redirect to GitHub
+    window.location.href = `https://github.com/login/oauth/authorize?${params.toString()}`;
+
   } catch (error) {
-    console.error('Sign-in failed:', error);
-    showToast('Failed to sign in. Please try again.', 'error');
+    console.error('Sign-in initiation failed:', error);
+    showToast('Failed to start sign in. Please try again.', 'error');
   }
 }
 

@@ -8,6 +8,7 @@ import {
   initAuthStateListener
 } from '../../modules/auth.js';
 import { getAuth } from '../../modules/firebase-service.js';
+import { GITHUB_CONFIG } from '../../utils/constants.js';
 
 // Mock dependencies
 vi.mock('../../modules/toast.js', () => ({
@@ -37,9 +38,19 @@ const mockFirebaseAuth = {
 
 const mockGithubAuthProvider = vi.fn();
 
+// Mock crypto
+if (!global.crypto) {
+    Object.defineProperty(global, 'crypto', {
+        value: {
+            getRandomValues: (arr) => {
+                for(let i=0; i<arr.length; i++) arr[i] = Math.floor(Math.random() * 256);
+                return arr;
+            }
+        }
+    });
+}
+
 global.window = {
-  // window.auth is no longer used by the module, but we might keep it if other things use it
-  // But for this test, we care about getAuth()
   auth: mockFirebaseAuth,
   firebase: {
     auth: {
@@ -47,8 +58,16 @@ global.window = {
     }
   },
   populateFreeInputRepoSelection: vi.fn(),
-  populateFreeInputBranchSelection: vi.fn()
+  populateFreeInputBranchSelection: vi.fn(),
+  // Mock location as simple object we can write to
+  location: { href: '' }
 };
+
+// Also set on global for good measure
+Object.defineProperty(global, 'location', {
+    value: global.window.location,
+    writable: true
+});
 
 global.firebase = {
   auth: {
@@ -64,6 +83,19 @@ Object.defineProperty(global, 'localStorage', {
   },
   writable: true
 });
+
+Object.defineProperty(global, 'sessionStorage', {
+    value: {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn()
+    },
+    writable: true
+});
+
+// Ensure window has storage references
+global.window.localStorage = global.localStorage;
+global.window.sessionStorage = global.sessionStorage;
 
 global.console = {
   error: vi.fn(),
@@ -113,12 +145,17 @@ function mockReset() {
   // Reset global functions
   global.window.populateFreeInputRepoSelection = vi.fn().mockResolvedValue();
   global.window.populateFreeInputBranchSelection = vi.fn().mockResolvedValue();
+  global.window.location.href = '';
   
   // Reset localStorage
   global.localStorage.getItem.mockReturnValue(null);
   global.localStorage.setItem.mockImplementation(() => {});
   global.localStorage.removeItem.mockImplementation(() => {});
   
+  // Reset sessionStorage
+  global.sessionStorage.setItem.mockImplementation(() => {});
+  global.sessionStorage.getItem.mockReturnValue(null);
+
   // Reset document.getElementById
   global.document.getElementById.mockImplementation((id) => {
     return createMockElement(id);
@@ -144,7 +181,6 @@ describe('auth', () => {
     it('should return the current user from auth service if available', () => {
       const mockUser = { uid: '123', email: 'test@example.com' };
       mockFirebaseAuth.currentUser = mockUser;
-      // getAuth returns mockFirebaseAuth which has currentUser
       
       const user = getCurrentUser();
       
@@ -155,22 +191,12 @@ describe('auth', () => {
       const mockUser = { uid: '123', email: 'test@example.com' };
       mockFirebaseAuth.currentUser = mockUser;
       
-      getCurrentUser();
-      mockFirebaseAuth.currentUser = null; // Simulate auth state change?
-      // But getCurrentUser implementation checks:
-      // if (auth?.currentUser && auth.currentUser !== currentUser) { currentUser = auth.currentUser; }
-      // So if auth.currentUser becomes null, currentUser variable inside auth.js REMAINS mockUser?
-      // Wait:
-      // if (auth?.currentUser ... )
-      // If auth.currentUser is null, the block is skipped, and it returns `currentUser`.
-      // So yes, it caches it (or rather, it holds a reference).
-      
       const cachedUser = getCurrentUser();
       expect(cachedUser).toBe(mockUser);
     });
 
     it('should handle missing auth service', () => {
-      setCurrentUser(null); // Reset cached user first
+      setCurrentUser(null);
       getAuth.mockReturnValue(null);
       
       expect(getCurrentUser()).toBe(null);
@@ -217,92 +243,42 @@ describe('auth', () => {
       );
     });
 
-    it('should create GitHub provider with public_repo scope', async () => {
-      const mockProvider = {
-        addScope: vi.fn()
-      };
-      mockGithubAuthProvider.mockReturnValue(mockProvider);
-      mockFirebaseAuth.signInWithPopup.mockResolvedValue({
-        credential: {
-          accessToken: 'test-token'
-        }
-      });
-
+    it('should initiate redirect flow with nonce', async () => {
       await signInWithGitHub();
       
-      expect(mockGithubAuthProvider).toHaveBeenCalled();
-      expect(mockProvider.addScope).toHaveBeenCalledWith('public_repo');
-    });
-
-    it('should sign in with popup', async () => {
-      const mockProvider = {
-        addScope: vi.fn()
-      };
-      mockGithubAuthProvider.mockReturnValue(mockProvider);
-      mockFirebaseAuth.signInWithPopup.mockResolvedValue({
-        credential: {
-          accessToken: 'test-token'
-        }
-      });
-
-      await signInWithGitHub();
+      // Should generate nonce and store it
+      expect(global.sessionStorage.setItem).toHaveBeenCalledWith('oauth_nonce', expect.any(String));
+      const nonce = global.sessionStorage.setItem.mock.calls[0][1];
       
-      expect(mockFirebaseAuth.signInWithPopup).toHaveBeenCalledWith(mockProvider);
+      // Should redirect
+      expect(window.location.href).toContain('https://github.com/login/oauth/authorize');
+      expect(window.location.href).toContain(`state=webapp-${nonce}`);
+      expect(window.location.href).toContain(`client_id=${GITHUB_CONFIG.clientId}`);
     });
 
-    it('should store access token in localStorage on success', async () => {
-      const mockProvider = { addScope: vi.fn() };
-      mockGithubAuthProvider.mockReturnValue(mockProvider);
-      mockFirebaseAuth.signInWithPopup.mockResolvedValue({
-        credential: {
-          accessToken: 'github-token-123'
-        }
-      });
-
-      await signInWithGitHub();
+    it('should include account selection prompt if requested', async () => {
+      await signInWithGitHub(true);
       
-      expect(global.localStorage.setItem).toHaveBeenCalledWith(
-        'github_access_token',
-        expect.stringContaining('github-token-123')
-      );
+      expect(window.location.href).toContain('prompt=select_account');
     });
 
-    it('should handle sign-in without access token', async () => {
-      const mockProvider = { addScope: vi.fn() };
-      mockGithubAuthProvider.mockReturnValue(mockProvider);
-      mockFirebaseAuth.signInWithPopup.mockResolvedValue({
-        credential: null
+    it('should show error toast on initiation failure', async () => {
+      // Simulate error by throwing from sessionStorage (or getAuth if needed)
+      // Throwing from window.location is hard in JS unless defined property.
+
+      // Let's force an error by mocking generateNonce or sessionStorage throw
+      global.sessionStorage.setItem.mockImplementation(() => {
+          throw new Error('Storage error');
       });
-
-      await signInWithGitHub();
       
-      expect(global.console.warn).toHaveBeenCalled();
-      expect(global.localStorage.setItem).not.toHaveBeenCalled();
-    });
-
-    it('should show error toast on sign-in failure', async () => {
-      const mockProvider = { addScope: vi.fn() };
-      mockGithubAuthProvider.mockReturnValue(mockProvider);
-      mockFirebaseAuth.signInWithPopup.mockRejectedValue(new Error('Sign-in failed'));
       const { showToast } = await import('../../modules/toast.js');
 
       await signInWithGitHub();
       
       expect(showToast).toHaveBeenCalledWith(
-        'Failed to sign in. Please try again.',
+        'Failed to start sign in. Please try again.',
         'error'
       );
-    });
-
-    it('should log error on sign-in failure', async () => {
-      const mockProvider = { addScope: vi.fn() };
-      mockGithubAuthProvider.mockReturnValue(mockProvider);
-      const error = new Error('Network error');
-      mockFirebaseAuth.signInWithPopup.mockRejectedValue(error);
-
-      await signInWithGitHub();
-      
-      expect(global.console.error).toHaveBeenCalledWith('Sign-in failed:', error);
     });
   });
 
@@ -360,6 +336,7 @@ describe('auth', () => {
   });
 
   describe('updateAuthUI', () => {
+    // ... existing UI tests match logic ...
     it('should update UI for signed-in user', async () => {
       const mockUser = {
         uid: 'user-123',
@@ -570,23 +547,11 @@ describe('auth', () => {
   });
 
   describe('integration scenarios', () => {
-    it('should handle complete sign-in workflow', async () => {
-      const mockProvider = { addScope: vi.fn() };
-      mockGithubAuthProvider.mockReturnValue(mockProvider);
-      mockFirebaseAuth.signInWithPopup.mockResolvedValue({
-        credential: {
-          accessToken: 'test-token'
-        },
-        user: {
-          uid: 'user-123',
-          displayName: 'Test User'
-        }
-      });
-
+    // This is now redundant for initiation, but we can verify it initiates redirect
+    it('should initiate sign-in workflow', async () => {
       await signInWithGitHub();
-      
-      expect(mockFirebaseAuth.signInWithPopup).toHaveBeenCalled();
-      expect(global.localStorage.setItem).toHaveBeenCalled();
+      expect(window.sessionStorage.setItem).toHaveBeenCalledWith('oauth_nonce', expect.any(String));
+      expect(window.location.href).toContain('state=webapp-');
     });
 
     it('should handle complete sign-out workflow', async () => {

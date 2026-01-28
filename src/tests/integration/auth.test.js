@@ -9,6 +9,36 @@ vi.mock('../../modules/toast.js');
 vi.mock('../../modules/jules-api.js');
 vi.mock('../../modules/firebase-service.js');
 
+// Mock crypto
+if (!global.crypto) {
+    Object.defineProperty(global, 'crypto', {
+        value: {
+            getRandomValues: (arr) => {
+                for(let i=0; i<arr.length; i++) arr[i] = Math.floor(Math.random() * 256);
+                return arr;
+            }
+        }
+    });
+}
+
+// Mock window location
+delete window.location;
+window.location = { href: '' };
+
+// Mock storage
+const storageMock = () => {
+  let store = {};
+  return {
+    getItem: vi.fn(key => store[key] || null),
+    setItem: vi.fn((key, value) => { store[key] = value.toString(); }),
+    removeItem: vi.fn(key => { delete store[key]; }),
+    clear: vi.fn(() => { store = {}; })
+  };
+};
+
+Object.defineProperty(window, 'sessionStorage', { value: storageMock(), writable: true });
+Object.defineProperty(window, 'localStorage', { value: storageMock(), writable: true });
+
 // Setup DOM elements
 function setupDOM() {
   document.body.innerHTML = `
@@ -30,6 +60,9 @@ describe('Auth Module', () => {
     setupDOM();
     vi.clearAllMocks();
     
+    // Reset location
+    window.location.href = '';
+
     // Setup mock auth instance
     mockAuth = {
       currentUser: null,
@@ -53,15 +86,14 @@ describe('Auth Module', () => {
   });
 
   describe('signInWithGitHub', () => {
-    it('should call signInWithPopup and store token', async () => {
-      mockAuth.signInWithPopup.mockResolvedValue({
-        credential: { accessToken: 'token123' }
-      });
-
+    it('should initiate redirect flow', async () => {
       await signInWithGitHub();
 
-      expect(mockAuth.signInWithPopup).toHaveBeenCalled();
-      expect(vi.mocked(localStorage.setItem)).toHaveBeenCalledWith('github_access_token', expect.any(String));
+      expect(window.sessionStorage.setItem).toHaveBeenCalledWith('oauth_nonce', expect.any(String));
+      expect(window.location.href).toContain('state=webapp-');
+      // Should NOT call popup or store token
+      expect(mockAuth.signInWithPopup).not.toHaveBeenCalled();
+      expect(window.localStorage.setItem).not.toHaveBeenCalled();
     });
 
     it('should show error toast when auth not ready', async () => {
@@ -75,13 +107,14 @@ describe('Auth Module', () => {
       );
     });
 
-    it('should show error toast on sign-in failure', async () => {
-      mockAuth.signInWithPopup.mockRejectedValue(new Error('Network error'));
+    it('should show error toast on initiation failure', async () => {
+      // Simulate error (e.g. storage full)
+      window.sessionStorage.setItem.mockImplementation(() => { throw new Error('Storage Error'); });
       
       await signInWithGitHub();
       
       expect(showToast).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to sign in'),
+        expect.stringContaining('Failed to start sign in'),
         'error'
       );
     });
@@ -94,7 +127,7 @@ describe('Auth Module', () => {
       await signOutUser();
 
       expect(mockAuth.signOut).toHaveBeenCalled();
-      expect(vi.mocked(localStorage.removeItem)).toHaveBeenCalledWith('github_access_token');
+      expect(vi.mocked(localStorage.removeItem).mock.calls.some(call => call[0] === 'github_access_token')).toBe(true);
       expect(clearJulesKeyCache).toHaveBeenCalled();
     });
   });
@@ -115,11 +148,7 @@ describe('Auth Module', () => {
           const signOut = document.getElementById('headerSignOut');
           const ddName = document.getElementById('dropdownUserName');
 
-          // Image loading is async in the code (onload), so we check the src was set
           expect(avatar.src).toBe(user.photoURL);
-          // UI Logic: cached avatar might show it immediately, but here we don't have cache.
-          // The code sets src and waits for onload.
-          // We can check other elements
           expect(ddName.textContent).toBe('Test User');
           expect(signIn.classList.contains('hidden')).toBe(true);
           expect(signOut.classList.contains('hidden')).toBe(false);

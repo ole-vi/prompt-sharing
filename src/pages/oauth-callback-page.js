@@ -3,9 +3,11 @@
  * Processes GitHub OAuth callbacks for both web app and browser extension
  */
 
-import { TIMEOUTS } from '../utils/constants.js';
+import { TIMEOUTS, GITHUB_CONFIG } from '../utils/constants.js';
+import { getFirebaseReady } from '../firebase-init.js';
+import { getAuth } from '../modules/firebase-service.js';
 
-(async function() {
+export async function processOAuthCallback() {
   const statusDiv = document.getElementById('status');
   
   try {
@@ -26,65 +28,149 @@ import { TIMEOUTS } from '../utils/constants.js';
     }
 
     if (state.startsWith('extension-')) {
-      const parts = state.split('-');
-      const extensionId = parts[parts.length - 1];
-      try {
-        chrome.runtime.sendMessage(
-          extensionId,
-          {
-            action: 'oauthCallback',
-            code: code,
-            state: state
-          },
-          (response) => {
-            if (chrome.runtime.lastError) {
-              console.error('Chrome runtime error:', chrome.runtime.lastError);
-              showError('Failed to communicate with extension');
-              return;
-            }
-
-            if (response && response.success) {
-              showSuccess('Successfully connected to GitHub!');
-              setTimeout(() => window.close(), TIMEOUTS.windowClose);
-            } else {
-              showError(response?.error || 'Failed to complete authentication');
-            }
-          }
-        );
-      } catch (err) {
-        console.error('Extension message error:', err);
-        showError(`Error communicating with extension: ${err.message}`);
-      }
+      handleExtensionCallback(code, state);
+    } else if (state.startsWith('webapp-')) {
+      await handleWebAppCallback(code, state);
     } else {
-      console.log('Web app OAuth callback, Firebase Auth will handle this');
+      console.log('Unknown state parameter format.');
+      showError('Invalid state parameter.');
     }
 
   } catch (error) {
     console.error('OAuth callback error:', error);
     showError(`Error: ${error.message}`);
   }
+}
 
-  function showError(message) {
-    const messageEl = document.querySelector('.message');
-    const spinner = document.querySelector('.spinner');
-    spinner.style.display = 'none';
-    messageEl.style.display = 'none';
-    statusDiv.replaceChildren();
-    const div = document.createElement('div');
-    div.className = 'error';
-    div.textContent = message;
-    statusDiv.appendChild(div);
-  }
+function handleExtensionCallback(code, state) {
+    const parts = state.split('-');
+    const extensionId = parts[parts.length - 1];
+    try {
+      chrome.runtime.sendMessage(
+        extensionId,
+        {
+          action: 'oauthCallback',
+          code: code,
+          state: state
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            console.error('Chrome runtime error:', chrome.runtime.lastError);
+            showError('Failed to communicate with extension');
+            return;
+          }
 
-  function showSuccess(message) {
-    const messageEl = document.querySelector('.message');
-    const spinner = document.querySelector('.spinner');
-    spinner.style.display = 'none';
-    messageEl.style.display = 'none';
-    statusDiv.replaceChildren();
-    const div = document.createElement('div');
-    div.className = 'success';
-    div.textContent = message;
-    statusDiv.appendChild(div);
+          if (response && response.success) {
+            showSuccess('Successfully connected to GitHub!');
+            setTimeout(() => window.close(), TIMEOUTS.windowClose);
+          } else {
+            showError(response?.error || 'Failed to complete authentication');
+          }
+        }
+      );
+    } catch (err) {
+      console.error('Extension message error:', err);
+      showError(`Error communicating with extension: ${err.message}`);
+    }
+}
+
+async function handleWebAppCallback(code, state) {
+    // Validate nonce
+    const nonce = state.replace('webapp-', '');
+    const storedNonce = sessionStorage.getItem('oauth_nonce');
+
+    if (!storedNonce || storedNonce !== nonce) {
+        throw new Error('Invalid or expired login session (nonce mismatch). Please try again.');
+    }
+
+    // Clear nonce to prevent replay
+    sessionStorage.removeItem('oauth_nonce');
+
+    // Initialize Firebase
+    showStatus('Initializing authentication...');
+    await getFirebaseReady();
+    const auth = getAuth();
+
+    if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+    }
+
+    // Exchange token
+    showStatus('Exchanging code for token...');
+    const tokenResponse = await fetch(GITHUB_CONFIG.functionsUrl + GITHUB_CONFIG.endpoints.oauthExchange, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, state })
+    });
+
+    if (!tokenResponse.ok) {
+         let errMsg = 'Token exchange failed';
+         try {
+             const err = await tokenResponse.json();
+             errMsg = err.error || errMsg;
+         } catch(e) {}
+         throw new Error(errMsg);
+    }
+
+    const tokenData = await tokenResponse.json();
+    const accessToken = tokenData.access_token;
+
+    if (!accessToken) {
+        throw new Error('No access token received');
+    }
+
+    // Sign in to Firebase
+    showStatus('Signing in...');
+    const credential = firebase.auth.GithubAuthProvider.credential(accessToken);
+    await auth.signInWithCredential(credential);
+
+    // Store access token for API usage
+    localStorage.setItem('github_access_token', JSON.stringify({
+        token: accessToken,
+        timestamp: Date.now()
+    }));
+
+    showSuccess('Successfully signed in! Redirecting...');
+
+    setTimeout(() => {
+        window.location.href = '/'; // Redirect to home
+    }, 1000);
+}
+
+function showError(message) {
+  const statusDiv = document.getElementById('status');
+  const messageEl = document.querySelector('.message');
+  const spinner = document.querySelector('.spinner');
+  if (spinner) spinner.style.display = 'none';
+  if (messageEl) messageEl.style.display = 'none';
+  if (statusDiv) {
+      statusDiv.replaceChildren();
+      const div = document.createElement('div');
+      div.className = 'error';
+      div.textContent = message;
+      statusDiv.appendChild(div);
   }
-})();
+}
+
+function showSuccess(message) {
+  const statusDiv = document.getElementById('status');
+  const messageEl = document.querySelector('.message');
+  const spinner = document.querySelector('.spinner');
+  if (spinner) spinner.style.display = 'none';
+  if (messageEl) messageEl.style.display = 'none';
+  if (statusDiv) {
+      statusDiv.replaceChildren();
+      const div = document.createElement('div');
+      div.className = 'success';
+      div.textContent = message;
+      statusDiv.appendChild(div);
+  }
+}
+
+function showStatus(message) {
+    const messageEl = document.querySelector('.message');
+    if (messageEl) messageEl.textContent = message;
+}
+
+// Start processing if in browser
+processOAuthCallback();

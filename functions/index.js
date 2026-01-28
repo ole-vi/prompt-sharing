@@ -313,7 +313,7 @@ exports.githubOAuthExchange = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    if (!state || !state.startsWith('extension-')) {
+    if (!state || (!state.startsWith('extension-') && !state.startsWith('webapp-'))) {
       res.status(400).json({ error: 'Invalid state parameter' });
       return;
     }

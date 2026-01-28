@@ -6,6 +6,17 @@ export const OWNER = "promptroot";
 export const REPO = "promptroot";
 export const BRANCH = "main";
 
+// GitHub Configuration
+export const GITHUB_CONFIG = {
+  clientId: 'Ov23liz8g6qMlD1izTFe',
+  redirectUri: 'https://promptroot-b02a2.firebaseapp.com/oauth-callback.html',
+  functionsUrl: 'https://us-central1-promptroot-b02a2.cloudfunctions.net',
+  endpoints: {
+    oauthExchange: '/githubOAuthExchange',
+    getGitHubUser: '/getGitHubUser'
+  }
+};
+
 // GitHub API
 export const GIST_POINTER_REGEX = /^https:\/\/gist\.githubusercontent\.com\/\S+\/raw\/\S+$/i;
 export const GIST_URL_REGEX = /^https:\/\/gist\.github\.com\/[\w-]+\/[a-f0-9]+\/?(?:#file-[\w.-]+)?(?:\?file=[\w.-]+)?$/i;
