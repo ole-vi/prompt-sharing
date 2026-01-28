@@ -2,7 +2,7 @@
 // Calculate and aggregate analytics data from tracked sessions
 
 import { getAuth, getDb } from './firebase-service.js';
-import { handleError, ErrorCategory } from '../utils/error-handler.js';
+import { handleError } from '../utils/error-handler.js';
 import { SESSION_TRACKING } from '../utils/constants.js';
 
 /**
