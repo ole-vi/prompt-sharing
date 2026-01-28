@@ -3,8 +3,33 @@ import { CACHE_DURATIONS, CACHE_KEYS, CACHE_POLICIES, CACHE_STRATEGIES } from '.
 
 export { CACHE_KEYS };
 
+function getSessionId() {
+  try {
+    const tokenStr = localStorage.getItem('github_access_token');
+    if (!tokenStr) return null;
+    const data = JSON.parse(tokenStr);
+    if (!data || !data.token) return null;
+
+    let hash = 5381;
+    for (let i = 0; i < data.token.length; i++) {
+      hash = ((hash << 5) + hash) + data.token.charCodeAt(i);
+    }
+    return (hash >>> 0).toString(36);
+  } catch (error) {
+    return null;
+  }
+}
+
 function getCacheKey(key, userId) {
-  return userId ? `${key}_${userId}` : key;
+  const sessionId = getSessionId();
+  let cacheKey = key;
+  if (userId) {
+    cacheKey += `_${userId}`;
+  }
+  if (sessionId) {
+    cacheKey += `_${sessionId}`;
+  }
+  return cacheKey;
 }
 
 export function setCache(key, data, userId = null) {

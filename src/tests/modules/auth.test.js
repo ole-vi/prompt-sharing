@@ -16,7 +16,8 @@ vi.mock('../../modules/toast.js', () => ({
 
 vi.mock('../../utils/session-cache.js', () => ({
   setCache: vi.fn(),
-  getCache: vi.fn()
+  getCache: vi.fn(),
+  clearAllCache: vi.fn()
 }));
 
 vi.mock('../../modules/jules-api.js', () => ({
@@ -309,10 +310,12 @@ describe('auth', () => {
   describe('signOutUser', () => {
     it('should sign out successfully', async () => {
       mockFirebaseAuth.signOut.mockResolvedValue();
+      const { clearAllCache } = await import('../../utils/session-cache.js');
 
       await signOutUser();
       
       expect(mockFirebaseAuth.signOut).toHaveBeenCalled();
+      expect(clearAllCache).toHaveBeenCalled();
     });
 
     it('should remove GitHub access token from localStorage', async () => {
