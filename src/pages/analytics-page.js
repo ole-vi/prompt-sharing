@@ -159,8 +159,8 @@ async function loadAnalytics() {
 
     // Render all sections
     renderKeyMetrics(currentAnalytics);
-    renderStatusChart(currentAnalytics);
-    renderTimelineChart(currentAnalytics);
+    await renderStatusChart(currentAnalytics); // Wait for Chart.js to load
+    await renderTimelineChart(currentAnalytics); // Now Chart.js is available
     renderTopPrompts(currentAnalytics);
     renderFailureAnalysis(currentAnalytics);
     renderRepoPerformance(currentAnalytics);
@@ -176,15 +176,17 @@ async function loadAnalytics() {
 
 function getSelectedDateRange() {
   const select = document.getElementById('dateRangeSelect');
-  const days = parseInt(select?.value || '30');
+  const value = select?.value || '30';
   
-  const end = new Date();
-  let start = null;
-
-  if (days !== 'all') {
-    start = new Date();
-    start.setDate(start.getDate() - days);
+  // Handle "all time" case
+  if (value === 'all') {
+    return { start: null, end: null };
   }
+  
+  const days = parseInt(value);
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - days);
 
   return { start, end };
 }
@@ -272,11 +274,36 @@ async function renderTimelineChart(analytics) {
   const ctx = document.getElementById('timelineChart');
   if (!ctx) return;
 
+  const container = ctx.parentElement;
+  
+  // Remove any existing "no data" message
+  const existingMessage = container.querySelector('.muted-text');
+  if (existingMessage) {
+    existingMessage.remove();
+  }
+
   // Destroy existing chart
   if (timelineChartInstance) {
     timelineChartInstance.destroy();
+    timelineChartInstance = null;
   }
 
+  // Check if there's any data
+  if (!analytics.sessionsOverTime || analytics.sessionsOverTime.length === 0) {
+    // Hide canvas and show "No data" message
+    ctx.style.display = 'none';
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'muted-text small-text';
+    messageDiv.style.padding = '24px';
+    messageDiv.style.textAlign = 'center';
+    messageDiv.textContent = 'No session data available for the selected time period';
+    container.appendChild(messageDiv);
+    return;
+  }
+
+  // Show canvas
+  ctx.style.display = '';
+  
   // Group sessions by day
   const sessionsByDay = {};
   const prsByDay = {};
@@ -399,7 +426,7 @@ function renderFailureAnalysis(analytics) {
   const recentFailures = analytics.recentFailures || [];
 
   if (recentFailures.length === 0) {
-    const emptyMsg = createElement('p', 'muted small-text text-center pad-lg', 'No failures recorded 🎉');
+    const emptyMsg = createElement('p', 'muted small-text text-center pad-lg', 'No failures recorded');
     container.appendChild(emptyMsg);
     return;
   }
