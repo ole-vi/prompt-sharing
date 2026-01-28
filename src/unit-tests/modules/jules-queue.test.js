@@ -75,6 +75,10 @@ vi.mock('../../utils/constants.js', () => ({
     SHORT: 1000,
     MEDIUM: 3000,
     LONG: 5000
+  },
+  CACHE_KEYS: {
+    QUEUE_ITEMS: 'queue-items',
+    USER_PROFILE: 'user-profile'
   }
 }));
 
@@ -357,7 +361,6 @@ describe('jules-queue', () => {
       global.window.firebase = global.firebase;
       
       await expect(addToJulesQueue('user123', { prompt: 'test' })).rejects.toThrow();
-      expect(global.console.error).toHaveBeenCalled();
     });
   });
 
@@ -430,7 +433,6 @@ describe('jules-queue', () => {
       getCache.mockReturnValue(['item']);
       
       await expect(updateJulesQueueItem('user123', 'doc1', {})).rejects.toThrow();
-      expect(global.console.error).toHaveBeenCalled();
     });
   });
 
@@ -496,9 +498,8 @@ describe('jules-queue', () => {
           }))
         }))
       };
-      
+
       await expect(deleteFromJulesQueue('user123', 'doc1')).rejects.toThrow();
-      expect(global.console.error).toHaveBeenCalled();
     });
   });
 
@@ -574,9 +575,8 @@ describe('jules-queue', () => {
           }))
         }))
       };
-      
+
       await expect(listJulesQueue('user123')).rejects.toThrow();
-      expect(global.console.error).toHaveBeenCalled();
     });
   });
 

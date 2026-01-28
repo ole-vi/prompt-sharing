@@ -5,9 +5,12 @@
 
 import { getAuth } from '../modules/firebase-service.js';
 import { initMutualExclusivity } from '../utils/checkbox-helpers.js';
-import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly } from '../modules/jules-queue.js';
+import { attachQueueHandlers, listJulesQueue, renderQueueListDirectly, subscribeToQueueUpdates } from '../modules/jules-queue.js';
 import { createElement, clearElement, waitForDOMReady, waitForHeader } from '../utils/dom-helpers.js';
 import { handleError } from '../utils/error-handler.js';
+import { clearCache, CACHE_KEYS } from '../utils/session-cache.js';
+
+let queueUnsubscribe = null;
 
 // Initialize checkbox mutual exclusivity
 initMutualExclusivity();
@@ -75,10 +78,28 @@ async function loadQueue() {
     loadingDiv.classList.remove('hidden');
     controlsDiv.classList.add('hidden');
     clearElement(listDiv);
+    
+    if (queueUnsubscribe) {
+      queueUnsubscribe();
+      queueUnsubscribe = null;
+    }
+    
+    clearCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
 
     const items = await listJulesQueue(user.uid);
     renderQueueListDirectly(items);
     attachQueueHandlers();
+    
+    queueUnsubscribe = subscribeToQueueUpdates(user.uid, (updatedItems) => {
+      const hasModalOpen = document.querySelector('.modal-overlay.show');
+      const hasSelections = document.querySelectorAll('.queue-checkbox:checked, .subtask-checkbox:checked').length > 0;
+      
+      if (!hasModalOpen && !hasSelections) {
+        clearCache(CACHE_KEYS.QUEUE_ITEMS, user.uid);
+        renderQueueListDirectly(updatedItems);
+        attachQueueHandlers();
+      }
+    });
     
     loadingDiv.classList.add('hidden');
     controlsDiv.classList.remove('hidden');

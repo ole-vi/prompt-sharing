@@ -11,12 +11,27 @@ import statusBar from './status-bar.js';
 import { initSplitButton, destroySplitButton } from './split-button.js';
 import { COPEN_OPTIONS, COPEN_STORAGE_KEY, COPEN_DEFAULT_LABEL, COPEN_DEFAULT_ICON } from '../utils/copen-config.js';
 
-function sanitizeHtml(html) {
+let domPurifyHooksInitialized = false;
+
+export function sanitizeHtml(html) {
   if (typeof window.DOMPurify === 'undefined') {
     console.error('DOMPurify not loaded - stripping all HTML tags as safety fallback');
     const div = document.createElement('div');
     div.textContent = html;
     return div.innerHTML;
+  }
+
+  if (!domPurifyHooksInitialized) {
+    window.DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+      if (node.tagName === 'A') {
+        node.setAttribute('target', '_blank');
+      }
+
+      if (node.getAttribute('target') === '_blank') {
+        node.setAttribute('rel', 'noopener noreferrer');
+      }
+    });
+    domPurifyHooksInitialized = true;
   }
 
   const config = {
@@ -34,7 +49,8 @@ function sanitizeHtml(html) {
       'href', 'title', 'alt', 'src', 'class', 'id', 'target', 'rel',
       'colspan', 'rowspan', 'align'
     ],
-    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    // Only allow data:image/ URIs to prevent XSS via data:text/html or other executable types
+    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|data:image\/|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
     ADD_ATTR: ['target'],
     FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'base', 'link', 'meta'],
     FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur']
@@ -454,25 +470,48 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     titleEl.textContent = firstLine.replace(/^#\s+/, '');
   }
 
-  // Lazy load marked.js
-  let marked;
+  // Lazy load marked.js with fallback
   try {
-    marked = await loadMarked();
-  } catch (err) {
-    console.error('Failed to load markdown parser:', err);
-    throw err;
-  }
+    const marked = await loadMarked();
 
-  if (isGistContent) {
-    const looksLikeMarkdown = /^#|^\*|^-|^\d+\.|```/.test(raw.trim());
-    if (!looksLikeMarkdown) {
-      const wrappedContent = '```\n' + raw + '\n```';
-      contentEl.innerHTML = sanitizeHtml(marked.parse(wrappedContent, { breaks: true }));
+    if (!marked) {
+      throw new Error('marked.js loaded but undefined');
+    }
+
+    if (isGistContent) {
+      const looksLikeMarkdown = /^#|^\*|^-|^\d+\.|```/.test(raw.trim());
+      if (!looksLikeMarkdown) {
+        const wrappedContent = '```\n' + raw + '\n```';
+        contentEl.innerHTML = sanitizeHtml(marked.parse(wrappedContent, { breaks: true }));
+      } else {
+        contentEl.innerHTML = sanitizeHtml(marked.parse(raw, { breaks: true }));
+      }
     } else {
       contentEl.innerHTML = sanitizeHtml(marked.parse(raw, { breaks: true }));
     }
-  } else {
-    contentEl.innerHTML = sanitizeHtml(marked.parse(raw, { breaks: true }));
+  } catch (err) {
+    console.error('Failed to load marked.js or parse markdown:', err);
+    showToast('Markdown rendering unavailable', 'error');
+
+    contentEl.innerHTML = '';
+
+    // Warning banner
+    const warningDiv = document.createElement('div');
+    warningDiv.style.padding = '12px';
+    warningDiv.style.marginBottom = '16px';
+    warningDiv.style.backgroundColor = 'rgba(243, 156, 18, 0.1)';
+    warningDiv.style.border = '1px solid var(--warn)';
+    warningDiv.style.borderRadius = '8px';
+    warningDiv.style.color = 'var(--warn)';
+    warningDiv.textContent = '⚠ Markdown rendering unavailable. Displaying raw text.';
+    contentEl.appendChild(warningDiv);
+
+    // Raw text fallback
+    const pre = document.createElement('pre');
+    pre.style.whiteSpace = 'pre-wrap';
+    pre.style.fontFamily = 'var(--font-mono)';
+    pre.textContent = raw;
+    contentEl.appendChild(pre);
   }
 
   setCurrentPromptText(raw);

@@ -300,7 +300,10 @@ export async function loadBranches() {
   if (!branchSelect) return;
 
   branchSelect.disabled = true;
-  branchSelect.innerHTML = `<option>Loading branches…</option>`;
+  branchSelect.replaceChildren();
+  const loadingOpt = document.createElement('option');
+  loadingOpt.textContent = 'Loading branches…';
+  branchSelect.appendChild(loadingOpt);
 
   try {
     // Check cache first
@@ -338,7 +341,7 @@ export async function loadBranches() {
     userBranchesArr.sort((a, b) => a.name.localeCompare(b.name));
     featureBranches.sort((a, b) => a.name.localeCompare(b.name));
 
-    branchSelect.innerHTML = '';
+    branchSelect.replaceChildren();
 
     for (const b of mainBranches) {
       const opt = document.createElement('option');
@@ -393,7 +396,11 @@ export async function loadBranches() {
     // Populate custom dropdown menu with favorites support
     await populateCustomDropdownMenu(branches);
   } catch (e) {
-    branchSelect.innerHTML = `<option value="${currentBranch}">${currentBranch}</option>`;
+    branchSelect.replaceChildren();
+    const errorOpt = document.createElement('option');
+    errorOpt.value = currentBranch;
+    errorOpt.textContent = currentBranch;
+    branchSelect.appendChild(errorOpt);
     branchSelect.title = (e && e.message) ? e.message : 'Failed to load branches';
   } finally {
     branchSelect.disabled = false;
@@ -406,7 +413,7 @@ export async function loadBranches() {
 async function populateCustomDropdownMenu(branches) {
   if (!branchDropdownMenu || !branchDropdownBtn) return;
 
-  branchDropdownMenu.innerHTML = '';
+  branchDropdownMenu.replaceChildren();
 
   // Always show current branch at the top
   const currentBranchObj = branches.find(b => b.name === currentBranch);

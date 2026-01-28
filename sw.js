@@ -26,7 +26,6 @@ const STATIC_ASSETS = [
   '/src/modules/prompt-service.js',
   '/src/modules/sidebar.js',
   '/src/modules/header.js',
-  '/src/modules/navbar.js',
   '/src/modules/toast.js',
   '/src/modules/dropdown.js',
   

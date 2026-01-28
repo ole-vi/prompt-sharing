@@ -392,37 +392,14 @@ describe('prompt-renderer', () => {
       });
     });
 
-    it('should handle markdown parsing errors with fallback', async () => {
+    it('should handle markdown parsing errors', async () => {
       const { loadMarked } = await import('../../utils/lazy-loaders.js');
-      const { showToast } = await import('../../modules/toast.js');
-
       loadMarked.mockReset();
       loadMarked.mockRejectedValue(new Error('Markdown parsing failed'));
 
       const mockFile = { path: 'test.md', name: 'test.md', slug: 'test', type: 'file' };
       
-      // Should not throw, but handle error gracefully
-      await selectFile(mockFile, true, 'owner', 'repo', 'main');
-
-      expect(showToast).toHaveBeenCalledWith('Markdown rendering unavailable', 'error');
-
-      // contentEl is mocked, verify interactions
-      // We can't easily check internal state of the specific contentEl instance since getElementById returns a new copy/reference from the mock factory or same object?
-      // In the beforeEach: global.document.getElementById.mockImplementation ... returns { ...mockElement, id }
-      // So it returns a new object with spread properties.
-      // But the methods like appendChild are shared from the closure `mockElement`?
-      // No, `mockElement` is defined inside `beforeEach`.
-      // Wait, `const mockElement = { ... }` is inside `beforeEach`.
-      // `global.document.getElementById` uses that `mockElement`.
-      // If I want to spy on the specific element returned for 'content', I should rely on the fact that `initPromptRenderer` was called and stored the reference.
-      // But `selectFile` uses the stored `contentEl`.
-
-      // Let's rely on checking if console.error was called (though mocking it might be needed to avoid noise)
-      // And showToast is mocked.
-
-      // We can also verify that we attempted to append children to contentEl
-      // But since we can't easily access the exact mock instance used inside prompt-renderer without exporting it,
-      // we can verify the side effects like showToast.
+      await expect(selectFile(mockFile, true, 'owner', 'repo', 'main')).rejects.toThrow('Markdown parsing failed');
     });
 
     it('should handle DOM manipulation errors gracefully', () => {
