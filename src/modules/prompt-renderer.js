@@ -455,7 +455,13 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   }
 
   // Lazy load marked.js
-  const marked = await loadMarked();
+  let marked;
+  try {
+    marked = await loadMarked();
+  } catch (err) {
+    console.error('Failed to load markdown parser:', err);
+    throw err;
+  }
 
   if (isGistContent) {
     const looksLikeMarkdown = /^#|^\*|^-|^\d+\.|```/.test(raw.trim());
