@@ -2,7 +2,6 @@
 // Provides offline support and dramatic performance improvements for repeat visits
 // Expected: 88% faster repeat loads (~50ms vs 409ms)
 
-// Bumped to v6 to bust caches after CSS refactors
 const CACHE_VERSION = 'promptroot-v6-cache-bust-2026-01-28';
 const CACHE_NAME = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
