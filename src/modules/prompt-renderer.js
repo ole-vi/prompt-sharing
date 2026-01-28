@@ -469,19 +469,48 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     titleEl.textContent = firstLine.replace(/^#\s+/, '');
   }
 
-  // Lazy load marked.js
-  const marked = await loadMarked();
+  // Lazy load marked.js with fallback
+  try {
+    const marked = await loadMarked();
 
-  if (isGistContent) {
-    const looksLikeMarkdown = /^#|^\*|^-|^\d+\.|```/.test(raw.trim());
-    if (!looksLikeMarkdown) {
-      const wrappedContent = '```\n' + raw + '\n```';
-      contentEl.innerHTML = sanitizeHtml(marked.parse(wrappedContent, { breaks: true }));
+    if (!marked) {
+      throw new Error('marked.js loaded but undefined');
+    }
+
+    if (isGistContent) {
+      const looksLikeMarkdown = /^#|^\*|^-|^\d+\.|```/.test(raw.trim());
+      if (!looksLikeMarkdown) {
+        const wrappedContent = '```\n' + raw + '\n```';
+        contentEl.innerHTML = sanitizeHtml(marked.parse(wrappedContent, { breaks: true }));
+      } else {
+        contentEl.innerHTML = sanitizeHtml(marked.parse(raw, { breaks: true }));
+      }
     } else {
       contentEl.innerHTML = sanitizeHtml(marked.parse(raw, { breaks: true }));
     }
-  } else {
-    contentEl.innerHTML = sanitizeHtml(marked.parse(raw, { breaks: true }));
+  } catch (err) {
+    console.error('Failed to load marked.js or parse markdown:', err);
+    showToast('Markdown rendering unavailable', 'error');
+
+    contentEl.innerHTML = '';
+
+    // Warning banner
+    const warningDiv = document.createElement('div');
+    warningDiv.style.padding = '12px';
+    warningDiv.style.marginBottom = '16px';
+    warningDiv.style.backgroundColor = 'rgba(243, 156, 18, 0.1)';
+    warningDiv.style.border = '1px solid var(--warn)';
+    warningDiv.style.borderRadius = '8px';
+    warningDiv.style.color = 'var(--warn)';
+    warningDiv.textContent = '⚠ Markdown rendering unavailable. Displaying raw text.';
+    contentEl.appendChild(warningDiv);
+
+    // Raw text fallback
+    const pre = document.createElement('pre');
+    pre.style.whiteSpace = 'pre-wrap';
+    pre.style.fontFamily = 'var(--font-mono)';
+    pre.textContent = raw;
+    contentEl.appendChild(pre);
   }
 
   setCurrentPromptText(raw);
