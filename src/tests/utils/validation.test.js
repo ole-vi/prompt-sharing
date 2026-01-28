@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateOwner, validateRepo, validateBranch } from '../../utils/validation.js';
+import { validateOwner, validateRepo, validateBranch, validatePath } from '../../utils/validation.js';
 
 describe('validation.js', () => {
   describe('validateOwner', () => {
@@ -39,6 +39,9 @@ describe('validation.js', () => {
       it('should validate correct branch', () => {
           expect(validateBranch('main')).toBe(true);
           expect(validateBranch('feature/branch')).toBe(true);
+          expect(validateBranch('my-branch')).toBe(true);
+          expect(validateBranch('my_branch')).toBe(true);
+          expect(validateBranch('v1.0')).toBe(true);
       });
 
       it('should invalidate incorrect branch', () => {
@@ -48,6 +51,37 @@ describe('validation.js', () => {
           expect(validateBranch('dot..dot')).toBe(false);
           expect(validateBranch('@{')).toBe(false);
           expect(validateBranch('back\\slash')).toBe(false);
+          expect(validateBranch('special$char')).toBe(false);
+          expect(validateBranch('space ')).toBe(false);
+      });
+  });
+
+  describe('validatePath', () => {
+      it('should validate correct path', () => {
+          expect(validatePath('readme.md')).toBe(true);
+          expect(validatePath('src/utils/validation.js')).toBe(true);
+          expect(validatePath('images/logo.png')).toBe(true);
+      });
+
+      it('should invalidate path traversal', () => {
+          expect(validatePath('../secret.txt')).toBe(false);
+          expect(validatePath('folder/../file')).toBe(false);
+          expect(validatePath('..')).toBe(false);
+      });
+
+      it('should invalidate absolute paths', () => {
+          expect(validatePath('/etc/passwd')).toBe(false);
+          expect(validatePath('/usr/bin')).toBe(false);
+      });
+
+      it('should invalidate empty path', () => {
+          expect(validatePath('')).toBe(false);
+      });
+
+      it('should invalidate non-string', () => {
+          expect(validatePath(null)).toBe(false);
+          expect(validatePath(undefined)).toBe(false);
+          expect(validatePath(123)).toBe(false);
       });
   });
 });

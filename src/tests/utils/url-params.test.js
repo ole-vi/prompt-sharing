@@ -110,6 +110,18 @@ describe('url-params', () => {
       consoleWarnSpy.mockRestore();
     });
 
+    it('should validate p parameter and reject invalid paths', () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      window.location.search = '?p=../secret';
+
+      const params = parseParams();
+
+      expect(params.p).toBeUndefined();
+      expect(consoleWarnSpy).toHaveBeenCalled();
+
+      consoleWarnSpy.mockRestore();
+    });
+
     it('should accept non-validated parameters without validation', () => {
       window.location.search = '?custom=value&another=param&owner=test';
       

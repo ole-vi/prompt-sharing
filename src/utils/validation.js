@@ -27,14 +27,19 @@ export function validateBranch(branch) {
   if (typeof branch !== 'string' || branch.length < 1 || branch.length > 250) {
     return false;
   }
-  // Cannot start or end with '/', no '..' or '@{'
+
+  // Allowlist: alphanumeric, hyphen, underscore, forward slash, period
+  const validBranchRegex = /^[a-zA-Z0-9_\/.-]+$/;
+  if (!validBranchRegex.test(branch)) {
+    return false;
+  }
+
+  // Additional checks for structural validity
   const invalidPatterns = [
     /^\//,    // Starts with '/'
     /\/$/,    // Ends with '/'
-    /\/\//,  // Contains '//'
+    /\/\//,   // Contains '//'
     /\.\./,   // Contains '..'
-    /@\{/,   // Contains '@{'
-    /\\/,     // Contains '\'
   ];
 
   for (const pattern of invalidPatterns) {
@@ -43,10 +48,22 @@ export function validateBranch(branch) {
     }
   }
 
-  // Control characters and some special characters are not allowed
-  // eslint-disable-next-line no-control-regex
-  const controlCharsRegex = /[\u0000-\u001f\u007f~^:?*\[\]]/;
-  if (controlCharsRegex.test(branch)) {
+  return true;
+}
+
+// Path Validation
+export function validatePath(path) {
+  if (typeof path !== 'string' || path.length < 1) {
+    return false;
+  }
+
+  // Reject path traversal
+  if (path.includes('..')) {
+    return false;
+  }
+
+  // Reject absolute paths
+  if (path.startsWith('/')) {
     return false;
   }
 

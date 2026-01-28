@@ -1,7 +1,7 @@
 // ===== Main App Initialization =====
 
 import { OWNER, REPO, BRANCH, STORAGE_KEYS } from './utils/constants.js';
-import { parseParams, getHashParam } from './utils/url-params.js';
+import { parseParams } from './utils/url-params.js';
 import statusBar from './modules/status-bar.js';
 import { initPromptList, loadList, loadExpandedState, renderList, setSelectFileCallback, setRepoContext } from './modules/prompt-list.js';
 import { initPromptRenderer, selectBySlug, selectFile, setHandleTryInJulesCallback } from './modules/prompt-renderer.js';
@@ -64,7 +64,7 @@ async function loadPrompts() {
   const cacheKey = STORAGE_KEYS.promptsCache(currentOwner, currentRepo, currentBranch);
   const files = await loadList(currentOwner, currentRepo, currentBranch, cacheKey);
 
-  const hashSlug = getHashParam('p');
+  const { p: hashSlug } = parseParams();
   if (hashSlug) {
     await selectBySlug(hashSlug, files, currentOwner, currentRepo, currentBranch);
   } else {
@@ -97,7 +97,7 @@ function setupEventListeners() {
         await loadBranches();
       } else {
         // Just switching prompt
-        const hashSlug = getHashParam('p');
+        const hashSlug = p.p;
         if (hashSlug) {
           const { getFiles } = await import('./modules/prompt-list.js');
           await selectBySlug(hashSlug, getFiles(), currentOwner, currentRepo, currentBranch);
