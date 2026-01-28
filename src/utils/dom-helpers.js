@@ -2,6 +2,12 @@
 
 import { TIMEOUTS, LIMITS } from './constants.js';
 
+// SECURITY WARNING:
+// Do not concatenate user-controlled input into strings that are passed to
+// evaluateJavascript, eval(), setTimeout(), or innerHTML.
+// Doing so can lead to XSS or injection attacks.
+// Always use safer alternatives like textContent, setAttribute, or structured data passing.
+
 export function createElement(tag, className = '', textContent = '') {
   const el = document.createElement(tag);
   if (className) el.className = className;
