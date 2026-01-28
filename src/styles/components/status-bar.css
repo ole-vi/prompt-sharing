@@ -47,7 +47,9 @@
   display: flex; 
 }
 
-#statusBar .status-msg { 
+#statusBar .status-msg,
+.status-bar__msg {
+  flex: 1;
   font-size: 14px; 
   color: var(--text); 
   font-weight: 500;
@@ -55,7 +57,9 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-#statusBar .status-progress { 
+#statusBar .status-progress,
+.status-bar__progress {
+  margin-left: 12px;
   font-size: 13px; 
   color: var(--accent); 
   font-weight: 700;
@@ -72,7 +76,9 @@
   text-align: center;
 }
 
-#statusBar .status-action { 
+#statusBar .status-action,
+.status-bar__action {
+  margin-left: 12px;
   font-size: 13px; 
   padding: 6px 14px;
   font-weight: 600;

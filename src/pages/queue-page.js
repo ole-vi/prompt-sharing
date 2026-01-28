@@ -19,8 +19,8 @@ initMutualExclusivity();
 
 function createEmptyStatePanel(message, isError = false) {
   const className = isError
-    ? 'panel text-center pad-xl'
-    : 'panel text-center pad-xl muted-text';
+    ? 'status-msg-box status-msg-box--error'
+    : 'status-msg-box status-msg-box--muted';
   return createElement('div', className, message);
 }
 
