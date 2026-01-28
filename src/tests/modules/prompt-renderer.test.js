@@ -37,7 +37,10 @@ vi.mock('../../utils/dom-helpers.js', () => ({
 }));
 
 vi.mock('../../utils/lazy-loaders.js', () => ({
-  loadMarked: vi.fn()
+  loadMarked: vi.fn().mockResolvedValue({
+    parse: vi.fn().mockReturnValue('<p>Test content</p>'),
+    Renderer: class { image = null; }
+  })
 }));
 
 vi.mock('../../modules/prompt-list.js', () => ({
@@ -313,7 +316,8 @@ describe('prompt-renderer', () => {
       
       fetchRawFile.mockResolvedValue('# Test Content\nThis is a test file.');
       loadMarked.mockResolvedValue({
-        parse: vi.fn().mockReturnValue('<h1>Test Content</h1><p>This is a test file.</p>')
+        parse: vi.fn().mockReturnValue('<h1>Test Content</h1><p>This is a test file.</p>'),
+        Renderer: class { image = null; }
       });
     });
 
@@ -388,7 +392,8 @@ describe('prompt-renderer', () => {
       
       fetchRawFile.mockResolvedValue('# Test Content');
       loadMarked.mockResolvedValue({
-        parse: vi.fn().mockReturnValue('<h1>Test Content</h1>')
+        parse: vi.fn().mockReturnValue('<h1>Test Content</h1>'),
+        Renderer: class { image = null; }
       });
     });
 
@@ -474,7 +479,8 @@ describe('prompt-renderer', () => {
       vi.clearAllMocks();
       
       loadMarked.mockResolvedValue({
-        parse: vi.fn().mockReturnValue('<h1>Test Content</h1>')
+        parse: vi.fn().mockReturnValue('<h1>Test Content</h1>'),
+        Renderer: class { image = null; }
       });
     });
 

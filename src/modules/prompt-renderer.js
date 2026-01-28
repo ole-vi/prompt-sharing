@@ -472,16 +472,40 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   // Lazy load marked.js
   const marked = await loadMarked();
 
+  // Configure renderer for image URL validation
+  const renderer = new marked.Renderer();
+  renderer.image = function(href, title, text) {
+    const newHref = prependBaseUrlToImages(href, owner, repo, branch, f ? f.path : '');
+    if (!newHref) return ''; // Block unsafe or invalid images
+
+    // Construct safe image tag
+    const cleanHref = newHref.replace(/"/g, '&quot;');
+    const cleanTitle = title ? title.replace(/"/g, '&quot;') : null;
+    const cleanText = text ? text.replace(/"/g, '&quot;') : '';
+
+    let out = `<img src="${cleanHref}" alt="${cleanText}"`;
+    if (cleanTitle) {
+      out += ` title="${cleanTitle}"`;
+    }
+    out += '>';
+    return out;
+  };
+
+  const markedOptions = {
+    breaks: true,
+    renderer
+  };
+
   if (isGistContent) {
     const looksLikeMarkdown = /^#|^\*|^-|^\d+\.|```/.test(raw.trim());
     if (!looksLikeMarkdown) {
       const wrappedContent = '```\n' + raw + '\n```';
-      contentEl.innerHTML = sanitizeHtml(marked.parse(wrappedContent, { breaks: true }));
+      contentEl.innerHTML = sanitizeHtml(marked.parse(wrappedContent, markedOptions));
     } else {
-      contentEl.innerHTML = sanitizeHtml(marked.parse(raw, { breaks: true }));
+      contentEl.innerHTML = sanitizeHtml(marked.parse(raw, markedOptions));
     }
   } else {
-    contentEl.innerHTML = sanitizeHtml(marked.parse(raw, { breaks: true }));
+    contentEl.innerHTML = sanitizeHtml(marked.parse(raw, markedOptions));
   }
 
   setCurrentPromptText(raw);
@@ -566,4 +590,74 @@ async function handleShareLink() {
   }
   const originalText = '<span class="icon icon-inline" aria-hidden="true">link</span> Copy link';
   setTimeout(() => (shareBtn.innerHTML = originalText), TIMEOUTS.copyFeedback);
+}
+
+export function prependBaseUrlToImages(url, owner, repo, branch, filePath) {
+  if (!url) return null;
+
+  // URL Scheme Validation
+  const trimmedUrl = url.trim();
+  const lowerUrl = trimmedUrl.toLowerCase();
+
+  // Explicitly reject unsafe schemes
+  const unsafeSchemes = ['javascript:', 'data:', 'vbscript:', 'file:'];
+  for (const scheme of unsafeSchemes) {
+    if (lowerUrl.startsWith(scheme)) {
+      console.warn(`Blocked unsafe image URL scheme: ${url}`);
+      return null;
+    }
+  }
+
+  // Allow absolute URLs (http/https only)
+  if (lowerUrl.startsWith('http://') || lowerUrl.startsWith('https://')) {
+    return trimmedUrl;
+  }
+
+  // Reject other schemes (like mailto:, ftp:, etc. for images)
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmedUrl)) {
+     console.warn(`Blocked unknown scheme in image URL: ${url}`);
+     return null;
+  }
+
+  // Relative Path Resolution
+  if (!owner || !repo || !branch) {
+    // Return original if no context available (e.g. preview mode without repo)
+    return trimmedUrl;
+  }
+
+  let resolvedPath = '';
+
+  if (trimmedUrl.startsWith('/')) {
+    // Root relative
+    resolvedPath = trimmedUrl.substring(1);
+  } else {
+    // Relative to file
+    const currentDir = filePath && filePath.includes('/') ? filePath.substring(0, filePath.lastIndexOf('/')) : '';
+    const combined = currentDir ? `${currentDir}/${trimmedUrl}` : trimmedUrl;
+
+    // Normalize path
+    const parts = combined.split('/');
+    const stack = [];
+
+    for (const part of parts) {
+      if (part === '.' || part === '') continue;
+      if (part === '..') {
+        if (stack.length > 0) {
+          stack.pop();
+        } else {
+          // Attempting to go above root
+          console.warn(`Blocked directory traversal in image URL: ${url}`);
+          return null;
+        }
+      } else {
+        stack.push(part);
+      }
+    }
+    resolvedPath = stack.join('/');
+  }
+
+  // URL encode the path parts
+  const encodedPath = resolvedPath.split('/').map(encodeURIComponent).join('/');
+
+  return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${encodedPath}`;
 }

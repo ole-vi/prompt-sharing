@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
-import { initPromptRenderer, selectFile } from '../../modules/prompt-renderer.js';
+import { initPromptRenderer, selectFile, prependBaseUrlToImages } from '../../modules/prompt-renderer.js';
 
 // Mock dependencies
 vi.mock('../../utils/slug.js', () => ({
@@ -26,7 +26,8 @@ vi.mock('../../utils/dom-helpers.js', () => ({
 
 vi.mock('../../utils/lazy-loaders.js', () => ({
   loadMarked: vi.fn().mockResolvedValue({
-    parse: vi.fn().mockReturnValue('<p>Test content</p>')
+    parse: vi.fn().mockReturnValue('<p>Test content</p>'),
+    Renderer: class { image = null; }
   })
 }));
 
@@ -191,5 +192,82 @@ describe('Prompt Renderer Hardening', () => {
     
     // Should not have called addHook again
     expect(callCountAfter).toBe(callCountBefore);
+  });
+});
+
+describe('prependBaseUrlToImages', () => {
+  const owner = 'test-owner';
+  const repo = 'test-repo';
+  const branch = 'test-branch';
+  const filePath = 'prompts/category/test.md';
+
+  it('should return null for undefined or null url', () => {
+    expect(prependBaseUrlToImages(null, owner, repo, branch, filePath)).toBeNull();
+    expect(prependBaseUrlToImages(undefined, owner, repo, branch, filePath)).toBeNull();
+  });
+
+  it('should allow valid http/https URLs', () => {
+    const httpUrl = 'http://example.com/image.png';
+    const httpsUrl = 'https://example.com/image.png';
+
+    expect(prependBaseUrlToImages(httpUrl, owner, repo, branch, filePath)).toBe(httpUrl);
+    expect(prependBaseUrlToImages(httpsUrl, owner, repo, branch, filePath)).toBe(httpsUrl);
+  });
+
+  it('should block unsafe schemes', () => {
+    expect(prependBaseUrlToImages('javascript:alert(1)', owner, repo, branch, filePath)).toBeNull();
+    expect(prependBaseUrlToImages('data:image/png;base64,12345', owner, repo, branch, filePath)).toBeNull();
+    expect(prependBaseUrlToImages('vbscript:msgbox', owner, repo, branch, filePath)).toBeNull();
+    expect(prependBaseUrlToImages('file:///etc/passwd', owner, repo, branch, filePath)).toBeNull();
+  });
+
+  it('should block unknown schemes', () => {
+    expect(prependBaseUrlToImages('ftp://example.com/file', owner, repo, branch, filePath)).toBeNull();
+    expect(prependBaseUrlToImages('mailto:user@example.com', owner, repo, branch, filePath)).toBeNull();
+  });
+
+  it('should resolve sibling relative paths', () => {
+    const result = prependBaseUrlToImages('image.png', owner, repo, branch, filePath);
+    // filePath: prompts/category/test.md -> dir: prompts/category
+    expect(result).toBe(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/prompts/category/image.png`);
+  });
+
+  it('should resolve child relative paths', () => {
+    const result = prependBaseUrlToImages('images/pic.png', owner, repo, branch, filePath);
+    expect(result).toBe(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/prompts/category/images/pic.png`);
+  });
+
+  it('should resolve parent relative paths (..)', () => {
+    const result = prependBaseUrlToImages('../shared/logo.png', owner, repo, branch, filePath);
+    // prompts/category -> .. -> prompts
+    expect(result).toBe(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/prompts/shared/logo.png`);
+  });
+
+  it('should resolve complex relative paths', () => {
+    const result = prependBaseUrlToImages('../../assets/icon.png', owner, repo, branch, filePath);
+    // prompts/category -> .. -> prompts -> .. -> root
+    expect(result).toBe(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/assets/icon.png`);
+  });
+
+  it('should block directory traversal above root', () => {
+    // prompts/category (depth 2)
+    // ../../../ = depth -1 -> Blocked
+    const result = prependBaseUrlToImages('../../../etc/passwd', owner, repo, branch, filePath);
+    expect(result).toBeNull();
+  });
+
+  it('should handle root relative paths', () => {
+    const result = prependBaseUrlToImages('/assets/logo.png', owner, repo, branch, filePath);
+    expect(result).toBe(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/assets/logo.png`);
+  });
+
+  it('should encode paths correctly', () => {
+    const result = prependBaseUrlToImages('weird image name.png', owner, repo, branch, filePath);
+    expect(result).toBe(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/prompts/category/weird%20image%20name.png`);
+  });
+
+  it('should handle missing context by returning url as is (or null for strictness, currently logic returns trimmedUrl)', () => {
+    // Current implementation returns trimmedUrl if context is missing
+    expect(prependBaseUrlToImages('image.png', null, null, null, null)).toBe('image.png');
   });
 });
