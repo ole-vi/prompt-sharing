@@ -13,7 +13,7 @@ import { COPEN_OPTIONS, COPEN_STORAGE_KEY, COPEN_DEFAULT_LABEL, COPEN_DEFAULT_IC
 
 let domPurifyHooksInitialized = false;
 
-function sanitizeHtml(html) {
+export function sanitizeHtml(html) {
   if (typeof window.DOMPurify === 'undefined') {
     console.error('DOMPurify not loaded - stripping all HTML tags as safety fallback');
     const div = document.createElement('div');
@@ -29,6 +29,10 @@ function sanitizeHtml(html) {
 
       if (node.getAttribute('target') === '_blank') {
         node.setAttribute('rel', 'noopener noreferrer');
+      }
+
+      if (node.tagName === 'IMG') {
+        node.setAttribute('referrerpolicy', 'no-referrer');
       }
     });
     domPurifyHooksInitialized = true;

@@ -4,6 +4,18 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PromptRoot</title>
+  <script>
+    (function() {
+      var meta = document.createElement('meta');
+      meta.name = 'referrer';
+      if (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        meta.content = 'origin';
+      } else {
+        meta.content = 'no-referrer';
+      }
+      document.head.insertBefore(meta, document.head.firstChild);
+    })();
+  </script>
   <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
   
   <!-- Resource Hints: Early connections for external resources -->
