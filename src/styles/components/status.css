@@ -27,3 +27,17 @@
 .status-loading {
   color: var(--muted);
 }
+
+/* Generic Status Box Indicators */
+.status-msg-box {
+  text-align: center;
+  padding: 24px;
+}
+
+.status-msg-box--muted {
+  color: var(--muted);
+}
+
+.status-msg-box--error {
+  color: var(--error);
+}
