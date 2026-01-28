@@ -31,8 +31,4 @@
 @import url('./styles/components/utilities.css');
 
 /* Page-specific overrides */
-@import url('./styles/pages/home.css');
-@import url('./styles/pages/jules.css');
-@import url('./styles/pages/sessions.css');
-@import url('./styles/pages/profile.css');
-@import url('./styles/pages/webcapture.css');
+/* Page-specific CSS imports removed: use component/utility styles only */
