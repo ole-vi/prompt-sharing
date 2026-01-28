@@ -29,6 +29,3 @@
 @import url('./styles/components/update-banner.css');
 @import url('./styles/components/toast.css');
 @import url('./styles/components/utilities.css');
-
-/* Page-specific overrides */
-/* Page-specific CSS imports removed: use component/utility styles only */
