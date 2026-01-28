@@ -1,4 +1,32 @@
+import { TRUSTED_DOMAINS } from './constants.js';
+
 // ===== Validation Functions =====
+
+// URL Scheme Validation
+export function isUrlSafe(url) {
+  if (!url || typeof url !== 'string') return false;
+
+  try {
+    const parsedUrl = new URL(url);
+    const protocol = parsedUrl.protocol.toLowerCase();
+
+    // Allow https everywhere
+    if (protocol === 'https:') {
+      return true;
+    }
+
+    // Allow http only for trusted domains
+    if (protocol === 'http:') {
+      return TRUSTED_DOMAINS.includes(parsedUrl.hostname);
+    }
+
+    // Block everything else (javascript:, data:, file:, content:, etc.)
+    return false;
+  } catch (e) {
+    // Invalid URL format
+    return false;
+  }
+}
 
 // GitHub Owner (Username/Organization) Validation
 export function validateOwner(owner) {

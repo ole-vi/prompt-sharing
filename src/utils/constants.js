@@ -6,6 +6,8 @@ export const OWNER = "promptroot";
 export const REPO = "promptroot";
 export const BRANCH = "main";
 
+export const TRUSTED_DOMAINS = ["localhost", "127.0.0.1"];
+
 // GitHub API
 export const GIST_POINTER_REGEX = /^https:\/\/gist\.githubusercontent\.com\/\S+\/raw\/\S+$/i;
 export const GIST_URL_REGEX = /^https:\/\/gist\.github\.com\/[\w-]+\/[a-f0-9]+\/?(?:#file-[\w.-]+)?(?:\?file=[\w.-]+)?$/i;

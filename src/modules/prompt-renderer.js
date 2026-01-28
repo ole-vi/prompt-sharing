@@ -5,6 +5,7 @@ import { toggleVisibility } from '../utils/dom-helpers.js';
 import { loadMarked } from '../utils/lazy-loaders.js';
 import { ensureAncestorsExpanded, loadExpandedState, persistExpandedState, renderList, updateActiveItem, setCurrentSlug, getCurrentSlug, getFiles } from './prompt-list.js';
 import { showToast } from './toast.js';
+import { isUrlSafe } from '../utils/validation.js';
 import { copyAndOpen } from './copen.js';
 import { copyText } from '../utils/clipboard.js';
 import statusBar from './status-bar.js';
@@ -49,7 +50,8 @@ function sanitizeHtml(html) {
       'href', 'title', 'alt', 'src', 'class', 'id', 'target', 'rel',
       'colspan', 'rowspan', 'align'
     ],
-    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    // Allow unsafe schemes in DOMPurify so we can intercept them with a toast in handleContentLinkClick
+    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data|file|content):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
     ADD_ATTR: ['target'],
     FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'base', 'link', 'meta'],
     FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur']
@@ -117,11 +119,19 @@ export function initPromptRenderer() {
   queueBtn = document.getElementById('queueBtn');
   moreBtn = document.getElementById('moreBtn');
 
+  if (contentEl) {
+    contentEl.addEventListener('click', handleContentLinkClick);
+  }
+
   document.addEventListener('click', handleDocumentClick);
   window.addEventListener('branchChanged', handleBranchChanged);
 }
 
 export function destroyPromptRenderer() {
+  if (contentEl) {
+    contentEl.removeEventListener('click', handleContentLinkClick);
+  }
+
   document.removeEventListener('click', handleDocumentClick);
   window.removeEventListener('branchChanged', handleBranchChanged);
   
@@ -136,6 +146,19 @@ export function destroyPromptRenderer() {
   if (currentBlobUrl) {
     URL.revokeObjectURL(currentBlobUrl);
     currentBlobUrl = null;
+  }
+}
+
+function handleContentLinkClick(event) {
+  const link = event.target.closest('a');
+  if (!link || !contentEl.contains(link)) return;
+
+  const href = link.getAttribute('href');
+  // Check if URL is safe
+  if (href && !isUrlSafe(href)) {
+    event.preventDefault();
+    event.stopPropagation();
+    showToast(`Blocked unsafe URL: ${href}`, 'error');
   }
 }
 

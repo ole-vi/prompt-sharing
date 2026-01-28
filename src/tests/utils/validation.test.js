@@ -1,7 +1,41 @@
 import { describe, it, expect } from 'vitest';
-import { validateOwner, validateRepo, validateBranch } from '../../utils/validation.js';
+import { validateOwner, validateRepo, validateBranch, isUrlSafe } from '../../utils/validation.js';
 
 describe('validation.js', () => {
+  describe('isUrlSafe', () => {
+    it('should allow https URLs', () => {
+      expect(isUrlSafe('https://google.com')).toBe(true);
+      expect(isUrlSafe('https://example.com/path?query=1')).toBe(true);
+    });
+
+    it('should allow http URLs for trusted domains', () => {
+      expect(isUrlSafe('http://localhost:3000')).toBe(true);
+      expect(isUrlSafe('http://127.0.0.1:8080')).toBe(true);
+    });
+
+    it('should block http URLs for untrusted domains', () => {
+      expect(isUrlSafe('http://example.com')).toBe(false);
+      expect(isUrlSafe('http://google.com')).toBe(false);
+      expect(isUrlSafe('http://192.168.1.1')).toBe(false);
+    });
+
+    it('should block unsafe schemes', () => {
+      expect(isUrlSafe('javascript:alert(1)')).toBe(false);
+      expect(isUrlSafe('data:text/plain;base64,SGVsbG8=')).toBe(false);
+      expect(isUrlSafe('file:///etc/passwd')).toBe(false);
+      expect(isUrlSafe('content://com.android.providers.media.documents')).toBe(false);
+      expect(isUrlSafe('ftp://example.com')).toBe(false);
+      expect(isUrlSafe('mailto:user@example.com')).toBe(false);
+    });
+
+    it('should handle invalid URLs', () => {
+      expect(isUrlSafe('not-a-url')).toBe(false);
+      expect(isUrlSafe(null)).toBe(false);
+      expect(isUrlSafe(undefined)).toBe(false);
+      expect(isUrlSafe(123)).toBe(false);
+    });
+  });
+
   describe('validateOwner', () => {
     it('should validate correct owner', () => {
       expect(validateOwner('promptroot')).toBe(true);
