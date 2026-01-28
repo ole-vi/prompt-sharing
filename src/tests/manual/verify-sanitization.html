@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Title Sanitization Verification</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .danger { color: red; }
+        .safe { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Title Sanitization Verification</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Original String</th>
+                <th>Sanitized String</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="results">
+        </tbody>
+    </table>
+
+    <script type="module">
+        import { sanitizeTitle } from '../../utils/title.js';
+
+        const testCases = [
+            {
+                desc: "Control Characters",
+                input: "Hello\u0000World\u001F"
+            },
+            {
+                desc: "Bidi Override",
+                input: "Right\u202ELeft\u202A"
+            },
+            {
+                desc: "Zero Width",
+                input: "Zero\u200BWidth\uFEFFSpace"
+            },
+            {
+                desc: "Homograph (Cyrillic)",
+                input: "My P\u0430ssword" // \u0430 is cyrillic 'a'
+            },
+            {
+                desc: "Homograph (Greek)",
+                input: "G\u03BFogle" // \u03BF is greek 'omicron'
+            },
+            {
+                desc: "Normal Title",
+                input: "Just a regular title"
+            }
+        ];
+
+        const tbody = document.getElementById('results');
+
+        testCases.forEach(tc => {
+            const sanitized = sanitizeTitle(tc.input);
+            const tr = document.createElement('tr');
+
+            // Expected outcomes for simple verification logic (checking if changes happened when expected)
+            let status = 'Changed';
+            if (tc.input === sanitized) {
+                status = 'Unchanged';
+            }
+
+            tr.innerHTML = `
+                <td>${tc.desc}</td>
+                <td><pre>${escapeHtml(tc.input)}</pre></td>
+                <td><pre>${escapeHtml(sanitized)}</pre></td>
+                <td class="${status === 'Changed' ? 'safe' : ''}">${status}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

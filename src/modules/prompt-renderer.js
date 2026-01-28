@@ -1,4 +1,5 @@
 import { slugify } from '../utils/slug.js';
+import { sanitizeTitle } from '../utils/title.js';
 import { isGistUrl, resolveGistRawUrl, fetchGistContent, fetchRawFile } from './github-api.js';
 import { CODEX_URL_REGEX, TIMEOUTS } from '../utils/constants.js';
 import { toggleVisibility } from '../utils/dom-helpers.js';
@@ -314,7 +315,7 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
     toggleVisibility(contentEl, true);
   }
 
-  titleEl.textContent = f.name.replace(/\.md$/i, '');
+  titleEl.textContent = sanitizeTitle(f.name.replace(/\.md$/i, ''));
   metaEl.textContent = `File: ${f.path}`;
 
   const slug = slugify(f.path);
@@ -466,7 +467,7 @@ export async function selectFile(f, pushHash, owner, repo, branch) {
   // Update title and content
   const firstLine = raw.split(/\r?\n/)[0];
   if (/^#\s+/.test(firstLine)) {
-    titleEl.textContent = firstLine.replace(/^#\s+/, '');
+    titleEl.textContent = sanitizeTitle(firstLine.replace(/^#\s+/, ''));
   }
 
   // Lazy load marked.js
