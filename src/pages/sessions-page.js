@@ -65,7 +65,7 @@ async function loadSessionsPage() {
     if (allSessionsCache.length === 0) {
       allSessionsList.replaceChildren();
       const errorDiv = createElement('div', { 
-        className: 'text-center pad-lg sessions__error'
+        className: 'text-center pad-lg color-error'
       });
       errorDiv.textContent = `Failed to load sessions: ${error.message}`;
       allSessionsList.appendChild(errorDiv);
@@ -107,7 +107,7 @@ export async function renderAllSessions(sessions) {
   if (filteredSessions.length === 0 && searchTerm) {
     allSessionsList.replaceChildren();
     const noResultsDiv = createElement('div', {
-      className: 'sessions__no-results'
+      className: 'list-empty'
     });
     noResultsDiv.textContent = 'No sessions match your search';
     allSessionsList.appendChild(noResultsDiv);

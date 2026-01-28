@@ -1,20 +1,2 @@
 /* Page: Sessions */
 /* Add any sessions-specific overrides here. */
-
-.is-hidden {
-  display: none !important;
-}
-
-.sessions__status {
-  flex: 1;
-}
-
-.sessions__error {
-  color: #e74c3c;
-}
-
-.sessions__no-results {
-  color: var(--muted);
-  text-align: center;
-  padding: 24px;
-}

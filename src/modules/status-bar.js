@@ -25,7 +25,6 @@ class StatusBar {
     // Ensure status bar is hidden initially
     this.element.classList.remove('status-visible');
     this.element.classList.add('hidden');
-    this.element.classList.add('is-hidden');
     
     // Add close button handler
     if (this.closeElement) {
@@ -43,7 +42,6 @@ class StatusBar {
     this.msgElement.textContent = message;
     this.element.classList.add('status-visible');
     this.element.classList.remove('hidden');
-    this.element.classList.remove('is-hidden');
 
     if (this.currentTimeout) {
       clearTimeout(this.currentTimeout);
@@ -62,14 +60,12 @@ class StatusBar {
 
     this.progressElement.textContent = text;
     this.progressElement.classList.remove('hidden');
-    this.progressElement.classList.remove('is-hidden');
   }
 
   clearProgress() {
     if (!this.progressElement) return;
     this.progressElement.textContent = '';
     this.progressElement.classList.add('hidden');
-    this.progressElement.classList.add('is-hidden');
   }
 
   setAction(label, callback) {
@@ -77,7 +73,6 @@ class StatusBar {
 
     this.actionElement.textContent = label;
     this.actionElement.classList.remove('hidden');
-    this.actionElement.classList.remove('is-hidden');
     this.actionElement.onclick = callback;
   }
 
@@ -85,7 +80,6 @@ class StatusBar {
     if (!this.actionElement) return;
     this.actionElement.textContent = '';
     this.actionElement.classList.add('hidden');
-    this.actionElement.classList.add('is-hidden');
     this.actionElement.onclick = null;
   }
 
@@ -94,7 +88,6 @@ class StatusBar {
     
     this.element.classList.remove('status-visible');
     this.element.classList.add('hidden');
-    this.element.classList.add('is-hidden');
     
     if (this.currentTimeout) {
       clearTimeout(this.currentTimeout);
