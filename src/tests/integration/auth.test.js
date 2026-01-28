@@ -55,7 +55,8 @@ describe('Auth Module', () => {
   describe('signInWithGitHub', () => {
     it('should call signInWithPopup and store token', async () => {
       mockAuth.signInWithPopup.mockResolvedValue({
-        credential: { accessToken: 'token123' }
+        credential: { accessToken: 'token123' },
+        user: { uid: '123' }
       });
 
       await signInWithGitHub();

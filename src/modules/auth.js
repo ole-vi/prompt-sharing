@@ -3,6 +3,7 @@
 import { showToast } from './toast.js';
 import { setCache, getCache } from '../utils/session-cache.js';
 import { getAuth } from './firebase-service.js';
+import { encryptData } from '../utils/encryption.js';
 // Lazy loaded: jules-api.js (for clearJulesKeyCache)
 
 let currentUser = null;
@@ -39,11 +40,21 @@ export async function signInWithGitHub(forceAccountSelection = false) {
     const result = await auth.signInWithPopup(provider);
     
     if (result.credential && result.credential.accessToken) {
-      const tokenData = {
-        token: result.credential.accessToken,
-        timestamp: Date.now()
-      };
-      localStorage.setItem('github_access_token', JSON.stringify(tokenData));
+      try {
+        const encryptedToken = await encryptData(result.credential.accessToken, result.user.uid);
+        const tokenData = {
+          encryptedToken,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('github_access_token', JSON.stringify(tokenData));
+      } catch (encryptError) {
+        console.error('Failed to encrypt GitHub token:', encryptError);
+        // Fallback to unencrypted storage if encryption fails, or maybe just fail?
+        // User asked to "Modify auth.js to encrypt token", implying strictly.
+        // But if encryption fails, maybe we shouldn't store it?
+        // I'll show an error toast.
+        showToast('Failed to secure GitHub token.', 'error');
+      }
     } else {
       console.warn('GitHub sign-in succeeded but no access token was returned. Falling back to unauthenticated GitHub requests.', {
         hasCredential: !!result.credential

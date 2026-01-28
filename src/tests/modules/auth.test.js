@@ -37,7 +37,7 @@ const mockFirebaseAuth = {
 
 const mockGithubAuthProvider = vi.fn();
 
-global.window = {
+Object.assign(global.window, {
   // window.auth is no longer used by the module, but we might keep it if other things use it
   // But for this test, we care about getAuth()
   auth: mockFirebaseAuth,
@@ -48,7 +48,7 @@ global.window = {
   },
   populateFreeInputRepoSelection: vi.fn(),
   populateFreeInputBranchSelection: vi.fn()
-};
+});
 
 global.firebase = {
   auth: {
@@ -256,14 +256,15 @@ describe('auth', () => {
       mockFirebaseAuth.signInWithPopup.mockResolvedValue({
         credential: {
           accessToken: 'github-token-123'
-        }
+        },
+        user: { uid: 'user-123' }
       });
 
       await signInWithGitHub();
       
       expect(global.localStorage.setItem).toHaveBeenCalledWith(
         'github_access_token',
-        expect.stringContaining('github-token-123')
+        expect.stringContaining('encryptedToken')
       );
     });
 

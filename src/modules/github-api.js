@@ -1,4 +1,5 @@
 import { getAuth } from './firebase-service.js';
+import { encryptData, decryptData } from '../utils/encryption.js';
 import { GIST_POINTER_REGEX, GIST_URL_REGEX, CACHE_DURATIONS } from '../utils/constants.js';
 
 let viaProxy = (url) => url;
@@ -81,7 +82,7 @@ async function fetchWithHeaders(url, headers) {
 
 const TOKEN_MAX_AGE = 60 * 24 * 60 * 60 * 1000; // 60 days
 
-async function getGitHubAccessToken() {
+export async function getGitHubAccessToken() {
   try {
     const user = getAuth()?.currentUser;
     if (!user) return null;
@@ -94,18 +95,36 @@ async function getGitHubAccessToken() {
 
     const parsed = JSON.parse(tokenDataStr);
     const isObject = parsed !== null && typeof parsed === 'object';
-    const token = isObject ? parsed.token : undefined;
+    let token = isObject ? parsed.token : undefined;
+    const encryptedToken = isObject ? parsed.encryptedToken : undefined;
     const timestamp = isObject ? parsed.timestamp : undefined;
-    
-    // Validate token is a non-empty string and timestamp is valid
-    if (typeof token !== 'string' || !token || !Number.isFinite(timestamp)) {
-      localStorage.removeItem('github_access_token');
-      return null;
-    }
     
     // Validate timestamp is not in the future and not expired
     const now = Date.now();
-    if (timestamp > now || now - timestamp > TOKEN_MAX_AGE) {
+    if (!Number.isFinite(timestamp) || timestamp > now || now - timestamp > TOKEN_MAX_AGE) {
+      localStorage.removeItem('github_access_token');
+      return null;
+    }
+
+    if (encryptedToken) {
+      token = await decryptData(encryptedToken, user.uid);
+      if (!token) {
+        console.error('Failed to decrypt GitHub token');
+        return null;
+      }
+    } else if (token && typeof token === 'string' && token.length > 0) {
+      // Migration: Encrypt legacy plaintext token
+      try {
+        const newEncryptedToken = await encryptData(token, user.uid);
+        localStorage.setItem('github_access_token', JSON.stringify({
+          encryptedToken: newEncryptedToken,
+          timestamp: timestamp // Preserve original timestamp
+        }));
+      } catch (err) {
+        console.error('Failed to migrate GitHub token:', err);
+        // Continue returning plaintext token even if migration fails
+      }
+    } else {
       localStorage.removeItem('github_access_token');
       return null;
     }
