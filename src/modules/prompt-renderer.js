@@ -13,7 +13,7 @@ import { COPEN_OPTIONS, COPEN_STORAGE_KEY, COPEN_DEFAULT_LABEL, COPEN_DEFAULT_IC
 
 let domPurifyHooksInitialized = false;
 
-function sanitizeHtml(html) {
+export function sanitizeHtml(html) {
   if (typeof window.DOMPurify === 'undefined') {
     console.error('DOMPurify not loaded - stripping all HTML tags as safety fallback');
     const div = document.createElement('div');
@@ -49,7 +49,8 @@ function sanitizeHtml(html) {
       'href', 'title', 'alt', 'src', 'class', 'id', 'target', 'rel',
       'colspan', 'rowspan', 'align'
     ],
-    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    // Only allow data:image/ URIs to prevent XSS via data:text/html or other executable types
+    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|data:image\/|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
     ADD_ATTR: ['target'],
     FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'base', 'link', 'meta'],
     FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur']
