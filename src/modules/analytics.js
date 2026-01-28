@@ -2,7 +2,7 @@
 // Calculate and aggregate analytics data from tracked sessions
 
 import { getAuth, getDb } from './firebase-service.js';
-import { handleError, ErrorCategory } from '../utils/error-handler.js';
+import { handleError } from '../utils/error-handler.js';
 import { SESSION_TRACKING } from '../utils/constants.js';
 
 /**
@@ -219,8 +219,6 @@ function aggregateSessionData(sessions) {
 
     // Timing metrics
     if (session.createdAt && session.completedAt) {
-      const created = session.createdAt.toDate?.() || new Date(session.createdAt.seconds * 1000);
-      const completed = session.completedAt.toDate?.() || new Date(session.completedAt.seconds * 1000);
       // Session completed within time period
     }
 

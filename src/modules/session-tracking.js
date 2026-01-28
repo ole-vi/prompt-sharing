@@ -3,9 +3,8 @@
 
 import { getAuth, getDb } from './firebase-service.js';
 import { getServerTimestamp } from '../utils/firestore-helpers.js';
-import { handleError, ErrorCategory } from '../utils/error-handler.js';
+import { handleError } from '../utils/error-handler.js';
 import { getJulesSession, getJulesSessionActivities, getDecryptedJulesKey, listJulesSessions } from './jules-api.js';
-import { CACHE_KEYS } from '../utils/session-cache.js';
 
 /**
  * Track a new session in Firestore
