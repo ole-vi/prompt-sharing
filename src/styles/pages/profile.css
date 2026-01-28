@@ -1,2 +1,100 @@
 /* Page: Profile */
-/* Add any profile-specific overrides here. */
+
+/* Copen List */
+.copen-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.copen-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.copen-item:hover {
+  border-color: var(--accent);
+}
+
+.copen-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.copen-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(77, 217, 255, 0.1);
+  color: var(--accent);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.copen-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.copen-item-label {
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.copen-item-default-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  background: rgba(77, 217, 255, 0.15);
+  color: var(--accent);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.copen-item-url {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.copen-item-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.copen-item-actions .btn-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.copen-item.disabled {
+  opacity: 0.5;
+}
+
+.copen-item.disabled .copen-item-icon {
+  background: rgba(139, 148, 168, 0.1);
+  color: var(--muted);
+}
+

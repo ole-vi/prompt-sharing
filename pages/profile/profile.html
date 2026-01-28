@@ -30,24 +30,48 @@
         <div class="info-label">Signed in as</div>
         <div id="profileUserName" class="info-value">Loading...</div>
       </div>
-      
-      <!-- Jules API Key Section -->
-      <div id="julesKeyStatusDiv" class="info-card">
-        <div class="info-label">Jules API Key</div>
-        <div id="julesKeyStatus" class="info-value muted-text">Loading...</div>
-      </div>
-      
-      <div class="btn-container">
-        <button id="addJulesKeyBtn" class="btn w-full hidden"><span class="icon icon-inline" aria-hidden="true">add</span> Add Jules API Key</button>
-      </div>
-      
-      <!-- Danger Zone -->
-      <div id="dangerZoneSection" class="danger-panel mt-lg hidden">
-        <div class="danger-title"><span class="icon icon-inline" aria-hidden="true">warning</span> Danger Zone</div>
-        <div class="danger-desc">This action will delete your stored Jules API key. You'll need to enter a new one next time.</div>
-        <button id="resetJulesKeyBtn" class="btn danger w-full fw-600"><span class="icon icon-inline" aria-hidden="true">delete</span> Delete Jules API Key</button>
+
+      <!-- Copen Management Section -->
+      <div id="copenManagementSection" class="mt-lg">
+        <h3 class="section-title-md mb-md"><span class="icon icon-inline" aria-hidden="true">open_in_new</span> Copen Links</h3>
+        <p class="muted-text mb-md">Manage the "Copy and Open" destinations available when working with prompts.</p>
+        
+        <div id="copenList" class="copen-list">
+          <!-- Copens will be populated here -->
+        </div>
+
+        <button id="addCopenBtn" class="btn w-full mt-md"><span class="icon icon-inline" aria-hidden="true">add</span> Add Custom Copen</button>
       </div>
     </main>
+  </div>
+
+  <!-- Copen Editor Modal -->
+  <div id="copenEditorModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="copenEditorTitle">Add Custom Copen</h3>
+        <button class="btn-icon close-modal" id="copenEditorClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="copenLabel">Label</label>
+          <input type="text" id="copenLabel" class="input" placeholder="e.g., My AI Tool" required>
+        </div>
+        <div class="form-group">
+          <label for="copenUrl">URL</label>
+          <input type="url" id="copenUrl" class="input" placeholder="https://example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="copenIcon">Icon (Material Symbol name)</label>
+          <input type="text" id="copenIcon" class="input" placeholder="extension">
+          <small class="muted-text">Optional. Default: extension</small>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button id="copenEditorSave" class="btn primary"><span class="icon icon-inline" aria-hidden="true">save</span> Save</button>
+        <button id="copenEditorCancel" class="btn">Cancel</button>
+      </div>
+    </div>
   </div>
 
   <footer>

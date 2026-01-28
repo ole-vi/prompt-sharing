@@ -208,3 +208,32 @@ export function destroySplitButton(container) {
     api.destroy();
   }
 }
+
+/**
+ * Update options for an existing split button
+ * @param {HTMLElement} container - Container element
+ * @param {Array} newOptions - New array of options
+ */
+export function updateSplitButtonOptions(container, newOptions) {
+  const api = activeButtons.get(container);
+  if (!api || !newOptions) return;
+  
+  // Rebuild the menu with new options
+  const menu = container.querySelector(SELECTORS.MENU);
+  if (!menu) return;
+  
+  menu.innerHTML = '';
+  newOptions.forEach(option => {
+    const item = createElement('div', CLASSES.MENU_ITEM);
+    item.dataset.value = option.value;
+    
+    if (option.icon) {
+      item.appendChild(createIcon(option.icon, 'icon-inline'));
+    }
+    
+    const label = createElement('span', '', option.label);
+    item.appendChild(label);
+    
+    menu.appendChild(item);
+  });
+}

@@ -2,17 +2,29 @@ import { getCurrentUser } from './auth.js';
 import { getAuth } from './firebase-service.js';
 import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { showToast } from './toast.js';
-import { copyAndOpen } from './copen.js';
+import { copyAndOpen, clearCopenCache } from './copen.js';
 import { toggleVisibility } from '../utils/dom-helpers.js';
 import { JULES_MESSAGES, TIMEOUTS, RETRY_CONFIG } from '../utils/constants.js';
-import { initSplitButton } from './split-button.js';
-import { COPEN_OPTIONS, COPEN_STORAGE_KEY, COPEN_DEFAULT_LABEL, COPEN_DEFAULT_ICON } from '../utils/copen-config.js';
+import { initSplitButton, updateSplitButtonOptions } from './split-button.js';
+import { getCopenOptions, COPEN_STORAGE_KEY, COPEN_DEFAULT_LABEL, COPEN_DEFAULT_ICON } from '../utils/copen-config.js';
 // Lazy loaded: jules-keys, jules-modal, jules-queue
 
 let _lastSelectedSourceId = null;
 let _lastSelectedBranch = null;
 let _branchChangeListenerAdded = false;
 let _freeInputCopenSplitBtn = null;
+
+async function refreshFreeInputCopenOptions() {
+  const copenContainer = document.getElementById('freeInputCopenContainer');
+  if (!copenContainer || !_freeInputCopenSplitBtn) return;
+  
+  try {
+    const options = await getCopenOptions();
+    updateSplitButtonOptions(copenContainer, options);
+  } catch (error) {
+    console.error('Error refreshing free input copen options:', error);
+  }
+}
 
 export function getLastSelectedSource() {
   return { sourceId: _lastSelectedSourceId, branch: _lastSelectedBranch };
@@ -362,7 +374,7 @@ export function showFreeInputForm() {
       container: copenContainer,
       defaultLabel: COPEN_DEFAULT_LABEL,
       defaultIcon: COPEN_DEFAULT_ICON,
-      options: COPEN_OPTIONS,
+      options: [],
       onAction: async (target) => {
         const promptText = validatePromptText();
         if (!promptText) return;
@@ -370,6 +382,18 @@ export function showFreeInputForm() {
       },
       storageKey: COPEN_STORAGE_KEY
     });
+    
+    // Load user's copen options
+    refreshFreeInputCopenOptions();
+    
+    // Listen for auth changes
+    const auth = getAuth();
+    if (auth) {
+      auth.onAuthStateChanged(() => {
+        clearCopenCache();
+        refreshFreeInputCopenOptions();
+      });
+    }
   }
 
   submitBtn.onclick = handleSubmit;
