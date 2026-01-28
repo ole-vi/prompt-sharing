@@ -7,11 +7,28 @@ import { RepoSelector, BranchSelector } from './repo-branch-selector.js';
 import { addToJulesQueue } from './jules-queue.js';
 import { toggleVisibility } from '../utils/dom-helpers.js';
 import { extractTitleFromPrompt } from '../utils/title.js';
-import { RETRY_CONFIG, TIMEOUTS, JULES_MESSAGES } from '../utils/constants.js';
+import { RETRY_CONFIG, TIMEOUTS, JULES_MESSAGES, JULES_API_KEY_CONFIG } from '../utils/constants.js';
 import { showToast } from './toast.js';
 
 let lastSelectedSourceId = 'sources/github/promptroot/promptroot';
 let lastSelectedBranch = 'main';
+let lastJulesKeySubmitTime = 0;
+
+function validateJulesKey(key) {
+  if (!key) {
+    return { valid: false, error: 'Please enter your Jules API key.' };
+  }
+  if (key.length < JULES_API_KEY_CONFIG.MIN_LENGTH) {
+    return { valid: false, error: `Key too short (min ${JULES_API_KEY_CONFIG.MIN_LENGTH} chars).` };
+  }
+  if (key.length > JULES_API_KEY_CONFIG.MAX_LENGTH) {
+    return { valid: false, error: `Key too long (max ${JULES_API_KEY_CONFIG.MAX_LENGTH} chars).` };
+  }
+  if (!JULES_API_KEY_CONFIG.PATTERN.test(key)) {
+    return { valid: false, error: 'Invalid key format (alphanumeric, underscores, hyphens only).' };
+  }
+  return { valid: true };
+}
 
 export async function loadSubtaskErrorModal() {
   try {
@@ -43,10 +60,19 @@ export function showJulesKeyModal(onSave) {
 
   const handleSave = async () => {
     const apiKey = input.value.trim();
-    if (!apiKey) {
-      showToast('Please enter your Jules API key.', 'warn');
+
+    const validation = validateJulesKey(apiKey);
+    if (!validation.valid) {
+      showToast(validation.error, 'warn');
       return;
     }
+
+    const now = Date.now();
+    if (now - lastJulesKeySubmitTime < JULES_API_KEY_CONFIG.RATE_LIMIT_MS) {
+      showToast('Please wait before submitting again.', 'warn');
+      return;
+    }
+    lastJulesKeySubmitTime = now;
 
     try {
       saveBtn.textContent = 'Saving...';

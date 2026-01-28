@@ -382,3 +382,13 @@ export const CACHE_POLICIES = {
     strategy: CACHE_STRATEGIES.CACHE_FIRST
   }
 };
+
+/**
+ * Jules API key validation configuration
+ */
+export const JULES_API_KEY_CONFIG = {
+  MIN_LENGTH: 20,
+  MAX_LENGTH: 512,
+  PATTERN: /^[A-Za-z0-9_\-]+$/,
+  RATE_LIMIT_MS: 5000
+};

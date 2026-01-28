@@ -17,15 +17,6 @@ vi.mock('../../modules/firebase-service.js', () => ({
   getFunctions: vi.fn(() => null)
 }));
 
-import {
-  loadSubtaskErrorModal,
-  openUrlInBackground,
-  showJulesKeyModal,
-  hideJulesKeyModal,
-  hideJulesEnvModal,
-  hideSubtaskErrorModal
-} from '../../modules/jules-modal.js';
-
 // Mock dependencies
 vi.mock('../../modules/jules-keys.js', () => ({
   encryptAndStoreKey: vi.fn()
@@ -51,6 +42,12 @@ vi.mock('../../utils/constants.js', () => ({
     SIGN_IN_REQUIRED: 'Please sign in',
     QUEUED: 'Added to queue',
     QUEUE_FAILED: (msg) => `Failed: ${msg}`
+  },
+  JULES_API_KEY_CONFIG: {
+    MIN_LENGTH: 5,
+    MAX_LENGTH: 20,
+    PATTERN: /^[A-Za-z0-9_\-]+$/,
+    RATE_LIMIT_MS: 1000
   }
 }));
 
@@ -138,8 +135,12 @@ function mockReset() {
 }
 
 describe('jules-modal', () => {
-  beforeEach(() => {
+  let julesModal;
+
+  beforeEach(async () => {
     mockReset();
+    vi.resetModules();
+    julesModal = await import('../../modules/jules-modal.js');
   });
 
   describe('loadSubtaskErrorModal', () => {
@@ -149,7 +150,7 @@ describe('jules-modal', () => {
         text: vi.fn().mockResolvedValue('<div>Modal HTML</div>')
       });
       
-      await loadSubtaskErrorModal();
+      await julesModal.loadSubtaskErrorModal();
       
       expect(global.fetch).toHaveBeenCalledWith('/partials/subtask-error-modal.html');
       expect(global.document.body.insertAdjacentHTML).toHaveBeenCalledWith('beforeend', '<div>Modal HTML</div>');
@@ -160,7 +161,7 @@ describe('jules-modal', () => {
         ok: false
       });
       
-      await loadSubtaskErrorModal();
+      await julesModal.loadSubtaskErrorModal();
       
       expect(global.document.body.insertAdjacentHTML).not.toHaveBeenCalled();
     });
@@ -168,7 +169,7 @@ describe('jules-modal', () => {
     it('should handle network errors', async () => {
       global.fetch.mockRejectedValue(new Error('Network error'));
       
-      await loadSubtaskErrorModal();
+      await julesModal.loadSubtaskErrorModal();
       
       expect(global.console.error).toHaveBeenCalledWith('Error loading subtask error modal:', expect.any(Error));
     });
@@ -176,13 +177,13 @@ describe('jules-modal', () => {
 
   describe('openUrlInBackground', () => {
     it('should call window.open with correct parameters', () => {
-      openUrlInBackground('https://example.com');
+      julesModal.openUrlInBackground('https://example.com');
       
       expect(global.window.open).toHaveBeenCalledWith('https://example.com', '_blank', 'noopener,noreferrer');
     });
 
     it('should handle different URLs', () => {
-      openUrlInBackground('https://test.com/path');
+      julesModal.openUrlInBackground('https://test.com/path');
       
       expect(global.window.open).toHaveBeenCalledWith('https://test.com/path', '_blank', 'noopener,noreferrer');
     });
@@ -203,7 +204,7 @@ describe('jules-modal', () => {
         return null;
       });
       
-      showJulesKeyModal();
+      julesModal.showJulesKeyModal();
       
       expect(mockModal.classList.add).toHaveBeenCalledWith('show');
       expect(mockInput.value).toBe('');
@@ -224,7 +225,7 @@ describe('jules-modal', () => {
         return null;
       });
       
-      showJulesKeyModal();
+      julesModal.showJulesKeyModal();
       
       expect(mockSaveBtn.onclick).toBeDefined();
       expect(mockCancelBtn.onclick).toBeDefined();
@@ -245,11 +246,92 @@ describe('jules-modal', () => {
         return null;
       });
       
-      showJulesKeyModal();
+      julesModal.showJulesKeyModal();
       
       await mockSaveBtn.onclick();
       
       expect(showToast).toHaveBeenCalledWith('Please enter your Jules API key.', 'warn');
+    });
+
+    it('should reject invalid API key format (too short)', async () => {
+      const { showToast } = await import('../../modules/toast.js');
+      const mockModal = createMockElement('julesKeyModal');
+      const mockInput = createMockElement('julesKeyInput');
+      const mockSaveBtn = createMockElement('julesSaveBtn');
+      const mockCancelBtn = createMockElement('julesCancelBtn');
+
+      global.document.getElementById.mockImplementation((id) => {
+        if (id === 'julesKeyModal') return mockModal;
+        if (id === 'julesKeyInput') return mockInput;
+        if (id === 'julesSaveBtn') return mockSaveBtn;
+        if (id === 'julesCancelBtn') return mockCancelBtn;
+        return null;
+      });
+
+      julesModal.showJulesKeyModal();
+      mockInput.value = '1234'; // Set value AFTER show (which clears it)
+
+      await mockSaveBtn.onclick();
+
+      expect(showToast).toHaveBeenCalledWith('Key too short (min 5 chars).', 'warn');
+    });
+
+    it('should reject invalid API key format (invalid characters)', async () => {
+      const { showToast } = await import('../../modules/toast.js');
+      const mockModal = createMockElement('julesKeyModal');
+      const mockInput = createMockElement('julesKeyInput');
+      const mockSaveBtn = createMockElement('julesSaveBtn');
+      const mockCancelBtn = createMockElement('julesCancelBtn');
+
+      global.document.getElementById.mockImplementation((id) => {
+        if (id === 'julesKeyModal') return mockModal;
+        if (id === 'julesKeyInput') return mockInput;
+        if (id === 'julesSaveBtn') return mockSaveBtn;
+        if (id === 'julesCancelBtn') return mockCancelBtn;
+        return null;
+      });
+
+      julesModal.showJulesKeyModal();
+      mockInput.value = 'abcde$'; // Set value AFTER show
+
+      await mockSaveBtn.onclick();
+
+      expect(showToast).toHaveBeenCalledWith('Invalid key format (alphanumeric, underscores, hyphens only).', 'warn');
+    });
+
+    it('should enforce rate limiting on key submission', async () => {
+      const { encryptAndStoreKey } = await import('../../modules/jules-keys.js');
+      const { showToast } = await import('../../modules/toast.js');
+      encryptAndStoreKey.mockResolvedValue();
+
+      global.window.auth = { currentUser: { uid: 'user123' } };
+
+      const mockModal = createMockElement('julesKeyModal');
+      const mockInput = createMockElement('julesKeyInput');
+      const mockSaveBtn = createMockElement('julesSaveBtn');
+      const mockCancelBtn = createMockElement('julesCancelBtn');
+
+      global.document.getElementById.mockImplementation((id) => {
+        if (id === 'julesKeyModal') return mockModal;
+        if (id === 'julesKeyInput') return mockInput;
+        if (id === 'julesSaveBtn') return mockSaveBtn;
+        if (id === 'julesCancelBtn') return mockCancelBtn;
+        return null;
+      });
+
+      julesModal.showJulesKeyModal();
+
+      // First submission
+      mockInput.value = 'valid-key-1';
+      await mockSaveBtn.onclick();
+      expect(encryptAndStoreKey).toHaveBeenCalledTimes(1);
+
+      // Second submission immediately (within 1000ms)
+      mockInput.value = 'valid-key-2';
+      await mockSaveBtn.onclick();
+
+      expect(encryptAndStoreKey).toHaveBeenCalledTimes(1); // Should not increase
+      expect(showToast).toHaveBeenCalledWith('Please wait before submitting again.', 'warn');
     });
 
     it('should show error if user not logged in', async () => {
@@ -269,7 +351,7 @@ describe('jules-modal', () => {
         return null;
       });
       
-      showJulesKeyModal();
+      julesModal.showJulesKeyModal();
       mockInput.value = 'test-key-123';  // Set value after showJulesKeyModal
       
       await mockSaveBtn.onclick();
@@ -299,7 +381,7 @@ describe('jules-modal', () => {
         return null;
       });
       
-      showJulesKeyModal();
+      julesModal.showJulesKeyModal();
       mockInput.value = 'my-api-key';  // Set value after showJulesKeyModal
       
       await mockSaveBtn.onclick();
@@ -331,8 +413,8 @@ describe('jules-modal', () => {
       });
       
       const onSaveCallback = vi.fn();
-      showJulesKeyModal(onSaveCallback);
-      mockInput.value = 'key';  // Set value after showJulesKeyModal
+      julesModal.showJulesKeyModal(onSaveCallback);
+      mockInput.value = 'key-valid-1';  // Set value after showJulesKeyModal
       
       await mockSaveBtn.onclick();
       
@@ -361,8 +443,8 @@ describe('jules-modal', () => {
         return null;
       });
       
-      showJulesKeyModal();
-      mockInput.value = 'key';  // Set value after showJulesKeyModal
+      julesModal.showJulesKeyModal();
+      mockInput.value = 'key-valid-2';  // Set value after showJulesKeyModal
       
       await mockSaveBtn.onclick();
       
@@ -385,7 +467,7 @@ describe('jules-modal', () => {
         return null;
       });
       
-      showJulesKeyModal();
+      julesModal.showJulesKeyModal();
       
       mockCancelBtn.onclick();
       
@@ -398,7 +480,7 @@ describe('jules-modal', () => {
       const mockModal = createMockElement('julesKeyModal');
       global.document.getElementById.mockReturnValue(mockModal);
       
-      hideJulesKeyModal();
+      julesModal.hideJulesKeyModal();
       
       expect(mockModal.classList.remove).toHaveBeenCalledWith('show');
     });
@@ -409,7 +491,7 @@ describe('jules-modal', () => {
       const mockModal = createMockElement('julesEnvModal');
       global.document.getElementById.mockReturnValue(mockModal);
       
-      hideJulesEnvModal();
+      julesModal.hideJulesEnvModal();
       
       expect(mockModal.classList.remove).toHaveBeenCalledWith('show');
     });
@@ -420,7 +502,7 @@ describe('jules-modal', () => {
       const mockModal = createMockElement('subtaskErrorModal');
       global.document.getElementById.mockReturnValue(mockModal);
       
-      hideSubtaskErrorModal();
+      julesModal.hideSubtaskErrorModal();
       
       expect(mockModal.classList.remove).toHaveBeenCalledWith('show');
     });
